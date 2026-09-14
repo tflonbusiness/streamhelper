@@ -1,0 +1,87 @@
+- id: "1"
+  title: GET members API and admin PATCH authorization
+  description: >-
+    Add GET /accounts/:accountId/members and extend PATCH member authorization
+    so active admins can deactivate/reactivate admin rows (CAP-3). Contract in
+    members-api.md; owner-only POST unchanged.
+  spec_checkpoint: true
+  done_checkpoint: true
+  invoke_dev_with: >-
+    Add e2e tests in server/test for roster GET (owner and admin callers) and
+    PATCH by admin on admin row. Reject admin PATCH on owner row and non-member
+    GET with 403.
+
+- id: "2"
+  title: App shell, routing, and inline team picker
+  description: >-
+    Implement AppShell per nav-shell.md with nested /dashboard, /team, and
+    /modules routes. Embed team picker in /dashboard picker mode — remove
+    /picker route. Post-login 2+ memberships land on dashboard picker mode
+    (CAP-2, CAP-4, CAP-7, CAP-9).
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    Add «Команда» nav item to /team between Главная and Модули. Disable
+    Команда and Модули nav until account selected in picker mode. Register
+    TeamPage route under AppShell. Delete PickerRoute and /picker path if
+    still present.
+
+- id: "3"
+  title: Dashboard home — team card and mock stats
+  description: >-
+    Build DashboardHomePage home mode with team summary card and mock stat
+    cards from mock-stats.md (CAP-1, CAP-5). No admin roster or add-admin
+    form on dashboard home. Hidden in picker mode.
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    Remove members roster, create-admin form, and revoke controls from
+    DashboardHomePage. Keep team card, stats grid, and link to /modules.
+    Admin management moves to TeamPage (story 4).
+
+- id: "4"
+  title: Team page — members roster and admin access
+  description: >-
+    Build TeamPage at /team with member roster, add-admin form for owners,
+    and revoke controls per surfaces.md role matrix (CAP-3, CAP-9). Wired
+    to GET members and existing create/revoke admin APIs.
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    Extract admin UI from DashboardHomePage into new TeamPage. H1 «Команда»,
+    lead «Участники с доступом к панели». Owner sees add-by-name form;
+    admin sees roster and revoke only. Deactivated admins show «Отозван»
+    badge. Show join link Alert on create success.
+
+- id: "5"
+  title: Modules page with catalog toggles
+  description: >-
+    Build ModulesPage listing module cards from modules-catalog.md with
+    localStorage persistence caz-modules-{accountId} (CAP-6). Owner and admin
+    can toggle available modules; coming_soon cards non-interactive.
+  spec_checkpoint: false
+  invoke_dev_with: >-
+    shadcn Switch or toggle Button for available modules. Show footer hint about
+    local persistence. modules_active stat on dashboard reads same localStorage key.
+
+- id: "6"
+  title: Mock game name cards when games module enabled
+  description: >-
+    When casino-stream-games is toggled on, show eight static game name cards
+    in an Игры section on /modules per games-mock.md (CAP-8). No launch or
+    settings; section hides when module off.
+  spec_checkpoint: false
+  invoke_dev_with: >-
+    Use Russian names from games-mock.md table. Hint text: «Запуск игр будет
+    доступен позже». Grid 2 cols mobile, 4 cols desktop.
+
+- id: "7"
+  title: Integration smoke and build verification
+  description: >-
+    Verify owner and admin flows end-to-end including picker-in-dashboard,
+    /team admin management, and npm run build in app/. Confirm no /picker
+    route and no admin UI on dashboard home (CAP-7, CAP-9).
+  spec_checkpoint: false
+  done_checkpoint: true
+  invoke_dev_with: >-
+    Manual or automated smoke: owner with 2 teams → picker mode → home (no
+    admin roster) → /team → add + revoke → /modules → toggle games → switch
+    team → picker mode → other team. Admin login → /team without add form.
+    npm run build in app/ must pass.

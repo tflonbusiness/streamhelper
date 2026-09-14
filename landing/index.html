@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Caz Agent — operator dashboard</title>
+    <meta
+      name="description"
+      content="Caz Agent helps streamers manage their service through a web app. Sign in with Kick."
+    />
+    <meta property="og:title" content="Caz Agent — operator dashboard" />
+    <meta
+      property="og:description"
+      content="Caz Agent helps operators manage their service through a web application."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/svg+xml" href="logo.svg" />
+    <style>
+      :root {
+        --background: #0a0a0c;
+        --foreground: #ffffff;
+        --muted-foreground: #9ca3af;
+        --card: #121215;
+        --border: #1f1f24;
+        --primary: #f59e0b;
+        --primary-hover: #d97706;
+        --radius: 0.75rem;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Inter, system-ui, sans-serif;
+        background: var(--background);
+        color: var(--foreground);
+        line-height: 1.5;
+      }
+
+      main {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+      }
+
+      .hero {
+        width: min(100%, 42rem);
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.25rem;
+      }
+
+      .logo {
+        width: 4rem;
+        height: 4rem;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2rem, 5vw, 2.5rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted-foreground);
+        font-size: 1.05rem;
+        max-width: 36rem;
+      }
+
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: calc(var(--radius) - 2px);
+        background: var(--primary);
+        color: #0a0a0c;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background 0.15s ease;
+      }
+
+      .cta:hover {
+        background: var(--primary-hover);
+      }
+
+      .cta:focus-visible {
+        outline: 2px solid #f59e0b;
+        outline-offset: 2px;
+      }
+
+      .features {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+        width: 100%;
+        margin-top: 0.5rem;
+      }
+
+      .feature {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.85rem 0.5rem;
+        border: 1px solid #1f1f24;
+        border-radius: calc(var(--radius) - 2px);
+        background: #121215;
+      }
+
+      .feature-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        line-height: 1;
+      }
+
+      .feature-icon.games {
+        background: rgba(245, 158, 11, 0.15);
+      }
+
+      .feature-icon.team {
+        background: rgba(56, 189, 248, 0.15);
+      }
+
+      .feature-icon.overlay {
+        background: rgba(168, 85, 247, 0.15);
+      }
+
+      .feature-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--foreground);
+      }
+
+      .feature-desc {
+        font-size: 0.7rem;
+        color: var(--muted-foreground);
+        line-height: 1.35;
+      }
+
+      @media (max-width: 520px) {
+        .features {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <img
+          class="logo"
+          src="logo.svg"
+          width="64"
+          height="64"
+          alt="Caz Agent"
+        />
+        <h1>Caz Agent</h1>
+        <p>
+          Caz Agent helps streamers manage their service through a web
+          application. Sign in with Kick.
+        </p>
+        <a class="cta" href="../app/">Sign in with Kick</a>
+        <div class="features">
+          <div class="feature">
+            <div class="feature-icon games" aria-hidden="true">🎲</div>
+            <span class="feature-title">Chat games</span>
+            <span class="feature-desc">Interactive Kick chat</span>
+          </div>
+          <div class="feature">
+            <div class="feature-icon team" aria-hidden="true">👥</div>
+            <span class="feature-title">Team</span>
+            <span class="feature-desc">Roles and access</span>
+          </div>
+          <div class="feature">
+            <div class="feature-icon overlay" aria-hidden="true">📺</div>
+            <span class="feature-title">OBS</span>
+            <span class="feature-desc">Stream overlays</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

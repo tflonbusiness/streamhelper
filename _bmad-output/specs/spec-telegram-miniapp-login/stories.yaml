@@ -1,0 +1,39 @@
+- id: "1"
+  title: Remove caz entirely
+  description: >-
+    Delete the caz/ project from the repo and product surface. Telegram Mini App
+    and Next.js UI in caz are not the shipped app (constraints in SPEC.md).
+  spec_checkpoint: true
+  done_checkpoint: true
+- id: "2"
+  title: Caz Agent login page in app
+  description: >-
+    In the React app at app/, ship a separate login page titled Caz Agent with
+    email and password fields (CAP-4). Dashboard and contact-to-pay are not shown
+    until login succeeds.
+  spec_checkpoint: true
+  done_checkpoint: true
+- id: "3"
+  title: Postgres auth in server and mock seed
+  description: >-
+    In server/, connect to Postgres and seed hashed mock users from mock-data.md
+    (CAP-5). Matching credentials create a session; unknown or wrong credentials
+    do not grant a logged-in dashboard or contact-to-pay view.
+  spec_checkpoint: true
+  done_checkpoint: true
+- id: "4"
+  title: Route by isActive to dashboard or contact-to-pay
+  description: >-
+    After a session in app/, isActive true opens the Russian dashboard titled
+    Caz Agent (CAP-1); false or unset opens a page with mock Telegram and email
+    from mock-data.md and blocks the dashboard (CAP-2).
+  spec_checkpoint: true
+  done_checkpoint: true
+- id: "5"
+  title: Simple HTML landing with link to the app
+  description: >-
+    In landing/, ship one static HTML page that presents the project and links
+    to the Caz Agent app in app/ (CAP-6). It is not the React login, dashboard,
+    or contact-to-pay screens.
+  spec_checkpoint: true
+  done_checkpoint: true

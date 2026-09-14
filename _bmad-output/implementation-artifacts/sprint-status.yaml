@@ -1,0 +1,49 @@
+generated: 09-11-2026 16:57
+last_updated: 09-11-2026 16:57
+project: test
+project_key: NOKEY
+tracking_system: file-system
+story_location: /Users/aliaksandr/Desktop/test/_bmad-output/implementation-artifacts
+
+development_status:
+  epic-1: done
+  1-1-remove-caz-entirely: done
+  1-2-caz-agent-login-page-in-app: done
+  1-3-postgres-auth-in-server-and-mock-seed: done
+  1-4-route-by-isactive-to-dashboard-or-contact-to-pay: done
+  1-5-simple-html-landing-with-link-to-the-app: done
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-postgres-schema-for-users-accounts-and-account_members: backlog
+  2-2-register-page-and-api-users-row-only: backlog
+  2-3-post-login-onboarding-zero-memberships: backlog
+  2-4-create-owned-account-with-name: backlog
+  2-5-memberships-api-and-select-account-session: backlog
+  2-6-post-login-router-and-account-picker: backlog
+  2-7-route-by-accounts-is_active: backlog
+  2-8-switch-account-from-dashboard: backlog
+  2-9-owner-add-and-disable-admin-by-email: backlog
+  2-10-update-auth-e2e-tests: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-get-members-api-and-admin-patch-authorization: backlog
+  3-2-app-shell-routing-and-inline-team-picker: backlog
+  3-3-dashboard-home-team-card-mock-stats-admin-roster: backlog
+  3-4-modules-page-with-catalog-toggles: backlog
+  3-5-mock-game-cards-when-games-module-enabled: backlog
+  3-6-integration-smoke-and-build-verification: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-postgres-schema-for-streaming-auth-model: backlog
+  4-2-kick-oauth-provider-module: backlog
+  4-3-owner-auto-provision-on-first-kick-login: backlog
+  4-4-login-page-and-landing-kick-only: backlog
+  4-5-admin-access-link-create-list-permanent-revoke: backlog
+  4-6-admin-join-flow-and-session: backlog
+  4-7-session-guard-roster-ui-instant-revoke: backlog
+  4-8-remove-legacy-auth-and-dead-routes: backlog
+  4-9-e2e-tests-and-dev-seed: backlog
+  epic-4-retrospective: optional

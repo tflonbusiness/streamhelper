@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Caz Agent">
+  <rect width="64" height="64" rx="16" fill="#2563EB"/>
+  <path
+    d="M18 42V22h8.5c5.2 0 8.5 2.8 8.5 7.2 0 3.1-1.7 5.3-4.4 6.3L38 42h-6.8l-4.6-5.6H26v5.6H18zm8-10.2h2.1c1.8 0 2.8-.9 2.8-2.3s-1-2.3-2.8-2.3H26v4.6zM40 42l9.5-20h7.1L47 42H40z"
+    fill="#F8FAFC"
+  />
+</svg>

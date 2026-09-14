@@ -1,0 +1,91 @@
+- id: "1"
+  title: Initialize shadcn/ui and dark theme in app
+  description: >-
+    Run shadcn init in app/ with Tailwind, CSS variables, and @/ alias (CAP-7).
+    Set class="dark" on html, customize globals.css per design-tokens.md, and
+    remove the Vite index.css scaffold so build passes.
+  spec_checkpoint: true
+  done_checkpoint: true
+  invoke_dev_with: >-
+    Use shadcn New York style, Slate base, CSS variables yes. Do not migrate
+    pages yet — only tooling, globals.css, and a green npm run build.
+
+- id: "2"
+  title: Add Caz Agent logo asset and BrandHeader
+  description: >-
+    Create app/public/logo.svg (generate a simple professional mark if none
+    supplied) and a shared BrandHeader component with logo + title (CAP-8).
+    Alt text «Caz Agent»; do not wire into pages until story 4.
+  spec_checkpoint: false
+  invoke_dev_with: >-
+    Logo must work on dark background. Export SVG only; same file will be
+    referenced from landing/ via relative path.
+
+- id: "3"
+  title: Install core shadcn components
+  description: >-
+    Add Button, Input, Label, Card, Alert, and Badge under
+    app/src/components/ui/ per components.md (CAP-2). Components install only;
+    no page migration in this story.
+  spec_checkpoint: false
+  invoke_dev_with: >-
+    npx shadcn@latest add button input label card alert badge. Verify each
+    component imports and cn() helper works.
+
+- id: "4"
+  title: Migrate login and register pages to shadcn
+  description: >-
+    Rewrite LoginPage and RegisterPage with Card layout, shadcn form controls,
+    Alert for errors, and BrandHeader (CAP-2, CAP-4, CAP-5, CAP-8). Russian
+    copy unchanged; no auth logic changes.
+  spec_checkpoint: true
+  done_checkpoint: true
+  invoke_dev_with: >-
+    Follow form and PageShell patterns in components.md and surfaces.md. Primary
+    submit buttons full-width on mobile. Remove App.css classes from these pages.
+
+- id: "5"
+  title: Migrate onboarding page to shadcn
+  description: >-
+    Rewrite OnboardingPage choose, create, and wait modes with shadcn Card and
+    Button hierarchy per surfaces.md (CAP-4). Russian copy and auth logic unchanged.
+  spec_checkpoint: false
+  invoke_dev_with: >-
+    Secondary actions use Button variant secondary or outline. Back navigation
+    preserved across all three modes.
+
+- id: "6"
+  title: Migrate picker, dashboard, and contact pages
+  description: >-
+    Rewrite AccountPickerPage, DashboardPage, and ContactPage with shadcn
+    components, account cards, owner add-admin form, and dashboard logo header
+    (CAP-4, CAP-8). Logout uses ghost or outline variant.
+  spec_checkpoint: false
+  invoke_dev_with: >-
+    Picker rows use Card per membership with Badge for role. Dashboard separates
+    identity, team actions, and logout visually. Contact rows styled, not bare ul.
+
+- id: "7"
+  title: Ship hero landing with SEO and no JavaScript
+  description: >-
+    Rebuild landing/index.html as a dark hero with logo, H1, description, and CTA
+    link to ../app/ (CAP-6, CAP-1). Static HTML only — no script tags; title,
+    meta description, lang=ru, semantic main/h1/p/a.
+  spec_checkpoint: true
+  done_checkpoint: true
+  invoke_dev_with: >-
+    CSS-only styling matching shadcn dark tokens. Google Fonts link for Inter is
+    OK (stylesheet, not JS). Logo from ../app/logo.svg or copied sibling path.
+    CTA text: «Войти в приложение».
+
+- id: "8"
+  title: Remove legacy CSS and verify responsive build
+  description: >-
+    Delete App.css and any orphan panel classes; confirm all seven app routes
+    work at 320px and 1280px without horizontal scroll (CAP-3). Final npm run
+    build in app/.
+  spec_checkpoint: false
+  done_checkpoint: true
+  invoke_dev_with: >-
+    Grep app/src for raw button/input outside components/ui. Remove App.css
+    import from App.tsx. Smoke-test login → dashboard path manually if possible.
