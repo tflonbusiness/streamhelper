@@ -1,14 +1,13 @@
+import Button from '@mui/material/Button'
 import { kickLoginUrl } from '@/api/auth'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 
-function KickLogo({ className }: { className?: string }) {
+function KickLogo() {
   return (
     <svg
       viewBox="0 0 24 24"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
-      className={cn('shrink-0', className)}
+      style={{ width: 24, height: 24, flexShrink: 0 }}
     >
       <path
         fill="currentColor"
@@ -25,17 +24,26 @@ type KickLoginButtonProps = {
 export function KickLoginButton({ className }: KickLoginButtonProps) {
   return (
     <Button
-      asChild
-      size="lg"
-      className={cn(
-        'h-12 w-full gap-3 bg-[#53FC18] text-base font-semibold text-[#0e0e10] shadow-sm hover:bg-[#47e014] focus-visible:ring-[#53FC18] [&_svg]:size-6',
-        className,
-      )}
+      component="a"
+      href={kickLoginUrl()}
+      className={className}
+      size="large"
+      fullWidth
+      sx={{
+        height: 48,
+        gap: 1.5,
+        bgcolor: '#53FC18',
+        color: '#0e0e10',
+        fontSize: '1rem',
+        fontWeight: 600,
+        boxShadow: 1,
+        '&:hover': {
+          bgcolor: '#47e014',
+        },
+      }}
     >
-      <a href={kickLoginUrl()}>
-        <KickLogo />
-        <span>Sign in with Kick</span>
-      </a>
+      <KickLogo />
+      <span>Sign in with Kick</span>
     </Button>
   )
 }

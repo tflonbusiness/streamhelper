@@ -1,8 +1,33 @@
-import type { LucideIcon } from 'lucide-react'
+import Box from '@mui/material/Box'
+import Breadcrumbs from '@mui/material/Breadcrumbs'
+import Link from '@mui/material/Link'
+import Typography from '@mui/material/Typography'
+import { alpha, useTheme } from '@mui/material/styles'
+import {
+  ChevronRight,
+  CreditCard,
+  Gift,
+  LayoutDashboard,
+  Puzzle,
+  Users,
+  type LucideIcon,
+} from 'lucide-react'
+import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { IconTile } from '@/components/IconTile'
-import { CardDescription, CardTitle } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
+import { useBreadcrumbDynamicLabel } from '@/context/BreadcrumbContext'
+import { getBreadcrumbAncestors } from '@/lib/breadcrumbs'
 import type { ModuleIconVariant } from '@/lib/modules'
+import { cardSx, colors } from '@/theme/colors'
+
+const ICON_TILE_HEIGHT = 40
+
+const breadcrumbIcons: Record<string, LucideIcon> = {
+  Home: LayoutDashboard,
+  Team: Users,
+  Modules: Puzzle,
+  Subscription: CreditCard,
+  'Bonus Buy': Gift,
+}
 
 type PageHeaderProps = {
   title: string
@@ -10,7 +35,115 @@ type PageHeaderProps = {
   icon?: LucideIcon
   iconVariant?: ModuleIconVariant
   action?: React.ReactNode
+  showBreadcrumbs?: boolean
   className?: string
+}
+
+function PageHeaderBreadcrumbs() {
+  const theme = useTheme()
+  const { pathname } = useLocation()
+  const { dynamicLabel } = useBreadcrumbDynamicLabel()
+  const ancestors = getBreadcrumbAncestors(pathname, dynamicLabel)
+
+  if (ancestors.length === 0) {
+    return null
+  }
+
+  return (
+    <Breadcrumbs
+      aria-label="Breadcrumb"
+      separator={
+        <ChevronRight
+          size={13}
+          aria-hidden
+          color={alpha(colors.neutral[400], 0.55)}
+        />
+      }
+      sx={{
+        '& .MuiBreadcrumbs-ol': {
+          flexWrap: 'nowrap',
+        },
+        '& .MuiBreadcrumbs-li': {
+          display: 'flex',
+          alignItems: 'center',
+          minWidth: 0,
+        },
+        '& .MuiBreadcrumbs-separator': {
+          mx: 0.375,
+        },
+      }}
+    >
+      {ancestors.map((item, index) => {
+        const Icon = breadcrumbIcons[item.label]
+        const isFirst = index === 0
+
+        if (!item.to) {
+          return (
+            <Box
+              key={`${item.label}-${index}`}
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.625,
+                px: 1,
+                py: 0.375,
+                borderRadius: 1,
+                bgcolor: alpha(theme.palette.text.primary, 0.04),
+                border: '1px solid',
+                borderColor: alpha(theme.palette.text.primary, 0.06),
+              }}
+            >
+              {Icon ? <Icon size={12} aria-hidden style={{ flexShrink: 0, opacity: 0.8 }} /> : null}
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                noWrap
+                sx={{ fontSize: '0.6875rem', fontWeight: 600, letterSpacing: '0.02em' }}
+              >
+                {item.label}
+              </Typography>
+            </Box>
+          )
+        }
+
+        return (
+          <Link
+            key={`${item.label}-${index}`}
+            component={RouterLink}
+            to={item.to}
+            underline="none"
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.625,
+              px: 1,
+              py: 0.375,
+              borderRadius: 1,
+              color: isFirst ? 'text.secondary' : alpha(theme.palette.text.primary, 0.72),
+              fontSize: '0.6875rem',
+              fontWeight: 600,
+              letterSpacing: '0.02em',
+              lineHeight: 1.4,
+              bgcolor: alpha(theme.palette.text.primary, 0.03),
+              border: '1px solid',
+              borderColor: alpha(theme.palette.text.primary, 0.06),
+              transition:
+                'color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease',
+              '&:hover': {
+                color: 'primary.light',
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                borderColor: alpha(theme.palette.primary.main, 0.22),
+                transform: 'translateY(-1px)',
+              },
+            }}
+          >
+            {Icon ? <Icon size={12} aria-hidden style={{ flexShrink: 0 }} /> : null}
+            {item.label}
+          </Link>
+        )
+      })}
+    </Breadcrumbs>
+  )
 }
 
 export function PageHeader({
@@ -19,21 +152,100 @@ export function PageHeader({
   icon,
   iconVariant = 'primary',
   action,
+  showBreadcrumbs = true,
   className,
 }: PageHeaderProps) {
+  const theme = useTheme()
+  const { pathname } = useLocation()
+  const { dynamicLabel } = useBreadcrumbDynamicLabel()
+  const hasBreadcrumbs =
+    showBreadcrumbs && getBreadcrumbAncestors(pathname, dynamicLabel).length > 0
+
   return (
-    <header className={cn('space-y-1.5', className)}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex min-w-0 items-start gap-3">
-          {icon ? <IconTile icon={icon} variant={iconVariant} /> : null}
-          <div className="min-w-0 space-y-1.5">
-            <CardTitle>{title}</CardTitle>
-            {description ? <CardDescription>{description}</CardDescription> : null}
-          </div>
-        </div>
-        {action ? <div className="shrink-0">{action}</div> : null}
-      </div>
-    </header>
+    <Box
+      component="header"
+      className={className}
+      sx={{
+        ...cardSx,
+        overflow: 'hidden',
+        backgroundImage: `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 42%)`,
+      }}
+    >
+      {hasBreadcrumbs ? (
+        <Box
+          sx={{
+            px: 2,
+            py: 1.25,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            bgcolor: alpha(colors.neutral[100], 0.015),
+            overflowX: 'auto',
+          }}
+        >
+          <PageHeaderBreadcrumbs />
+        </Box>
+      ) : null}
+
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 2,
+          px: 2,
+          py: hasBreadcrumbs ? 2 : 2.25,
+        }}
+      >
+        <Box sx={{ display: 'flex', minWidth: 0, alignItems: 'center', gap: 1.5 }}>
+          {icon ? <IconTile icon={icon} variant={iconVariant} size="md" /> : null}
+          <Box
+            sx={{
+              minWidth: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              gap: 0.375,
+              ...(icon
+                ? {
+                    height: ICON_TILE_HEIGHT,
+                    overflow: 'hidden',
+                  }
+                : {}),
+            }}
+          >
+            <Typography
+              variant="subtitle1"
+              component="h1"
+              noWrap
+              sx={{
+                fontWeight: 700,
+                fontSize: '1.0625rem',
+                lineHeight: 1.25,
+                letterSpacing: '-0.01em',
+              }}
+            >
+              {title}
+            </Typography>
+            {description ? (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                noWrap
+                sx={{
+                  fontSize: '0.8125rem',
+                  lineHeight: 1.35,
+                  display: 'block',
+                  maxWidth: { xs: '100%', sm: 480 },
+                }}
+              >
+                {description}
+              </Typography>
+            ) : null}
+          </Box>
+        </Box>
+        {action ? <Box sx={{ flexShrink: 0 }}>{action}</Box> : null}
+      </Box>
+    </Box>
   )
 }
 
@@ -49,11 +261,19 @@ export function SectionHeader({
   className,
 }: SectionHeaderProps) {
   return (
-    <header className={cn('space-y-1', className)}>
-      <CardTitle className="text-lg">{title}</CardTitle>
+    <Box
+      component="header"
+      className={className}
+      sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}
+    >
+      <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
+        {title}
+      </Typography>
       {description ? (
-        <CardDescription className="text-xs">{description}</CardDescription>
+        <Typography variant="caption" color="text.secondary">
+          {description}
+        </Typography>
       ) : null}
-    </header>
+    </Box>
   )
 }

@@ -1,3 +1,9 @@
+import Box from '@mui/material/Box'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import Grid from '@mui/material/Grid'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { Gamepad2, Layers, Users } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { BrandHeader } from '@/components/BrandHeader'
@@ -5,7 +11,6 @@ import { IconTile } from '@/components/IconTile'
 import { KickLoginButton } from '@/components/KickLoginButton'
 import { PageShell } from '@/components/PageShell'
 import { StatusAlert } from '@/components/StatusAlert'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
 
 const features = [
   {
@@ -36,40 +41,65 @@ export function LoginPage() {
   return (
     <PageShell>
       <Card>
-        <CardHeader>
-          <BrandHeader description="Streamer dashboard" />
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {joinError ? (
-            <StatusAlert tone="error">
-              This link is invalid or has been revoked.
-            </StatusAlert>
-          ) : null}
+        <CardContent sx={{ p: 3 }}>
+          <Stack spacing={3}>
+            <BrandHeader description="Streamer dashboard" />
 
-          {authError ? (
-            <StatusAlert tone="error">
-              {authError === 'state'
-                ? 'Your sign-in session expired. Click "Sign in with Kick" again.'
-                : 'Could not sign in with Kick. Check your app settings and try again.'}
-            </StatusAlert>
-          ) : null}
+            {joinError ? (
+              <StatusAlert tone="error">
+                This link is invalid or has been revoked.
+              </StatusAlert>
+            ) : null}
 
-          <KickLoginButton />
+            {authError ? (
+              <StatusAlert tone="error">
+                {authError === 'state'
+                  ? 'Your sign-in session expired. Click "Sign in with Kick" again.'
+                  : 'Could not sign in with Kick. Check your app settings and try again.'}
+              </StatusAlert>
+            ) : null}
 
-          <div className="grid gap-3 border-t pt-6 sm:grid-cols-3">
-            {features.map((feature) => (
-              <div
-                key={feature.title}
-                className="flex flex-col items-center gap-2 rounded-lg border bg-background/50 p-3 text-center"
-              >
-                <IconTile icon={feature.icon} variant={feature.variant} size="sm" />
-                <p className="text-sm font-medium">{feature.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  {feature.description}
-                </p>
-              </div>
-            ))}
-          </div>
+            <KickLoginButton />
+
+            <Box
+              sx={{
+                borderTop: 1,
+                borderColor: 'divider',
+                pt: 3,
+              }}
+            >
+              <Grid container spacing={1.5}>
+                {features.map((feature) => (
+                  <Grid key={feature.title} size={{ xs: 12, sm: 4 }}>
+                    <Stack
+                      spacing={1}
+                      sx={{
+                        alignItems: 'center',
+                        border: 1,
+                        borderColor: 'divider',
+                        borderRadius: 2,
+                        bgcolor: 'background.default',
+                        p: 1.5,
+                        textAlign: 'center',
+                      }}
+                    >
+                      <IconTile
+                        icon={feature.icon}
+                        variant={feature.variant}
+                        size="sm"
+                      />
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {feature.title}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {feature.description}
+                      </Typography>
+                    </Stack>
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          </Stack>
         </CardContent>
       </Card>
     </PageShell>

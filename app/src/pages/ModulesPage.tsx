@@ -1,20 +1,19 @@
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Grid,
+  Stack,
+  Switch,
+  Typography,
+} from '@mui/material'
 import { Gamepad2, Sparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { IconTile } from '@/components/IconTile'
 import { PageHeader, SectionHeader } from '@/components/PageHeader'
-import { Badge } from '@/components/ui/badge'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { useAuth } from '@/context/AuthContext'
 import { MOCK_GAMES } from '@/lib/games-mock'
 import {
@@ -22,8 +21,11 @@ import {
   MODULE_CATALOG,
   setModuleEnabled,
 } from '@/lib/modules'
+import { alpha, useTheme } from '@mui/material/styles'
+import { cardSx } from '@/theme/colors'
 
 export function ModulesPage() {
+  const theme = useTheme()
   const { user } = useAuth()
   const accountId = user?.accountId
   const [enabledIds, setEnabledIds] = useState<string[]>([])
@@ -45,7 +47,7 @@ export function ModulesPage() {
   const enabledCount = enabledIds.length
 
   return (
-    <div className="space-y-8">
+    <Stack spacing={4}>
       <PageHeader
         title="Modules"
         description="Tools for your team's streamers"
@@ -54,125 +56,223 @@ export function ModulesPage() {
       />
 
       {enabledCount > 0 ? (
-        <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm">
-          <Sparkles className="size-4 text-primary" aria-hidden />
-          <span>
-            <strong className="text-foreground">{enabledCount}</strong>{' '}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            px: 2,
+            py: 1.5,
+            borderRadius: 1,
+            border: '1px solid',
+            borderColor: alpha(theme.palette.primary.main, 0.2),
+            bgcolor: alpha(theme.palette.primary.main, 0.06),
+            fontSize: '0.875rem',
+          }}
+        >
+          <Sparkles size={16} color={theme.palette.primary.light} aria-hidden />
+          <Typography variant="body2">
+            <Typography component="span" variant="body2" sx={{ fontWeight: 700 }}>
+              {enabledCount}
+            </Typography>{' '}
             {enabledCount === 1 ? 'module connected' : 'modules connected'}
-          </span>
-        </div>
+          </Typography>
+        </Box>
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <Grid container spacing={2}>
         {MODULE_CATALOG.map((module) => {
           const hasToggle = module.hasToggle !== false
           const isEnabled = enabledIds.includes(module.id)
           const isAvailable = module.status === 'available'
           const switchId = `module-${module.id}`
+          const isConnected = hasToggle && isEnabled && isAvailable
 
           return (
-            <Card
-              key={module.id}
-              className={
-                hasToggle && isEnabled && isAvailable
-                  ? 'border-primary/30 bg-primary/5'
-                  : !isAvailable
-                    ? 'opacity-80'
-                    : undefined
-              }
-            >
-              <CardHeader>
-                <div className="flex gap-3">
-                  <IconTile
-                    icon={module.icon}
-                    variant={module.iconVariant}
-                  />
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <CardTitle className="text-base">{module.name}</CardTitle>
-                      <Badge
-                        variant={
-                          hasToggle && isEnabled && isAvailable
-                            ? 'default'
-                            : 'secondary'
-                        }
-                      >
-                        {isAvailable
-                          ? hasToggle && isEnabled
-                            ? 'Connected'
-                            : 'Available'
-                          : 'Soon'}
-                      </Badge>
-                    </div>
-                    <CardDescription>{module.description}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardFooter
-                className={
-                  hasToggle ? 'justify-between gap-4' : 'justify-end gap-4'
-                }
+            <Grid key={module.id} size={{ xs: 12, md: 6 }}>
+              <Card
+                elevation={0}
+                sx={{
+                  ...cardSx,
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  ...(isConnected
+                    ? {
+                        borderColor: alpha(theme.palette.primary.main, 0.3),
+                        bgcolor: alpha(theme.palette.primary.main, 0.05),
+                      }
+                    : {}),
+                  ...(!isAvailable ? { opacity: 0.8 } : {}),
+                }}
               >
-                {isAvailable ? (
-                  hasToggle ? (
-                    <>
-                      <Label htmlFor={switchId} className="text-sm font-normal">
-                        {isEnabled ? 'Connected' : 'Disabled'}
-                      </Label>
-                      <Switch
-                        id={switchId}
-                        checked={isEnabled}
-                        onCheckedChange={(checked) =>
-                          handleToggle(module.id, checked)
-                        }
-                        aria-label={`${isEnabled ? 'Disable' : 'Enable'} ${module.name}`}
+                <CardContent
+                  sx={{
+                    p: 2.5,
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    '&:last-child': { pb: 2.5 },
+                  }}
+                >
+                  <Stack direction="row" spacing={1.5} sx={{ mb: 2 }}>
+                    <IconTile
+                      icon={module.icon}
+                      variant={module.iconVariant}
+                    />
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        sx={{ mb: 0.5, flexWrap: 'wrap', alignItems: 'center' }}
+                      >
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                          {module.name}
+                        </Typography>
+                        <Chip
+                          label={
+                            isAvailable
+                              ? hasToggle && isEnabled
+                                ? 'Connected'
+                                : 'Available'
+                              : 'Soon'
+                          }
+                          size="small"
+                          sx={
+                            isConnected
+                              ? {
+                                  bgcolor: theme.palette.primary.main,
+                                  color: theme.palette.primary.contrastText,
+                                  fontWeight: 600,
+                                }
+                              : {
+                                  bgcolor: alpha(theme.palette.text.primary, 0.08),
+                                }
+                          }
+                        />
+                      </Stack>
+                      <Typography variant="body2" color="text.secondary">
+                        {module.description}
+                      </Typography>
+                    </Box>
+                  </Stack>
+
+                  <Box
+                    sx={{
+                      mt: 'auto',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: hasToggle ? 'space-between' : 'flex-end',
+                      gap: 2,
+                    }}
+                  >
+                    {isAvailable ? (
+                      hasToggle ? (
+                        <>
+                          <Typography variant="body2" color="text.secondary">
+                            {isEnabled ? 'Connected' : 'Disabled'}
+                          </Typography>
+                          <Switch
+                            id={switchId}
+                            checked={isEnabled}
+                            onChange={(_, checked) =>
+                              handleToggle(module.id, checked)
+                            }
+                            slotProps={{
+                              input: {
+                                'aria-label': `${isEnabled ? 'Disable' : 'Enable'} ${module.name}`,
+                              },
+                            }}
+                          />
+                        </>
+                      ) : module.widgetRoute ? (
+                        <Button
+                          component={Link}
+                          to={module.widgetRoute}
+                          variant="contained"
+                        >
+                          Open
+                        </Button>
+                      ) : null
+                    ) : (
+                      <Chip
+                        label="Coming soon"
+                        size="small"
+                        sx={{ bgcolor: alpha(theme.palette.text.primary, 0.08) }}
                       />
-                    </>
-                  ) : module.widgetRoute ? (
-                    <Button asChild>
-                      <Link to={module.widgetRoute}>Open</Link>
-                    </Button>
-                  ) : null
-                ) : (
-                  <Badge variant="secondary">Coming soon</Badge>
-                )}
-              </CardFooter>
-            </Card>
+                    )}
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
           )
         })}
-      </div>
+      </Grid>
 
-      <CardDescription className="block text-xs">
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
         Settings are saved locally until the server is connected
-      </CardDescription>
+      </Typography>
 
       {gamesEnabled ? (
-        <section className="space-y-3">
+        <Stack spacing={1.5} component="section">
           <SectionHeader
             title="Games"
             description="Available chat games for your stream"
           />
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Grid container spacing={1.5}>
             {MOCK_GAMES.map((game) => (
-              <Card
-                key={game.id}
-                className="group transition-colors hover:border-primary/30 hover:bg-primary/5"
-              >
-                <CardContent className="flex min-h-28 flex-col items-center justify-center gap-2 p-4 text-center">
-                  <IconTile icon={game.icon} variant={game.iconVariant} size="lg" />
-                  <p className="text-sm font-medium leading-tight">{game.name}</p>
-                  <Badge variant="secondary" className="text-[10px]">
-                    {game.tag}
-                  </Badge>
-                </CardContent>
-              </Card>
+              <Grid key={game.id} size={{ xs: 6, md: 3 }}>
+                <Card
+                  elevation={0}
+                  sx={{
+                    ...cardSx,
+                    transition: 'border-color 0.2s, background-color 0.2s',
+                    '&:hover': {
+                      borderColor: alpha(theme.palette.primary.main, 0.3),
+                      bgcolor: alpha(theme.palette.primary.main, 0.05),
+                    },
+                  }}
+                >
+                  <CardContent
+                    sx={{
+                      minHeight: 112,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 1,
+                      textAlign: 'center',
+                      p: 2,
+                      '&:last-child': { pb: 2 },
+                    }}
+                  >
+                    <IconTile
+                      icon={game.icon}
+                      variant={game.iconVariant}
+                      size="lg"
+                    />
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {game.name}
+                    </Typography>
+                    <Chip
+                      label={game.tag}
+                      size="small"
+                      sx={{
+                        bgcolor: alpha(theme.palette.text.primary, 0.08),
+                        fontSize: '0.625rem',
+                        height: 20,
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+              </Grid>
             ))}
-          </div>
-          <CardDescription className="text-xs">
+          </Grid>
+          <Typography variant="caption" color="text.secondary">
             Game launching will be available later
-          </CardDescription>
-        </section>
+          </Typography>
+        </Stack>
       ) : null}
-    </div>
+    </Stack>
   )
 }

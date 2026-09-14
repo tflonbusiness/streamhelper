@@ -1,3 +1,9 @@
+import Box from '@mui/material/Box'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import Link from '@mui/material/Link'
+import Skeleton from '@mui/material/Skeleton'
+import Typography from '@mui/material/Typography'
 import { Eye, ExternalLink, Gift, Radio, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import {
@@ -8,8 +14,6 @@ import {
 import { SectionHeader } from '@/components/PageHeader'
 import { StatCard } from '@/components/StatCard'
 import { StatusAlert } from '@/components/StatusAlert'
-import { Card, CardHeader } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
 
 type KickChannelStatsSectionProps = {
   accountId: number
@@ -18,11 +22,11 @@ type KickChannelStatsSectionProps = {
 function StatCardSkeleton() {
   return (
     <Card>
-      <CardHeader className="space-y-3 pb-2">
-        <Skeleton className="size-8 rounded-lg" />
-        <Skeleton className="h-9 w-16" />
-        <Skeleton className="h-4 w-24" />
-      </CardHeader>
+      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, pb: 2 }}>
+        <Skeleton variant="rounded" width={32} height={32} />
+        <Skeleton width={64} height={36} />
+        <Skeleton width={96} height={16} />
+      </CardContent>
     </Card>
   )
 }
@@ -83,7 +87,7 @@ export function KickChannelStatsSection({
     : 'off air'
 
   return (
-    <section className="space-y-3">
+    <Box component="section" sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
       <SectionHeader
         title="Kick stats"
         description="Live channel metrics from Kick"
@@ -94,12 +98,18 @@ export function KickChannelStatsSection({
       ) : null}
 
       {notFound ? (
-        <p className="text-sm text-muted-foreground">
+        <Typography variant="body2" color="text.secondary">
           Kick channel not connected
-        </p>
+        </Typography>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
+          gap: 2,
+        }}
+      >
         {loading ? (
           <>
             <StatCardSkeleton />
@@ -151,19 +161,26 @@ export function KickChannelStatsSection({
             />
           </>
         ) : null}
-      </div>
+      </Box>
 
       {channel ? (
-        <a
+        <Link
           href={`https://kick.com/${channel.slug}`}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          underline="hover"
+          color="text.secondary"
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 0.75,
+            fontSize: '0.875rem',
+          }}
         >
           kick.com/{channel.slug}
-          <ExternalLink className="size-3.5" aria-hidden />
-        </a>
+          <ExternalLink size={14} aria-hidden />
+        </Link>
       ) : null}
-    </section>
+    </Box>
   )
 }

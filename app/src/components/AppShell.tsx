@@ -1,18 +1,19 @@
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import ListItemButton from '@mui/material/ListItemButton'
+import Typography from '@mui/material/Typography'
+import { alpha } from '@mui/material/styles'
 import {
   CreditCard,
   LayoutDashboard,
   LogOut,
   Puzzle,
-  Settings,
   Users,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { BrandHeader } from '@/components/BrandHeader'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
-import { cn } from '@/lib/utils'
+import { BreadcrumbProvider } from '@/context/BreadcrumbContext'
 import { useAuth } from '@/context/AuthContext'
 
 type NavItem = {
@@ -57,14 +58,9 @@ const navItems: NavItem[] = [
   },
 ]
 
-const futureNavItems = [{ label: 'Settings', icon: Settings }] as const
-
 function ShellBrand({ compact = false }: { compact?: boolean }) {
   return (
-    <BrandHeader
-      compact={compact}
-      className={compact ? 'flex-row items-center text-left' : undefined}
-    />
+    <BrandHeader compact={compact} horizontal={compact} />
   )
 }
 
@@ -73,27 +69,33 @@ function SidebarNavLink({
   label,
   icon: Icon,
   end,
-  className,
 }: {
   to: string
   label: string
   icon: LucideIcon
   end: boolean
-  className?: string
 }) {
   return (
-    <Button asChild variant="ghost" className={cn('w-full justify-start gap-2', className)}>
-      <NavLink
-        to={to}
-        end={end}
-        className={({ isActive }) =>
-          cn(isActive && 'bg-accent text-accent-foreground')
-        }
-      >
-        <Icon className="size-4 shrink-0" aria-hidden />
-        {label}
-      </NavLink>
-    </Button>
+    <NavLink
+      to={to}
+      end={end}
+      style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+    >
+      {({ isActive }) => (
+        <ListItemButton
+          selected={isActive}
+          sx={{
+            borderRadius: 1,
+            gap: 1,
+            px: 1.5,
+            py: 1,
+          }}
+        >
+          <Icon size={16} aria-hidden style={{ flexShrink: 0 }} />
+          <Typography variant="body2">{label}</Typography>
+        </ListItemButton>
+      )}
+    </NavLink>
   )
 }
 
@@ -109,21 +111,30 @@ function MobileNavLink({
   end: boolean
 }) {
   return (
-    <Button asChild variant="ghost" size="sm" className="flex-1 gap-1.5">
-      <NavLink
-        to={to}
-        end={end}
-        className={({ isActive }) =>
-          cn(
-            'w-full',
-            isActive ? 'bg-accent text-accent-foreground' : 'text-muted-foreground',
-          )
-        }
-      >
-        <Icon className="size-4 shrink-0" aria-hidden />
-        <span className="truncate">{label}</span>
-      </NavLink>
-    </Button>
+    <NavLink
+      to={to}
+      end={end}
+      style={{ textDecoration: 'none', color: 'inherit', flex: 1, minWidth: 0 }}
+    >
+      {({ isActive }) => (
+        <ListItemButton
+          selected={isActive}
+          sx={{
+            flex: 1,
+            borderRadius: 1,
+            gap: 0.75,
+            px: 1,
+            py: 0.75,
+            color: isActive ? 'text.primary' : 'text.secondary',
+          }}
+        >
+          <Icon size={16} aria-hidden style={{ flexShrink: 0 }} />
+          <Typography variant="body2" noWrap>
+            {label}
+          </Typography>
+        </ListItemButton>
+      )}
+    </NavLink>
   )
 }
 
@@ -142,33 +153,79 @@ export function AppShell() {
   )
 
   return (
-    <div className="flex min-h-svh flex-col md:flex-row">
-      <header className="border-b bg-card md:hidden">
-        <div className="flex items-center justify-between px-4 py-3">
+    <Box
+      sx={{
+        display: 'flex',
+        minHeight: '100svh',
+        flexDirection: { xs: 'column', md: 'row' },
+      }}
+    >
+      <Box
+        component="header"
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          borderBottom: 1,
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: 2,
+            py: 1.5,
+          }}
+        >
           <ShellBrand compact />
-          <Button type="button" variant="ghost" size="sm" onClick={() => void handleLogout()}>
-            <LogOut className="size-4" aria-hidden />
+          <Button
+            type="button"
+            variant="text"
+            size="small"
+            onClick={() => void handleLogout()}
+            sx={{ minWidth: 0, px: 1 }}
+          >
+            <LogOut size={16} aria-hidden />
           </Button>
-        </div>
-      </header>
+        </Box>
+      </Box>
 
-      <nav className="flex gap-1 overflow-x-auto border-b px-2 py-2 md:hidden">
+      <Box
+        component="nav"
+        sx={{
+          display: { xs: 'flex', md: 'none' },
+          gap: 0.5,
+          overflowX: 'auto',
+          borderBottom: 1,
+          borderColor: 'divider',
+          px: 1,
+          py: 1,
+        }}
+      >
         {visibleNavItems.map((item) => {
           const disabled = item.requiresAccount && !hasAccount
 
           if (disabled) {
             return (
-              <Button
+              <ListItemButton
                 key={item.to}
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="flex-1 gap-1.5 text-muted-foreground opacity-50"
                 disabled
+                sx={{
+                  flex: 1,
+                  borderRadius: 1,
+                  gap: 0.75,
+                  px: 1,
+                  py: 0.75,
+                  opacity: 0.5,
+                  color: 'text.secondary',
+                }}
               >
-                <item.icon className="size-4 shrink-0" aria-hidden />
-                <span className="truncate">{item.label}</span>
-              </Button>
+                <item.icon size={16} aria-hidden style={{ flexShrink: 0 }} />
+                <Typography variant="body2" noWrap>
+                  {item.label}
+                </Typography>
+              </ListItemButton>
             )
           }
 
@@ -182,30 +239,44 @@ export function AppShell() {
             />
           )
         })}
-      </nav>
-
-      <aside className="hidden w-56 flex-col border-r bg-card p-4 md:flex">
+      </Box>
+      <Box
+        component="aside"
+        sx={{
+          display: { xs: 'none', md: 'flex' },
+          width: 224,
+          flexDirection: 'column',
+          borderRight: 1,
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+          p: 2,
+        }}
+      >
         <ShellBrand compact />
-
-        <div className="mb-4 mt-6 flex flex-1 flex-col gap-1">
+        <Box sx={{ mb: 2, mt: 3, display: 'flex', flex: 1, flexDirection: 'column', gap: 0.5 }}>
           {visibleNavItems.map((item) => {
             const disabled = item.requiresAccount && !hasAccount
 
             if (disabled) {
               return (
-                <Button
+                <ListItemButton
                   key={item.to}
-                  type="button"
-                  variant="ghost"
-                  className="justify-start gap-2 text-muted-foreground opacity-50"
                   disabled
+                  sx={{
+                    borderRadius: 1,
+                    gap: 1,
+                    px: 1.5,
+                    py: 1,
+                    justifyContent: 'flex-start',
+                    opacity: 0.5,
+                    color: 'text.secondary',
+                  }}
                 >
-                  <item.icon className="size-4 shrink-0" aria-hidden />
-                  {item.label}
-                </Button>
+                  <item.icon size={16} aria-hidden style={{ flexShrink: 0 }} />
+                  <Typography variant="body2">{item.label}</Typography>
+                </ListItemButton>
               )
             }
-
             return (
               <SidebarNavLink
                 key={item.to}
@@ -216,55 +287,29 @@ export function AppShell() {
               />
             )
           })}
-
-          <Separator className="my-2" />
-
-          {futureNavItems.map((item) => (
-            <Button
-              key={item.label}
-              type="button"
-              variant="ghost"
-              className="justify-between gap-2 text-muted-foreground opacity-60"
-              disabled
-            >
-              <span className="flex items-center gap-2">
-                <item.icon className="size-4 shrink-0" aria-hidden />
-                {item.label}
-              </span>
-              <Badge variant="secondary">Soon</Badge>
-            </Button>
-          ))}
-        </div>
-
-        {user ? (
-          <div className="mb-3 rounded-lg border bg-background/60 p-3">
-            <p className="truncate text-sm font-medium">{user.name}</p>
-            <p className="truncate text-xs text-muted-foreground">
-              {user.accountName ?? 'No team'}
-            </p>
-          </div>
-        ) : null}
-
-        <div className="mt-auto space-y-2 pt-4">
+        </Box>
+        <Box sx={{ mt: 'auto', pt: 2 }}>
           <Button
             type="button"
-            variant="ghost"
-            className="w-full justify-start gap-2"
+            variant="text"
+            fullWidth
             onClick={() => void handleLogout()}
+            startIcon={<LogOut size={16} aria-hidden />}
+            sx={{ justifyContent: 'flex-start' }}
           >
-            <LogOut className="size-4" aria-hidden />
             Sign out
           </Button>
-        </div>
-      </aside>
-
-      <div className="flex min-h-0 flex-1 flex-col">
-        <main className="flex-1 overflow-auto p-6">
-          <div className="mx-auto w-full max-w-5xl">
-            <Outlet />
-          </div>
-        </main>
-      </div>
-    </div>
+        </Box>
+      </Box>
+      <Box sx={{ display: 'flex', minHeight: 0, flex: 1, flexDirection: 'column' }}>
+        <Box component="main" sx={{ flex: 1, overflow: 'auto', p: 3 }}>
+          <BreadcrumbProvider>
+            <Box sx={{ mx: 'auto', width: '100%', maxWidth: 1024 }}>
+              <Outlet />
+            </Box>
+          </BreadcrumbProvider>
+        </Box>
+      </Box>
+    </Box>
   )
 }

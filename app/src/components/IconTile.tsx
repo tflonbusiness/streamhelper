@@ -1,17 +1,16 @@
+import Box from '@mui/material/Box'
+import { alpha, useTheme, type Theme } from '@mui/material/styles'
 import type { LucideIcon } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { colors } from '@/theme/colors'
 
-const variantStyles = {
-  primary: 'bg-primary/15 text-primary',
-  success: 'bg-emerald-500/15 text-emerald-400',
-  warning: 'bg-amber-500/15 text-amber-400',
-  danger: 'bg-red-500/15 text-red-400',
-  info: 'bg-sky-500/15 text-sky-400',
-  purple: 'bg-purple-500/15 text-purple-400',
-  muted: 'bg-muted text-muted-foreground',
-} as const
-
-type IconTileVariant = keyof typeof variantStyles
+type IconTileVariant =
+  | 'primary'
+  | 'success'
+  | 'warning'
+  | 'danger'
+  | 'info'
+  | 'purple'
+  | 'muted'
 
 type IconTileProps = {
   icon: LucideIcon
@@ -20,11 +19,51 @@ type IconTileProps = {
   className?: string
 }
 
-const sizeStyles = {
-  sm: { box: 'size-8', icon: 'size-4' },
-  md: { box: 'size-10', icon: 'size-5' },
-  lg: { box: 'size-12', icon: 'size-6' },
+const sizeMap = {
+  sm: { box: 32, icon: 16 },
+  md: { box: 40, icon: 20 },
+  lg: { box: 48, icon: 24 },
 } as const
+
+function getVariantColors(variant: IconTileVariant, theme: Theme) {
+  switch (variant) {
+    case 'primary':
+      return {
+        bg: alpha(theme.palette.primary.main, 0.14),
+        color: theme.palette.primary.light,
+      }
+    case 'success':
+      return {
+        bg: alpha(theme.palette.success.main, 0.14),
+        color: theme.palette.success.light,
+      }
+    case 'warning':
+      return {
+        bg: alpha(theme.palette.warning.main, 0.14),
+        color: theme.palette.warning.main,
+      }
+    case 'danger':
+      return {
+        bg: alpha(theme.palette.error.main, 0.14),
+        color: theme.palette.error.main,
+      }
+    case 'info':
+      return {
+        bg: alpha(theme.palette.info.main, 0.14),
+        color: theme.palette.info.light,
+      }
+    case 'purple':
+      return {
+        bg: alpha(colors.purple[500], 0.14),
+        color: colors.purple[400],
+      }
+    case 'muted':
+      return {
+        bg: alpha(theme.palette.text.primary, 0.06),
+        color: theme.palette.text.secondary,
+      }
+  }
+}
 
 export function IconTile({
   icon: Icon,
@@ -32,18 +71,26 @@ export function IconTile({
   size = 'md',
   className,
 }: IconTileProps) {
-  const sizes = sizeStyles[size]
+  const theme = useTheme()
+  const sizes = sizeMap[size]
+  const variantColors = getVariantColors(variant, theme)
 
   return (
-    <div
-      className={cn(
-        'flex shrink-0 items-center justify-center rounded-lg',
-        sizes.box,
-        variantStyles[variant],
-        className,
-      )}
+    <Box
+      className={className}
+      sx={{
+        display: 'flex',
+        flexShrink: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 1,
+        width: sizes.box,
+        height: sizes.box,
+        bgcolor: variantColors.bg,
+        color: variantColors.color,
+      }}
     >
-      <Icon className={sizes.icon} aria-hidden />
-    </div>
+      <Icon size={sizes.icon} aria-hidden />
+    </Box>
   )
 }

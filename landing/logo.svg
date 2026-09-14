@@ -1,7 +1,68 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Caz Agent">
-  <rect width="64" height="64" rx="16" fill="#2563EB"/>
+  <defs>
+    <linearGradient id="bg" x1="10" y1="8" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1F1F28"/>
+      <stop offset="1" stop-color="#0B0B0F"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="20" y1="12" x2="44" y2="52" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7BC4F"/>
+      <stop offset="1" stop-color="#D48908"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="16" fill="url(#bg)"/>
+  <rect x="1.25" y="1.25" width="61.5" height="61.5" rx="14.75" stroke="#F0A020" stroke-opacity="0.24"/>
+
+  <path d="M14 54h36l-3.5-8.5H17.5L14 54z" fill="#18181F"/>
+  <path d="M18.5 45.5h27l-2.2-5.5H20.7l-2.2 5.5z" fill="#121218"/>
+  <path d="M21 45.5h22v2.2c0 1.2-1 2.2-2.2 2.2H23.2c-1.2 0-2.2-1-2.2-2.2v-2.2z" fill="#2A2A35"/>
+
   <path
-    d="M18 42V22h8.5c5.2 0 8.5 2.8 8.5 7.2 0 3.1-1.7 5.3-4.4 6.3L38 42h-6.8l-4.6-5.6H26v5.6H18zm8-10.2h2.1c1.8 0 2.8-.9 2.8-2.3s-1-2.3-2.8-2.3H26v4.6zM40 42l9.5-20h7.1L47 42H40z"
-    fill="#F8FAFC"
+    d="M32 12.5c-8.2 0-14.5 6.1-14.5 14.2v4.8c0 1.8 1.4 3.2 3.2 3.2h1.2v-2.6c0-5.8 4.4-10.4 10.1-10.4s10.1 4.6 10.1 10.4v2.6h1.2c1.8 0 3.2-1.4 3.2-3.2v-4.8C46.5 18.6 40.2 12.5 32 12.5z"
+    fill="#2A2A35"
+  />
+  <ellipse cx="32" cy="28.5" rx="11.5" ry="13.5" fill="#121218"/>
+
+  <circle cx="27" cy="27.5" r="1.9" fill="#F0A020"/>
+  <circle cx="37" cy="27.5" r="1.9" fill="#F0A020"/>
+  <path
+    d="M28 33.2c1.3 1.1 2.7 1.7 4 1.7s2.7-.6 4-1.7"
+    stroke="#9898A4"
+    stroke-width="1.4"
+    stroke-linecap="round"
+  />
+
+  <path d="M32 34.8l-4.2 6.8h8.4L32 34.8z" fill="url(#gold)"/>
+  <path d="M32 36.1l-2.4 3.8h4.8L32 36.1z" fill="#0B0B0F" opacity="0.85"/>
+
+  <path
+    d="M24.8 43.2h14.4"
+    stroke="#F7BC4F"
+    stroke-width="1.5"
+    stroke-linecap="round"
+  />
+
+  <g transform="translate(44 13)">
+    <circle cx="0" cy="0" r="7.5" fill="#18181F" stroke="#F0A020" stroke-width="1.2"/>
+    <circle cx="0" cy="0" r="5.8" fill="none" stroke="#F7BC4F" stroke-opacity="0.45" stroke-dasharray="1.6 1.6"/>
+    <text
+      x="0"
+      y="1.5"
+      text-anchor="middle"
+      fill="#F0A020"
+      font-family="Inter, system-ui, sans-serif"
+      font-size="7"
+      font-weight="700"
+    >
+      A
+    </text>
+  </g>
+
+  <path
+    d="M11.5 18.5l2.2 3.8M52.5 18.5l-2.2 3.8"
+    stroke="#3ECF8E"
+    stroke-width="1.4"
+    stroke-linecap="round"
+    opacity="0.75"
   />
 </svg>

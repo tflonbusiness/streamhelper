@@ -1,4 +1,21 @@
 import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  IconButton,
+  Skeleton,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
+import {
   ArrowLeft,
   CircleStop,
   ExternalLink,
@@ -7,41 +24,18 @@ import {
   Pencil,
   Plus,
 } from 'lucide-react'
+import { alpha, useTheme } from '@mui/material/styles'
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { endBonusBuy, fetchBonusBuy, type BonusBuyRecord } from '@/api/bonus-buy'
+import { AppTable, type AppTableColumn } from '@/components/AppTable'
 import { PageHeader } from '@/components/PageHeader'
+import { IconTile } from '@/components/IconTile'
 import { StatusAlert } from '@/components/StatusAlert'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { useAuth } from '@/context/AuthContext'
+import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
 import { MODULE_CATALOG } from '@/lib/modules'
-import { cn } from '@/lib/utils'
+import { cardSx, colors, inputFieldSx } from '@/theme/colors'
 
 const bonusBuyModule = MODULE_CATALOG.find((module) => module.id === 'bonus-buy')!
 
@@ -92,32 +86,54 @@ function computeStats(startBalance: number, slots: MockSlot[]): SessionStats {
 function StatCard({
   label,
   value,
-  valueClassName,
+  valueColor,
   action,
 }: {
   label: string
   value: string
-  valueClassName?: string
+  valueColor?: string
   action?: React.ReactNode
 }) {
   return (
-    <Card className="border-border/80 bg-card">
-      <CardContent className="space-y-2 p-4">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+    <Card elevation={0} sx={cardSx}>
+      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+        <Typography
+          variant="caption"
+          sx={{
+            display: 'block',
+            fontWeight: 500,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            color: 'text.secondary',
+            mb: 1,
+          }}
+        >
           {label}
-        </p>
-        <div className="flex items-center justify-between gap-2">
-          <p className={cn('text-xl font-semibold tabular-nums', valueClassName)}>
+        </Typography>
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ alignItems: 'center', justifyContent: 'space-between' }}
+        >
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 600,
+              fontVariantNumeric: 'tabular-nums',
+              color: valueColor ?? 'inherit',
+            }}
+          >
             {value}
-          </p>
+          </Typography>
           {action}
-        </div>
+        </Stack>
       </CardContent>
     </Card>
   )
 }
 
 export function BonusBuySessionPage() {
+  const theme = useTheme()
   const { id } = useParams()
   const { user } = useAuth()
   const [record, setRecord] = useState<BonusBuyRecord | null>(null)
@@ -137,6 +153,10 @@ export function BonusBuySessionPage() {
   const [endDialogOpen, setEndDialogOpen] = useState(false)
   const [isEnding, setIsEnding] = useState(false)
   const [endError, setEndError] = useState<string | null>(null)
+
+  useSetBreadcrumbLabel(
+    record ? `${record.title} #${record.id}` : null,
+  )
 
   const loadRecord = useCallback(async () => {
     if (!user?.accountId || !id) {
@@ -181,6 +201,66 @@ export function BonusBuySessionPage() {
   const stats = useMemo(
     () => computeStats(startBalance, slots),
     [startBalance, slots],
+  )
+
+  const slotColumns: AppTableColumn<MockSlot>[] = useMemo(
+    () => [
+      {
+        id: 'slotName',
+        header: 'Slot',
+        width: '100%',
+        sx: {
+          fontWeight: 500,
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        },
+        render: (slot) => slot.slotName,
+      },
+      {
+        id: 'nickProvider',
+        header: 'Nick / provider',
+        width: 140,
+        minWidth: 120,
+        sx: {
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        },
+        render: (slot) => slot.nickProvider || '—',
+      },
+      {
+        id: 'purchase',
+        header: 'Purchase',
+        width: 110,
+        minWidth: 100,
+        sx: { whiteSpace: 'nowrap' },
+        render: (slot) => formatUsd(slot.purchaseAmount),
+      },
+      {
+        id: 'win',
+        header: 'Win',
+        width: 100,
+        minWidth: 90,
+        sx: { color: 'text.secondary', whiteSpace: 'nowrap' },
+        render: (slot) =>
+          slot.winAmount == null ? 'Pending' : formatUsd(slot.winAmount),
+      },
+      {
+        id: 'multiplier',
+        header: 'Multiplier',
+        width: 100,
+        minWidth: 90,
+        sx: { color: 'text.secondary', whiteSpace: 'nowrap' },
+        render: (slot) =>
+          slot.winAmount == null || slot.purchaseAmount === 0
+            ? '—'
+            : formatMultiplier(slot.winAmount / slot.purchaseAmount),
+      },
+    ],
+    [],
   )
 
   function showStub(message: string) {
@@ -282,28 +362,30 @@ export function BonusBuySessionPage() {
 
   if (loading) {
     return (
-      <div className="space-y-8">
+      <Stack spacing={4}>
         <PageHeader
           title={bonusBuyModule.name}
           description={bonusBuyModule.description}
           icon={bonusBuyModule.icon}
           iconVariant={bonusBuyModule.iconVariant}
         />
-        <Skeleton className="h-16 w-full rounded-xl" />
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <Skeleton variant="rounded" height={64} />
+        <Grid container spacing={1.5}>
           {Array.from({ length: 5 }).map((_, index) => (
-            <Skeleton key={index} className="h-24 w-full rounded-xl" />
+            <Grid key={index} size={{ xs: 12, sm: 6, lg: 2.4 }}>
+              <Skeleton variant="rounded" height={96} />
+            </Grid>
           ))}
-        </div>
-        <Skeleton className="h-48 w-full rounded-xl" />
-        <Skeleton className="h-40 w-full rounded-xl" />
-      </div>
+        </Grid>
+        <Skeleton variant="rounded" height={192} />
+        <Skeleton variant="rounded" height={160} />
+      </Stack>
     )
   }
 
   if (error || !record) {
     return (
-      <div className="space-y-8">
+      <Stack spacing={4}>
         <PageHeader
           title={bonusBuyModule.name}
           description={bonusBuyModule.description}
@@ -311,15 +393,15 @@ export function BonusBuySessionPage() {
           iconVariant={bonusBuyModule.iconVariant}
         />
         <StatusAlert tone="error">{error ?? 'Session not found'}</StatusAlert>
-        <Button asChild variant="outline">
-          <Link to="/bonus-buy">Back to history</Link>
+        <Button component={Link} to="/bonus-buy" variant="outlined">
+          Back to history
         </Button>
-      </div>
+      </Stack>
     )
   }
 
   return (
-    <div className="space-y-8">
+    <Stack spacing={4}>
       <PageHeader
         title={bonusBuyModule.name}
         description={bonusBuyModule.description}
@@ -327,98 +409,131 @@ export function BonusBuySessionPage() {
         iconVariant={bonusBuyModule.iconVariant}
       />
 
-      <Card className="border-border/80 bg-card">
-        <CardContent className="flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex min-w-0 items-center gap-2">
-            <Button asChild variant="ghost" size="icon" className="shrink-0">
-              <Link to="/bonus-buy" aria-label="Back to history">
-                <ArrowLeft className="size-4" aria-hidden />
-              </Link>
-            </Button>
+      <Card elevation={0} sx={cardSx}>
+        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+          <Stack
+            direction={{ xs: 'column', lg: 'row' }}
+            spacing={2}
+            sx={{ alignItems: { lg: 'center' }, justifyContent: 'space-between' }}
+          >
+            <Stack direction="row" spacing={1} sx={{ minWidth: 0, alignItems: 'center' }}>
+              <IconButton
+                component={Link}
+                to="/bonus-buy"
+                aria-label="Back to history"
+                size="small"
+              >
+                <ArrowLeft size={16} aria-hidden />
+              </IconButton>
 
-            <div className="flex min-w-0 items-center gap-2">
-              {isEditingTitle ? (
-                <Input
-                  value={titleDraft}
-                  onChange={(event) => setTitleDraft(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      handleTitleSave()
-                    }
-                    if (event.key === 'Escape') {
-                      setTitleDraft(record.title)
-                      setIsEditingTitle(false)
-                    }
-                  }}
-                  onBlur={handleTitleSave}
-                  className="h-9 max-w-[16rem]"
-                  autoFocus
-                />
-              ) : (
-                <h1 className="truncate text-lg font-semibold">
-                  {record.title}{' '}
-                  <span className="text-muted-foreground">#{record.id}</span>
-                </h1>
-              )}
+              <Stack direction="row" spacing={1} sx={{ minWidth: 0, alignItems: 'center' }}>
+                {isEditingTitle ? (
+                  <TextField
+                    value={titleDraft}
+                    onChange={(event) => setTitleDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        handleTitleSave()
+                      }
+                      if (event.key === 'Escape') {
+                        setTitleDraft(record.title)
+                        setIsEditingTitle(false)
+                      }
+                    }}
+                    onBlur={handleTitleSave}
+                    size="small"
+                    autoFocus
+                    sx={{ ...inputFieldSx, maxWidth: 256 }}
+                  />
+                ) : (
+                  <Typography variant="h6" noWrap sx={{ fontWeight: 600 }}>
+                    {record.title}{' '}
+                    <Typography
+                      component="span"
+                      variant="h6"
+                      color="text.secondary"
+                      sx={{ fontWeight: 600 }}
+                    >
+                      #{record.id}
+                    </Typography>
+                  </Typography>
+                )}
 
-              {!record.isActive ? (
-                <Badge variant="outline" className="shrink-0 text-muted-foreground">
-                  Ended
-                </Badge>
-              ) : null}
+                {!record.isActive ? (
+                  <Chip
+                    label="Ended"
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      flexShrink: 0,
+                      color: 'text.secondary',
+                      borderColor: 'divider',
+                    }}
+                  />
+                ) : null}
 
-              {!isEditingTitle && record.isActive ? (
+                {!isEditingTitle && record.isActive ? (
+                  <IconButton
+                    type="button"
+                    size="small"
+                    aria-label="Edit title"
+                    onClick={() => setIsEditingTitle(true)}
+                  >
+                    <Pencil size={14} aria-hidden />
+                  </IconButton>
+                ) : null}
+              </Stack>
+            </Stack>
+
+            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+              {record.isActive ? (
                 <Button
                   type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-8 shrink-0"
-                  aria-label="Edit title"
-                  onClick={() => setIsEditingTitle(true)}
+                  variant="outlined"
+                  size="small"
+                  startIcon={<CircleStop size={16} aria-hidden />}
+                  onClick={() => handleEndDialogChange(true)}
+                  sx={{
+                    borderColor: alpha(theme.palette.error.main, 0.4),
+                    color: theme.palette.error.main,
+                    '&:hover': {
+                      borderColor: theme.palette.error.main,
+                      bgcolor: alpha(theme.palette.error.main, 0.1),
+                    },
+                  }}
                 >
-                  <Pencil className="size-3.5" aria-hidden />
+                  End bonus buy
                 </Button>
               ) : null}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {record.isActive ? (
               <Button
                 type="button"
-                variant="outline"
-                className="border-destructive/40 text-destructive hover:bg-destructive/10"
-                onClick={() => handleEndDialogChange(true)}
+                variant="outlined"
+                size="small"
+                startIcon={<Palette size={16} aria-hidden />}
+                onClick={() => showStub('Widget style — coming soon')}
               >
-                <CircleStop className="size-4" aria-hidden />
-                End bonus buy
+                Widget style
               </Button>
-            ) : null}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => showStub('Widget style — coming soon')}
-            >
-              <Palette className="size-4" aria-hidden />
-              Widget style
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => showStub('OBS link — coming soon')}
-            >
-              <Link2 className="size-4" aria-hidden />
-              OBS link
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => showStub('Overlay — coming soon')}
-            >
-              <ExternalLink className="size-4" aria-hidden />
-              Overlay
-            </Button>
-          </div>
+              <Button
+                type="button"
+                variant="outlined"
+                size="small"
+                startIcon={<Link2 size={16} aria-hidden />}
+                onClick={() => showStub('OBS link — coming soon')}
+              >
+                OBS link
+              </Button>
+              <Button
+                type="button"
+                variant="outlined"
+                size="small"
+                startIcon={<ExternalLink size={16} aria-hidden />}
+                onClick={() => showStub('Overlay — coming soon')}
+              >
+                Overlay
+              </Button>
+            </Stack>
+          </Stack>
         </CardContent>
       </Card>
 
@@ -432,191 +547,264 @@ export function BonusBuySessionPage() {
         </StatusAlert>
       ) : null}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard
-          label="Start balance"
-          value={formatUsd(startBalance)}
-          action={
-            isEditingStartBalance ? (
-              <Input
-                value={startBalanceDraft}
-                onChange={(event) => setStartBalanceDraft(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    handleStartBalanceSave()
-                  }
-                  if (event.key === 'Escape') {
-                    setStartBalanceDraft(record.startBalance)
-                    setIsEditingStartBalance(false)
-                  }
-                }}
-                onBlur={handleStartBalanceSave}
-                type="number"
-                inputMode="decimal"
-                step="0.01"
-                min="0"
-                className="h-8 w-24 px-2 text-sm"
-                autoFocus
-              />
-            ) : record.isActive ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="size-7"
-                aria-label="Edit start balance"
-                onClick={() => setIsEditingStartBalance(true)}
-              >
-                <Pencil className="size-3.5" aria-hidden />
-              </Button>
-            ) : null
-          }
-        />
-        <StatCard
-          label="Current balance"
-          value={formatUsd(stats.currentBalance)}
-          valueClassName="text-emerald-400"
-        />
-        <StatCard label="Spent" value={formatUsd(stats.spent)} />
-        <StatCard
-          label="Profit"
-          value={formatUsd(stats.profit)}
-          valueClassName={stats.profit >= 0 ? 'text-emerald-400' : undefined}
-        />
-        <StatCard label="Average X" value={formatMultiplier(stats.averageX)} />
-      </div>
-
-      <Card className="border-border/80 bg-card">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base">Quick add slot</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form className="space-y-4" onSubmit={handleAddSlot}>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="grid gap-2">
-                <Label htmlFor="session-slot-name">
-                  Slot <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="session-slot-name"
-                  value={slotName}
-                  onChange={(event) => setSlotName(event.target.value)}
-                  placeholder="Slot name"
-                  disabled={!record.isActive}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="session-nick-provider">Nick / provider</Label>
-                <Input
-                  id="session-nick-provider"
-                  value={nickProvider}
-                  onChange={(event) => setNickProvider(event.target.value)}
-                  placeholder="Nickname or provider"
-                  disabled={!record.isActive}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="session-purchase">
-                  Purchase ($) <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="session-purchase"
+      <Grid container spacing={1.5}>
+        <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
+          <StatCard
+            label="Start balance"
+            value={formatUsd(startBalance)}
+            action={
+              isEditingStartBalance ? (
+                <TextField
+                  value={startBalanceDraft}
+                  onChange={(event) => setStartBalanceDraft(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      handleStartBalanceSave()
+                    }
+                    if (event.key === 'Escape') {
+                      setStartBalanceDraft(record.startBalance)
+                      setIsEditingStartBalance(false)
+                    }
+                  }}
+                  onBlur={handleStartBalanceSave}
                   type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  min="0"
-                  value={purchaseAmount}
-                  onChange={(event) => setPurchaseAmount(event.target.value)}
-                  placeholder="Purchase amount"
-                  disabled={!record.isActive}
+                  slotProps={{ htmlInput: { step: '0.01', min: 0, inputMode: 'decimal' } }}
+                  size="small"
+                  autoFocus
+                  sx={{ ...inputFieldSx, width: 96 }}
                 />
-              </div>
-            </div>
+              ) : record.isActive ? (
+                <IconButton
+                  type="button"
+                  size="small"
+                  aria-label="Edit start balance"
+                  onClick={() => setIsEditingStartBalance(true)}
+                >
+                  <Pencil size={14} aria-hidden />
+                </IconButton>
+              ) : null
+            }
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
+          <StatCard
+            label="Current balance"
+            value={formatUsd(stats.currentBalance)}
+            valueColor={theme.palette.success.main}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
+          <StatCard label="Spent" value={formatUsd(stats.spent)} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
+          <StatCard
+            label="Profit"
+            value={formatUsd(stats.profit)}
+            valueColor={
+              stats.profit >= 0 ? theme.palette.success.main : undefined
+            }
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
+          <StatCard label="Average X" value={formatMultiplier(stats.averageX)} />
+        </Grid>
+      </Grid>
 
-            {formError ? (
-              <StatusAlert tone="error">{formError}</StatusAlert>
-            ) : null}
-
-            <div className="flex justify-end">
-              <Button type="submit" disabled={!record.isActive}>
-                <Plus className="size-4" aria-hidden />
+      <Card elevation={0} sx={cardSx}>
+        <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
+          <Box component="form" onSubmit={handleAddSlot}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={2}
+              sx={{
+                mb: 2.5,
+                alignItems: { xs: 'stretch', sm: 'center' },
+                justifyContent: 'space-between',
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  minWidth: 0,
+                  flex: 1,
+                }}
+              >
+                <IconTile icon={Plus} variant="success" />
+                <Box
+                  sx={{
+                    minWidth: 0,
+                    height: 40,
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    gap: 0.25,
+                  }}
+                >
+                  <Typography
+                    noWrap
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: '0.875rem',
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    Quick add slot
+                  </Typography>
+                  <Typography
+                    noWrap
+                    color="text.secondary"
+                    sx={{
+                      fontSize: '0.6875rem',
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    Enter slot details and purchase amount in USD
+                  </Typography>
+                </Box>
+              </Box>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={!record.isActive}
+                startIcon={<Plus size={16} aria-hidden />}
+                sx={{ alignSelf: { xs: 'flex-end', sm: 'auto' }, flexShrink: 0 }}
+              >
                 Add slot
               </Button>
-            </div>
-          </form>
+            </Stack>
+
+            <Box
+              sx={{
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 1.5,
+                bgcolor: alpha(colors.neutral[100], 0.02),
+                p: 2,
+                transition: 'opacity 0.15s ease',
+                ...(!record.isActive ? { opacity: 0.55 } : {}),
+              }}
+            >
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TextField
+                    id="session-slot-name"
+                    label="Slot"
+                    required
+                    value={slotName}
+                    onChange={(event) => setSlotName(event.target.value)}
+                    placeholder="Gates of Olympus"
+                    disabled={!record.isActive}
+                    fullWidth
+                    size="small"
+                    sx={inputFieldSx}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TextField
+                    id="session-nick-provider"
+                    label="Nick / provider"
+                    value={nickProvider}
+                    onChange={(event) => setNickProvider(event.target.value)}
+                    placeholder="Pragmatic Play"
+                    disabled={!record.isActive}
+                    fullWidth
+                    size="small"
+                    sx={inputFieldSx}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TextField
+                    id="session-purchase"
+                    label="Purchase ($)"
+                    required
+                    type="number"
+                    slotProps={{
+                      htmlInput: { step: '0.01', min: 0, inputMode: 'decimal' },
+                    }}
+                    value={purchaseAmount}
+                    onChange={(event) => setPurchaseAmount(event.target.value)}
+                    placeholder="50.00"
+                    disabled={!record.isActive}
+                    fullWidth
+                    size="small"
+                    sx={inputFieldSx}
+                  />
+                </Grid>
+              </Grid>
+
+              {formError ? (
+                <Box sx={{ mt: 2 }}>
+                  <StatusAlert tone="error">{formError}</StatusAlert>
+                </Box>
+              ) : null}
+            </Box>
+
+            {!record.isActive ? (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mt: 1.5, display: 'block' }}
+              >
+                Session ended — adding new slots is disabled.
+              </Typography>
+            ) : null}
+          </Box>
         </CardContent>
       </Card>
 
-      <Card className="border-border/80 bg-card">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base">
+      <Card elevation={0} sx={cardSx}>
+        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+          <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
             Bonus list ({slots.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {slots.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              No bonuses added yet.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Slot</TableHead>
-                  <TableHead>Nick / provider</TableHead>
-                  <TableHead>Purchase</TableHead>
-                  <TableHead>Win</TableHead>
-                  <TableHead>Multiplier</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {slots.map((slot) => (
-                  <TableRow key={slot.id}>
-                    <TableCell className="font-medium">{slot.slotName}</TableCell>
-                    <TableCell>{slot.nickProvider || '—'}</TableCell>
-                    <TableCell>{formatUsd(slot.purchaseAmount)}</TableCell>
-                    <TableCell className="text-muted-foreground">Pending</TableCell>
-                    <TableCell className="text-muted-foreground">—</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          </Typography>
+          <AppTable
+            columns={slotColumns}
+            rows={slots}
+            getRowKey={(slot) => slot.id}
+            emptyMessage="No bonuses added yet."
+          />
         </CardContent>
       </Card>
 
-      <Dialog open={endDialogOpen} onOpenChange={handleEndDialogChange}>
+      <Dialog
+        open={endDialogOpen}
+        onClose={() => handleEndDialogChange(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>End bonus buy session?</DialogTitle>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>End bonus buy session?</DialogTitle>
-            <DialogDescription>
-              This marks the session as ended. You can still view stats and the
-              bonus list, but adding new slots will be disabled.
-            </DialogDescription>
-          </DialogHeader>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            This marks the session as ended. You can still view stats and the
+            bonus list, but adding new slots will be disabled.
+          </Typography>
           {endError ? (
             <StatusAlert tone="error">{endError}</StatusAlert>
           ) : null}
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleEndDialogChange(false)}
-              disabled={isEnding}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => void handleEndSession()}
-              disabled={isEnding}
-            >
-              {isEnding ? 'Ending…' : 'End session'}
-            </Button>
-          </DialogFooter>
         </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={() => handleEndDialogChange(false)}
+            disabled={isEnding}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="contained"
+            color="error"
+            onClick={() => void handleEndSession()}
+            disabled={isEnding}
+          >
+            {isEnding ? 'Ending…' : 'End session'}
+          </Button>
+        </DialogActions>
       </Dialog>
-    </div>
+    </Stack>
   )
 }

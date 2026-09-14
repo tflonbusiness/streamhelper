@@ -1,4 +1,21 @@
-import { Gift, Plus } from 'lucide-react'
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Skeleton,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
+import { useTheme, alpha, type Theme } from '@mui/material/styles'
+import { ArrowRight, Gift, Plus } from 'lucide-react'
 import { type FormEvent, useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -6,37 +23,12 @@ import {
   fetchBonusBuys,
   type BonusBuyRecord,
 } from '@/api/bonus-buy'
+import { AppTable, type AppTableColumn } from '@/components/AppTable'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusAlert } from '@/components/StatusAlert'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { useAuth } from '@/context/AuthContext'
+import { useNotification } from '@/context/NotificationContext'
+import { cardSx, inputFieldSx, mutedChipSx, toneChipSx } from '@/theme/colors'
 
 function formatUsd(amount: string): string {
   return new Intl.NumberFormat('en-US', {
@@ -55,27 +47,30 @@ function formatDateTime(iso: string): string {
   }).format(new Date(iso))
 }
 
-function StatusBadge({ isActive }: { isActive: boolean }) {
+function recordStatusChip(
+  isActive: boolean,
+  palette: Theme['palette'],
+  theme: Theme,
+) {
   if (isActive) {
     return (
-      <Badge
-        variant="secondary"
-        className="border-transparent bg-emerald-500/15 text-emerald-400"
-      >
-        Active
-      </Badge>
+      <Chip
+        label="Active"
+        size="small"
+        sx={toneChipSx(palette.success.light)}
+      />
     )
   }
 
   return (
-    <Badge variant="outline" className="text-muted-foreground">
-      Inactive
-    </Badge>
+    <Chip label="Inactive" size="small" sx={mutedChipSx(theme)} />
   )
 }
 
 export function BonusBuyPage() {
+  const theme = useTheme()
   const { user } = useAuth()
+  const { showSuccess } = useNotification()
   const [records, setRecords] = useState<BonusBuyRecord[]>([])
   const [loadingRecords, setLoadingRecords] = useState(true)
   const [recordsError, setRecordsError] = useState<string | null>(null)
@@ -119,7 +114,7 @@ export function BonusBuyPage() {
 
   function handleCreateDialogChange(open: boolean) {
     setCreateDialogOpen(open)
-    if (open) {
+    if (!open) {
       resetCreateForm()
     }
   }
@@ -138,6 +133,7 @@ export function BonusBuyPage() {
       setCreateDialogOpen(false)
       resetCreateForm()
       await loadRecords()
+      showSuccess('Bonus buy session created.')
     } catch (error) {
       setCreateError(
         error instanceof Error ? error.message : 'Could not create bonus buy',
@@ -147,129 +143,239 @@ export function BonusBuyPage() {
     }
   }
 
+  const recordColumns: AppTableColumn<BonusBuyRecord>[] = [
+    {
+      id: 'title',
+      header: 'Title',
+      width: '100%',
+      sx: {
+        fontWeight: 500,
+        minWidth: 0,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      },
+      render: (record) => record.title,
+    },
+    {
+      id: 'startBalance',
+      header: 'Start balance',
+      width: 120,
+      minWidth: 120,
+      sx: { whiteSpace: 'nowrap' },
+      render: (record) => formatUsd(record.startBalance),
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      width: 100,
+      minWidth: 100,
+      sx: { px: 1.5, whiteSpace: 'nowrap' },
+      render: (record) =>
+        recordStatusChip(record.isActive, theme.palette, theme),
+    },
+    {
+      id: 'createdBy',
+      header: 'Created by',
+      width: 140,
+      minWidth: 140,
+      sx: {
+        minWidth: 0,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      },
+      render: (record) => record.createdByName,
+    },
+    {
+      id: 'createdAt',
+      header: 'Created',
+      width: 200,
+      minWidth: 200,
+      sx: { whiteSpace: 'nowrap' },
+      render: (record) => formatDateTime(record.createdAt),
+    },
+    {
+      id: 'action',
+      header: '',
+      align: 'right',
+      width: 56,
+      minWidth: 56,
+      sx: { px: 1, whiteSpace: 'nowrap' },
+      render: (record) => (
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <IconButton
+            component={Link}
+            to={`/bonus-buy/${record.id}`}
+            aria-label={`Open ${record.title}`}
+            size="small"
+            sx={{
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
+              borderRadius: 1,
+              width: 28,
+              height: 28,
+              '&:hover': {
+                bgcolor: 'primary.dark',
+              },
+            }}
+          >
+            <ArrowRight size={14} aria-hidden />
+          </IconButton>
+        </Box>
+      ),
+    },
+  ]
+
   return (
-    <div className="space-y-8">
+    <Stack spacing={4}>
       <PageHeader
         title="Bonus Buy"
         description="Bonus buy widget for your stream"
         icon={Gift}
         iconVariant="warning"
-        action={
-          user?.accountId ? (
-            <Button type="button" onClick={() => handleCreateDialogChange(true)}>
-              <Plus className="size-4" aria-hidden />
-              New
-            </Button>
-          ) : null
-        }
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>History</CardTitle>
-          <CardDescription>Bonus buy sessions for this account</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {loadingRecords ? (
-            <div className="space-y-3">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-          ) : null}
-          {recordsError ? (
-            <StatusAlert tone="error">{recordsError}</StatusAlert>
-          ) : null}
-          {!loadingRecords && records.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Start balance</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created by</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {records.map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell className="font-medium">{record.title}</TableCell>
-                    <TableCell>{formatUsd(record.startBalance)}</TableCell>
-                    <TableCell>
-                      <StatusBadge isActive={record.isActive} />
-                    </TableCell>
-                    <TableCell>{record.createdByName}</TableCell>
-                    <TableCell>{formatDateTime(record.createdAt)}</TableCell>
-                    <TableCell className="text-right">
-                      <Button asChild variant="outline" size="sm">
-                        <Link to={`/bonus-buy/${record.id}`}>Open</Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : null}
-          {!loadingRecords && !recordsError && records.length === 0 ? (
-            <StatusAlert tone="info">No bonus buy sessions yet</StatusAlert>
-          ) : null}
+      <Card elevation={0} sx={cardSx}>
+        <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
+          <Stack
+            direction="row"
+            spacing={2}
+            sx={{ mb: 3, alignItems: 'flex-start', justifyContent: 'space-between' }}
+          >
+            <Stack direction="row" spacing={1.5}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 1,
+                  bgcolor: alpha(theme.palette.warning.main, 0.14),
+                  color: theme.palette.warning.main,
+                }}
+              >
+                <Gift size={20} aria-hidden />
+              </Box>
+              <Stack spacing={0.5}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  History
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Bonus buy sessions for this account
+                </Typography>
+              </Stack>
+            </Stack>
+            {user?.accountId ? (
+              <Button
+                type="button"
+                variant="contained"
+                startIcon={<Plus size={16} aria-hidden />}
+                onClick={() => {
+                  resetCreateForm()
+                  setCreateDialogOpen(true)
+                }}
+              >
+                New
+              </Button>
+            ) : null}
+          </Stack>
+
+          <Stack spacing={2}>
+            {loadingRecords ? (
+              <Stack spacing={1.5}>
+                <Skeleton variant="rounded" height={40} />
+                <Skeleton variant="rounded" height={40} />
+                <Skeleton variant="rounded" height={40} />
+              </Stack>
+            ) : null}
+            {recordsError ? (
+              <StatusAlert tone="error">{recordsError}</StatusAlert>
+            ) : null}
+            {!loadingRecords && records.length > 0 ? (
+              <AppTable
+                columns={recordColumns}
+                rows={records}
+                getRowKey={(record) => record.id}
+              />
+            ) : null}
+            {!loadingRecords && !recordsError && records.length === 0 ? (
+              <StatusAlert tone="info">No bonus buy sessions yet</StatusAlert>
+            ) : null}
+          </Stack>
         </CardContent>
       </Card>
 
-      <Dialog open={createDialogOpen} onOpenChange={handleCreateDialogChange}>
+      <Dialog
+        open={createDialogOpen}
+        onClose={() => handleCreateDialogChange(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>New Bonus Buy</DialogTitle>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>New Bonus Buy</DialogTitle>
-            <DialogDescription>
-              Create a bonus buy session with a title and starting balance in USD.
-            </DialogDescription>
-          </DialogHeader>
-          <form className="grid gap-4" onSubmit={handleCreate}>
-            <div className="grid gap-2">
-              <Label htmlFor="bonus-buy-title">Title</Label>
-              <Input
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Create a bonus buy session with a title and starting balance in USD.
+          </Typography>
+          <Box
+            component="form"
+            id="bonus-buy-create-form"
+            onSubmit={handleCreate}
+          >
+            <Stack spacing={2.5}>
+              <TextField
                 id="bonus-buy-title"
+                label="Title"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
                 required
-                maxLength={200}
+                slotProps={{ htmlInput: { maxLength: 200 } }}
                 autoFocus
+                fullWidth
+                size="small"
+                sx={inputFieldSx}
               />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="bonus-buy-balance">Start balance (USD)</Label>
-              <Input
+              <TextField
                 id="bonus-buy-balance"
+                label="Start balance (USD)"
                 type="number"
-                inputMode="decimal"
-                step="0.01"
-                min="0"
+                slotProps={{
+                  htmlInput: { step: '0.01', min: 0, inputMode: 'decimal' },
+                }}
                 value={startBalance}
                 onChange={(event) => setStartBalance(event.target.value)}
                 required
+                fullWidth
+                size="small"
+                sx={inputFieldSx}
               />
-            </div>
-            {createError ? (
-              <StatusAlert tone="error">{createError}</StatusAlert>
-            ) : null}
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleCreateDialogChange(false)}
-                disabled={isCreating}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isCreating}>
-                {isCreating ? 'Creating…' : 'Create'}
-              </Button>
-            </DialogFooter>
-          </form>
+              {createError ? (
+                <StatusAlert tone="error">{createError}</StatusAlert>
+              ) : null}
+            </Stack>
+          </Box>
         </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={() => handleCreateDialogChange(false)}
+            disabled={isCreating}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="bonus-buy-create-form"
+            variant="contained"
+            disabled={isCreating}
+          >
+            {isCreating ? 'Creating…' : 'Create'}
+          </Button>
+        </DialogActions>
       </Dialog>
-    </div>
+    </Stack>
   )
 }

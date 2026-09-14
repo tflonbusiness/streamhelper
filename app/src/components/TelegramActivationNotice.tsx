@@ -1,46 +1,69 @@
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import Typography from '@mui/material/Typography'
+import { alpha, useTheme } from '@mui/material/styles'
 import { ExternalLink, Send } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import {
   getTelegramSupportUrl,
   getTelegramSupportUsername,
 } from '@/lib/subscription-plan'
 
 export function TelegramActivationNotice() {
+  const theme = useTheme()
   const username = getTelegramSupportUsername()
   const telegramUrl = getTelegramSupportUrl()
 
   return (
-    <Card className="border-primary/20 bg-primary/5">
-      <CardHeader className="pb-3">
-        <div className="flex items-start gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Send className="size-5" aria-hidden />
-          </div>
-          <div className="space-y-1">
-            <CardTitle className="text-base">Subscription activation</CardTitle>
-            <CardDescription>
+    <Card
+      sx={{
+        borderColor: alpha(theme.palette.primary.main, 0.2),
+        bgcolor: alpha(theme.palette.primary.main, 0.05),
+      }}
+    >
+      <CardContent sx={{ pb: 1.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              width: 40,
+              height: 40,
+              flexShrink: 0,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 1,
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              color: theme.palette.primary.main,
+            }}
+          >
+            <Send size={20} aria-hidden />
+          </Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+            <Typography variant="subtitle1" component="h3">
+              Subscription activation
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
               Contact us on Telegram to upgrade to a paid plan
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">
+            </Typography>
+          </Box>
+        </Box>
+      </CardContent>
+      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Typography variant="body2" color="text.secondary">
           Message our support team — we will help you choose a plan and activate
           a subscription for your team.
-        </p>
-        <Button variant="default" className="w-full sm:w-auto" asChild>
-          <a href={telegramUrl} target="_blank" rel="noopener noreferrer">
-            Message @{username}
-            <ExternalLink className="ml-2 size-4" aria-hidden />
-          </a>
+        </Typography>
+        <Button
+          component="a"
+          href={telegramUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          variant="contained"
+          endIcon={<ExternalLink size={16} aria-hidden />}
+          sx={{ alignSelf: 'flex-start', width: 'auto' }}
+        >
+          Message @{username}
         </Button>
       </CardContent>
     </Card>

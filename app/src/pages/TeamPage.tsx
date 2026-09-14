@@ -1,4 +1,21 @@
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Skeleton,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
+import { useTheme, alpha, type Theme } from '@mui/material/styles'
 import { Link2, UserPlus, Users, UserX } from 'lucide-react'
+import type { RowAction } from '@/components/RowActionsMenu'
 import { type FormEvent, useCallback, useEffect, useState } from 'react'
 import {
   createAdmin,
@@ -6,46 +23,57 @@ import {
   fetchAdminInviteLink,
   revokeAdmin,
   type AccountMember,
-  type CreateAdminResult,
 } from '@/api/auth'
+import { AppTable, type AppTableColumn } from '@/components/AppTable'
 import { PageHeader } from '@/components/PageHeader'
+import { RowActionsMenu } from '@/components/RowActionsMenu'
 import { StatusAlert } from '@/components/StatusAlert'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { useAuth } from '@/context/AuthContext'
+import { useNotification } from '@/context/NotificationContext'
+import { cardSx, inputFieldSx, mutedChipSx, toneChipSx } from '@/theme/colors'
 
 function roleBadge(role: AccountMember['role']) {
   return role === 'owner' ? 'Owner' : 'Admin'
 }
 
+function memberRoleChip(role: AccountMember['role'], palette: Theme['palette']) {
+  const isOwner = role === 'owner'
+
+  return (
+    <Chip
+      label={roleBadge(role)}
+      size="small"
+      sx={toneChipSx(
+        isOwner ? palette.primary.light : palette.info.light,
+      )}
+    />
+  )
+}
+
+function memberStatusChip(
+  isActive: boolean,
+  palette: Theme['palette'],
+  theme: Theme,
+) {
+  if (isActive) {
+    return (
+      <Chip
+        label="Active"
+        size="small"
+        sx={toneChipSx(palette.success.light)}
+      />
+    )
+  }
+
+  return (
+    <Chip label="Revoked" size="small" sx={mutedChipSx(theme)} />
+  )
+}
+
 export function TeamPage() {
+  const theme = useTheme()
   const { user } = useAuth()
+  const { showSuccess, showError } = useNotification()
   const [members, setMembers] = useState<AccountMember[]>([])
   const [loadingMembers, setLoadingMembers] = useState(true)
   const [membersError, setMembersError] = useState<string | null>(null)
@@ -53,9 +81,6 @@ export function TeamPage() {
   const [adminName, setAdminName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
-  const [createdLink, setCreatedLink] = useState<CreateAdminResult | null>(null)
-  const [teamMessage, setTeamMessage] = useState<string | null>(null)
-  const [teamError, setTeamError] = useState<string | null>(null)
   const [copyingMemberId, setCopyingMemberId] = useState<number | null>(null)
 
   const loadMembers = useCallback(async () => {
@@ -102,17 +127,15 @@ export function TeamPage() {
 
     setIsCreating(true)
     setCreateError(null)
-    setTeamMessage(null)
-    setTeamError(null)
-    setCreatedLink(null)
 
     try {
-      const result = await createAdmin(user.accountId, adminName)
-      setCreatedLink(result)
-      setTeamMessage('Copy the link and share it with the administrator.')
+      await createAdmin(user.accountId, adminName)
       setCreateDialogOpen(false)
       resetCreateForm()
       await loadMembers()
+      showSuccess(
+        'Copy the link and share it with the administrator.',
+      )
     } catch (error) {
       setCreateError(
         error instanceof Error ? error.message : 'Could not create admin',
@@ -127,19 +150,15 @@ export function TeamPage() {
       return
     }
 
-    setTeamMessage(null)
-    setTeamError(null)
     setCopyingMemberId(member.userId)
 
     try {
       const joinUrl = await fetchAdminInviteLink(user.accountId, member.userId)
       await navigator.clipboard.writeText(joinUrl)
-      setTeamMessage(`Link for ${member.name} copied.`)
+      showSuccess(`Link for ${member.name} copied.`)
     } catch (error) {
-      setTeamError(
-        error instanceof Error
-          ? error.message
-          : 'Could not copy link',
+      showError(
+        error instanceof Error ? error.message : 'Could not copy link',
       )
     } finally {
       setCopyingMemberId(null)
@@ -151,196 +170,246 @@ export function TeamPage() {
       return
     }
 
-    setTeamMessage(null)
-    setTeamError(null)
-
     try {
       await revokeAdmin(user.accountId, member.userId)
       await loadMembers()
-      setTeamMessage('Administrator access revoked.')
+      showSuccess('Administrator access revoked.')
     } catch (error) {
-      setTeamError(
-        error instanceof Error
-          ? error.message
-          : 'Could not revoke access',
+      showError(
+        error instanceof Error ? error.message : 'Could not revoke access',
       )
     }
   }
 
+  function memberActions(member: AccountMember): RowAction[] {
+    if (member.role !== 'admin' || !member.isActive) {
+      return []
+    }
+
+    const actions: RowAction[] = []
+
+    if (user?.role === 'owner' && member.hasInviteLink) {
+      actions.push({
+        id: 'copy-link',
+        label:
+          copyingMemberId === member.userId ? 'Copying…' : 'Copy link',
+        icon: <Link2 size={16} aria-hidden />,
+        disabled: copyingMemberId === member.userId,
+        onClick: () => void handleCopyInviteLink(member),
+      })
+    }
+
+    actions.push({
+      id: 'revoke',
+      label: 'Revoke',
+      icon: <UserX size={16} aria-hidden />,
+      destructive: true,
+      onClick: () => void handleRevokeAdmin(member),
+    })
+
+    return actions
+  }
+
+  const memberColumns: AppTableColumn<AccountMember>[] = [
+    {
+      id: 'name',
+      header: 'Name',
+      width: '100%',
+      sx: {
+        fontWeight: 500,
+        minWidth: 0,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      },
+      render: (member) => member.name,
+    },
+    {
+      id: 'role',
+      header: 'Role',
+      width: 100,
+      minWidth: 100,
+      sx: { px: 1.5, whiteSpace: 'nowrap' },
+      render: (member) => memberRoleChip(member.role, theme.palette),
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      width: 100,
+      minWidth: 100,
+      sx: { px: 1.5, whiteSpace: 'nowrap' },
+      render: (member) => memberStatusChip(member.isActive, theme.palette, theme),
+    },
+    {
+      id: 'action',
+      header: 'Actions',
+      align: 'right',
+      width: 80,
+      minWidth: 80,
+      sx: { px: 1, whiteSpace: 'nowrap' },
+      render: (member) => {
+        const actions = memberActions(member)
+
+        return actions.length > 0 ? (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <RowActionsMenu
+              actions={actions}
+              ariaLabel={`Actions for ${member.name}`}
+            />
+          </Box>
+        ) : null
+      },
+    },
+  ]
+
   return (
-    <div className="space-y-8">
+    <Stack spacing={4}>
       <PageHeader
         title="Team"
-        description="Members with dashboard access"
+        description="Invite admins and manage access"
         icon={Users}
         iconVariant="info"
       />
+      <Card elevation={0} sx={cardSx}>
+        <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
+          <Stack
+            direction="row"
+            spacing={2}
+            sx={{ mb: 3, alignItems: 'flex-start', justifyContent: 'space-between' }}
+          >
+            <Stack direction="row" spacing={1.5}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 1,
+                  bgcolor: alpha(theme.palette.info.main, 0.14),
+                  color: theme.palette.info.light,
+                }}
+              >
+                <Users size={20} aria-hidden />
+              </Box>
+              <Stack spacing={0.5}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  Members
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Manage administrator access
+                </Typography>
+              </Stack>
+            </Stack>
+            {user?.role === 'owner' && user.accountId ? (
+              <Button
+                type="button"
+                variant="contained"
+                startIcon={<UserPlus size={16} aria-hidden />}
+                onClick={() => setCreateDialogOpen(true)}
+              >
+                Add
+              </Button>
+            ) : null}
+          </Stack>
 
-      <Card>
-        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-          <div className="flex gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-sky-500/15 text-sky-400">
-              <Users className="size-5" aria-hidden />
-            </div>
-            <div className="space-y-1.5">
-              <CardTitle>Members</CardTitle>
-              <CardDescription>Manage administrator access</CardDescription>
-            </div>
-          </div>
-          {user?.role === 'owner' && user.accountId ? (
-            <Button type="button" onClick={() => setCreateDialogOpen(true)}>
-              <UserPlus className="size-4" aria-hidden />
-              Add
-            </Button>
-          ) : null}
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {loadingMembers ? (
-            <div className="space-y-3">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-          ) : null}
-          {membersError ? (
-            <StatusAlert tone="error">{membersError}</StatusAlert>
-          ) : null}
-          {!loadingMembers && members.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {members.map((member) => (
-                  <TableRow key={member.userId}>
-                    <TableCell className="font-medium">{member.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{roleBadge(member.role)}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {member.isActive ? (
-                        <Badge variant="secondary">Active</Badge>
-                      ) : (
-                        <Badge variant="secondary">Revoked</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {member.role === 'admin' && member.isActive ? (
-                        <div className="flex justify-end gap-2">
-                          {user?.role === 'owner' && member.hasInviteLink ? (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              disabled={copyingMemberId === member.userId}
-                              onClick={() => void handleCopyInviteLink(member)}
-                            >
-                              <Link2 className="size-3.5" aria-hidden />
-                              {copyingMemberId === member.userId
-                                ? 'Copying…'
-                                : 'Copy link'}
-                            </Button>
-                          ) : null}
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => void handleRevokeAdmin(member)}
-                          >
-                            <UserX className="size-3.5" aria-hidden />
-                            Revoke
-                          </Button>
-                        </div>
-                      ) : (
-                        <CardDescription>—</CardDescription>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : null}
-          {!loadingMembers && !membersError && members.length === 1 ? (
-            <StatusAlert tone="info">Only the owner so far</StatusAlert>
-          ) : null}
-
-          {createdLink ? (
-            <StatusAlert tone="success">
-              <span className="block space-y-2">
-                <span className="block">
-                  Link for <strong>{createdLink.name}</strong>:
-                </span>
-                <code className="block break-all text-xs">{createdLink.joinUrl}</code>
-              </span>
-            </StatusAlert>
-          ) : null}
-
-          {teamMessage ? (
-            <StatusAlert tone="success">{teamMessage}</StatusAlert>
-          ) : null}
-          {teamError ? (
-            <StatusAlert tone="error">{teamError}</StatusAlert>
-          ) : null}
+          <Stack spacing={2}>
+            {loadingMembers ? (
+              <Stack spacing={1.5}>
+                <Skeleton variant="rounded" height={40} />
+                <Skeleton variant="rounded" height={40} />
+                <Skeleton variant="rounded" height={40} />
+              </Stack>
+            ) : null}
+            {membersError ? (
+              <StatusAlert tone="error">{membersError}</StatusAlert>
+            ) : null}
+            {!loadingMembers && members.length > 0 ? (
+              <AppTable
+                columns={memberColumns}
+                rows={members}
+                getRowKey={(member) => member.userId}
+              />
+            ) : null}
+            {!loadingMembers && !membersError && members.length === 1 ? (
+              <StatusAlert tone="info">Only the owner so far</StatusAlert>
+            ) : null}
+          </Stack>
         </CardContent>
       </Card>
 
-      <Dialog open={createDialogOpen} onOpenChange={handleCreateDialogChange}>
+      <Dialog
+        open={createDialogOpen}
+        onClose={() => handleCreateDialogChange(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Add</DialogTitle>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add</DialogTitle>
-            <DialogDescription className="space-y-2 text-left">
-              <span className="block">
-                The administrator will get access to the team dashboard: view
-                the home page, manage streamer modules, and revoke access for
-                other admins. Only the owner can add new members.
-              </span>
-              <span className="block">
-                Enter a name and share the link — they will join the team
-                through it.
-              </span>
-            </DialogDescription>
-          </DialogHeader>
-          <form className="grid gap-4" onSubmit={handleCreateAdmin}>
-            <div className="grid gap-2">
-              <Label htmlFor="admin-name">Name</Label>
-              <Input
+          <Stack spacing={1.5} sx={{ mb: 3 }}>
+            <Typography variant="body2" color="text.secondary">
+              The administrator will get access to the team dashboard: view
+              the home page, manage streamer modules, and revoke access for
+              other admins. Only the owner can add new members.
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Enter a name and share the link — they will join the team
+              through it.
+            </Typography>
+          </Stack>
+          <Box
+            component="form"
+            id="team-create-admin-form"
+            onSubmit={handleCreateAdmin}
+          >
+            <Stack spacing={2.5}>
+              <TextField
                 id="admin-name"
+                label="Name"
                 value={adminName}
                 onChange={(event) => setAdminName(event.target.value)}
                 required
-                minLength={2}
-                maxLength={100}
+                slotProps={{ htmlInput: { minLength: 2, maxLength: 100 } }}
                 autoFocus
+                fullWidth
+                size="small"
+                sx={inputFieldSx}
               />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="admin-role">Role</Label>
-              <Input id="admin-role" value="Admin" disabled />
-            </div>
-            {createError ? (
-              <StatusAlert tone="error">{createError}</StatusAlert>
-            ) : null}
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleCreateDialogChange(false)}
-                disabled={isCreating}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isCreating}>
-                {isCreating ? 'Adding…' : 'Add'}
-              </Button>
-            </DialogFooter>
-          </form>
+              <TextField
+                id="admin-role"
+                label="Role"
+                value="Admin"
+                disabled
+                fullWidth
+                size="small"
+                sx={inputFieldSx}
+              />
+              {createError ? (
+                <StatusAlert tone="error">{createError}</StatusAlert>
+              ) : null}
+            </Stack>
+          </Box>
         </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={() => handleCreateDialogChange(false)}
+            disabled={isCreating}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="team-create-admin-form"
+            variant="contained"
+            disabled={isCreating}
+          >
+            {isCreating ? 'Adding…' : 'Add'}
+          </Button>
+        </DialogActions>
       </Dialog>
-    </div>
+    </Stack>
   )
 }

@@ -54,48 +54,59 @@ Client API module: `app/src/api/bonus-buy.ts`.
 
 ## Widget page UI
 
-Replace empty main on `BonusBuyPage` with create + history (pattern: `TeamPage.tsx`).
+`BonusBuyPage` composes shared MUI wrappers from `TeamPage.tsx` — no raw table markup, no page-local badge components.
 
-### Header action
+### Page layout
+
+```
+PageHeader (title, description, Gift icon — no action slot)
+
+Card (cardSx)
+  Section header row: Gift icon tile + History title + description + New button
+  AppTable (history) OR loading skeletons / StatusAlert states
+```
+
+### Section header action
 
 | Element | Value |
 |---------|-------|
-| Button | **New bonus buy** in `PageHeader` action slot |
-| Opens | `Dialog` with create form |
+| Button | **New** in card section header (right side) |
+| Visible when | `user.accountId` present |
+| Opens | MUI `Dialog` with create form |
 
 ### Create form (dialog)
 
 | Field | Input | Validation |
 |-------|-------|------------|
-| Title | `Input` text | Required, non-empty |
-| Start balance | `Input` number, `step="0.01"` | Required, > 0, max 2 decimal places |
+| Title | `TextField` + `inputFieldSx` | Required, non-empty, max 200 chars |
+| Start balance | `TextField` number, `step="0.01"` | Required, > 0, max 2 decimal places |
 
 Label or helper text: USD (dollars and cents). Display formatted as `$1,234.56`.
 
-On success: close dialog, refresh table. On error: inline alert in dialog.
+On success: close dialog, refresh table, `NotificationContext.showSuccess` toast. On error: `StatusAlert` tone error in dialog.
 
-### History table
+### History table (`AppTable`)
+
+Define columns via `AppTableColumn<BonusBuyRecord>[]`. Use `AppTable` from `@/components/AppTable`.
 
 | Column | Source | Display |
 |--------|--------|---------|
-| Title | `title` | Plain text |
+| Title | `title` | Plain text, `fontWeight: 500`, ellipsis on overflow |
 | Start balance | `startBalance` | `$X,XXX.XX` (en-US, 2 decimals) |
-| Status | `isActive` | Badge: **Active** / **Inactive** |
-| Created by | `createdByName` | `users.name` of creator |
-| Created | `createdAt` | Locale date-time |
+| Status | `isActive` | `Chip` — **Active** via `toneChipSx(success.light)`; **Inactive** via `mutedChipSx(theme)` |
+| Created by | `createdByName` | Plain text |
+| Created | `createdAt` | Locale date-time (`en-US`, medium date + short time) |
+| Action | — | Outlined `Button` as `Link` to `/bonus-buy/:id`, label **Open** |
 
-Empty state when no records. Loading: `Skeleton` rows. Error: `Alert` above table.
+Empty state when no records: `StatusAlert` tone info — **No bonus buy sessions yet**. Loading: three `Skeleton` rows. Fetch error: `StatusAlert` tone error above table area.
 
-Sort: `created_at` descending (newest first).
+Sort: `created_at` descending (newest first) — server-side on list endpoint.
 
-### Row action
-
-| Column | Action |
-|--------|--------|
-| Action | **Open** button → `Link` to `/bonus-buy/:id` (session workspace per `session-page.md`) |
+**Row actions:** single **Open** link per row — use inline `Button` in the Actions column, not `RowActionsMenu`.
 
 ## Out of scope (this companion)
 
 - Widget overlay / OBS runtime tied to a record
 - Edit, delete, or toggle `is_active` from UI
 - Cross-account queries or admin views
+- Session page (`/bonus-buy/:id`) layout — see `session-page.md`

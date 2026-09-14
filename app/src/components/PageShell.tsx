@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils'
+import Box from '@mui/material/Box'
 
 type PageShellProps = {
   children: React.ReactNode
@@ -8,15 +8,20 @@ type PageShellProps = {
 
 export function PageShell({ children, wide = false, className }: PageShellProps) {
   return (
-    <main
-      className={cn(
-        'flex min-h-svh items-center justify-center p-4 sm:p-6',
-        className,
-      )}
+    <Box
+      component="main"
+      className={className}
+      sx={{
+        display: 'flex',
+        minHeight: '100svh',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: { xs: 2, sm: 3 },
+      }}
     >
-      <div className={cn('w-full', wide ? 'max-w-xl' : 'max-w-md')}>
+      <Box sx={{ width: '100%', maxWidth: wide ? 576 : 448 }}>
         {children}
-      </div>
-    </main>
+      </Box>
+    </Box>
   )
 }

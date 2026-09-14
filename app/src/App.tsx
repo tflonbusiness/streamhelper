@@ -7,6 +7,7 @@ import {
   ProtectedRoute,
 } from './components/ProtectedRoute'
 import { AuthProvider } from './context/AuthContext'
+import { NotificationProvider } from './context/NotificationContext'
 import { DashboardHomePage } from './pages/DashboardHomePage'
 import { LoginPage } from './pages/LoginPage'
 import { BonusBuyPage } from './pages/BonusBuyPage'
@@ -18,7 +19,8 @@ import { TeamPage } from './pages/TeamPage'
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <NotificationProvider>
+        <BrowserRouter>
         <Routes>
           <Route element={<GuestRoute />}>
             <Route path="/" element={<LoginPage />} />
@@ -42,6 +44,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
+      </NotificationProvider>
     </AuthProvider>
   )
 }

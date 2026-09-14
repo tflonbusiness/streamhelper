@@ -1,3 +1,11 @@
+import Box from '@mui/material/Box'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import Chip from '@mui/material/Chip'
+import Divider from '@mui/material/Divider'
+import Link from '@mui/material/Link'
+import Skeleton from '@mui/material/Skeleton'
+import Typography from '@mui/material/Typography'
 import { Crown, ExternalLink, Shield, Tv } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import {
@@ -5,15 +13,6 @@ import {
   KickChannelNotFoundError,
 } from '@/api/kick-channel'
 import { IconTile } from '@/components/IconTile'
-import { Badge } from '@/components/ui/badge'
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
 
 type DashboardWelcomeBannerProps = {
   accountId: number
@@ -86,79 +85,130 @@ export function DashboardWelcomeBanner({
   const channelName = channelDisplayName(accountName, slug)
 
   return (
-    <Card className="overflow-hidden border-l-4 border-l-primary">
-      <CardHeader className="p-4">
-        <div className="flex flex-col gap-4 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-stretch sm:gap-0">
-          <div className="min-w-0 space-y-2">
-            <div className="flex items-center gap-2">
+    <Card
+      sx={{
+        overflow: 'hidden',
+        borderLeft: 4,
+        borderLeftStyle: 'solid',
+        borderLeftColor: 'primary.main',
+      }}
+    >
+      <CardContent sx={{ p: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: { xs: 2, sm: 0 },
+            alignItems: { sm: 'stretch' },
+          }}
+        >
+          <Box sx={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <IconTile icon={Tv} variant="primary" size="sm" />
-              <CardDescription>Channel</CardDescription>
-            </div>
+              <Typography variant="body2" color="text.secondary">
+                Channel
+              </Typography>
+            </Box>
             {loading ? (
-              <Skeleton className="h-8 w-40" />
+              <Skeleton width={160} height={32} />
             ) : channelName ? (
-              <CardTitle className="text-2xl font-bold tracking-tight">
+              <Typography
+                variant="h5"
+                component="p"
+                sx={{ fontWeight: 700, letterSpacing: '-0.02em' }}
+              >
                 {channelName}
-              </CardTitle>
+              </Typography>
             ) : (
-              <CardTitle className="text-2xl font-bold tracking-tight text-muted-foreground">
+              <Typography
+                variant="h5"
+                component="p"
+                color="text.secondary"
+                sx={{ fontWeight: 700, letterSpacing: '-0.02em' }}
+              >
                 —
-              </CardTitle>
+              </Typography>
             )}
-          </div>
+          </Box>
 
-          <div className="flex items-stretch px-4">
-            <Separator className="sm:hidden" />
-            <Separator orientation="vertical" className="hidden sm:block" />
-          </div>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'stretch',
+              px: { sm: 2 },
+            }}
+          >
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ display: { xs: 'none', sm: 'block' } }}
+            />
+            <Divider sx={{ display: { xs: 'block', sm: 'none' }, width: '100%' }} />
+          </Box>
 
-          <div className="flex flex-col justify-center gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
+          <Box
+            sx={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              gap: 2,
+            }}
+          >
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <IconTile
                   icon={role === 'owner' ? Crown : Shield}
                   variant={role === 'owner' ? 'warning' : 'info'}
                   size="sm"
                 />
-                <CardDescription>Role</CardDescription>
-              </div>
-              <Badge variant="secondary" className="shrink-0">
-                {roleLabel(role)}
-              </Badge>
-            </div>
+                <Typography variant="body2" color="text.secondary">
+                  Role
+                </Typography>
+              </Box>
+              <Chip label={roleLabel(role)} size="small" sx={{ alignSelf: 'flex-start' }} />
+            </Box>
 
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <IconTile icon={ExternalLink} variant="muted" size="sm" />
-                <CardDescription>Link</CardDescription>
-              </div>
+                <Typography variant="body2" color="text.secondary">
+                  Link
+                </Typography>
+              </Box>
               {loading ? (
-                <Skeleton className="h-4 w-40" />
+                <Skeleton width={160} height={16} />
               ) : slug ? (
-                <p className="text-sm leading-none">
-                  <a
-                    href={`https://kick.com/${slug}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-foreground hover:underline"
-                  >
-                    kick.com/{slug}
-                    <ExternalLink className="size-3.5" aria-hidden />
-                  </a>
-                </p>
+                <Link
+                  href={`https://kick.com/${slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  underline="hover"
+                  color="text.primary"
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    fontSize: '0.875rem',
+                    lineHeight: 1,
+                  }}
+                >
+                  kick.com/{slug}
+                  <ExternalLink size={14} aria-hidden />
+                </Link>
               ) : (
-                <p className="text-sm leading-none text-muted-foreground">
+                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1 }}>
                   {fetchError
                     ? 'Could not load channel'
                     : notFound || !channelName
                       ? 'Kick channel not connected'
                       : '—'}
-                </p>
+                </Typography>
               )}
-            </div>
-          </div>
-        </div>
-      </CardHeader>
+            </Box>
+          </Box>
+        </Box>
+      </CardContent>
     </Card>
   )
 }

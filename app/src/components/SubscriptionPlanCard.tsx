@@ -1,15 +1,12 @@
+import Box from '@mui/material/Box'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import CardActions from '@mui/material/CardActions'
+import Typography from '@mui/material/Typography'
+import { alpha, useTheme } from '@mui/material/styles'
 import { Check, CreditCard } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { PlanBadge } from '@/components/PlanBadge'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { cn } from '@/lib/utils'
 import { getPlanFeatures, isFreePlan } from '@/lib/subscription-plan'
 
 type SubscriptionPlanCardProps = {
@@ -25,64 +22,90 @@ export function SubscriptionPlanCard({
   footer,
   className,
 }: SubscriptionPlanCardProps) {
+  const theme = useTheme()
   const free = isFreePlan(subscriptionPlan)
   const features = getPlanFeatures(subscriptionPlan)
   const compact = variant === 'compact'
 
   return (
     <Card
-      className={cn(
-        'overflow-hidden border-l-4',
-        free ? 'border-l-muted-foreground/40' : 'border-l-primary',
-        className,
-      )}
+      className={className}
+      sx={{
+        overflow: 'hidden',
+        borderLeft: 4,
+        borderLeftStyle: 'solid',
+        borderLeftColor: free
+          ? alpha(theme.palette.text.secondary, 0.4)
+          : theme.palette.primary.main,
+      }}
     >
-      <CardHeader className={cn(compact ? 'pb-3' : 'pb-4')}>
-        <div className="flex items-start gap-3">
-          <div
-            className={cn(
-              'flex size-10 shrink-0 items-center justify-center rounded-lg',
-              free ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary',
-            )}
+      <CardContent sx={{ pb: compact ? 1.5 : 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              width: 40,
+              height: 40,
+              flexShrink: 0,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 1,
+              bgcolor: free
+                ? alpha(theme.palette.text.primary, 0.08)
+                : alpha(theme.palette.primary.main, 0.1),
+              color: free ? theme.palette.text.secondary : theme.palette.primary.main,
+            }}
           >
-            <CreditCard className="size-5" aria-hidden />
-          </div>
-          <div className="min-w-0 flex-1 space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <CardTitle className="text-base">
+            <CreditCard size={20} aria-hidden />
+          </Box>
+          <Box sx={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
+              <Typography variant="subtitle1" component="h3">
                 {compact ? 'Plan' : 'Current plan'}
-              </CardTitle>
+              </Typography>
               <PlanBadge subscriptionPlan={subscriptionPlan} />
-            </div>
-            <CardDescription>
+            </Box>
+            <Typography variant="body2" color="text.secondary">
               {compact
                 ? "Your team's current subscription plan"
                 : "Your team's subscription plan"}
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
+            </Typography>
+          </Box>
+        </Box>
+      </CardContent>
 
       {!compact ? (
-        <CardContent>
-          <ul className="space-y-2">
+        <CardContent sx={{ pt: 0 }}>
+          <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 1 }}>
             {features.map((feature) => (
-              <li
+              <Box
+                component="li"
                 key={feature}
-                className="flex items-start gap-2 text-sm text-muted-foreground"
+                sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}
               >
                 <Check
-                  className="mt-0.5 size-4 shrink-0 text-primary"
+                  size={16}
                   aria-hidden
+                  style={{
+                    marginTop: 2,
+                    flexShrink: 0,
+                    color: theme.palette.primary.main,
+                  }}
                 />
-                <span>{feature}</span>
-              </li>
+                <Typography variant="body2" color="text.secondary">
+                  {feature}
+                </Typography>
+              </Box>
             ))}
-          </ul>
+          </Box>
         </CardContent>
       ) : null}
 
-      {footer ? <CardFooter className="border-t pt-4">{footer}</CardFooter> : null}
+      {footer ? (
+        <CardActions sx={{ borderTop: 1, borderColor: 'divider', pt: 2, px: 2, pb: 2 }}>
+          {footer}
+        </CardActions>
+      ) : null}
     </Card>
   )
 }

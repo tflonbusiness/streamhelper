@@ -1,3 +1,4 @@
+import { Stack } from '@mui/material'
 import { LayoutDashboard } from 'lucide-react'
 import { DashboardTariffCard } from '@/components/DashboardTariffCard'
 import { DashboardWelcomeBanner } from '@/components/DashboardWelcomeBanner'
@@ -10,7 +11,7 @@ export function DashboardHomePage() {
   const hasAccount = Boolean(user?.accountId)
 
   return (
-    <div className="space-y-5">
+    <Stack spacing={2.5}>
       <PageHeader
         title="Home"
         description="Team overview and activity"
@@ -36,6 +37,6 @@ export function DashboardHomePage() {
       {user?.accountId ? (
         <KickChannelStatsSection accountId={user.accountId} />
       ) : null}
-    </div>
+    </Stack>
   )
 }

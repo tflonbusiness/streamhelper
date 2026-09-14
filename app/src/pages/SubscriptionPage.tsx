@@ -1,3 +1,4 @@
+import { Stack } from '@mui/material'
 import { CreditCard } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { SubscriptionPlanCard } from '@/components/SubscriptionPlanCard'
@@ -8,7 +9,7 @@ export function SubscriptionPage() {
   const { user } = useAuth()
 
   return (
-    <div className="space-y-8">
+    <Stack spacing={4}>
       <PageHeader
         title="Subscription"
         description="Your team's plan and features"
@@ -16,10 +17,10 @@ export function SubscriptionPage() {
         iconVariant="warning"
       />
 
-      <div className="flex flex-col gap-6">
+      <Stack spacing={3}>
         <SubscriptionPlanCard subscriptionPlan={user?.subscriptionPlan} />
         <TelegramActivationNotice />
-      </div>
-    </div>
+      </Stack>
+    </Stack>
   )
 }

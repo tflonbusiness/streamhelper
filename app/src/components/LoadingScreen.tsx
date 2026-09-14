@@ -1,16 +1,28 @@
-import { Loader2 } from 'lucide-react'
+import Box from '@mui/material/Box'
+import CircularProgress from '@mui/material/CircularProgress'
+import Typography from '@mui/material/Typography'
 import { PageShell } from '@/components/PageShell'
-import { Card, CardContent } from '@/components/ui/card'
 
 export function LoadingScreen() {
   return (
     <PageShell>
-      <Card>
-        <CardContent className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-          <p>Loading...</p>
-        </CardContent>
-      </Card>
+      <Box
+        role="status"
+        aria-live="polite"
+        aria-label="Loading"
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 1.5,
+          py: 8,
+        }}
+      >
+        <CircularProgress size={24} thickness={4} sx={{ color: 'primary.main' }} />
+        <Typography variant="caption" color="text.secondary">
+          Loading
+        </Typography>
+      </Box>
     </PageShell>
   )
 }

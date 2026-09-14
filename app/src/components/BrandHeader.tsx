@@ -1,10 +1,11 @@
-import { CardDescription, CardTitle } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
 
 type BrandHeaderProps = {
   title?: string
   description?: string
   compact?: boolean
+  horizontal?: boolean
   className?: string
 }
 
@@ -12,19 +13,40 @@ export function BrandHeader({
   title = 'Caz Agent',
   description,
   compact = false,
+  horizontal = false,
   className,
 }: BrandHeaderProps) {
   return (
-    <div className={cn('flex flex-col items-center gap-3 text-center', className)}>
-      <img
+    <Box
+      className={className}
+      sx={{
+        display: 'flex',
+        flexDirection: horizontal ? 'row' : 'column',
+        alignItems: horizontal ? 'center' : 'center',
+        gap: 1.5,
+        textAlign: horizontal ? 'left' : 'center',
+      }}
+    >
+      <Box
+        component="img"
         src="/logo.svg"
         alt="Caz Agent"
-        className={cn('shrink-0', compact ? 'h-8 w-8' : 'h-12 w-12')}
+        sx={{
+          flexShrink: 0,
+          width: compact ? 32 : 48,
+          height: compact ? 32 : 48,
+        }}
       />
-      <div className="space-y-1.5">
-        <CardTitle className={cn(compact && 'text-xl')}>{title}</CardTitle>
-        {description ? <CardDescription>{description}</CardDescription> : null}
-      </div>
-    </div>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+        <Typography variant={compact ? 'h6' : 'h5'} component="h1">
+          {title}
+        </Typography>
+        {description ? (
+          <Typography variant="body2" color="text.secondary">
+            {description}
+          </Typography>
+        ) : null}
+      </Box>
+    </Box>
   )
 }

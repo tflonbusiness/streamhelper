@@ -23,7 +23,7 @@ sources: []
 
 **Opportunity:** **Bonus Buy** is a standalone slot bonus-buy engagement module. Operators need a catalog entry, a list/history page, a **session workspace** per record, and persistent slot entries with live stats. The placeholder session page and create-only flow are insufficient once operators run a bonus-buy on stream.
 
-**Who:** Owner and admin on an active Caz Agent team (English UI, dark shadcn).
+**Who:** Owner and admin on an active Caz Agent team (English UI, dark MUI theme).
 
 ## Capabilities
 
@@ -37,15 +37,15 @@ sources: []
 
 - **CAP-4**
   - **intent:** An operator reaches the Bonus Buy history page inside the app shell.
-  - **success:** `/bonus-buy` renders `PageHeader` (title **Bonus Buy**, `Gift` icon, description per `widget-page.md`), a create action, and a history table per `bonus-buy-records.md`; page uses `AppShell`; direct URL works for any active-account operator.
+  - **success:** `/bonus-buy` renders `PageHeader` (title **Bonus Buy**, `Gift` icon, description per `widget-page.md`), a history card with section header and **New** action, and an `AppTable` per `bonus-buy-records.md`; page uses `AppShell`; direct URL works for any active-account operator.
 
 - **CAP-5**
   - **intent:** An operator creates a bonus buy record for the current account from the history page.
-  - **success:** **New bonus buy** opens a dialog with **Title** and **Start balance** (USD, cents); valid submit calls `POST /accounts/:accountId/bonus-buys`; row persists with `is_active = true`, `created_by_user_id` from session, and server `created_at`; dialog closes and table refreshes without full page reload.
+  - **success:** **New** in the history card header opens a MUI `Dialog` with **Title** and **Start balance** (USD, cents) using `inputFieldSx`; valid submit calls `POST /accounts/:accountId/bonus-buys`; row persists with `is_active = true`, `created_by_user_id` from session, and server `created_at`; dialog closes, table refreshes, and `NotificationContext` shows a success toast without full page reload.
 
 - **CAP-6**
   - **intent:** An operator sees the history of bonus buy records for the current account on the history page.
-  - **success:** On load, `GET /accounts/:accountId/bonus-buys` populates a table with columns title, start balance (`$X.XX`), active status, created by (user name), and created date; rows sorted newest first; each row has **Open** linking to `/bonus-buy/:id`; empty, loading, and error states handled; only the session account's records appear.
+  - **success:** On load, `GET /accounts/:accountId/bonus-buys` populates an `AppTable` with columns title, start balance (`$X.XX`), active/inactive status chips, created by (user name), created date, and **Open** action; rows sorted newest first; **Open** links to `/bonus-buy/:id`; empty, loading, and error states handled; only the session account's records appear.
 
 - **CAP-7**
   - **intent:** An operator opens a bonus buy session and sees the full session workspace for that record.
@@ -67,6 +67,10 @@ sources: []
   - **intent:** An operator reviews all slots added to the session.
   - **success:** Section title **Bonus list (N)** where N matches slot count; empty state **No bonuses added yet.** when N = 0; populated rows per `bonus-buy-slots.md` when N > 0.
 
+- **CAP-12**
+  - **intent:** An operator sees the Bonus Buy history page using the same shared table, card, chip, and dialog patterns as `/team`.
+  - **success:** `BonusBuyPage` uses `AppTable` with column config (no raw `Table` markup); status chips use `toneChipSx` / `mutedChipSx`; history section uses `cardSx` with icon tile header row; create dialog uses `TextField` + `inputFieldSx`; successful create fires a `NotificationContext` toast; visual parity with `TeamPage.tsx` at 1280px without horizontal scroll.
+
 ## Constraints
 
 - **Catalog delta:** `bonus-buy` in `MODULE_CATALOG` with status `available` and widget route `/bonus-buy`; do not alter existing module IDs.
@@ -75,11 +79,13 @@ sources: []
 - **Separate product module:** no coupling to `casino-stream-games` or Spin Prediction.
 - **Data model:** `bonus_buy` per `bonus-buy-records.md`; `bonus_buy_slot` per `bonus-buy-slots.md`.
 - **API:** account-scoped REST for records and nested slots; session auth and membership check; SQL in `DatabaseService`.
+- **History page UI:** `AppTable`, `cardSx`, `inputFieldSx`, `toneChipSx`, `mutedChipSx`, `StatusAlert`, `NotificationContext` — pattern `TeamPage.tsx`; details in `bonus-buy-records.md` and `widget-page.md`.
 - **Session page UI:** bespoke session header and panel layout per `session-page.md` — not `PageHeader` with `Gift` icon.
-- **Visual tokens:** dark shadcn surfaces, amber primary CTAs, emerald positive currency per adopted `design-tokens.md`.
+- **Visual tokens:** dark MUI theme from `app/src/theme/colors.ts` — amber primary CTAs, emerald positive currency; session page emerald accents per adopted `design-tokens.md` mapping.
 - **English UI:** all labels per `spec-app-english-only`; mockup Russian strings mapped in `session-page.md`.
 - **No nav item:** `/bonus-buy` and `/bonus-buy/:id` are not added to sidebar or mobile tab bar.
 - **Record CRUD:** create + list only on history page — no edit, delete, or deactivate endpoints unless session-page inline edit is confirmed.
+- **Row actions on history table:** single **Open** link per row in `AppTable` Actions column — `RowActionsMenu` not required.
 
 ## Non-goals
 
@@ -91,10 +97,11 @@ sources: []
 - Full OBS browser-source runtime, animated overlay widget, or chat-bot triggers — header buttons may stub until dedicated slices land.
 - Slot row edit/delete or bulk import unless added via spec update.
 - Edit or deactivate bonus buy records from the history table.
+- Refactoring `/bonus-buy/:id` session workspace in the history-page component slice.
 
 ## Success signal
 
-Owner opens `/bonus-buy` → creates session → clicks **Open** → session page shows header, five stat cards, quick-add form, and empty bonus list → adds slot **Gates of Olympus** purchase **$50** → **Spent** shows **$50.00**, list shows **Bonus list (1)** → reload persists slot and stats → `npm run build` in `app/` passes and server e2e covers slot create + list under account scope.
+Owner opens `/bonus-buy` → history card shows `AppTable` with shared styling → clicks **New** → creates session → success toast appears → clicks **Open** → session page shows header, five stat cards, quick-add form, and empty bonus list → adds slot **Gates of Olympus** purchase **$50** → **Spent** shows **$50.00**, list shows **Bonus list (1)** → reload persists slot and stats → `npm run build` in `app/` passes and server e2e covers slot create + list under account scope.
 
 ## Assumptions
 
@@ -105,6 +112,7 @@ Owner opens `/bonus-buy` → creates session → clicks **Open** → session pag
 - Widget style, OBS link, and Overlay buttons are visible in this slice; full overlay/OBS runtime may follow later.
 - Start balance stat card shows edit affordance; PATCH for title/start balance may stub if deferred.
 - CAP-2 (toggle enable/disable) retired — superseded by no-toggle decision.
+- Session page component patterns deferred — CAP-12 applies to `/bonus-buy` history page only.
 
 ## Open Questions
 

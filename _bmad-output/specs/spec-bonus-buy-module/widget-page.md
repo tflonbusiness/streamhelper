@@ -22,11 +22,13 @@ PageHeader
   description: Bonus buy widget for your stream
   icon: Gift
   iconVariant: warning
-  action: New bonus buy → opens create Dialog
+  action: none (create moved into history card header)
+
+History Card (cardSx)
+  section header: Gift icon tile + History / description + New button
+  AppTable (account-scoped bonus_buy rows) — see bonus-buy-records.md
 
 Create Dialog (title + start_balance) — see bonus-buy-records.md
-
-History Table (account-scoped bonus_buy rows) — see bonus-buy-records.md
 ```
 
 No back button required — operator uses sidebar **Modules** or browser back.
@@ -42,3 +44,7 @@ On `/modules`, Bonus Buy card footer shows **Open** only — navigates to `/bonu
 ## Nav shell
 
 **No** new sidebar or mobile tab entry. `/bonus-buy` is reached from the module card or direct URL.
+
+## Component reference
+
+Align `BonusBuyPage` with `TeamPage.tsx`: `AppTable`, `PageHeader`, `StatusAlert`, `NotificationContext`, `cardSx`, `inputFieldSx`, `toneChipSx`, `mutedChipSx` from `@/theme/colors`.

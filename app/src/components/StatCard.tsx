@@ -1,13 +1,10 @@
+import Box from '@mui/material/Box'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import Typography from '@mui/material/Typography'
+import { alpha, useTheme } from '@mui/material/styles'
 import type { LucideIcon } from 'lucide-react'
 import { IconTile } from '@/components/IconTile'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { cn } from '@/lib/utils'
 
 type StatCardProps = {
   value: string
@@ -28,36 +25,76 @@ export function StatCard({
   highlight = false,
   className,
 }: StatCardProps) {
+  const theme = useTheme()
+
   return (
     <Card
-      className={cn(
-        'overflow-hidden transition-colors',
-        highlight && 'border-emerald-500/40 bg-emerald-500/5',
-        className,
-      )}
+      className={className}
+      sx={{
+        overflow: 'hidden',
+        transition: 'background-color 0.2s, border-color 0.2s',
+        ...(highlight && {
+          borderColor: alpha(theme.palette.success.main, 0.35),
+          bgcolor: alpha(theme.palette.success.main, 0.06),
+        }),
+      }}
     >
-      <CardHeader className="space-y-3 pb-2">
-        <div className="flex items-start justify-between gap-2">
+      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, pb: subtext ? 1 : 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
           <IconTile icon={icon} variant={variant} size="sm" />
           {highlight ? (
-            <span className="relative flex size-2.5">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-              <span className="relative inline-flex size-2.5 rounded-full bg-emerald-400" />
-            </span>
+            <Box sx={{ position: 'relative', display: 'flex', width: 10, height: 10 }}>
+              <Box
+                sx={{
+                  position: 'absolute',
+                  display: 'inline-flex',
+                  width: '100%',
+                  height: '100%',
+                  borderRadius: '50%',
+                  bgcolor: theme.palette.success.light,
+                  opacity: 0.6,
+                  animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite',
+                  '@keyframes ping': {
+                    '75%, 100%': { transform: 'scale(2)', opacity: 0 },
+                  },
+                }}
+              />
+              <Box
+                sx={{
+                  position: 'relative',
+                  display: 'inline-flex',
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  bgcolor: theme.palette.success.light,
+                }}
+              />
+            </Box>
           ) : null}
-        </div>
-        <div className="space-y-1">
-          <CardTitle className="text-3xl font-semibold tracking-tight">
+        </Box>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+          <Typography variant="h4" component="p" sx={{ fontWeight: 600, letterSpacing: '-0.02em' }}>
             {value}
-          </CardTitle>
-          <CardDescription>{label}</CardDescription>
-        </div>
-      </CardHeader>
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {label}
+          </Typography>
+        </Box>
+      </CardContent>
       {subtext ? (
-        <CardContent className="pt-0">
-          <CardDescription className="line-clamp-2 text-xs">
+        <CardContent sx={{ pt: 0, pb: 2 }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+            }}
+          >
             {subtext}
-          </CardDescription>
+          </Typography>
         </CardContent>
       ) : null}
     </Card>
