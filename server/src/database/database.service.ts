@@ -28,6 +28,17 @@ export type DbAccountMember = {
   hasInviteLink: boolean;
 };
 
+export type DbBonusBuy = {
+  id: number;
+  accountId: number;
+  title: string;
+  startBalance: string;
+  isActive: boolean;
+  createdAt: Date;
+  createdByUserId: number;
+  createdByName: string;
+};
+
 function toInt(value: string | number): number {
   return typeof value === 'number' ? value : Number.parseInt(value, 10);
 }
@@ -55,6 +66,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   private async initSchema(): Promise<void> {
     await this.pool.query(`
+      DROP TABLE IF EXISTS bonus_buy CASCADE;
       DROP TABLE IF EXISTS account_channels CASCADE;
       DROP TABLE IF EXISTS account_members CASCADE;
       DROP TABLE IF EXISTS auth_credentials CASCADE;
@@ -119,6 +131,19 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       );
 
       CREATE INDEX idx_channels_account ON account_channels(account_id);
+
+      CREATE TABLE bonus_buy (
+        id                  BIGSERIAL PRIMARY KEY,
+        account_id          BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+        created_by_user_id  BIGINT NOT NULL REFERENCES users(id),
+        title               TEXT NOT NULL,
+        start_balance       NUMERIC(12, 2) NOT NULL,
+        is_active           BOOLEAN NOT NULL DEFAULT true,
+        created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+
+      CREATE INDEX idx_bonus_buy_account_created
+        ON bonus_buy (account_id, created_at DESC);
     `);
   }
 
@@ -500,6 +525,218 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     } finally {
       client.release();
     }
+  }
+
+  async getBonusBuyById(
+    accountId: number,
+    bonusBuyId: number,
+  ): Promise<DbBonusBuy | null> {
+    const result = await this.pool.query<{
+      id: string | number;
+      account_id: string | number;
+      title: string;
+      start_balance: string;
+      is_active: boolean;
+      created_at: Date;
+      created_by_user_id: string | number;
+      created_by_name: string;
+    }>(
+      `
+        SELECT
+          bb.id,
+          bb.account_id,
+          bb.title,
+          bb.start_balance::text AS start_balance,
+          bb.is_active,
+          bb.created_at,
+          bb.created_by_user_id,
+          u.name AS created_by_name
+        FROM bonus_buy bb
+        JOIN users u ON u.id = bb.created_by_user_id
+        WHERE bb.account_id = $1 AND bb.id = $2
+      `,
+      [accountId, bonusBuyId],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: toInt(row.id),
+      accountId: toInt(row.account_id),
+      title: row.title,
+      startBalance: row.start_balance,
+      isActive: row.is_active,
+      createdAt: row.created_at,
+      createdByUserId: toInt(row.created_by_user_id),
+      createdByName: row.created_by_name,
+    };
+  }
+
+  async listBonusBuys(accountId: number): Promise<DbBonusBuy[]> {
+    const result = await this.pool.query<{
+      id: string | number;
+      account_id: string | number;
+      title: string;
+      start_balance: string;
+      is_active: boolean;
+      created_at: Date;
+      created_by_user_id: string | number;
+      created_by_name: string;
+    }>(
+      `
+        SELECT
+          bb.id,
+          bb.account_id,
+          bb.title,
+          bb.start_balance::text AS start_balance,
+          bb.is_active,
+          bb.created_at,
+          bb.created_by_user_id,
+          u.name AS created_by_name
+        FROM bonus_buy bb
+        JOIN users u ON u.id = bb.created_by_user_id
+        WHERE bb.account_id = $1
+        ORDER BY bb.created_at DESC
+      `,
+      [accountId],
+    );
+
+    return result.rows.map((row) => ({
+      id: toInt(row.id),
+      accountId: toInt(row.account_id),
+      title: row.title,
+      startBalance: row.start_balance,
+      isActive: row.is_active,
+      createdAt: row.created_at,
+      createdByUserId: toInt(row.created_by_user_id),
+      createdByName: row.created_by_name,
+    }));
+  }
+
+  async createBonusBuy(
+    accountId: number,
+    createdByUserId: number,
+    title: string,
+    startBalance: string,
+  ): Promise<DbBonusBuy> {
+    const trimmedTitle = title.trim();
+    if (trimmedTitle.length === 0 || trimmedTitle.length > 200) {
+      throw new Error('INVALID_TITLE');
+    }
+
+    if (!/^\d+(\.\d{1,2})?$/.test(startBalance)) {
+      throw new Error('INVALID_START_BALANCE');
+    }
+
+    const balanceValue = Number.parseFloat(startBalance);
+    if (!Number.isFinite(balanceValue) || balanceValue < 0) {
+      throw new Error('INVALID_START_BALANCE');
+    }
+
+    const normalizedBalance = balanceValue.toFixed(2);
+
+    const result = await this.pool.query<{
+      id: string | number;
+      account_id: string | number;
+      title: string;
+      start_balance: string;
+      is_active: boolean;
+      created_at: Date;
+      created_by_user_id: string | number;
+      created_by_name: string;
+    }>(
+      `
+        INSERT INTO bonus_buy (
+          account_id, created_by_user_id, title, start_balance
+        )
+        VALUES ($1, $2, $3, $4)
+        RETURNING
+          id,
+          account_id,
+          title,
+          start_balance::text AS start_balance,
+          is_active,
+          created_at,
+          created_by_user_id,
+          (SELECT name FROM users WHERE id = $2) AS created_by_name
+      `,
+      [accountId, createdByUserId, trimmedTitle, normalizedBalance],
+    );
+
+    const row = result.rows[0];
+    return {
+      id: toInt(row.id),
+      accountId: toInt(row.account_id),
+      title: row.title,
+      startBalance: row.start_balance,
+      isActive: row.is_active,
+      createdAt: row.created_at,
+      createdByUserId: toInt(row.created_by_user_id),
+      createdByName: row.created_by_name,
+    };
+  }
+
+  async endBonusBuy(
+    accountId: number,
+    bonusBuyId: number,
+  ): Promise<DbBonusBuy> {
+    const result = await this.pool.query<{
+      id: string | number;
+      account_id: string | number;
+      title: string;
+      start_balance: string;
+      is_active: boolean;
+      created_at: Date;
+      created_by_user_id: string | number;
+      created_by_name: string;
+    }>(
+      `
+        UPDATE bonus_buy bb
+        SET is_active = false
+        FROM users u
+        WHERE bb.created_by_user_id = u.id
+          AND bb.account_id = $1
+          AND bb.id = $2
+          AND bb.is_active = true
+        RETURNING
+          bb.id,
+          bb.account_id,
+          bb.title,
+          bb.start_balance::text AS start_balance,
+          bb.is_active,
+          bb.created_at,
+          bb.created_by_user_id,
+          u.name AS created_by_name
+      `,
+      [accountId, bonusBuyId],
+    );
+
+    const row = result.rows[0];
+    if (row) {
+      return {
+        id: toInt(row.id),
+        accountId: toInt(row.account_id),
+        title: row.title,
+        startBalance: row.start_balance,
+        isActive: row.is_active,
+        createdAt: row.created_at,
+        createdByUserId: toInt(row.created_by_user_id),
+        createdByName: row.created_by_name,
+      };
+    }
+
+    const existing = await this.getBonusBuyById(accountId, bonusBuyId);
+    if (!existing) {
+      throw new Error('NOT_FOUND');
+    }
+    if (!existing.isActive) {
+      throw new Error('ALREADY_ENDED');
+    }
+
+    throw new Error('NOT_FOUND');
   }
 
   async revokeAdminPermanently(

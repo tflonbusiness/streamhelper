@@ -16,6 +16,11 @@ type CreateAdminBody = {
   name?: string;
 };
 
+type CreateBonusBuyBody = {
+  title?: string;
+  start_balance?: string;
+};
+
 @Controller('accounts')
 export class AccountsController {
   constructor(private readonly authService: AuthService) {}
@@ -78,6 +83,59 @@ export class AccountsController {
       user.id,
       memberUserId,
     );
+  }
+
+  @Get(':accountId/bonus-buys')
+  async listBonusBuys(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    const records = await this.authService.listBonusBuys(accountId, user.id);
+    return { records };
+  }
+
+  @Get(':accountId/bonus-buys/:bonusBuyId')
+  async getBonusBuy(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('bonusBuyId', ParseIntPipe) bonusBuyId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.authService.getBonusBuy(accountId, user.id, bonusBuyId);
+  }
+
+  @Post(':accountId/bonus-buys')
+  async createBonusBuy(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Body() body: CreateBonusBuyBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    const record = await this.authService.createBonusBuy(
+      accountId,
+      user.id,
+      body.title ?? '',
+      body.start_balance ?? '',
+    );
+
+    return record;
+  }
+
+  @Post(':accountId/bonus-buys/:bonusBuyId/end')
+  async endBonusBuy(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('bonusBuyId', ParseIntPipe) bonusBuyId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.endBonusBuy(accountId, user.id, bonusBuyId);
   }
 
   @Delete(':accountId/members/:memberUserId')

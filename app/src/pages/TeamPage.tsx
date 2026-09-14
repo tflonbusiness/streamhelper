@@ -9,7 +9,7 @@ import {
   type CreateAdminResult,
 } from '@/api/auth'
 import { PageHeader } from '@/components/PageHeader'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { StatusAlert } from '@/components/StatusAlert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -203,9 +203,7 @@ export function TeamPage() {
             </div>
           ) : null}
           {membersError ? (
-            <Alert variant="destructive">
-              <AlertDescription>{membersError}</AlertDescription>
-            </Alert>
+            <StatusAlert tone="error">{membersError}</StatusAlert>
           ) : null}
           {!loadingMembers && members.length > 0 ? (
             <Table>
@@ -268,31 +266,25 @@ export function TeamPage() {
             </Table>
           ) : null}
           {!loadingMembers && !membersError && members.length === 1 ? (
-            <Alert>
-              <AlertDescription>Only the owner so far</AlertDescription>
-            </Alert>
+            <StatusAlert tone="info">Only the owner so far</StatusAlert>
           ) : null}
 
           {createdLink ? (
-            <Alert variant="success">
-              <AlertDescription className="space-y-2">
-                <p>
+            <StatusAlert tone="success">
+              <span className="block space-y-2">
+                <span className="block">
                   Link for <strong>{createdLink.name}</strong>:
-                </p>
+                </span>
                 <code className="block break-all text-xs">{createdLink.joinUrl}</code>
-              </AlertDescription>
-            </Alert>
+              </span>
+            </StatusAlert>
           ) : null}
 
           {teamMessage ? (
-            <Alert variant="success">
-              <AlertDescription>{teamMessage}</AlertDescription>
-            </Alert>
+            <StatusAlert tone="success">{teamMessage}</StatusAlert>
           ) : null}
           {teamError ? (
-            <Alert variant="destructive">
-              <AlertDescription>{teamError}</AlertDescription>
-            </Alert>
+            <StatusAlert tone="error">{teamError}</StatusAlert>
           ) : null}
         </CardContent>
       </Card>
@@ -331,9 +323,7 @@ export function TeamPage() {
               <Input id="admin-role" value="Admin" disabled />
             </div>
             {createError ? (
-              <Alert variant="destructive">
-                <AlertDescription>{createError}</AlertDescription>
-              </Alert>
+              <StatusAlert tone="error">{createError}</StatusAlert>
             ) : null}
             <DialogFooter>
               <Button

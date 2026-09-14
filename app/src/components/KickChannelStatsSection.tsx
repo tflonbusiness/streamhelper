@@ -7,7 +7,7 @@ import {
 } from '@/api/kick-channel'
 import { SectionHeader } from '@/components/PageHeader'
 import { StatCard } from '@/components/StatCard'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { StatusAlert } from '@/components/StatusAlert'
 import { Card, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -90,9 +90,7 @@ export function KickChannelStatsSection({
       />
 
       {error ? (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <StatusAlert tone="error">{error}</StatusAlert>
       ) : null}
 
       {notFound ? (

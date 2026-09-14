@@ -9,6 +9,8 @@ import {
 import { AuthProvider } from './context/AuthContext'
 import { DashboardHomePage } from './pages/DashboardHomePage'
 import { LoginPage } from './pages/LoginPage'
+import { BonusBuyPage } from './pages/BonusBuyPage'
+import { BonusBuySessionPage } from './pages/BonusBuySessionPage'
 import { ModulesPage } from './pages/ModulesPage'
 import { SubscriptionPage } from './pages/SubscriptionPage'
 import { TeamPage } from './pages/TeamPage'
@@ -27,6 +29,8 @@ function App() {
               <Route path="/dashboard" element={<DashboardHomePage />} />
               <Route element={<AccountActiveRoute />}>
                 <Route path="/modules" element={<ModulesPage />} />
+                <Route path="/bonus-buy" element={<BonusBuyPage />} />
+                <Route path="/bonus-buy/:id" element={<BonusBuySessionPage />} />
                 <Route element={<OwnerRoute />}>
                   <Route path="/team" element={<TeamPage />} />
                   <Route path="/subscription" element={<SubscriptionPage />} />

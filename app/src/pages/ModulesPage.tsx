@@ -1,5 +1,6 @@
 import { Gamepad2, Sparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { IconTile } from '@/components/IconTile'
 import { PageHeader, SectionHeader } from '@/components/PageHeader'
 import { Badge } from '@/components/ui/badge'
@@ -11,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { useAuth } from '@/context/AuthContext'
@@ -63,6 +65,7 @@ export function ModulesPage() {
 
       <div className="grid gap-4 md:grid-cols-2">
         {MODULE_CATALOG.map((module) => {
+          const hasToggle = module.hasToggle !== false
           const isEnabled = enabledIds.includes(module.id)
           const isAvailable = module.status === 'available'
           const switchId = `module-${module.id}`
@@ -71,7 +74,7 @@ export function ModulesPage() {
             <Card
               key={module.id}
               className={
-                isEnabled && isAvailable
+                hasToggle && isEnabled && isAvailable
                   ? 'border-primary/30 bg-primary/5'
                   : !isAvailable
                     ? 'opacity-80'
@@ -87,9 +90,15 @@ export function ModulesPage() {
                   <div className="min-w-0 flex-1 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <CardTitle className="text-base">{module.name}</CardTitle>
-                      <Badge variant={isEnabled && isAvailable ? 'default' : 'secondary'}>
+                      <Badge
+                        variant={
+                          hasToggle && isEnabled && isAvailable
+                            ? 'default'
+                            : 'secondary'
+                        }
+                      >
                         {isAvailable
-                          ? isEnabled
+                          ? hasToggle && isEnabled
                             ? 'Connected'
                             : 'Available'
                           : 'Soon'}
@@ -99,21 +108,31 @@ export function ModulesPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardFooter className="justify-between gap-4">
+              <CardFooter
+                className={
+                  hasToggle ? 'justify-between gap-4' : 'justify-end gap-4'
+                }
+              >
                 {isAvailable ? (
-                  <>
-                    <Label htmlFor={switchId} className="text-sm font-normal">
-                      {isEnabled ? 'Connected' : 'Disabled'}
-                    </Label>
-                    <Switch
-                      id={switchId}
-                      checked={isEnabled}
-                      onCheckedChange={(checked) =>
-                        handleToggle(module.id, checked)
-                      }
-                      aria-label={`${isEnabled ? 'Disable' : 'Enable'} ${module.name}`}
-                    />
-                  </>
+                  hasToggle ? (
+                    <>
+                      <Label htmlFor={switchId} className="text-sm font-normal">
+                        {isEnabled ? 'Connected' : 'Disabled'}
+                      </Label>
+                      <Switch
+                        id={switchId}
+                        checked={isEnabled}
+                        onCheckedChange={(checked) =>
+                          handleToggle(module.id, checked)
+                        }
+                        aria-label={`${isEnabled ? 'Disable' : 'Enable'} ${module.name}`}
+                      />
+                    </>
+                  ) : module.widgetRoute ? (
+                    <Button asChild>
+                      <Link to={module.widgetRoute}>Open</Link>
+                    </Button>
+                  ) : null
                 ) : (
                   <Badge variant="secondary">Coming soon</Badge>
                 )}

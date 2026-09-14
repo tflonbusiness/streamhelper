@@ -3,15 +3,19 @@ import * as React from 'react'
 import { cn } from '@/lib/utils'
 
 const alertVariants = cva(
-  'relative w-full rounded-lg border px-4 py-3 text-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground [&>svg~*]:pl-7',
+  'relative flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-sm [&>svg]:size-5 [&>svg]:shrink-0',
   {
     variants: {
       variant: {
-        default: 'bg-background text-foreground',
-        destructive:
-          'border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive',
+        default: 'border-border bg-background text-foreground [&>svg]:text-foreground',
         success:
-          'border-emerald-500/50 text-emerald-400 dark:border-emerald-500 [&>svg]:text-emerald-400',
+          'border-emerald-500/50 bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20 [&>svg]:text-emerald-400',
+        info:
+          'border-sky-500/50 bg-sky-500/10 text-sky-300 ring-1 ring-sky-500/20 [&>svg]:text-sky-400',
+        warning:
+          'border-primary/50 bg-primary/10 text-foreground ring-1 ring-primary/20 [&>svg]:text-primary',
+        destructive:
+          'border-destructive/50 bg-destructive/10 text-destructive ring-1 ring-destructive/20 [&>svg]:text-destructive',
       },
     },
     defaultVariants: {
@@ -33,6 +37,18 @@ const Alert = React.forwardRef<
 ))
 Alert.displayName = 'Alert'
 
+const AlertTitle = React.forwardRef<
+  HTMLHeadingElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h5
+    ref={ref}
+    className={cn('mb-1 font-semibold leading-none tracking-tight', className)}
+    {...props}
+  />
+))
+AlertTitle.displayName = 'AlertTitle'
+
 const AlertDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
@@ -45,4 +61,4 @@ const AlertDescription = React.forwardRef<
 ))
 AlertDescription.displayName = 'AlertDescription'
 
-export { Alert, AlertDescription }
+export { Alert, AlertDescription, AlertTitle, alertVariants }

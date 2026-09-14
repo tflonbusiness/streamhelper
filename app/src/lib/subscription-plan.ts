@@ -1,4 +1,4 @@
-const DEFAULT_TELEGRAM_USERNAME = 'parsyuk'
+const DEFAULT_TELEGRAM_USERNAME = 'jirni_otec '
 
 export function getPlanLabel(subscriptionPlan?: string): string {
   if (!subscriptionPlan || subscriptionPlan === 'free') {

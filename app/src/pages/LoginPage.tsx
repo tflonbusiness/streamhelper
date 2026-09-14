@@ -4,7 +4,7 @@ import { BrandHeader } from '@/components/BrandHeader'
 import { IconTile } from '@/components/IconTile'
 import { KickLoginButton } from '@/components/KickLoginButton'
 import { PageShell } from '@/components/PageShell'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { StatusAlert } from '@/components/StatusAlert'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 
 const features = [
@@ -41,21 +41,17 @@ export function LoginPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           {joinError ? (
-            <Alert variant="destructive">
-              <AlertDescription>
-                This link is invalid or has been revoked.
-              </AlertDescription>
-            </Alert>
+            <StatusAlert tone="error">
+              This link is invalid or has been revoked.
+            </StatusAlert>
           ) : null}
 
           {authError ? (
-            <Alert variant="destructive">
-              <AlertDescription>
-                {authError === 'state'
-                  ? 'Your sign-in session expired. Click "Sign in with Kick" again.'
-                  : 'Could not sign in with Kick. Check your app settings and try again.'}
-              </AlertDescription>
-            </Alert>
+            <StatusAlert tone="error">
+              {authError === 'state'
+                ? 'Your sign-in session expired. Click "Sign in with Kick" again.'
+                : 'Could not sign in with Kick. Check your app settings and try again.'}
+            </StatusAlert>
           ) : null}
 
           <KickLoginButton />

@@ -103,6 +103,45 @@ describe('AccountsController (e2e)', () => {
           accountId === 10
             ? { channelId: 'channel-mock', channelSlug: 'kick_user_mock' }
             : null,
+        listBonusBuys: async () => [],
+        getBonusBuyById: async (
+          accountId: number,
+          bonusBuyId: number,
+        ) => ({
+          id: bonusBuyId,
+          accountId,
+          title: 'Friday stream',
+          startBalance: '50.00',
+          isActive: true,
+          createdAt: new Date('2026-09-14T12:00:00.000Z'),
+          createdByUserId: 1,
+          createdByName: 'demo_streamer',
+        }),
+        createBonusBuy: async (
+          accountId: number,
+          createdByUserId: number,
+          title: string,
+          startBalance: string,
+        ) => ({
+          id: 1,
+          accountId,
+          title,
+          startBalance,
+          isActive: true,
+          createdAt: new Date('2026-09-14T12:00:00.000Z'),
+          createdByUserId,
+          createdByName: 'demo_streamer',
+        }),
+        endBonusBuy: async (accountId: number, bonusBuyId: number) => ({
+          id: bonusBuyId,
+          accountId,
+          title: 'Friday stream',
+          startBalance: '50.00',
+          isActive: false,
+          createdAt: new Date('2026-09-14T12:00:00.000Z'),
+          createdByUserId: 1,
+          createdByName: 'demo_streamer',
+        }),
       })
       .compile();
 
@@ -177,6 +216,62 @@ describe('AccountsController (e2e)', () => {
       .expect(200)
       .expect(({ body }) => {
         expect(body.joinUrl).toContain('/join/');
+      });
+  });
+
+  it('lists bonus buys for owner', async () => {
+    const agent = request.agent(app.getHttpServer());
+    await loginOwner(agent);
+
+    await agent
+      .get('/accounts/10/bonus-buys')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.records).toEqual([]);
+      });
+  });
+
+  it('owner fetches bonus buy by id', async () => {
+    const agent = request.agent(app.getHttpServer());
+    await loginOwner(agent);
+
+    await agent
+      .get('/accounts/10/bonus-buys/1')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.id).toBe(1);
+        expect(body.title).toBe('Friday stream');
+        expect(body.startBalance).toBe('50.00');
+      });
+  });
+
+  it('owner creates bonus buy', async () => {
+    const agent = request.agent(app.getHttpServer());
+    await loginOwner(agent);
+
+    await agent
+      .post('/accounts/10/bonus-buys')
+      .send({ title: 'Friday stream', start_balance: '50.00' })
+      .expect(201)
+      .expect(({ body }) => {
+        expect(body.title).toBe('Friday stream');
+        expect(body.startBalance).toBe('50.00');
+        expect(body.isActive).toBe(true);
+        expect(body.createdByUserId).toBe(1);
+        expect(body.createdByName).toBe('demo_streamer');
+      });
+  });
+
+  it('owner ends bonus buy session', async () => {
+    const agent = request.agent(app.getHttpServer());
+    await loginOwner(agent);
+
+    await agent
+      .post('/accounts/10/bonus-buys/1/end')
+      .expect(201)
+      .expect(({ body }) => {
+        expect(body.id).toBe(1);
+        expect(body.isActive).toBe(false);
       });
   });
 

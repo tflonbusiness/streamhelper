@@ -156,6 +156,142 @@ export class AuthService {
     }
   }
 
+  async getBonusBuy(
+    accountId: number,
+    callerUserId: number,
+    bonusBuyId: number,
+  ) {
+    const isMember = await this.database.hasActiveMembership(
+      accountId,
+      callerUserId,
+    );
+    if (!isMember) {
+      throw new ForbiddenException('Not a member of this account');
+    }
+
+    const row = await this.database.getBonusBuyById(accountId, bonusBuyId);
+    if (!row) {
+      throw new NotFoundException('Bonus buy not found');
+    }
+
+    return {
+      id: row.id,
+      accountId: row.accountId,
+      title: row.title,
+      startBalance: row.startBalance,
+      isActive: row.isActive,
+      createdAt: row.createdAt.toISOString(),
+      createdByUserId: row.createdByUserId,
+      createdByName: row.createdByName,
+    };
+  }
+
+  async listBonusBuys(accountId: number, callerUserId: number) {
+    const isMember = await this.database.hasActiveMembership(
+      accountId,
+      callerUserId,
+    );
+    if (!isMember) {
+      throw new ForbiddenException('Not a member of this account');
+    }
+
+    const rows = await this.database.listBonusBuys(accountId);
+    return rows.map((row) => ({
+      id: row.id,
+      accountId: row.accountId,
+      title: row.title,
+      startBalance: row.startBalance,
+      isActive: row.isActive,
+      createdAt: row.createdAt.toISOString(),
+      createdByUserId: row.createdByUserId,
+      createdByName: row.createdByName,
+    }));
+  }
+
+  async createBonusBuy(
+    accountId: number,
+    callerUserId: number,
+    title: string,
+    startBalance: string,
+  ) {
+    const isMember = await this.database.hasActiveMembership(
+      accountId,
+      callerUserId,
+    );
+    if (!isMember) {
+      throw new ForbiddenException('Not a member of this account');
+    }
+
+    try {
+      const row = await this.database.createBonusBuy(
+        accountId,
+        callerUserId,
+        title,
+        startBalance,
+      );
+      return {
+        id: row.id,
+        accountId: row.accountId,
+        title: row.title,
+        startBalance: row.startBalance,
+        isActive: row.isActive,
+        createdAt: row.createdAt.toISOString(),
+        createdByUserId: row.createdByUserId,
+        createdByName: row.createdByName,
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === 'INVALID_TITLE') {
+          throw new BadRequestException('Title must be 1-200 characters');
+        }
+        if (error.message === 'INVALID_START_BALANCE') {
+          throw new BadRequestException(
+            'Start balance must be zero or a positive number with up to 2 decimal places',
+          );
+        }
+      }
+      throw error;
+    }
+  }
+
+  async endBonusBuy(
+    accountId: number,
+    callerUserId: number,
+    bonusBuyId: number,
+  ) {
+    const isMember = await this.database.hasActiveMembership(
+      accountId,
+      callerUserId,
+    );
+    if (!isMember) {
+      throw new ForbiddenException('Not a member of this account');
+    }
+
+    try {
+      const row = await this.database.endBonusBuy(accountId, bonusBuyId);
+      return {
+        id: row.id,
+        accountId: row.accountId,
+        title: row.title,
+        startBalance: row.startBalance,
+        isActive: row.isActive,
+        createdAt: row.createdAt.toISOString(),
+        createdByUserId: row.createdByUserId,
+        createdByName: row.createdByName,
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === 'NOT_FOUND') {
+          throw new NotFoundException('Bonus buy not found');
+        }
+        if (error.message === 'ALREADY_ENDED') {
+          throw new BadRequestException('Bonus buy session has already ended');
+        }
+      }
+      throw error;
+    }
+  }
+
   async getAccountMembers(accountId: number, callerUserId: number) {
     const isMember = await this.database.hasActiveMembership(
       accountId,

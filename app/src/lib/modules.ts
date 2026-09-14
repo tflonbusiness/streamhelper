@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   Dices,
+  Gift,
   History,
   MonitorPlay,
   Radio,
@@ -24,6 +25,8 @@ export type ModuleDefinition = {
   status: ModuleCatalogStatus
   icon: LucideIcon
   iconVariant: ModuleIconVariant
+  widgetRoute?: string
+  hasToggle?: boolean
 }
 
 export const MODULE_CATALOG: ModuleDefinition[] = [
@@ -59,6 +62,17 @@ export const MODULE_CATALOG: ModuleDefinition[] = [
     status: 'coming_soon',
     icon: Radio,
     iconVariant: 'success',
+  },
+  {
+    id: 'bonus-buy',
+    name: 'Bonus Buy',
+    description:
+      'Slot bonus-buy rounds for stream engagement — viewers trigger bonus features during live play.',
+    status: 'available',
+    icon: Gift,
+    iconVariant: 'warning',
+    widgetRoute: '/bonus-buy',
+    hasToggle: false,
   },
 ]
 
