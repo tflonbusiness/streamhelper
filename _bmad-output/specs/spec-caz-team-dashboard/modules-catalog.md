@@ -1,43 +1,40 @@
 # Modules catalog — streamer product modules
 
-Static catalog for `/modules`. IDs are stable for future backend mapping.
+Static catalog for `/modules`. IDs are stable for future backend mapping. English copy per `spec-app-english-only`.
 
 ## Module rows
 
-| ID | Name (RU) | Description (RU) | Catalog status | Default enabled |
-|----|-----------|-------------------|----------------|-----------------|
-| `casino-stream-games` | CasinoStream — игры | Библиотека интерактивных игр для чата Kick с overlay и одним победителем за раунд. | `available` | false |
-| `obs-overlay` | OBS Overlay | Browser source для отображения состояния игр на стриме. | `coming_soon` | — |
-| `round-history` | История раундов | Журнал раундов, победителей и статусов выплат. | `coming_soon` | — |
-| `kick-integration` | Kick — интеграция | Подключение канала Kick и приём chat-команд. | `coming_soon` | — |
+Exactly two cards render on `/modules` — no other catalog rows.
+
+| ID | Name | Description | Catalog status | Interaction |
+|----|------|-------------|----------------|-------------|
+| `bonus-buy` | Bonus Buy | Slot bonus-buy rounds for stream engagement — viewers trigger bonus features during live play. | `available` | **Open** button → `/bonus-buy`; no toggle |
+| `wheel-of-fortune` | Wheel of Fortune | Spin-the-wheel chat game for Kick streams — prize segments and overlay coming later. | `coming_soon` | Non-interactive; **Soon** badge |
 
 ## UI status mapping
 
-| Catalog status | Badge | Interaction |
-|----------------|-------|-------------|
-| `available` | «Доступен» or «Подключён» when toggled on | Toggle enabled |
-| `coming_soon` | «Скоро» | No toggle; card muted |
+| Catalog status | Badge | Footer |
+|----------------|-------|--------|
+| `available` (Bonus Buy) | **Available** | Primary **Open** button to module route |
+| `coming_soon` (Wheel of Fortune) | **Soon** | Static **Coming soon** chip; card slightly muted |
 
 ## Card layout
 
-Each module card (`Card`):
+Each module card:
 
 - **Header:** module name + status badge
 - **Content:** description (2–3 lines max)
-- **Footer:** toggle (available only) or static «Скоро» text
+- **Footer:** **Open** (available, no toggle) or **Coming soon** chip (coming_soon)
 
-## Persistence (mock)
+## Removed rows (not on `/modules`)
 
-```ts
-// localStorage key
-`caz-modules-${accountId}`
+These IDs are retired from the visible catalog in this slice — do not render cards for them:
 
-// value: JSON string array of enabled module ids
-// e.g. ["casino-stream-games"]
-```
-
-On toggle: read array, add/remove id, write back. On page load: merge catalog with stored ids to show «Подключён» state.
+- `casino-stream-games`
+- `obs-overlay`
+- `round-history`
+- `kick-integration`
 
 ## Future backend (out of scope)
 
-When Postgres module table exists, replace localStorage reads/writes with `GET/PATCH /accounts/:id/modules`. Keep the same module IDs.
+When a Postgres module table exists, replace any client-side module state with `GET/PATCH /accounts/:id/modules`. Keep the same module IDs.

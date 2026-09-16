@@ -33,19 +33,19 @@ const navItems: NavItem[] = [
     requiresAccount: false,
   },
   {
+    to: '/modules',
+    label: 'Modules',
+    icon: Puzzle,
+    end: true,
+    requiresAccount: true,
+  },
+  {
     to: '/team',
     label: 'Team',
     icon: Users,
     end: true,
     requiresAccount: true,
     requiresOwner: true,
-  },
-  {
-    to: '/modules',
-    label: 'Modules',
-    icon: Puzzle,
-    end: true,
-    requiresAccount: true,
   },
   {
     to: '/subscription',

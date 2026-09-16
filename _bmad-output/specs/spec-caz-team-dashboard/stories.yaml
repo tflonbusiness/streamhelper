@@ -51,28 +51,19 @@
     badge. Show join link Alert on create success.
 
 - id: "5"
-  title: Modules page with catalog toggles
+  title: Modules page — two-card catalog
   description: >-
-    Build ModulesPage listing module cards from modules-catalog.md with
-    localStorage persistence caz-modules-{accountId} (CAP-6). Owner and admin
-    can toggle available modules; coming_soon cards non-interactive.
+    Build ModulesPage with exactly two cards from modules-catalog.md (CAP-6):
+    Bonus Buy with Available badge and Open to /bonus-buy; Wheel of Fortune
+    with Soon badge and Coming soon chip. No other module rows or mock games
+    section.
   spec_checkpoint: false
   invoke_dev_with: >-
-    shadcn Switch or toggle Button for available modules. Show footer hint about
-    local persistence. modules_active stat on dashboard reads same localStorage key.
+    MODULE_CATALOG in app/src/lib/modules.ts lists only bonus-buy and
+    wheel-of-fortune. Remove games mock section, connected-modules banner,
+    and localStorage footer hint from ModulesPage.
 
 - id: "6"
-  title: Mock game name cards when games module enabled
-  description: >-
-    When casino-stream-games is toggled on, show eight static game name cards
-    in an Игры section on /modules per games-mock.md (CAP-8). No launch or
-    settings; section hides when module off.
-  spec_checkpoint: false
-  invoke_dev_with: >-
-    Use Russian names from games-mock.md table. Hint text: «Запуск игр будет
-    доступен позже». Grid 2 cols mobile, 4 cols desktop.
-
-- id: "7"
   title: Integration smoke and build verification
   description: >-
     Verify owner and admin flows end-to-end including picker-in-dashboard,
@@ -82,6 +73,6 @@
   done_checkpoint: true
   invoke_dev_with: >-
     Manual or automated smoke: owner with 2 teams → picker mode → home (no
-    admin roster) → /team → add + revoke → /modules → toggle games → switch
-    team → picker mode → other team. Admin login → /team without add form.
-    npm run build in app/ must pass.
+    admin roster) → /team → add + revoke → /modules → two cards → Open Bonus
+    Buy → /bonus-buy → switch team → picker mode → other team. Admin login →
+    /team without add form. npm run build in app/ must pass.

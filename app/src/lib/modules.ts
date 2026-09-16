@@ -1,11 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import {
-  Dices,
-  Gift,
-  History,
-  MonitorPlay,
-  Radio,
-} from 'lucide-react'
+import { CircleDot, Gift } from 'lucide-react'
 
 export type ModuleCatalogStatus = 'available' | 'coming_soon'
 
@@ -31,39 +25,6 @@ export type ModuleDefinition = {
 
 export const MODULE_CATALOG: ModuleDefinition[] = [
   {
-    id: 'casino-stream-games',
-    name: 'CasinoStream — Games',
-    description:
-      'Interactive Kick chat games library with overlay and one winner per round.',
-    status: 'available',
-    icon: Dices,
-    iconVariant: 'primary',
-  },
-  {
-    id: 'obs-overlay',
-    name: 'OBS Overlay',
-    description: 'Browser source for displaying game state on stream.',
-    status: 'coming_soon',
-    icon: MonitorPlay,
-    iconVariant: 'purple',
-  },
-  {
-    id: 'round-history',
-    name: 'Round History',
-    description: 'Log of rounds, winners, and payout statuses.',
-    status: 'coming_soon',
-    icon: History,
-    iconVariant: 'info',
-  },
-  {
-    id: 'kick-integration',
-    name: 'Kick Integration',
-    description: 'Kick channel connection and chat command handling.',
-    status: 'coming_soon',
-    icon: Radio,
-    iconVariant: 'success',
-  },
-  {
     id: 'bonus-buy',
     name: 'Bonus Buy',
     description:
@@ -73,6 +34,15 @@ export const MODULE_CATALOG: ModuleDefinition[] = [
     iconVariant: 'warning',
     widgetRoute: '/bonus-buy',
     hasToggle: false,
+  },
+  {
+    id: 'wheel-of-fortune',
+    name: 'Wheel of Fortune',
+    description:
+      'Spin-the-wheel chat game for Kick streams — prize segments and overlay coming later.',
+    status: 'coming_soon',
+    icon: CircleDot,
+    iconVariant: 'primary',
   },
 ]
 

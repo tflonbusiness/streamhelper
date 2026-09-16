@@ -66,25 +66,21 @@ Russian copy, shadcn components, hierarchy per adopted UI spec.
 
 ## `/modules` — ModulesPage
 
-- **Shell:** `nav-shell.md` with «Модули» active
-- **H1:** Модули
-- **Lead:** Инструменты для стримеров вашей команды
+- **Shell:** `nav-shell.md` with **Modules** active
+- **H1:** Modules
+- **Lead:** Tools for your team's streamers
 
 ### Content
 
-- Grid of module cards from `modules-catalog.md` (1 col mobile, 2 cols md+)
-- Each card: icon placeholder, name, description, status badge, toggle or «Скоро» label
-- Footer hint: «Настройки сохраняются локально до подключения сервера»
+- Grid of **exactly two** module cards from `modules-catalog.md` (1 col mobile, 2 cols md+)
+- **Bonus Buy:** **Available** badge; primary **Open** button → `/bonus-buy`; no toggle
+- **Wheel of Fortune:** **Soon** badge; muted card; **Coming soon** chip in footer; no navigation
+- No mock games section; no cards for retired catalog rows
 
-### Mock games section (CAP-8)
+### Card behavior
 
-When `casino-stream-games` is enabled, render **Игры** section below the module grid per `games-mock.md`. Hide section when module is off.
-
-### Toggle behavior
-
-- Available modules: shadcn `Switch` (Radix-backed) «Подключить» / «Отключить» — not ad-hoc toggle `Button`
-- Coming soon: no switch; badge «Скоро»
-- Persist enabled module ids in `localStorage` (`caz-modules-{accountId}`)
+- Available row with route: shadcn `Button` **Open** (not a toggle `Switch`)
+- Coming soon row: no switch or button; badge **Soon** + footer chip **Coming soon**
 
 ## Role visibility
 
@@ -95,5 +91,5 @@ When `casino-stream-games` is enabled, render **Игры** section below the mod
 | Admin list (`/team`) | yes | yes |
 | Add admin form (`/team`) | yes | **no** |
 | Revoke admin (`/team`) | yes | yes |
-| Module toggles | yes | yes |
+| Module catalog (`/modules`) | yes | yes |
 | Switch team (if multi) | yes | yes |
