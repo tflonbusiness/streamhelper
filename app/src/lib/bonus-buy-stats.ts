@@ -7,6 +7,7 @@ export type BonusBuySlotStatsInput = {
 
 export type BonusBuySessionStats = {
   spent: string
+  totalWin: string
   profit: string
   currentBalance: string
   averageX: string
@@ -33,6 +34,7 @@ export function computeSessionStats(
 
   return {
     spent: spent.toFixed(2),
+    totalWin: totalWin.toFixed(2),
     profit: profit.toFixed(2),
     currentBalance: currentBalance.toFixed(2),
     averageX: formatAverageX(averageX),

@@ -37,10 +37,28 @@ export type BonusBuyWidgetCardProps = {
   autoScrollEnabled: boolean
   autoScrollDuration: number
   averageXColor: string
+  averageXSentiment: AverageXSentiment
 }
+
+export type AverageXSentiment = 'dissatisfied' | 'neutral' | 'satisfied'
+
+const AVERAGE_X_NEUTRAL_COLOR = '#FACC15'
 
 function parseAverageX(value: string): number {
   return Number.parseFloat(value.replace(/x$/i, '')) || 0
+}
+
+export function getAverageXPresentation(
+  averageXValue: number,
+  theme: BonusBuyWidgetTheme,
+): { color: string; sentiment: AverageXSentiment } {
+  if (averageXValue < 0) {
+    return { color: theme.negativeColor, sentiment: 'dissatisfied' }
+  }
+  if (averageXValue >= 1) {
+    return { color: theme.positiveColor, sentiment: 'satisfied' }
+  }
+  return { color: AVERAGE_X_NEUTRAL_COLOR, sentiment: 'neutral' }
 }
 
 export function deriveBonusBuyWidgetCardProps(
@@ -68,7 +86,10 @@ export function deriveBonusBuyWidgetCardProps(
 
   const stats = computeSessionStats(record.startBalance, activeSlots)
   const averageXValue = parseAverageX(stats.averageX)
-  const averageXColor = averageXValue > 1 ? theme.positiveColor : '#FFFFFF'
+  const { color: averageXColor, sentiment: averageXSentiment } = getAverageXPresentation(
+    averageXValue,
+    theme,
+  )
 
   return {
     record,
@@ -82,5 +103,6 @@ export function deriveBonusBuyWidgetCardProps(
     autoScrollEnabled,
     autoScrollDuration,
     averageXColor,
+    averageXSentiment,
   }
 }

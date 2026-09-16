@@ -1,11 +1,27 @@
+import SentimentNeutralIcon from '@mui/icons-material/SentimentNeutral'
+import SentimentSatisfiedAltIcon from '@mui/icons-material/SentimentSatisfiedAlt'
+import SentimentVeryDissatisfiedIcon from '@mui/icons-material/SentimentVeryDissatisfied'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { Crown, Gift, ShoppingBasket, Smile } from 'lucide-react'
+import { Crown, Gift, ShoppingBasket } from 'lucide-react'
 import type { BonusBuySlot } from '@/api/bonus-buy'
 import { formatMultiplierDisplay } from '@/lib/bonus-buy-stats'
-import type { BonusBuyWidgetCardProps, BonusBuyWidgetTheme } from '@/lib/bonus-buy-widget-presentation'
+import type {
+  AverageXSentiment,
+  BonusBuyWidgetCardProps,
+  BonusBuyWidgetTheme,
+} from '@/lib/bonus-buy-widget-presentation'
 
 const BORDER_SUBTLE = 'rgba(255,255,255,0.12)'
+
+const AVERAGE_X_ICONS: Record<
+  AverageXSentiment,
+  typeof SentimentNeutralIcon
+> = {
+  dissatisfied: SentimentVeryDissatisfiedIcon,
+  neutral: SentimentNeutralIcon,
+  satisfied: SentimentSatisfiedAltIcon,
+}
 
 function formatUsd(amount: string | number): string {
   const value = typeof amount === 'string' ? Number.parseFloat(amount) : amount
@@ -140,7 +156,10 @@ export function BonusBuyWidgetCard({
   autoScrollEnabled,
   autoScrollDuration,
   averageXColor,
+  averageXSentiment,
 }: BonusBuyWidgetCardProps) {
+  const AverageXIcon = AVERAGE_X_ICONS[averageXSentiment]
+
   return (
     <Box
       sx={{
@@ -219,11 +238,11 @@ export function BonusBuyWidgetCard({
           <Typography
             sx={{ ml: '10px', fontWeight: 600, fontSize: '26px', color: '#FFFFFF' }}
           >
-            {formatUsd(record.startBalance)}
+            {formatUsd(stats.totalWin)}
           </Typography>
         </Box>
         <Box sx={{ ...cellSx(theme, 54) }}>
-          <Smile size={36} color={theme.positiveColor} aria-hidden />
+          <AverageXIcon sx={{ fontSize: 36, color: averageXColor }} aria-hidden />
           <Typography
             sx={{
               ml: '10px',
