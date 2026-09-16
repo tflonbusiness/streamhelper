@@ -22,6 +22,17 @@ export function normalizeMoney(value: string): string {
   return parsed.toDecimalPlaces(2).toString();
 }
 
+export function normalizeSignedMoney(value: string): string {
+  if (!/^-?\d+(\.\d{1,2})?$/.test(value)) {
+    throw new Error('INVALID_SIGNED_AMOUNT');
+  }
+  const parsed = new Decimal(value);
+  if (!parsed.isFinite()) {
+    throw new Error('INVALID_SIGNED_AMOUNT');
+  }
+  return parsed.toDecimalPlaces(2).toString();
+}
+
 export function normalizePositiveMoney(value: string): string {
   const normalized = normalizeMoney(value);
   if (new Decimal(normalized).lte(0)) {

@@ -344,6 +344,11 @@ export class AuthService {
       if (error.message === 'INVALID_SLOT_NAME') {
         throw new BadRequestException('Slot name must be 1-200 characters');
       }
+      if (error.message === 'INVALID_SIGNED_AMOUNT') {
+        throw new BadRequestException(
+          'Amount must be a number with up to 2 decimal places',
+        );
+      }
       if (
         error.message === 'INVALID_AMOUNT' ||
         error.message === 'INVALID_PURCHASE_AMOUNT'

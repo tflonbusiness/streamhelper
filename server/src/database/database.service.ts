@@ -3,7 +3,7 @@ import { Pool } from 'pg';
 import type { KickProfile } from '../auth/auth.types.js';
 import {
   computeMultiplier,
-  normalizeMoney,
+  normalizeSignedMoney,
   normalizePositiveMoney,
 } from '../bonus-buy/bonus-buy-math.js';
 import {
@@ -1064,7 +1064,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       let nextWin: string | null = row.win_amount;
       if (input.winAmount !== undefined) {
         nextWin =
-          input.winAmount === null ? null : normalizeMoney(input.winAmount);
+          input.winAmount === null
+            ? null
+            : normalizeSignedMoney(input.winAmount);
       }
 
       let nextMultiplier: string | null = row.multiplier;

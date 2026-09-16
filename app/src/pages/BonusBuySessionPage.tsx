@@ -22,6 +22,7 @@ import {
   Circle,
   CircleDot,
   CircleStop,
+  Copy,
   ExternalLink,
   Link2,
   Palette,
@@ -74,6 +75,20 @@ function formatDateTime(value: string): string {
   }).format(new Date(value))
 }
 
+function signedValueColor(value: number, theme: Theme): string | undefined {
+  if (value > 0) {
+    return theme.palette.success.main
+  }
+  if (value < 0) {
+    return theme.palette.error.main
+  }
+  return undefined
+}
+
+function parseAverageX(value: string): number {
+  return Number.parseFloat(value.replace(/x$/i, ''))
+}
+
 function SlotExpandedDetails({ slot }: { slot: BonusBuySlot }) {
   return (
     <Grid container spacing={2}>
@@ -89,7 +104,7 @@ function SlotExpandedDetails({ slot }: { slot: BonusBuySlot }) {
             mb: 0.5,
           }}
         >
-          Nick / provider
+          Nickname
         </Typography>
         <Typography variant="body2">{slot.nickProvider || '—'}</Typography>
       </Grid>
@@ -259,15 +274,11 @@ export function BonusBuySessionPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [isAddingSlot, setIsAddingSlot] = useState(false)
 
-  const [titleDialogOpen, setTitleDialogOpen] = useState(false)
-  const [titleDraft, setTitleDraft] = useState('')
-  const [titleError, setTitleError] = useState<string | null>(null)
-  const [isSavingTitle, setIsSavingTitle] = useState(false)
-
-  const [balanceDialogOpen, setBalanceDialogOpen] = useState(false)
-  const [startBalanceDraft, setStartBalanceDraft] = useState('')
-  const [balanceError, setBalanceError] = useState<string | null>(null)
-  const [isSavingBalance, setIsSavingBalance] = useState(false)
+  const [sessionDialogOpen, setSessionDialogOpen] = useState(false)
+  const [sessionTitleDraft, setSessionTitleDraft] = useState('')
+  const [sessionBalanceDraft, setSessionBalanceDraft] = useState('')
+  const [sessionEditError, setSessionEditError] = useState<string | null>(null)
+  const [isSavingSession, setIsSavingSession] = useState(false)
 
   const [editSlot, setEditSlot] = useState<BonusBuySlot | null>(null)
   const [editSlotName, setEditSlotName] = useState('')
@@ -314,8 +325,6 @@ export function BonusBuySessionPage() {
       ])
       setRecord(row)
       setSlots(slotRows)
-      setTitleDraft(row.title)
-      setStartBalanceDraft(row.startBalance)
     } catch (loadError) {
       setError(
         loadError instanceof Error
@@ -416,64 +425,50 @@ export function BonusBuySessionPage() {
     }
   }
 
-  async function handleSaveTitle() {
-    if (!user?.accountId || !record || bonusBuyId === null) {
+  function openSessionEdit() {
+    if (!record) {
       return
     }
 
-    const trimmed = titleDraft.trim()
-    if (!trimmed) {
-      setTitleError('Title is required')
-      return
-    }
-
-    setIsSavingTitle(true)
-    setTitleError(null)
-    try {
-      const updated = await patchBonusBuy(user.accountId, bonusBuyId, {
-        title: trimmed,
-      })
-      setRecord(updated)
-      setTitleDialogOpen(false)
-      showSuccess('Session title updated.')
-    } catch (saveError) {
-      setTitleError(
-        saveError instanceof Error ? saveError.message : 'Could not update title',
-      )
-    } finally {
-      setIsSavingTitle(false)
-    }
+    setSessionTitleDraft(record.title)
+    setSessionBalanceDraft(record.startBalance)
+    setSessionEditError(null)
+    setSessionDialogOpen(true)
   }
 
-  async function handleSaveStartBalance() {
+  async function handleSaveSession() {
     if (!user?.accountId || !record || bonusBuyId === null) {
       return
     }
 
-    const parsed = Number.parseFloat(startBalanceDraft)
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      setBalanceError('Start balance must be greater than zero')
+    const trimmedTitle = sessionTitleDraft.trim()
+    if (!trimmedTitle) {
+      setSessionEditError('Title is required')
       return
     }
 
-    setIsSavingBalance(true)
-    setBalanceError(null)
+    const parsedBalance = Number.parseFloat(sessionBalanceDraft)
+    if (!Number.isFinite(parsedBalance) || parsedBalance <= 0) {
+      setSessionEditError('Start balance must be greater than zero')
+      return
+    }
+
+    setIsSavingSession(true)
+    setSessionEditError(null)
     try {
       const updated = await patchBonusBuy(user.accountId, bonusBuyId, {
-        start_balance: parsed.toFixed(2),
+        title: trimmedTitle,
+        start_balance: parsedBalance.toFixed(2),
       })
       setRecord(updated)
-      setStartBalanceDraft(updated.startBalance)
-      setBalanceDialogOpen(false)
-      showSuccess('Start balance updated.')
+      setSessionDialogOpen(false)
+      showSuccess('Session updated.')
     } catch (saveError) {
-      setBalanceError(
-        saveError instanceof Error
-          ? saveError.message
-          : 'Could not update start balance',
+      setSessionEditError(
+        saveError instanceof Error ? saveError.message : 'Could not update session',
       )
     } finally {
-      setIsSavingBalance(false)
+      setIsSavingSession(false)
     }
   }
 
@@ -498,8 +493,8 @@ export function BonusBuySessionPage() {
 
     if (trimmedWin) {
       const parsedWin = Number.parseFloat(trimmedWin)
-      if (!Number.isFinite(parsedWin) || parsedWin < 0) {
-        setEditSlotError('Win amount must be zero or greater')
+      if (!Number.isFinite(parsedWin)) {
+        setEditSlotError('Win amount must be a valid number')
         return
       }
     }
@@ -609,6 +604,15 @@ export function BonusBuySessionPage() {
     })
   }
 
+  async function handleCopySlotName(slot: BonusBuySlot) {
+    try {
+      await navigator.clipboard.writeText(slot.slotName)
+      showSuccess('Slot name copied.')
+    } catch {
+      showError('Could not copy slot name.')
+    }
+  }
+
   const slotColumns: AppTableColumn<BonusBuySlot>[] = useMemo(
     () => [
       {
@@ -636,6 +640,26 @@ export function BonusBuySessionPage() {
             >
               {slot.slotName}
             </Box>
+            <IconButton
+              size="small"
+              aria-label={`Copy ${slot.slotName}`}
+              onClick={(event) => {
+                event.stopPropagation()
+                void handleCopySlotName(slot)
+              }}
+              sx={{
+                width: 24,
+                height: 24,
+                flexShrink: 0,
+                color: theme.palette.warning.main,
+                '&:hover': {
+                  color: theme.palette.warning.dark,
+                  bgcolor: alpha(theme.palette.warning.main, 0.12),
+                },
+              }}
+            >
+              <Copy size={12} aria-hidden />
+            </IconButton>
             {slot.isNowPlaying ? (
               <Chip
                 label="Now playing"
@@ -659,16 +683,49 @@ export function BonusBuySessionPage() {
         id: 'win',
         header: 'Win',
         width: 100,
-        sx: { color: 'text.secondary' },
-        render: (slot) =>
-          slot.winAmount == null ? 'Pending' : formatUsd(slot.winAmount),
+        render: (slot) => {
+          if (slot.winAmount == null) {
+            return (
+              <Box component="span" sx={{ color: 'text.secondary' }}>
+                Pending
+              </Box>
+            )
+          }
+
+          const value = Number.parseFloat(slot.winAmount)
+          return (
+            <Box
+              component="span"
+              sx={{ color: signedValueColor(value, theme) ?? 'inherit' }}
+            >
+              {formatUsd(slot.winAmount)}
+            </Box>
+          )
+        },
       },
       {
         id: 'multiplier',
         header: 'Multiplier',
         width: 100,
-        sx: { color: 'text.secondary' },
-        render: (slot) => formatMultiplierDisplay(slot.multiplier),
+        render: (slot) => {
+          if (!slot.multiplier) {
+            return (
+              <Box component="span" sx={{ color: 'text.secondary' }}>
+                —
+              </Box>
+            )
+          }
+
+          const value = Number.parseFloat(slot.multiplier)
+          return (
+            <Box
+              component="span"
+              sx={{ color: signedValueColor(value, theme) ?? 'inherit' }}
+            >
+              {formatMultiplierDisplay(slot.multiplier)}
+            </Box>
+          )
+        },
       },
       {
         id: 'actions',
@@ -768,6 +825,8 @@ export function BonusBuySessionPage() {
   }
 
   const profitValue = Number.parseFloat(stats.profit)
+  const currentBalanceValue = Number.parseFloat(stats.currentBalance)
+  const averageXValue = parseAverageX(stats.averageX)
 
   return (
     <Stack spacing={4}>
@@ -777,7 +836,6 @@ export function BonusBuySessionPage() {
         icon={bonusBuyModule.icon}
         iconVariant={bonusBuyModule.iconVariant}
       />
-
       <Card elevation={0} sx={cardSx}>
         <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
           <Stack
@@ -786,15 +844,6 @@ export function BonusBuySessionPage() {
             sx={{ alignItems: { lg: 'center' }, justifyContent: 'space-between' }}
           >
             <Stack direction="row" spacing={1} sx={{ minWidth: 0, alignItems: 'center' }}>
-              <IconButton
-                component={Link}
-                to="/bonus-buy"
-                aria-label="Back to history"
-                size="small"
-              >
-                <ArrowLeft size={16} aria-hidden />
-              </IconButton>
-
               <Stack direction="row" spacing={1} sx={{ minWidth: 0, alignItems: 'center' }}>
                 <Typography variant="h6" noWrap sx={{ fontWeight: 600 }}>
                   {record.title}{' '}
@@ -821,23 +870,8 @@ export function BonusBuySessionPage() {
                   />
                 ) : null}
 
-                {record.isActive ? (
-                  <IconButton
-                    type="button"
-                    size="small"
-                    aria-label="Edit title"
-                    onClick={() => {
-                      setTitleDraft(record.title)
-                      setTitleError(null)
-                      setTitleDialogOpen(true)
-                    }}
-                  >
-                    <Pencil size={14} aria-hidden />
-                  </IconButton>
-                ) : null}
               </Stack>
             </Stack>
-
             <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
               {record.isActive ? (
                 <Button
@@ -855,7 +889,18 @@ export function BonusBuySessionPage() {
                     },
                   }}
                 >
-                  End bonus buy
+                  End Bonus Buy
+                </Button>
+              ) : null}
+              {record.isActive ? (
+                <Button
+                  type="button"
+                  variant="outlined"
+                  size="small"
+                  startIcon={<Pencil size={16} aria-hidden />}
+                  onClick={openSessionEdit}
+                >
+                  Edit
                 </Button>
               ) : null}
               <Button
@@ -865,7 +910,7 @@ export function BonusBuySessionPage() {
                 startIcon={<Palette size={16} aria-hidden />}
                 onClick={() => showStub('Coming soon')}
               >
-                Widget style
+                Widget Style
               </Button>
               <Button
                 type="button"
@@ -874,7 +919,7 @@ export function BonusBuySessionPage() {
                 startIcon={<Link2 size={16} aria-hidden />}
                 onClick={() => showStub('Coming soon')}
               >
-                OBS link
+                OBS Link
               </Button>
               <Button
                 type="button"
@@ -889,41 +934,23 @@ export function BonusBuySessionPage() {
           </Stack>
         </CardContent>
       </Card>
-
       {!record.isActive ? (
         <StatusAlert tone="warning">
           This bonus buy session has ended.
         </StatusAlert>
       ) : null}
-
       <Grid container spacing={1.5}>
         <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
           <StatCard
             label="Start balance"
             value={formatUsd(record.startBalance)}
-            action={
-              record.isActive ? (
-                <IconButton
-                  type="button"
-                  size="small"
-                  aria-label="Edit start balance"
-                  onClick={() => {
-                    setStartBalanceDraft(record.startBalance)
-                    setBalanceError(null)
-                    setBalanceDialogOpen(true)
-                  }}
-                >
-                  <Pencil size={14} aria-hidden />
-                </IconButton>
-              ) : null
-            }
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
           <StatCard
             label="Current balance"
             value={formatUsd(stats.currentBalance)}
-            valueColor={theme.palette.success.main}
+            valueColor={signedValueColor(currentBalanceValue, theme)}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
@@ -933,14 +960,17 @@ export function BonusBuySessionPage() {
           <StatCard
             label="Profit"
             value={formatUsd(stats.profit)}
-            valueColor={profitValue >= 0 ? theme.palette.success.main : undefined}
+            valueColor={signedValueColor(profitValue, theme)}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
-          <StatCard label="Average X" value={stats.averageX} />
+          <StatCard
+            label="Average X"
+            value={stats.averageX}
+            valueColor={signedValueColor(averageXValue, theme)}
+          />
         </Grid>
       </Grid>
-
       <Card elevation={0} sx={cardSx}>
         <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
           <Box component="form" onSubmit={handleAddSlot}>
@@ -982,7 +1012,6 @@ export function BonusBuySessionPage() {
                 {isAddingSlot ? 'Adding…' : 'Add slot'}
               </Button>
             </Stack>
-
             <Box
               sx={{
                 border: '1px solid',
@@ -1002,7 +1031,6 @@ export function BonusBuySessionPage() {
                     required
                     value={slotName}
                     onChange={(event) => setSlotName(event.target.value)}
-                    placeholder="Gates of Olympus"
                     disabled={!record.isActive || isAddingSlot}
                     fullWidth
                     size="small"
@@ -1012,10 +1040,9 @@ export function BonusBuySessionPage() {
                 <Grid size={{ xs: 12, md: 4 }}>
                   <TextField
                     id="session-nick-provider"
-                    label="Nick / provider"
+                    label="Nickname"
                     value={nickProvider}
                     onChange={(event) => setNickProvider(event.target.value)}
-                    placeholder="Pragmatic Play"
                     disabled={!record.isActive || isAddingSlot}
                     fullWidth
                     size="small"
@@ -1033,7 +1060,6 @@ export function BonusBuySessionPage() {
                     }}
                     value={purchaseAmount}
                     onChange={(event) => setPurchaseAmount(event.target.value)}
-                    placeholder="50.00"
                     disabled={!record.isActive || isAddingSlot}
                     fullWidth
                     size="small"
@@ -1051,7 +1077,6 @@ export function BonusBuySessionPage() {
           </Box>
         </CardContent>
       </Card>
-
       <Card elevation={0} sx={cardSx}>
         <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
           <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
@@ -1077,86 +1102,57 @@ export function BonusBuySessionPage() {
           />
         </CardContent>
       </Card>
-
       <Dialog
-        open={titleDialogOpen}
-        onClose={() => setTitleDialogOpen(false)}
+        open={sessionDialogOpen}
+        onClose={() => setSessionDialogOpen(false)}
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Edit session title</DialogTitle>
+        <DialogTitle>Edit</DialogTitle>
         <DialogContent>
-          <TextField
-            label="Title"
-            value={titleDraft}
-            onChange={(event) => setTitleDraft(event.target.value)}
-            fullWidth
-            autoFocus
-            sx={{ mt: 1, ...inputFieldSx }}
-          />
-          {titleError ? (
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Title"
+              value={sessionTitleDraft}
+              onChange={(event) => setSessionTitleDraft(event.target.value)}
+              fullWidth
+              autoFocus
+              sx={inputFieldSx}
+            />
+            <TextField
+              label="Start balance ($)"
+              type="number"
+              value={sessionBalanceDraft}
+              onChange={(event) => setSessionBalanceDraft(event.target.value)}
+              slotProps={{
+                htmlInput: { step: '0.01', min: 0, inputMode: 'decimal' },
+              }}
+              fullWidth
+              sx={inputFieldSx}
+            />
+          </Stack>
+          {sessionEditError ? (
             <Box sx={{ mt: 2 }}>
-              <StatusAlert tone="error">{titleError}</StatusAlert>
-            </Box>
-          ) : null}
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setTitleDialogOpen(false)} disabled={isSavingTitle}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => void handleSaveTitle()}
-            disabled={isSavingTitle}
-          >
-            {isSavingTitle ? 'Saving…' : 'Save'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={balanceDialogOpen}
-        onClose={() => setBalanceDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Edit start balance</DialogTitle>
-        <DialogContent>
-          <TextField
-            label="Start balance ($)"
-            type="number"
-            value={startBalanceDraft}
-            onChange={(event) => setStartBalanceDraft(event.target.value)}
-            slotProps={{
-              htmlInput: { step: '0.01', min: 0, inputMode: 'decimal' },
-            }}
-            fullWidth
-            autoFocus
-            sx={{ mt: 1, ...inputFieldSx }}
-          />
-          {balanceError ? (
-            <Box sx={{ mt: 2 }}>
-              <StatusAlert tone="error">{balanceError}</StatusAlert>
+              <StatusAlert tone="error">{sessionEditError}</StatusAlert>
             </Box>
           ) : null}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button
-            onClick={() => setBalanceDialogOpen(false)}
-            disabled={isSavingBalance}
+            onClick={() => setSessionDialogOpen(false)}
+            disabled={isSavingSession}
           >
             Cancel
           </Button>
           <Button
             variant="contained"
-            onClick={() => void handleSaveStartBalance()}
-            disabled={isSavingBalance}
+            onClick={() => void handleSaveSession()}
+            disabled={isSavingSession}
           >
-            {isSavingBalance ? 'Saving…' : 'Save'}
+            {isSavingSession ? 'Saving…' : 'Save'}
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog open={editSlot !== null} onClose={closeEditSlot} maxWidth="sm" fullWidth>
         <DialogTitle>Edit slot</DialogTitle>
         <DialogContent>
@@ -1169,7 +1165,7 @@ export function BonusBuySessionPage() {
               sx={inputFieldSx}
             />
             <TextField
-              label="Nick / provider"
+              label="Nickname"
               value={editNickProvider}
               onChange={(event) => setEditNickProvider(event.target.value)}
               fullWidth
@@ -1193,19 +1189,10 @@ export function BonusBuySessionPage() {
               onChange={(event) => setEditWinAmount(event.target.value)}
               placeholder="Leave empty if pending"
               slotProps={{
-                htmlInput: { step: '0.01', min: 0, inputMode: 'decimal' },
+                htmlInput: { step: '0.01', inputMode: 'decimal' },
               }}
               fullWidth
               sx={inputFieldSx}
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={editNowPlaying}
-                  onChange={(event) => setEditNowPlaying(event.target.checked)}
-                />
-              }
-              label="Now playing"
             />
           </Stack>
           {editSlotError ? (
@@ -1227,7 +1214,6 @@ export function BonusBuySessionPage() {
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog
         open={deleteSlot !== null}
         onClose={() => setDeleteSlot(null)}
@@ -1261,7 +1247,6 @@ export function BonusBuySessionPage() {
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog
         open={endDialogOpen}
         onClose={() => setEndDialogOpen(false)}

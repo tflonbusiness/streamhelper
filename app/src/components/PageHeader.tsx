@@ -189,14 +189,21 @@ export function PageHeader({
       <Box
         sx={{
           display: 'flex',
-          alignItems: 'center',
+          alignItems: description ? 'flex-start' : 'center',
           justifyContent: 'space-between',
           gap: 2,
           px: 2,
           py: hasBreadcrumbs ? 2 : 2.25,
         }}
       >
-        <Box sx={{ display: 'flex', minWidth: 0, alignItems: 'center', gap: 1.5 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            minWidth: 0,
+            alignItems: description ? 'flex-start' : 'center',
+            gap: 1.5,
+          }}
+        >
           {icon ? <IconTile icon={icon} variant={iconVariant} size="md" /> : null}
           <Box
             sx={{
@@ -205,7 +212,7 @@ export function PageHeader({
               flexDirection: 'column',
               justifyContent: 'center',
               gap: 0.375,
-              ...(icon
+              ...(icon && !description
                 ? {
                     height: ICON_TILE_HEIGHT,
                     overflow: 'hidden',
@@ -230,12 +237,12 @@ export function PageHeader({
               <Typography
                 variant="caption"
                 color="text.secondary"
-                noWrap
                 sx={{
                   fontSize: '0.8125rem',
-                  lineHeight: 1.35,
+                  lineHeight: 1.5,
                   display: 'block',
-                  maxWidth: { xs: '100%', sm: 480 },
+                  whiteSpace: 'normal',
+                  wordBreak: 'break-word',
                 }}
               >
                 {description}
@@ -270,7 +277,15 @@ export function SectionHeader({
         {title}
       </Typography>
       {description ? (
-        <Typography variant="caption" color="text.secondary">
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{
+            lineHeight: 1.5,
+            whiteSpace: 'normal',
+            wordBreak: 'break-word',
+          }}
+        >
           {description}
         </Typography>
       ) : null}
