@@ -24,12 +24,35 @@ const MEMBERS = [
   },
 ];
 
+type MockSlot = {
+  id: number;
+  bonusBuyId: number;
+  createdByUserId: number;
+  createdByName: string;
+  slotName: string;
+  nickProvider: string | null;
+  purchaseAmount: string;
+  winAmount: string | null;
+  multiplier: string | null;
+  isNowPlaying: boolean;
+  isArchived: boolean;
+  createdAt: Date;
+};
+
 describe('AccountsController (e2e)', () => {
   let app: INestApplication<App>;
   let members = [...MEMBERS];
+  let slots: MockSlot[] = [];
+  let nextSlotId = 1;
+  let bonusBuyTitle = 'Friday stream';
+  let bonusBuyStartBalance = '50.00';
 
   beforeEach(async () => {
     members = [...MEMBERS];
+    slots = [];
+    nextSlotId = 1;
+    bonusBuyTitle = 'Friday stream';
+    bonusBuyStartBalance = '50.00';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -110,13 +133,142 @@ describe('AccountsController (e2e)', () => {
         ) => ({
           id: bonusBuyId,
           accountId,
-          title: 'Friday stream',
-          startBalance: '50.00',
+          title: bonusBuyTitle,
+          startBalance: bonusBuyStartBalance,
           isActive: true,
           createdAt: new Date('2026-09-14T12:00:00.000Z'),
           createdByUserId: 1,
           createdByName: 'demo_streamer',
         }),
+        updateBonusBuy: async (
+          accountId: number,
+          bonusBuyId: number,
+          updates: { title?: string; startBalance?: string },
+        ) => {
+          if (updates.title !== undefined) {
+            bonusBuyTitle = updates.title;
+          }
+          if (updates.startBalance !== undefined) {
+            bonusBuyStartBalance = updates.startBalance;
+          }
+          return {
+            id: bonusBuyId,
+            accountId,
+            title: bonusBuyTitle,
+            startBalance: bonusBuyStartBalance,
+            isActive: true,
+            createdAt: new Date('2026-09-14T12:00:00.000Z'),
+            createdByUserId: 1,
+            createdByName: 'demo_streamer',
+          };
+        },
+        listBonusBuySlots: async (accountId: number, bonusBuyId: number) =>
+          slots
+            .filter(
+              (slot) =>
+                slot.bonusBuyId === bonusBuyId && !slot.isArchived,
+            )
+            .map((slot) => ({
+              ...slot,
+              accountId,
+            })),
+        createBonusBuySlot: async (
+          _accountId: number,
+          bonusBuyId: number,
+          createdByUserId: number,
+          slotName: string,
+          nickProvider: string | null,
+          purchaseAmount: string,
+        ) => {
+          const slot: MockSlot = {
+            id: nextSlotId++,
+            bonusBuyId,
+            createdByUserId,
+            createdByName: 'demo_streamer',
+            slotName,
+            nickProvider,
+            purchaseAmount,
+            winAmount: null,
+            multiplier: null,
+            isNowPlaying: false,
+            isArchived: false,
+            createdAt: new Date('2026-09-14T12:05:00.000Z'),
+          };
+          slots.push(slot);
+          return slot;
+        },
+        patchBonusBuySlot: async (
+          _accountId: number,
+          bonusBuyId: number,
+          slotId: number,
+          input: {
+            slotName?: string;
+            nickProvider?: string | null;
+            purchaseAmount?: string;
+            winAmount?: string | null;
+            isNowPlaying?: boolean;
+          },
+        ) => {
+          const slot = slots.find(
+            (s) =>
+              s.id === slotId &&
+              s.bonusBuyId === bonusBuyId &&
+              !s.isArchived,
+          );
+          if (!slot) {
+            throw new Error('NOT_FOUND');
+          }
+          if (input.slotName !== undefined) {
+            slot.slotName = input.slotName;
+          }
+          if (input.nickProvider !== undefined) {
+            slot.nickProvider = input.nickProvider;
+          }
+          if (input.purchaseAmount !== undefined) {
+            slot.purchaseAmount = input.purchaseAmount;
+          }
+          if (input.winAmount !== undefined) {
+            slot.winAmount = input.winAmount;
+          }
+          if (input.isNowPlaying !== undefined) {
+            if (input.isNowPlaying) {
+              slots.forEach((s) => {
+                if (s.bonusBuyId === bonusBuyId) {
+                  s.isNowPlaying = s.id === slotId;
+                }
+              });
+            } else {
+              slot.isNowPlaying = false;
+            }
+          }
+          if (slot.winAmount !== null) {
+            const purchase = Number(slot.purchaseAmount);
+            const win = Number(slot.winAmount);
+            slot.multiplier = purchase > 0
+              ? (Math.round((win / purchase) * 100) / 100).toFixed(2)
+              : null;
+          } else {
+            slot.multiplier = null;
+          }
+          return slot;
+        },
+        archiveBonusBuySlot: async (
+          _accountId: number,
+          bonusBuyId: number,
+          slotId: number,
+        ) => {
+          const slot = slots.find(
+            (s) =>
+              s.id === slotId &&
+              s.bonusBuyId === bonusBuyId &&
+              !s.isArchived,
+          );
+          if (!slot) {
+            throw new Error('NOT_FOUND');
+          }
+          slot.isArchived = true;
+          slot.isNowPlaying = false;
+        },
         createBonusBuy: async (
           accountId: number,
           createdByUserId: number,
@@ -272,6 +424,124 @@ describe('AccountsController (e2e)', () => {
       .expect(({ body }) => {
         expect(body.id).toBe(1);
         expect(body.isActive).toBe(false);
+      });
+  });
+
+  it('owner patches bonus buy title and start balance', async () => {
+    const agent = request.agent(app.getHttpServer());
+    await loginOwner(agent);
+
+    await agent
+      .patch('/accounts/10/bonus-buys/1')
+      .send({ title: 'Saturday stream', start_balance: '100.00' })
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.title).toBe('Saturday stream');
+        expect(body.startBalance).toBe('100.00');
+      });
+  });
+
+  it('owner lists bonus buy slots', async () => {
+    const agent = request.agent(app.getHttpServer());
+    await loginOwner(agent);
+
+    await agent
+      .get('/accounts/10/bonus-buys/1/slots')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body).toEqual([]);
+      });
+  });
+
+  it('owner creates and patches bonus buy slot', async () => {
+    const agent = request.agent(app.getHttpServer());
+    await loginOwner(agent);
+
+    const created = await agent
+      .post('/accounts/10/bonus-buys/1/slots')
+      .send({
+        slot_name: 'Gates of Olympus',
+        nick_provider: 'Pragmatic',
+        purchase_amount: '20.00',
+      })
+      .expect(201);
+
+    expect(created.body.slotName).toBe('Gates of Olympus');
+    expect(created.body.purchaseAmount).toBe('20.00');
+    expect(created.body.multiplier).toBeNull();
+
+    await agent
+      .patch(`/accounts/10/bonus-buys/1/slots/${created.body.id}`)
+      .send({ win_amount: '60.00' })
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.winAmount).toBe('60.00');
+        expect(body.multiplier).toBe('3.00');
+      });
+  });
+
+  it('owner sets and clears now playing slot', async () => {
+    const agent = request.agent(app.getHttpServer());
+    await loginOwner(agent);
+
+    const first = await agent
+      .post('/accounts/10/bonus-buys/1/slots')
+      .send({ slot_name: 'Slot A', purchase_amount: '10.00' })
+      .expect(201);
+
+    const second = await agent
+      .post('/accounts/10/bonus-buys/1/slots')
+      .send({ slot_name: 'Slot B', purchase_amount: '15.00' })
+      .expect(201);
+
+    await agent
+      .patch(`/accounts/10/bonus-buys/1/slots/${first.body.id}`)
+      .send({ is_now_playing: true })
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.isNowPlaying).toBe(true);
+      });
+
+    await agent
+      .patch(`/accounts/10/bonus-buys/1/slots/${second.body.id}`)
+      .send({ is_now_playing: true })
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.isNowPlaying).toBe(true);
+      });
+
+    const list = await agent.get('/accounts/10/bonus-buys/1/slots').expect(200);
+    const playing = list.body.filter((slot: { isNowPlaying: boolean }) => slot.isNowPlaying);
+    expect(playing).toHaveLength(1);
+    expect(playing[0].id).toBe(second.body.id);
+
+    await agent
+      .patch(`/accounts/10/bonus-buys/1/slots/${second.body.id}`)
+      .send({ is_now_playing: false })
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.isNowPlaying).toBe(false);
+      });
+  });
+
+  it('owner archives bonus buy slot', async () => {
+    const agent = request.agent(app.getHttpServer());
+    await loginOwner(agent);
+
+    const created = await agent
+      .post('/accounts/10/bonus-buys/1/slots')
+      .send({ slot_name: 'To delete', purchase_amount: '5.00' })
+      .expect(201);
+
+    await agent
+      .delete(`/accounts/10/bonus-buys/1/slots/${created.body.id}`)
+      .expect(204);
+
+    await agent
+      .get('/accounts/10/bonus-buys/1/slots')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body).toEqual([]);
       });
   });
 

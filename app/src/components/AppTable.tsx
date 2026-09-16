@@ -1,4 +1,6 @@
 import Box from '@mui/material/Box'
+import Collapse from '@mui/material/Collapse'
+import IconButton from '@mui/material/IconButton'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
@@ -7,6 +9,8 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import type { SxProps, Theme } from '@mui/material/styles'
 import { alpha } from '@mui/material/styles'
+import { ChevronDown } from 'lucide-react'
+import { Fragment } from 'react'
 import { colors } from '@/theme/colors'
 
 export type AppTableColumn<T> = {
@@ -19,11 +23,20 @@ export type AppTableColumn<T> = {
   render: (row: T) => React.ReactNode
 }
 
+export type AppTableExpandableConfig<T> = {
+  isExpanded: (row: T) => boolean
+  onToggle: (row: T) => void
+  renderDetail: (row: T) => React.ReactNode
+  ariaLabel?: (row: T) => string
+}
+
 type AppTableProps<T> = {
   columns: AppTableColumn<T>[]
   rows: T[]
   getRowKey: (row: T) => string | number
   emptyMessage?: React.ReactNode
+  expandable?: AppTableExpandableConfig<T>
+  getRowSx?: (row: T) => SxProps<Theme> | undefined
 }
 
 const tableContainerSx: SxProps<Theme> = {
@@ -69,11 +82,15 @@ const tableSx: SxProps<Theme> = {
   },
 }
 
+const expandColumnWidth = 40
+
 export function AppTable<T>({
   columns,
   rows,
   getRowKey,
   emptyMessage,
+  expandable,
+  getRowSx,
 }: AppTableProps<T>) {
   if (rows.length === 0 && emptyMessage) {
     return (
@@ -96,6 +113,9 @@ export function AppTable<T>({
     <TableContainer sx={tableContainerSx}>
       <Table size="small" sx={{ ...tableSx, tableLayout: 'fixed', width: '100%' }}>
         <colgroup>
+          {expandable ? (
+            <col style={{ width: expandColumnWidth, minWidth: expandColumnWidth }} />
+          ) : null}
           {columns.map((column) => (
             <col
               key={column.id}
@@ -108,6 +128,11 @@ export function AppTable<T>({
         </colgroup>
         <TableHead>
           <TableRow>
+            {expandable ? (
+              <TableCell
+                sx={{ width: expandColumnWidth, minWidth: expandColumnWidth, px: 1 }}
+              />
+            ) : null}
             {columns.map((column) => (
               <TableCell
                 key={column.id}
@@ -120,23 +145,79 @@ export function AppTable<T>({
           </TableRow>
         </TableHead>
         <TableBody>
-          {rows.map((row) => (
-            <TableRow key={getRowKey(row)} hover>
-              {columns.map((column) => (
-                <TableCell
-                  key={column.id}
-                  align={column.align}
-                  sx={{
-                    width: column.width,
-                    minWidth: column.minWidth,
-                    ...(column.sx as object),
-                  }}
-                >
-                  {column.render(row)}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
+          {rows.map((row) => {
+            const rowKey = getRowKey(row)
+            const expanded = expandable?.isExpanded(row) ?? false
+            const rowSx = getRowSx?.(row)
+
+            return (
+              <Fragment key={rowKey}>
+                <TableRow hover sx={rowSx}>
+                  {expandable ? (
+                    <TableCell sx={{ width: expandColumnWidth, px: 1 }}>
+                      <IconButton
+                        size="small"
+                        aria-label={
+                          expandable.ariaLabel?.(row) ??
+                          (expanded ? 'Collapse details' : 'Expand details')
+                        }
+                        aria-expanded={expanded}
+                        onClick={() => expandable.onToggle(row)}
+                        sx={{
+                          width: 28,
+                          height: 28,
+                          color: 'text.secondary',
+                          transform: expanded ? 'rotate(180deg)' : 'none',
+                          transition: 'transform 0.15s ease',
+                        }}
+                      >
+                        <ChevronDown size={16} aria-hidden />
+                      </IconButton>
+                    </TableCell>
+                  ) : null}
+                  {columns.map((column) => (
+                    <TableCell
+                      key={column.id}
+                      align={column.align}
+                      sx={{
+                        width: column.width,
+                        minWidth: column.minWidth,
+                        ...(column.sx as object),
+                      }}
+                    >
+                      {column.render(row)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+                {expandable ? (
+                  <TableRow key={`${rowKey}-details`}>
+                    <TableCell
+                      colSpan={columns.length + 1}
+                      sx={{
+                        py: 0,
+                        px: 0,
+                        borderBottom: expanded ? undefined : 0,
+                      }}
+                    >
+                      <Collapse in={expanded} timeout="auto" unmountOnExit>
+                        <Box
+                          sx={{
+                            px: 2,
+                            py: 1.5,
+                            bgcolor: alpha(colors.neutral[100], 0.03),
+                            borderTop: '1px solid',
+                            borderColor: alpha(colors.neutral[100], 0.05),
+                          }}
+                        >
+                          {expandable.renderDetail(row)}
+                        </Box>
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+              </Fragment>
+            )
+          })}
         </TableBody>
       </Table>
     </TableContainer>

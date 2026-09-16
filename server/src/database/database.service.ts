@@ -2,6 +2,11 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Pool } from 'pg';
 import type { KickProfile } from '../auth/auth.types.js';
 import {
+  computeMultiplier,
+  normalizeMoney,
+  normalizePositiveMoney,
+} from '../bonus-buy/bonus-buy-math.js';
+import {
   generateAccessToken,
   hashAccessToken,
   providerUserIdForAccessLink,
@@ -39,6 +44,28 @@ export type DbBonusBuy = {
   createdByName: string;
 };
 
+export type DbBonusBuySlot = {
+  id: number;
+  bonusBuyId: number;
+  createdByUserId: number;
+  createdByName: string;
+  slotName: string;
+  nickProvider: string | null;
+  purchaseAmount: string;
+  winAmount: string | null;
+  multiplier: string | null;
+  isNowPlaying: boolean;
+  createdAt: Date;
+};
+
+export type PatchBonusBuySlotInput = {
+  slotName?: string;
+  nickProvider?: string | null;
+  purchaseAmount?: string;
+  winAmount?: string | null;
+  isNowPlaying?: boolean;
+};
+
 function toInt(value: string | number): number {
   return typeof value === 'number' ? value : Number.parseInt(value, 10);
 }
@@ -66,6 +93,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   private async initSchema(): Promise<void> {
     await this.pool.query(`
+      DROP TABLE IF EXISTS bonus_buy_slot CASCADE;
       DROP TABLE IF EXISTS bonus_buy CASCADE;
       DROP TABLE IF EXISTS account_channels CASCADE;
       DROP TABLE IF EXISTS account_members CASCADE;
@@ -144,6 +172,28 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
       CREATE INDEX idx_bonus_buy_account_created
         ON bonus_buy (account_id, created_at DESC);
+
+      CREATE TABLE bonus_buy_slot (
+        id                  BIGSERIAL PRIMARY KEY,
+        bonus_buy_id        BIGINT NOT NULL REFERENCES bonus_buy(id) ON DELETE CASCADE,
+        created_by_user_id  BIGINT NOT NULL REFERENCES users(id),
+        slot_name           TEXT NOT NULL,
+        nick_provider       TEXT,
+        purchase_amount     NUMERIC(12, 2) NOT NULL,
+        win_amount          NUMERIC(12, 2),
+        multiplier          NUMERIC(10, 2),
+        is_now_playing      BOOLEAN NOT NULL DEFAULT false,
+        is_archived         BOOLEAN NOT NULL DEFAULT false,
+        created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+
+      CREATE UNIQUE INDEX idx_bonus_buy_slot_one_playing
+        ON bonus_buy_slot (bonus_buy_id)
+        WHERE is_now_playing = true AND is_archived = false;
+
+      CREATE INDEX idx_bonus_buy_slot_list
+        ON bonus_buy_slot (bonus_buy_id, created_at ASC)
+        WHERE is_archived = false;
     `);
   }
 
@@ -737,6 +787,394 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
 
     throw new Error('NOT_FOUND');
+  }
+
+  async updateBonusBuy(
+    accountId: number,
+    bonusBuyId: number,
+    updates: { title?: string; startBalance?: string },
+  ): Promise<DbBonusBuy> {
+    const existing = await this.getBonusBuyById(accountId, bonusBuyId);
+    if (!existing) {
+      throw new Error('NOT_FOUND');
+    }
+
+    const nextTitle =
+      updates.title !== undefined ? updates.title.trim() : existing.title;
+    if (nextTitle.length === 0 || nextTitle.length > 200) {
+      throw new Error('INVALID_TITLE');
+    }
+
+    const nextBalance =
+      updates.startBalance !== undefined
+        ? normalizePositiveMoney(updates.startBalance)
+        : existing.startBalance;
+
+    const result = await this.pool.query<{
+      id: string | number;
+      account_id: string | number;
+      title: string;
+      start_balance: string;
+      is_active: boolean;
+      created_at: Date;
+      created_by_user_id: string | number;
+      created_by_name: string;
+    }>(
+      `
+        UPDATE bonus_buy bb
+        SET title = $3, start_balance = $4
+        FROM users u
+        WHERE bb.created_by_user_id = u.id
+          AND bb.account_id = $1
+          AND bb.id = $2
+        RETURNING
+          bb.id,
+          bb.account_id,
+          bb.title,
+          bb.start_balance::text AS start_balance,
+          bb.is_active,
+          bb.created_at,
+          bb.created_by_user_id,
+          u.name AS created_by_name
+      `,
+      [accountId, bonusBuyId, nextTitle, nextBalance],
+    );
+
+    const row = result.rows[0];
+    return {
+      id: toInt(row.id),
+      accountId: toInt(row.account_id),
+      title: row.title,
+      startBalance: row.start_balance,
+      isActive: row.is_active,
+      createdAt: row.created_at,
+      createdByUserId: toInt(row.created_by_user_id),
+      createdByName: row.created_by_name,
+    };
+  }
+
+  private mapBonusBuySlotRow(row: {
+    id: string | number;
+    bonus_buy_id: string | number;
+    created_by_user_id: string | number;
+    created_by_name: string;
+    slot_name: string;
+    nick_provider: string | null;
+    purchase_amount: string;
+    win_amount: string | null;
+    multiplier: string | null;
+    is_now_playing: boolean;
+    created_at: Date;
+  }): DbBonusBuySlot {
+    return {
+      id: toInt(row.id),
+      bonusBuyId: toInt(row.bonus_buy_id),
+      createdByUserId: toInt(row.created_by_user_id),
+      createdByName: row.created_by_name,
+      slotName: row.slot_name,
+      nickProvider: row.nick_provider,
+      purchaseAmount: row.purchase_amount,
+      winAmount: row.win_amount,
+      multiplier: row.multiplier,
+      isNowPlaying: row.is_now_playing,
+      createdAt: row.created_at,
+    };
+  }
+
+  async listBonusBuySlots(
+    accountId: number,
+    bonusBuyId: number,
+  ): Promise<DbBonusBuySlot[]> {
+    const session = await this.getBonusBuyById(accountId, bonusBuyId);
+    if (!session) {
+      throw new Error('NOT_FOUND');
+    }
+
+    const result = await this.pool.query<{
+      id: string | number;
+      bonus_buy_id: string | number;
+      created_by_user_id: string | number;
+      created_by_name: string;
+      slot_name: string;
+      nick_provider: string | null;
+      purchase_amount: string;
+      win_amount: string | null;
+      multiplier: string | null;
+      is_now_playing: boolean;
+      created_at: Date;
+    }>(
+      `
+        SELECT
+          s.id,
+          s.bonus_buy_id,
+          s.created_by_user_id,
+          u.name AS created_by_name,
+          s.slot_name,
+          s.nick_provider,
+          s.purchase_amount::text AS purchase_amount,
+          s.win_amount::text AS win_amount,
+          s.multiplier::text AS multiplier,
+          s.is_now_playing,
+          s.created_at
+        FROM bonus_buy_slot s
+        JOIN users u ON u.id = s.created_by_user_id
+        WHERE s.bonus_buy_id = $1
+          AND s.is_archived = false
+        ORDER BY s.created_at ASC
+      `,
+      [bonusBuyId],
+    );
+
+    return result.rows.map((row) => this.mapBonusBuySlotRow(row));
+  }
+
+  async createBonusBuySlot(
+    accountId: number,
+    bonusBuyId: number,
+    createdByUserId: number,
+    slotName: string,
+    nickProvider: string | null,
+    purchaseAmount: string,
+  ): Promise<DbBonusBuySlot> {
+    const session = await this.getBonusBuyById(accountId, bonusBuyId);
+    if (!session) {
+      throw new Error('NOT_FOUND');
+    }
+
+    const trimmedSlot = slotName.trim();
+    if (trimmedSlot.length === 0 || trimmedSlot.length > 200) {
+      throw new Error('INVALID_SLOT_NAME');
+    }
+
+    const normalizedPurchase = normalizePositiveMoney(purchaseAmount);
+    const trimmedNick = nickProvider?.trim() ?? '';
+    const nickValue = trimmedNick.length > 0 ? trimmedNick : null;
+
+    const result = await this.pool.query<{
+      id: string | number;
+      bonus_buy_id: string | number;
+      created_by_user_id: string | number;
+      created_by_name: string;
+      slot_name: string;
+      nick_provider: string | null;
+      purchase_amount: string;
+      win_amount: string | null;
+      multiplier: string | null;
+      is_now_playing: boolean;
+      created_at: Date;
+    }>(
+      `
+        INSERT INTO bonus_buy_slot (
+          bonus_buy_id,
+          created_by_user_id,
+          slot_name,
+          nick_provider,
+          purchase_amount
+        )
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING
+          id,
+          bonus_buy_id,
+          created_by_user_id,
+          (SELECT name FROM users WHERE id = $2) AS created_by_name,
+          slot_name,
+          nick_provider,
+          purchase_amount::text AS purchase_amount,
+          win_amount::text AS win_amount,
+          multiplier::text AS multiplier,
+          is_now_playing,
+          created_at
+      `,
+      [bonusBuyId, createdByUserId, trimmedSlot, nickValue, normalizedPurchase],
+    );
+
+    return this.mapBonusBuySlotRow(result.rows[0]);
+  }
+
+  async patchBonusBuySlot(
+    accountId: number,
+    bonusBuyId: number,
+    slotId: number,
+    input: PatchBonusBuySlotInput,
+  ): Promise<DbBonusBuySlot> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const existing = await client.query<{
+        id: string | number;
+        bonus_buy_id: string | number;
+        slot_name: string;
+        nick_provider: string | null;
+        purchase_amount: string;
+        win_amount: string | null;
+        multiplier: string | null;
+        is_now_playing: boolean;
+        is_archived: boolean;
+      }>(
+        `
+          SELECT
+            s.id,
+            s.bonus_buy_id,
+            s.slot_name,
+            s.nick_provider,
+            s.purchase_amount::text AS purchase_amount,
+            s.win_amount::text AS win_amount,
+            s.multiplier::text AS multiplier,
+            s.is_now_playing,
+            s.is_archived
+          FROM bonus_buy_slot s
+          JOIN bonus_buy bb ON bb.id = s.bonus_buy_id
+          WHERE bb.account_id = $1
+            AND s.bonus_buy_id = $2
+            AND s.id = $3
+        `,
+        [accountId, bonusBuyId, slotId],
+      );
+
+      const row = existing.rows[0];
+      if (!row || row.is_archived) {
+        throw new Error('NOT_FOUND');
+      }
+
+      let nextSlotName = row.slot_name;
+      if (input.slotName !== undefined) {
+        const trimmed = input.slotName.trim();
+        if (trimmed.length === 0 || trimmed.length > 200) {
+          throw new Error('INVALID_SLOT_NAME');
+        }
+        nextSlotName = trimmed;
+      }
+
+      let nextNick = row.nick_provider;
+      if (input.nickProvider !== undefined) {
+        if (input.nickProvider === null) {
+          nextNick = null;
+        } else {
+          const trimmed = input.nickProvider.trim();
+          nextNick = trimmed.length > 0 ? trimmed : null;
+        }
+      }
+
+      let nextPurchase = row.purchase_amount;
+      if (input.purchaseAmount !== undefined) {
+        nextPurchase = normalizePositiveMoney(input.purchaseAmount);
+      }
+
+      let nextWin: string | null = row.win_amount;
+      if (input.winAmount !== undefined) {
+        nextWin =
+          input.winAmount === null ? null : normalizeMoney(input.winAmount);
+      }
+
+      let nextMultiplier: string | null = row.multiplier;
+      if (nextWin === null) {
+        nextMultiplier = null;
+      } else {
+        nextMultiplier = computeMultiplier(nextWin, nextPurchase);
+      }
+
+      let nextPlaying = row.is_now_playing;
+      if (input.isNowPlaying !== undefined) {
+        nextPlaying = input.isNowPlaying;
+      }
+
+      if (nextPlaying) {
+        await client.query(
+          `
+            UPDATE bonus_buy_slot
+            SET is_now_playing = false
+            WHERE bonus_buy_id = $1
+              AND id != $2
+              AND is_archived = false
+          `,
+          [bonusBuyId, slotId],
+        );
+      }
+
+      const updated = await client.query<{
+        id: string | number;
+        bonus_buy_id: string | number;
+        created_by_user_id: string | number;
+        created_by_name: string;
+        slot_name: string;
+        nick_provider: string | null;
+        purchase_amount: string;
+        win_amount: string | null;
+        multiplier: string | null;
+        is_now_playing: boolean;
+        created_at: Date;
+      }>(
+        `
+          UPDATE bonus_buy_slot s
+          SET
+            slot_name = $3,
+            nick_provider = $4,
+            purchase_amount = $5,
+            win_amount = $6,
+            multiplier = $7,
+            is_now_playing = $8
+          FROM users u
+          WHERE s.created_by_user_id = u.id
+            AND s.id = $1
+            AND s.bonus_buy_id = $2
+          RETURNING
+            s.id,
+            s.bonus_buy_id,
+            s.created_by_user_id,
+            u.name AS created_by_name,
+            s.slot_name,
+            s.nick_provider,
+            s.purchase_amount::text AS purchase_amount,
+            s.win_amount::text AS win_amount,
+            s.multiplier::text AS multiplier,
+            s.is_now_playing,
+            s.created_at
+        `,
+        [
+          slotId,
+          bonusBuyId,
+          nextSlotName,
+          nextNick,
+          nextPurchase,
+          nextWin,
+          nextMultiplier,
+          nextPlaying,
+        ],
+      );
+
+      await client.query('COMMIT');
+      return this.mapBonusBuySlotRow(updated.rows[0]);
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async archiveBonusBuySlot(
+    accountId: number,
+    bonusBuyId: number,
+    slotId: number,
+  ): Promise<void> {
+    const result = await this.pool.query(
+      `
+        UPDATE bonus_buy_slot s
+        SET is_archived = true, is_now_playing = false
+        FROM bonus_buy bb
+        WHERE s.bonus_buy_id = bb.id
+          AND bb.account_id = $1
+          AND s.bonus_buy_id = $2
+          AND s.id = $3
+          AND s.is_archived = false
+      `,
+      [accountId, bonusBuyId, slotId],
+    );
+
+    if (result.rowCount === 0) {
+      throw new Error('NOT_FOUND');
+    }
   }
 
   async revokeAdminPermanently(

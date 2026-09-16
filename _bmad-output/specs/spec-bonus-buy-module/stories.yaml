@@ -1,0 +1,82 @@
+- id: "1"
+  title: bonus_buy_slot schema and slot REST API
+  description: >-
+    Add bonus_buy_slot table per bonus-buy-slots.md (is_now_playing,
+    is_archived, partial unique index) and nested endpoints GET/POST/PATCH/DELETE
+    under accounts/:accountId/bonus-buys/:bonusBuyId/slots. Server computes
+    multiplier with decimal.js on win_amount PATCH; DELETE archives row.
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    Add decimal.js to server package if missing. Register routes in
+    accounts.controller.ts and DatabaseService methods. E2e tests: create slot,
+    partial PATCH win_amount (multiplier), is_now_playing clears siblings,
+    DELETE sets is_archived. Reject PATCH on archived rows (404).
+
+- id: "2"
+  title: Client slot API and session stats strip
+  description: >-
+    Extend app/src/api/bonus-buy.ts with BonusBuySlot types and fetch/create/
+    patch/archive slot functions. Wire BonusBuySessionPage stats strip to live
+    slot data using decimal.js for Spent, Profit, Current balance, Average X
+    (CAP-9). Non-archived slots only.
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    Add decimal.js to app package if missing. Shared calc helper in
+    app/src/lib/bonus-buy-stats.ts (or similar). Stats refresh after slot
+    mutations without full page reload.
+
+- id: "3"
+  title: Quick-add slot form
+  description: >-
+    Implement quick-add panel on /bonus-buy/:id per session-page.md — Slot,
+    Nick/provider, Purchase ($) — POST on submit, form reset, list and stats
+    refresh (CAP-10).
+  spec_checkpoint: false
+  invoke_dev_with: >-
+    Use TextField + inputFieldSx matching create session dialog. Disable submit
+    while saving. New rows default is_now_playing false.
+
+- id: "4"
+  title: Bonus list with Edit and now playing actions
+  description: >-
+    Populate Bonus list (N) with columns per bonus-buy-slots.md. RowActionsMenu
+    with Edit dialog (partial PATCH all mutable fields), Set as playing, Clear
+    playing (CAP-11, CAP-13).
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    Edit dialog fields: Slot, Nick/provider, Purchase, Win, Now playing toggle.
+    Now playing chip in Playing column. NotificationContext toast on success.
+
+- id: "5"
+  title: Archive slot (Delete action)
+  description: >-
+    Add Delete with confirm dialog; call DELETE endpoint to archive slot;
+    refresh list and stats; decrement N (CAP-14).
+  spec_checkpoint: false
+  invoke_dev_with: >-
+    Dialog title Delete slot? with slot_name in body. Delete menu item uses
+    error color. Archived rows excluded from GET list.
+
+- id: "6"
+  title: Session PATCH title and start balance
+  description: >-
+    Add PATCH /accounts/:accountId/bonus-buys/:bonusBuyId on server and client.
+    Header pencil edits title; start balance stat pencil edits start_balance;
+    stats recalc on balance change (CAP-15, bonus-buy-records.md).
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    Separate dialogs or shared edit pattern with inputFieldSx. Update header
+    {title} #{id} on title save. E2e: PATCH title and start_balance under
+    account scope.
+
+- id: "7"
+  title: Integration smoke and build verification
+  description: >-
+    End-to-end flow per SPEC success signal: create session, add slot, set
+    playing, edit win, archive slot, PATCH session fields. npm run build in
+    app/ passes.
+  spec_checkpoint: false
+  done_checkpoint: true
+  invoke_dev_with: >-
+    Widget style / OBS / Overlay remain Coming soon stubs only. Verify header
+    toolbar buttons still render per session-page.md.

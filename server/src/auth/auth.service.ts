@@ -5,7 +5,12 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service.js';
+import {
+  DatabaseService,
+  type DbBonusBuy,
+  type DbBonusBuySlot,
+  type PatchBonusBuySlotInput,
+} from '../database/database.service.js';
 import { KickChannelService } from './kick-channel.service.js';
 import type { KickChannelDto } from './kick-channel.types.js';
 import { KickOAuthService } from './kick-oauth.service.js';
@@ -289,6 +294,211 @@ export class AuthService {
         }
       }
       throw error;
+    }
+  }
+
+  private formatBonusBuy(row: DbBonusBuy) {
+    return {
+      id: row.id,
+      accountId: row.accountId,
+      title: row.title,
+      startBalance: row.startBalance,
+      isActive: row.isActive,
+      createdAt: row.createdAt.toISOString(),
+      createdByUserId: row.createdByUserId,
+      createdByName: row.createdByName,
+    };
+  }
+
+  private formatBonusBuySlot(row: DbBonusBuySlot) {
+    return {
+      id: row.id,
+      bonusBuyId: row.bonusBuyId,
+      createdByUserId: row.createdByUserId,
+      createdByName: row.createdByName,
+      slotName: row.slotName,
+      nickProvider: row.nickProvider,
+      purchaseAmount: row.purchaseAmount,
+      winAmount: row.winAmount,
+      multiplier: row.multiplier,
+      isNowPlaying: row.isNowPlaying,
+      createdAt: row.createdAt.toISOString(),
+    };
+  }
+
+  private async requireAccountMember(accountId: number, callerUserId: number) {
+    const isMember = await this.database.hasActiveMembership(
+      accountId,
+      callerUserId,
+    );
+    if (!isMember) {
+      throw new ForbiddenException('Not a member of this account');
+    }
+  }
+
+  private mapSlotMutationError(error: unknown): never {
+    if (error instanceof Error) {
+      if (error.message === 'NOT_FOUND') {
+        throw new NotFoundException('Bonus buy slot not found');
+      }
+      if (error.message === 'INVALID_SLOT_NAME') {
+        throw new BadRequestException('Slot name must be 1-200 characters');
+      }
+      if (
+        error.message === 'INVALID_AMOUNT' ||
+        error.message === 'INVALID_PURCHASE_AMOUNT'
+      ) {
+        throw new BadRequestException(
+          'Amount must be a positive number with up to 2 decimal places',
+        );
+      }
+    }
+    throw error;
+  }
+
+  async updateBonusBuy(
+    accountId: number,
+    callerUserId: number,
+    bonusBuyId: number,
+    updates: { title?: string; start_balance?: string },
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    if (updates.title === undefined && updates.start_balance === undefined) {
+      throw new BadRequestException('At least one field is required');
+    }
+
+    try {
+      const row = await this.database.updateBonusBuy(accountId, bonusBuyId, {
+        title: updates.title,
+        startBalance: updates.start_balance,
+      });
+      return this.formatBonusBuy(row);
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === 'NOT_FOUND') {
+          throw new NotFoundException('Bonus buy not found');
+        }
+        if (error.message === 'INVALID_TITLE') {
+          throw new BadRequestException('Title must be 1-200 characters');
+        }
+        if (error.message === 'INVALID_AMOUNT') {
+          throw new BadRequestException(
+            'Start balance must be a positive number with up to 2 decimal places',
+          );
+        }
+      }
+      throw error;
+    }
+  }
+
+  async listBonusBuySlots(
+    accountId: number,
+    callerUserId: number,
+    bonusBuyId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      const rows = await this.database.listBonusBuySlots(accountId, bonusBuyId);
+      return rows.map((row) => this.formatBonusBuySlot(row));
+    } catch (error) {
+      if (error instanceof Error && error.message === 'NOT_FOUND') {
+        throw new NotFoundException('Bonus buy not found');
+      }
+      throw error;
+    }
+  }
+
+  async createBonusBuySlot(
+    accountId: number,
+    callerUserId: number,
+    bonusBuyId: number,
+    slotName: string,
+    nickProvider: string | undefined,
+    purchaseAmount: string,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      const row = await this.database.createBonusBuySlot(
+        accountId,
+        bonusBuyId,
+        callerUserId,
+        slotName,
+        nickProvider ?? null,
+        purchaseAmount,
+      );
+      return this.formatBonusBuySlot(row);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'NOT_FOUND') {
+        throw new NotFoundException('Bonus buy not found');
+      }
+      this.mapSlotMutationError(error);
+    }
+  }
+
+  async patchBonusBuySlot(
+    accountId: number,
+    callerUserId: number,
+    bonusBuyId: number,
+    slotId: number,
+    body: {
+      slot_name?: string;
+      nick_provider?: string | null;
+      purchase_amount?: string;
+      win_amount?: string | null;
+      is_now_playing?: boolean;
+    },
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    const input: PatchBonusBuySlotInput = {};
+    if (body.slot_name !== undefined) {
+      input.slotName = body.slot_name;
+    }
+    if (body.nick_provider !== undefined) {
+      input.nickProvider = body.nick_provider;
+    }
+    if (body.purchase_amount !== undefined) {
+      input.purchaseAmount = body.purchase_amount;
+    }
+    if (body.win_amount !== undefined) {
+      input.winAmount = body.win_amount;
+    }
+    if (body.is_now_playing !== undefined) {
+      input.isNowPlaying = body.is_now_playing;
+    }
+
+    if (Object.keys(input).length === 0) {
+      throw new BadRequestException('At least one field is required');
+    }
+
+    try {
+      const row = await this.database.patchBonusBuySlot(
+        accountId,
+        bonusBuyId,
+        slotId,
+        input,
+      );
+      return this.formatBonusBuySlot(row);
+    } catch (error) {
+      this.mapSlotMutationError(error);
+    }
+  }
+
+  async archiveBonusBuySlot(
+    accountId: number,
+    callerUserId: number,
+    bonusBuyId: number,
+    slotId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      await this.database.archiveBonusBuySlot(accountId, bonusBuyId, slotId);
+    } catch (error) {
+      this.mapSlotMutationError(error);
     }
   }
 

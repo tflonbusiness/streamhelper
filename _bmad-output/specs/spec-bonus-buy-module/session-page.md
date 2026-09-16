@@ -38,7 +38,7 @@ Single horizontal bar spanning full content width. Background: card surface; sub
 |---------|----------|-----------------|
 | Back | `Link` or navigate to `/bonus-buy` | Icon only (`ArrowLeft`) |
 | Title | `{record.title} #{record.id}` | e.g. `test #1` |
-| Edit title | Icon button beside title | Icon only (`Pencil`) — opens inline edit or dialog |
+| Edit title | Icon button beside title | Icon only (`Pencil`) — opens dialog with **Title** field; PATCH on save |
 
 ### Right cluster (left → right)
 
@@ -52,7 +52,7 @@ Single horizontal bar spanning full content width. Background: card surface; sub
 
 **New session:** same create flow as `/bonus-buy` (dialog: title + start balance); on success navigate to new `/bonus-buy/:newId`.
 
-**Widget style / OBS link / Overlay:** buttons visible per mockup. Behavior defined in open questions — may stub (toast "Coming soon") until overlay slices land.
+**Widget style / OBS link / Overlay:** buttons visible per mockup. **Stubs in this slice** — click shows `NotificationContext` toast **Coming soon**; no navigation, copy, or overlay runtime.
 
 ## 2. Stats strip
 
@@ -60,7 +60,7 @@ Five stat cards in one row. Each card: uppercase muted label (xs), large value b
 
 | # | Label (English) | Value source | Display |
 |---|-----------------|--------------|---------|
-| 1 | **Start balance** | `record.startBalance` | `$X,XXX.XX`; pencil icon for inline edit affordance |
+| 1 | **Start balance** | `record.startBalance` | `$X,XXX.XX`; pencil icon opens dialog with **Start balance ($)**; PATCH on save |
 | 2 | **Current balance** | computed — see `bonus-buy-slots.md` | `$X,XXX.XX`; `text-emerald-400` when value ≥ start balance or per product rule |
 | 3 | **Spent** | sum of slot purchases | `$X,XXX.XX` |
 | 4 | **Profit** | computed — see `bonus-buy-slots.md` | `$X,XXX.XX`; emerald when positive |

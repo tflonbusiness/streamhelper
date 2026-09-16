@@ -27,11 +27,28 @@ Account-scoped REST under existing NestJS patterns (`TeamPage` / `accounts.contr
 | Method | Path | Body | Response |
 |--------|------|------|----------|
 | `GET` | `/accounts/:accountId/bonus-buys` | — | `BonusBuyRecord[]` |
+| `GET` | `/accounts/:accountId/bonus-buys/:bonusBuyId` | — | `BonusBuyRecord` |
 | `POST` | `/accounts/:accountId/bonus-buys` | `{ title: string; start_balance: string }` | `BonusBuyRecord` |
+| `PATCH` | `/accounts/:accountId/bonus-buys/:bonusBuyId` | see below | `BonusBuyRecord` |
+
+**PATCH body** (partial — at least one field):
+
+```ts
+{ title?: string; start_balance?: string }
+```
+
+| Field | Validation |
+|-------|------------|
+| `title` | non-empty, max 200 chars |
+| `start_balance` | > 0, max 2 decimal places, USD |
 
 **Auth:** session user required; `hasActiveMembership(accountId, userId)`.
 
 **Create:** set `account_id` from route param; `created_by_user_id` from session user; `is_active = true`; `created_at = now()`. Validate `start_balance` is a positive number with at most 2 decimal places.
+
+**PATCH:** verify `bonus_buy.account_id = :accountId`; update only supplied fields; `created_by_user_id` and `created_at` immutable. Changing `start_balance` affects **Current balance** stat (via formulas in `bonus-buy-slots.md`); slot rows unchanged.
+
+**Get one:** `WHERE id = :bonusBuyId AND account_id = :accountId`; 404 if missing or foreign account.
 
 **List:** filter `WHERE account_id = :accountId`; join `users` on `created_by_user_id` for `created_by_name`; order `created_at DESC`.
 
