@@ -4,7 +4,9 @@ companions:
   - bonus-buy-module.md
   - bonus-buy-records.md
   - bonus-buy-slots.md
+  - bonus-buy-widget.md
   - session-page.md
+  - stream-widget-page.md
   - widget-page.md
   - ../spec-caz-team-dashboard/modules-catalog.md
   - ../spec-caz-team-dashboard/nav-shell.md
@@ -21,7 +23,7 @@ sources: []
 
 ## Why
 
-**Opportunity:** **Bonus Buy** is a standalone slot bonus-buy engagement module. Operators need a catalog entry, a list/history page, a **session workspace** per record, and persistent slot entries with live stats. The placeholder session page and create-only flow are insufficient once operators run a bonus-buy on stream.
+**Opportunity:** **Bonus Buy** is a standalone slot bonus-buy engagement module. Operators need a catalog entry, a list/history page, a **session workspace** per record, persistent slot entries with live stats, and **per-session widget style settings** for the stream overlay. Hardcoded overlay colors and dimensions block the **Widget style** workflow.
 
 **Who:** Owner and admin on an active Caz Agent team (English UI, dark MUI theme).
 
@@ -41,7 +43,7 @@ sources: []
 
 - **CAP-5**
   - **intent:** An operator creates a bonus buy record for the current account from the history page.
-  - **success:** **New** in the history card header opens a MUI `Dialog` with **Title** and **Start balance** (USD, cents) using `inputFieldSx`; valid submit calls `POST /accounts/:accountId/bonus-buys`; row persists with `is_active = true`, `created_by_user_id` from session, and server `created_at`; dialog closes, table refreshes, and `NotificationContext` shows a success toast without full page reload.
+  - **success:** **New** in the history card header opens a MUI `Dialog` with **Title** and **Start balance** (USD, cents) using `inputFieldSx`; valid submit calls `POST /accounts/:accountId/bonus-buys`; row persists with `is_active = true`, `created_by_user_id` from session, server `created_at`, and a default `bonus_buy_widget` row; dialog closes, table refreshes, and `NotificationContext` shows a success toast without full page reload.
 
 - **CAP-6**
   - **intent:** An operator sees the history of bonus buy records for the current account on the history page.
@@ -53,7 +55,27 @@ sources: []
 
 - **CAP-8**
   - **intent:** An operator uses the session header toolbar to navigate, start a new session, and access stream tools.
-  - **success:** Back and exit return to `/bonus-buy`; title displays `{title} #{id}` with edit affordance; **+ New session** opens create dialog and navigates to new session on success; **Widget style**, **OBS link**, and **Overlay** render per `session-page.md` and show **Coming soon** toast on click (stubs — no runtime).
+  - **success:** Back and exit return to `/bonus-buy`; title displays `{title} #{id}` with edit affordance; **+ New session** opens create dialog and navigates to new session on success; **Widget style** opens style dialog per `bonus-buy-widget.md`; **OBS link** shows **Coming soon** toast; **Overlay** navigates to `/bonus-buy/:id/widget` (no query params).
+
+- **CAP-16**
+  - **intent:** A viewer or operator opens the public stream overlay at `/bonus-buy/:id/widget` without signing in.
+  - **success:** Route is registered outside `ProtectedRoute` and `AppShell`; page fetches `GET /bonus-buys/:id/widget` without auth; unauthenticated load shows transparent viewport and centered overlay card sized and styled from `settings`; OBS Browser Source works without dashboard session cookie; unknown `:id` shows **Session not found.** on the overlay canvas.
+
+- **CAP-17**
+  - **intent:** The overlay displays session summary metrics from live slot data in the Figma compact layout.
+  - **success:** Summary row shows **Start balance** (basket icon) and **Average X** (happy icon, `positiveColor` when `> 1x`) computed via `computeSessionStats` from API `slots`; header shows **Bonus Buy #{id}** and non-archived slot count pill; card `width`/`height` and colors from `settings`.
+
+- **CAP-18**
+  - **intent:** The overlay shows the now-playing slot and a scrollable list of other session slots for the stream audience.
+  - **success:** When `isNowPlaying`: win-highlight row (crown, name, nick, win) if `winAmount` set; LIVE row with `accentColor` left accent, purchase, and **LIVE** badge; when none, both rows omitted; list excludes playing slot and shows remaining non-archived slots with purchase, color-coded win, and multiplier pill per companion; data from public widget API.
+
+- **CAP-19**
+  - **intent:** The system persists per-session stream widget style settings for each bonus buy record.
+  - **success:** Table `bonus_buy_widget` has exactly one row per `bonus_buy_id` with style columns per `bonus-buy-widget.md`; new session create inserts Figma `1:5` defaults; authenticated `GET`/`PATCH .../widget` return and update settings with validation; public `GET /bonus-buys/:id/widget` includes `settings` in response; account scope enforced on PATCH.
+
+- **CAP-20**
+  - **intent:** An operator customizes stream overlay appearance from the session workspace.
+  - **success:** **Widget style** opens dialog with size, color, shape, and typography fields per `bonus-buy-widget.md`; loads current settings on open; valid **Save** PATCHes and shows success toast; **Preview overlay** opens `/bonus-buy/:id/widget`; invalid hex or dimensions show `StatusAlert` errors in dialog.
 
 - **CAP-9**
   - **intent:** An operator sees live session statistics derived from slot data.
@@ -68,8 +90,8 @@ sources: []
   - **success:** Section title **Bonus list (N)** where N matches slot count; empty state **No bonuses added yet.** when N = 0; populated rows show slot, nick, purchase, win, multiplier, **Now playing** chip when `is_now_playing`, created by, and created date per `bonus-buy-slots.md`; **Edit** dialog PATCHes any mutable field; **Set as playing** / **Clear playing** shortcuts PATCH `is_now_playing` (at most one playing slot per session); stats refresh without full page reload.
 
 - **CAP-13**
-  - **intent:** The system records which slot is currently playing so a future stream widget can display it.
-  - **success:** `is_now_playing = true` on exactly one slot per session (or zero); setting a slot playing clears siblings atomically; partial unique index enforced; widget runtime out of scope but `GET .../slots` exposes `isNowPlaying` for the playing row.
+  - **intent:** The system records which slot is currently playing so the stream widget can display it.
+  - **success:** `is_now_playing = true` on exactly one slot per session (or zero); setting a slot playing clears siblings atomically; partial unique index enforced; `GET .../slots` exposes `isNowPlaying` for the playing row.
 
 - **CAP-14**
   - **intent:** An operator removes a slot from the session without erasing history from the database.
@@ -89,19 +111,26 @@ sources: []
 - **No toggle:** Bonus Buy card has no `Switch`, no Connected/Disabled labels, and no entry in `caz-modules-{accountId}` localStorage.
 - **Card only on `/modules`:** navigation via **Open** only; no inline widget preview.
 - **Separate product module:** no coupling to `casino-stream-games` or Spin Prediction.
-- **Data model:** `bonus_buy` per `bonus-buy-records.md`; `bonus_buy_slot` per `bonus-buy-slots.md` (FK `bonus_buy_id`, `created_by_user_id`, `is_now_playing`, `is_archived`, stored `multiplier`). Slot table does **not** use `is_active` — that name is reserved for `bonus_buy` sessions.
+- **Data model:** `bonus_buy` per `bonus-buy-records.md`; `bonus_buy_slot` per `bonus-buy-slots.md`; `bonus_buy_widget` per `bonus-buy-widget.md` (FK `bonus_buy_id` UNIQUE, style columns with Figma defaults). Slot table does **not** use `is_active` — that name is reserved for `bonus_buy` sessions.
+- **Widget bootstrap:** `POST .../bonus-buys` inserts default `bonus_buy_widget` row in the same transaction.
+- **Widget colors:** hex `#RRGGBB` or `#RGB` only — no `rgba()` or named colors in DB.
+- **Widget dimensions:** width and height each 200–2400 px; defaults 500×600; overlay reads from DB only — no URL `width`/`height`/`w`/`h` query params.
+- **Public widget API:** `GET /bonus-buys/:bonusBuyId/widget` returns `{ record, slots, settings }` without auth; replaces `BONUS_BUY_WIDGET_MOCKS`.
 - **No hard delete:** slot `DELETE` sets `is_archived = true` — never `DELETE FROM bonus_buy_slot`.
 - **One playing slot:** at most one `bonus_buy_slot.is_now_playing = true` per `bonus_buy_id`; PATCH clears siblings; partial unique index per `bonus-buy-slots.md`.
-- **API:** account-scoped REST for records and nested slots including partial `PATCH` and `DELETE` on slots; session auth and membership check; SQL in `DatabaseService`.
+- **API:** account-scoped REST for records, nested slots, and widget settings including partial `PATCH` and `DELETE` on slots; session auth and membership check; SQL in `DatabaseService`.
 - **History page UI:** `AppTable`, `cardSx`, `inputFieldSx`, `toneChipSx`, `mutedChipSx`, `StatusAlert`, `NotificationContext` — pattern `TeamPage.tsx`; details in `bonus-buy-records.md` and `widget-page.md`.
 - **Session page UI:** bespoke session header and panel layout per `session-page.md` — not `PageHeader` with `Gift` icon.
-- **Visual tokens:** dark MUI theme from `app/src/theme/colors.ts` — amber primary CTAs, emerald positive currency; session page emerald accents per adopted `design-tokens.md` mapping.
+- **Visual tokens:** dark MUI theme from `app/src/theme/colors.ts` — amber primary CTAs, emerald positive currency; session page emerald accents per adopted `design-tokens.md` mapping; overlay defaults in `bonus-buy-widget.md`.
 - **English UI:** all labels per `spec-app-english-only`; mockup Russian strings mapped in `session-page.md`.
 - **No nav item:** `/bonus-buy` and `/bonus-buy/:id` are not added to sidebar or mobile tab bar.
 - **Record CRUD:** create + list on history page; session title and start balance editable via PATCH on `/bonus-buy/:id` only — no delete or deactivate from history table.
 - **Row actions on history table:** single **Open** link per row in `AppTable` Actions column — `RowActionsMenu` not required.
 - **Slot multiplier:** always `win_amount ÷ purchase_amount` via `decimal.js` on server; not client-supplied.
 - **Decimal math:** `decimal.js` for all bonus-buy monetary calculations in `app/` and `server/` — multiplier, stats, aggregations; no native float arithmetic for money.
+- **Stream overlay route:** `/bonus-buy/:id/widget` is **public** — outside `ProtectedRoute` and `AppShell`; no login redirect; live data via public widget API; authenticated PATCH for settings only.
+- **Widget style UI:** dialog on session page per `bonus-buy-widget.md` and `session-page.md` — not a stub.
+- **Overlay design target:** Figma frame `bb` (`1:5`, 500×600) per [stream-widget-page.md](stream-widget-page.md); default colors `#0A0A0C`, `#121215`, `#F59E0B`, `#10B981`, `#EF4444`.
 
 ## Non-goals
 
@@ -110,7 +139,9 @@ sources: []
 - Enforcing a single active record per account.
 - Cross-account admin views or reporting.
 - Integration with Spin Prediction or the CasinoStream games library.
-- Full OBS browser-source runtime, animated overlay widget, or chat-bot triggers — header buttons may stub until dedicated slices land.
+- Large Figma variant `8:23` (1100×1100) or WebSocket/SSE live push on the overlay page.
+- Signed OBS token or per-session secret URL — overlay stays public by id until a follow-on hardening slice.
+- Chat-bot triggers on the overlay page.
 - Bulk import of slots or manual multiplier override.
 - Hard delete or unarchive of archived slots.
 - Edit or deactivate bonus buy records from the history table.
@@ -118,7 +149,7 @@ sources: []
 
 ## Success signal
 
-Owner opens `/bonus-buy` → creates session → **Open** → adds slot **Gates of Olympus** purchase **$50** → **Spent** **$50.00** → **Set as playing** → **Edit** sets win **$600** → multiplier **12.00x** (decimal.js) → **Delete** confirms removal → **Spent** **$0.00**, list empty → reload persists → `npm run build` passes and server e2e covers slot create, PATCH, delete, and one-playing-slot rule.
+Owner opens `/bonus-buy` → creates session (default `bonus_buy_widget` row inserted) → **Open** → **Widget style** changes accent to custom hex and width to 600 → **Save** → adds slot **Gates of Olympus** purchase **$50** → **Set as playing** → **Overlay** opens `/bonus-buy/:id/widget` at 600px width with live data and custom colors → **Edit** sets win **$600** → multiplier **12.00x** → overlay refetch shows updated stats → `npm run build` passes.
 
 ## Assumptions
 
@@ -126,7 +157,11 @@ Owner opens `/bonus-buy` → creates session → **Open** → adds slot **Gates 
 - `start_balance` stored and displayed as USD dollars with two decimal places.
 - Owner and admin share the same access as `/modules`.
 - Session label uses `{title} #{id}` where `id` is `bonus_buy.id`.
-- Widget style, OBS link, and Overlay are visible stubs — **Coming soon** toast only.
+- Widget style settings are per `bonus_buy` session — one `bonus_buy_widget` row each.
+- Widget style dialog, authenticated settings API, public overlay API, and overlay DB-driven dimensions ship in the same slice.
+- OBS link remains **Coming soon** stub; **Overlay** navigates to `/bonus-buy/:id/widget` without query params.
+- Stream overlay uses Figma frame `bb` (`1:5`); large variant `8:23` deferred.
+- `/bonus-buy/:id/widget` is a public URL — readable by anyone with the link; acceptable for OBS in this slice.
 - Session title and start balance PATCH ship in the same slice as slots (CAP-15).
 - CAP-2 (toggle enable/disable) retired — superseded by no-toggle decision.
 - Session page component patterns deferred — CAP-12 applies to `/bonus-buy` history page only.
@@ -137,3 +172,4 @@ Owner opens `/bonus-buy` → creates session → **Open** → adds slot **Gates 
 - Archived slots (`is_archived = true`) remain in DB for audit; hidden from UI.
 - `nick_provider` stores the user-facing nickname field.
 - Win pending vs recorded is inferred from `win_amount` nullability — no separate status column.
+- Overlay may poll public widget API on interval; WebSocket deferred.

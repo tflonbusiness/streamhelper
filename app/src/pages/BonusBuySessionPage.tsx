@@ -55,6 +55,7 @@ import {
   computeSessionStats,
   formatMultiplierDisplay,
 } from '@/lib/bonus-buy-stats'
+import { buildBonusBuyWidgetUrl } from '@/lib/bonus-buy-widget-dimensions'
 import { MODULE_CATALOG } from '@/lib/modules'
 import { cardSx, colors, inputFieldSx, toneChipSx } from '@/theme/colors'
 
@@ -922,11 +923,13 @@ export function BonusBuySessionPage() {
                 OBS Link
               </Button>
               <Button
-                type="button"
+                component={Link}
+                to={id ? buildBonusBuyWidgetUrl(id) : '/bonus-buy'}
+                target="_blank"
+                rel="noopener noreferrer"
                 variant="outlined"
                 size="small"
                 startIcon={<ExternalLink size={16} aria-hidden />}
-                onClick={() => showStub('Coming soon')}
               >
                 Overlay
               </Button>

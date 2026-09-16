@@ -12,6 +12,7 @@ import { DashboardHomePage } from './pages/DashboardHomePage'
 import { LoginPage } from './pages/LoginPage'
 import { BonusBuyPage } from './pages/BonusBuyPage'
 import { BonusBuySessionPage } from './pages/BonusBuySessionPage'
+import { BonusBuyStreamWidgetPage } from './pages/BonusBuyStreamWidgetPage'
 import { ModulesPage } from './pages/ModulesPage'
 import { SubscriptionPage } from './pages/SubscriptionPage'
 import { TeamPage } from './pages/TeamPage'
@@ -25,6 +26,11 @@ function App() {
           <Route element={<GuestRoute />}>
             <Route path="/" element={<LoginPage />} />
           </Route>
+
+          <Route
+            path="/bonus-buy/:id/widget"
+            element={<BonusBuyStreamWidgetPage />}
+          />
 
           <Route element={<ProtectedRoute />}>
             <Route element={<AppShell />}>

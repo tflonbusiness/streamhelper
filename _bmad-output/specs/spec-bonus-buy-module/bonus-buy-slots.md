@@ -172,9 +172,9 @@ On delete success: close confirm dialog, refresh stats and list, decrement **Bon
 
 Use `TextField` + `inputFieldSx` per create dialog. On success: close dialog, refresh stats and list; `NotificationContext` success toast.
 
-## Widget contract (future)
+## Widget contract
 
-OBS/stream widget for a session displays the non-archived slot where `is_now_playing = true`. If none, widget shows empty or last-known state per overlay slice. Session page prepares the flag; widget runtime is out of scope here.
+OBS overlay at `/bonus-buy/:id/widget` per `stream-widget-page.md`. Displays non-archived slots; `is_now_playing` drives LIVE + win-highlight rows; list excludes playing slot. Mock data in overlay slice; live API deferred.
 
 ## Out of scope (this companion)
 

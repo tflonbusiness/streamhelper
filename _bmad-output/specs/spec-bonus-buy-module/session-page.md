@@ -52,7 +52,11 @@ Single horizontal bar spanning full content width. Background: card surface; sub
 
 **New session:** same create flow as `/bonus-buy` (dialog: title + start balance); on success navigate to new `/bonus-buy/:newId`.
 
-**Widget style / OBS link / Overlay:** buttons visible per mockup. **Stubs in this slice** — click shows `NotificationContext` toast **Coming soon**; no navigation, copy, or overlay runtime.
+**Widget style:** opens **Widget style** dialog per [bonus-buy-widget.md](bonus-buy-widget.md) — loads `GET .../widget`, PATCH on save, **Preview overlay** link to `/bonus-buy/:id/widget`.
+
+**OBS link:** stub — click shows `NotificationContext` toast **Coming soon**.
+
+**Overlay:** navigates to `/bonus-buy/:id/widget` (same tab, no query params). Opens stream overlay preview per `stream-widget-page.md`.
 
 ## 2. Stats strip
 
