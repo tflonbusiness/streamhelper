@@ -21,7 +21,7 @@ Rules for Caz Agent after the English migration. Apply to all new UI work.
 | Sign out | Sign out |
 | Sign in | Sign in with Kick |
 | Owner role | Owner |
-| Admin role | Admin |
+| Moderator role | Moderator |
 | Free plan | Free |
 | Live stream | Live |
 | Offline stream | Offline |

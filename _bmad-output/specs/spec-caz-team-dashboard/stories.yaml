@@ -1,14 +1,14 @@
 - id: "1"
-  title: GET members API and admin PATCH authorization
+  title: GET members API and moderator PATCH authorization
   description: >-
     Add GET /accounts/:accountId/members and extend PATCH member authorization
-    so active admins can deactivate/reactivate admin rows (CAP-3). Contract in
-    members-api.md; owner-only POST unchanged.
+    so active moderators can deactivate/reactivate moderator rows (CAP-3). Contract in
+    members-api.md; owner-only POST /moderators unchanged.
   spec_checkpoint: true
   done_checkpoint: true
   invoke_dev_with: >-
-    Add e2e tests in server/test for roster GET (owner and admin callers) and
-    PATCH by admin on admin row. Reject admin PATCH on owner row and non-member
+    Add e2e tests in server/test for roster GET (owner and moderator callers) and
+    PATCH by moderator on moderator row. Reject moderator PATCH on owner row and non-member
     GET with 403.
 
 - id: "2"
@@ -20,8 +20,8 @@
     (CAP-2, CAP-4, CAP-7, CAP-9).
   spec_checkpoint: true
   invoke_dev_with: >-
-    Add «Команда» nav item to /team between Главная and Модули. Disable
-    Команда and Модули nav until account selected in picker mode. Register
+    Add Team nav item to /team between Home and Modules. Disable
+    Team and Modules nav until account selected in picker mode. Register
     TeamPage route under AppShell. Delete PickerRoute and /picker path if
     still present.
 
@@ -29,26 +29,26 @@
   title: Dashboard home — team card and mock stats
   description: >-
     Build DashboardHomePage home mode with team summary card and mock stat
-    cards from mock-stats.md (CAP-1, CAP-5). No admin roster or add-admin
+    cards from mock-stats.md (CAP-1, CAP-5). No moderator roster or add-moderator
     form on dashboard home. Hidden in picker mode.
   spec_checkpoint: true
   invoke_dev_with: >-
-    Remove members roster, create-admin form, and revoke controls from
+    Remove members roster, create-moderator form, and revoke controls from
     DashboardHomePage. Keep team card, stats grid, and link to /modules.
-    Admin management moves to TeamPage (story 4).
+    Moderator management moves to TeamPage (story 4).
 
 - id: "4"
-  title: Team page — members roster and admin access
+  title: Team page — members roster and moderator access
   description: >-
-    Build TeamPage at /team with member roster, add-admin form for owners,
+    Build TeamPage at /team with member roster, add-moderator form for owners,
     and revoke controls per surfaces.md role matrix (CAP-3, CAP-9). Wired
-    to GET members and existing create/revoke admin APIs.
+    to GET members and existing create/revoke moderator APIs.
   spec_checkpoint: true
   invoke_dev_with: >-
-    Extract admin UI from DashboardHomePage into new TeamPage. H1 «Команда»,
-    lead «Участники с доступом к панели». Owner sees add-by-name form;
-    admin sees roster and revoke only. Deactivated admins show «Отозван»
-    badge. Show join link Alert on create success.
+    TeamPage H1 Team, lead Members with dashboard access. Owner sees add-by-name form;
+    moderator sees roster and revoke only. Deactivated moderators show Revoked
+    badge. Role badge Moderator not Admin. Show join link Alert on create success.
+    Rename createAdmin/revokeAdmin API helpers to createModerator/revokeModerator.
 
 - id: "5"
   title: Modules page — two-card catalog
@@ -66,13 +66,13 @@
 - id: "6"
   title: Integration smoke and build verification
   description: >-
-    Verify owner and admin flows end-to-end including picker-in-dashboard,
-    /team admin management, and npm run build in app/. Confirm no /picker
-    route and no admin UI on dashboard home (CAP-7, CAP-9).
+    Verify owner and moderator flows end-to-end including picker-in-dashboard,
+    /team moderator management, and npm run build in app/. Confirm no /picker
+    route and no moderator UI on dashboard home (CAP-7, CAP-9).
   spec_checkpoint: false
   done_checkpoint: true
   invoke_dev_with: >-
     Manual or automated smoke: owner with 2 teams → picker mode → home (no
-    admin roster) → /team → add + revoke → /modules → two cards → Open Bonus
-    Buy → /bonus-buy → switch team → picker mode → other team. Admin login →
-    /team without add form. npm run build in app/ must pass.
+    moderator roster) → /team → add + revoke → /modules → two cards → Open Bonus
+    Buy → /bonus-buy → switch team → picker mode → other team. Moderator login →
+    /team without add form; role badge Moderator. npm run build in app/ must pass.

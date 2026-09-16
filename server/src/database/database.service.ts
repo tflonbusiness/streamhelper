@@ -25,14 +25,14 @@ export type DbUser = {
 export type DbMembership = {
   accountId: number;
   name: string;
-  role: 'owner' | 'admin';
+  role: 'owner' | 'moderator';
   subscriptionPlan: string;
 };
 
 export type DbAccountMember = {
   userId: number;
   name: string;
-  role: 'owner' | 'admin';
+  role: 'owner' | 'moderator';
   isActive: boolean;
   hasInviteLink: boolean;
 };
@@ -188,7 +188,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         id          BIGSERIAL PRIMARY KEY,
         account_id  BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
         user_id     BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        role        TEXT NOT NULL CHECK (role IN ('owner', 'admin')),
+        role        TEXT NOT NULL CHECK (role IN ('owner', 'moderator')),
         is_active   BOOLEAN NOT NULL DEFAULT true,
         created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -319,7 +319,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     const result = await this.pool.query<{
       account_id: string | number;
       name: string;
-      role: 'owner' | 'admin';
+      role: 'owner' | 'moderator';
       subscription_plan: string;
     }>(
       `
@@ -506,7 +506,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     const result = await this.pool.query<{
       user_id: string | number;
       name: string;
-      role: 'owner' | 'admin';
+      role: 'owner' | 'moderator';
       is_active: boolean;
       has_invite_link: boolean;
     }>(
@@ -540,10 +540,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }));
   }
 
-  async rotateAdminInviteLink(
+  async rotateModeratorInviteLink(
     accountId: number,
     ownerUserId: number,
-    adminUserId: number,
+    moderatorUserId: number,
     appBaseUrl: string,
   ): Promise<{ joinUrl: string }> {
     const isOwner = await this.isAccountOwner(accountId, ownerUserId);
@@ -552,7 +552,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
 
     const target = await this.pool.query<{
-      role: 'owner' | 'admin';
+      role: 'owner' | 'moderator';
       is_active: boolean;
     }>(
       `
@@ -560,15 +560,15 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         FROM account_members
         WHERE account_id = $1 AND user_id = $2
       `,
-      [accountId, adminUserId],
+      [accountId, moderatorUserId],
     );
 
     if (
       !target.rows[0] ||
-      target.rows[0].role !== 'admin' ||
+      target.rows[0].role !== 'moderator' ||
       !target.rows[0].is_active
     ) {
-      throw new Error('ADMIN_NOT_FOUND');
+      throw new Error('MODERATOR_NOT_FOUND');
     }
 
     const plainToken = generateAccessToken();
@@ -582,7 +582,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           AND provider = 'access_link'
           AND is_active = true
       `,
-      [tokenHash, adminUserId],
+      [tokenHash, moderatorUserId],
     );
 
     if (result.rowCount === 0) {
@@ -593,7 +593,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     return { joinUrl };
   }
 
-  async createAdminWithAccessLink(
+  async createModeratorWithAccessLink(
     accountId: number,
     ownerUserId: number,
     name: string,
@@ -606,7 +606,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
     const trimmed = name.trim();
     if (trimmed.length < 2 || trimmed.length > 100) {
-      throw new Error('INVALID_ADMIN_NAME');
+      throw new Error('INVALID_MODERATOR_NAME');
     }
 
     const plainToken = generateAccessToken();
@@ -636,7 +636,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       await client.query(
         `
           INSERT INTO account_members (account_id, user_id, role, is_active)
-          VALUES ($1, $2, 'admin', true)
+          VALUES ($1, $2, 'moderator', true)
         `,
         [accountId, userId],
       );
@@ -1567,26 +1567,26 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async revokeAdminPermanently(
+  async revokeModeratorPermanently(
     accountId: number,
     ownerUserId: number,
-    adminUserId: number,
+    moderatorUserId: number,
   ): Promise<void> {
     const isOwner = await this.isAccountOwner(accountId, ownerUserId);
     if (!isOwner) {
       throw new Error('FORBIDDEN');
     }
 
-    const target = await this.pool.query<{ role: 'owner' | 'admin' }>(
+    const target = await this.pool.query<{ role: 'owner' | 'moderator' }>(
       `
         SELECT role FROM account_members
         WHERE account_id = $1 AND user_id = $2
       `,
-      [accountId, adminUserId],
+      [accountId, moderatorUserId],
     );
 
-    if (!target.rows[0] || target.rows[0].role !== 'admin') {
-      throw new Error('ADMIN_NOT_FOUND');
+    if (!target.rows[0] || target.rows[0].role !== 'moderator') {
+      throw new Error('MODERATOR_NOT_FOUND');
     }
 
     await this.pool.query(
@@ -1595,20 +1595,20 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         SET is_active = false, updated_at = now()
         WHERE user_id = $1 AND provider = 'access_link'
       `,
-      [adminUserId],
+      [moderatorUserId],
     );
 
     const result = await this.pool.query(
       `
         UPDATE account_members
         SET is_active = false, updated_at = now()
-        WHERE account_id = $1 AND user_id = $2 AND role = 'admin'
+        WHERE account_id = $1 AND user_id = $2 AND role = 'moderator'
       `,
-      [accountId, adminUserId],
+      [accountId, moderatorUserId],
     );
 
     if (result.rowCount === 0) {
-      throw new Error('ADMIN_NOT_FOUND');
+      throw new Error('MODERATOR_NOT_FOUND');
     }
   }
 }

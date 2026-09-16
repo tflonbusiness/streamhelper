@@ -25,7 +25,7 @@ CREATE TABLE accounts (
 CREATE TABLE account_members (
   account_id BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
   user_id    BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  role       TEXT NOT NULL CHECK (role IN ('owner', 'admin')),
+  role       TEXT NOT NULL CHECK (role IN ('owner', 'moderator')),
   is_active  BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -50,8 +50,8 @@ Store `accounts.name` as trimmed text from application code (or `btrim` before i
 | `accounts` | `name` | Display label; 2–100 chars after trim; not globally unique |
 | `accounts` | `owner_user_id` | Paying owner; unique — one owned account per user |
 | `accounts` | `is_active` | Team subscription; demo toggled via seed + dev SQL |
-| `account_members` | `role` | `owner` or `admin` |
-| `account_members` | `is_active` | Admin access toggle; owner row not disabled this way |
+| `account_members` | `role` | `owner` or `moderator` |
+| `account_members` | `is_active` | Moderator access toggle; owner row not disabled this way |
 
 ## API contracts (reference)
 
@@ -75,11 +75,11 @@ Body: `{ "name": "Моя команда" }`. Rejects if user already owns an acc
 
 ### POST /accounts/:id/members
 
-Owner only. Body: `{ "email": "admin@example.com" }`. Adds or reactivates admin.
+Owner only. Body: `{ "email": "moderator@example.com" }`. Adds or reactivates moderator.
 
 ### PATCH /accounts/:id/members/:userId
 
-Owner only. Body: `{ "isActive": false }`. Admin rows only.
+Owner only. Body: `{ "isActive": false }`. Moderator rows only.
 
 ## Dev: toggle subscription
 
@@ -108,7 +108,7 @@ type SessionUser = {
   email: string;
   accountId?: number;
   accountName?: string;
-  role?: 'owner' | 'admin';
+  role?: 'owner' | 'moderator';
   accountIsActive?: boolean;
 };
 ```

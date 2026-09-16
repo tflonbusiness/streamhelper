@@ -17,8 +17,8 @@ const MEMBERS = [
   },
   {
     userId: 3,
-    name: 'demo_admin',
-    role: 'admin' as const,
+    name: 'demo_moderator',
+    role: 'moderator' as const,
     isActive: true,
     hasInviteLink: true,
   },
@@ -117,7 +117,7 @@ describe('AccountsController (e2e)', () => {
             return {
               accountId: 10,
               name: 'demo_streamer',
-              role: 'admin' as const,
+              role: 'moderator' as const,
               subscriptionPlan: 'free',
             };
           }
@@ -128,21 +128,21 @@ describe('AccountsController (e2e)', () => {
         isAccountOwner: async (accountId: number, userId: number) =>
           accountId === 10 && userId === 1,
         listAccountMembers: async () => members,
-        createAdminWithAccessLink: async () => ({
+        createModeratorWithAccessLink: async () => ({
           userId: 99,
-          name: 'New Admin',
+          name: 'New Moderator',
           joinUrl: 'http://localhost:5173/join/new-token',
         }),
-        rotateAdminInviteLink: async () => ({
+        rotateModeratorInviteLink: async () => ({
           joinUrl: 'http://localhost:5173/join/rotated-token',
         }),
-        revokeAdminPermanently: async (
+        revokeModeratorPermanently: async (
           _accountId: number,
           _ownerUserId: number,
-          adminUserId: number,
+          moderatorUserId: number,
         ) => {
           members = members.map((m) =>
-            m.userId === adminUserId ? { ...m, isActive: false } : m,
+            m.userId === moderatorUserId ? { ...m, isActive: false } : m,
           );
         },
         provisionOwnerFromKick: async () => ({
@@ -418,21 +418,21 @@ describe('AccountsController (e2e)', () => {
       });
   });
 
-  it('owner creates admin with join link', async () => {
+  it('owner creates moderator with join link', async () => {
     const agent = request.agent(app.getHttpServer());
     await loginOwner(agent);
 
     await agent
-      .post('/accounts/10/admins')
+      .post('/accounts/10/moderators')
       .send({ name: 'Moderator' })
       .expect(201)
       .expect(({ body }) => {
         expect(body.joinUrl).toContain('/join/');
-        expect(body.name).toBe('New Admin');
+        expect(body.name).toBe('New Moderator');
       });
   });
 
-  it('owner fetches admin invite link', async () => {
+  it('owner fetches moderator invite link', async () => {
     const agent = request.agent(app.getHttpServer());
     await loginOwner(agent);
 
@@ -641,7 +641,7 @@ describe('AccountsController (e2e)', () => {
       });
   });
 
-  it('owner permanently revokes admin', async () => {
+  it('owner permanently revokes moderator', async () => {
     const agent = request.agent(app.getHttpServer());
     await loginOwner(agent);
 
@@ -651,8 +651,8 @@ describe('AccountsController (e2e)', () => {
       .get('/accounts/10/members')
       .expect(200)
       .expect(({ body }) => {
-        const admin = body.members.find((m: { userId: number }) => m.userId === 3);
-        expect(admin?.isActive).toBe(false);
+        const moderator = body.members.find((m: { userId: number }) => m.userId === 3);
+        expect(moderator?.isActive).toBe(false);
       });
   });
 });

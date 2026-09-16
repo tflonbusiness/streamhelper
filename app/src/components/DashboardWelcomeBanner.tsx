@@ -17,11 +17,11 @@ import { IconTile } from '@/components/IconTile'
 type DashboardWelcomeBannerProps = {
   accountId: number
   accountName?: string
-  role?: 'owner' | 'admin'
+  role?: 'owner' | 'moderator'
 }
 
-function roleLabel(role: 'owner' | 'admin' | undefined) {
-  return role === 'owner' ? 'Owner' : 'Admin'
+function roleLabel(role: 'owner' | 'moderator' | undefined) {
+  return role === 'owner' ? 'Owner' : 'Moderator'
 }
 
 function channelDisplayName(accountName?: string, slug?: string | null) {

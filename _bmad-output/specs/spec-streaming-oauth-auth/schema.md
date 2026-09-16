@@ -2,13 +2,13 @@
 
 Source: brainstorming `brainstorm-kick-auth-login-2026-09-13`, SPEC.md resolved decisions.
 
-**Provisioning rules:** `accounts.name` = Kick `provider_username` on auto-provision. One account per owner. Admin revoke is permanent (`is_active = false`, no reactivate).
+**Provisioning rules:** `accounts.name` = Kick `provider_username` on auto-provision. One account per owner. Moderator revoke is permanent (`is_active = false`, no reactivate).
 
 ## Tables
 
 ### `users`
 
-Identity for owners and admins. No credentials on this table.
+Identity for owners and moderators. No credentials on this table.
 
 ```sql
 CREATE TABLE users (
@@ -21,7 +21,7 @@ CREATE TABLE users (
 
 ### `auth_credentials`
 
-All login methods. One user may have multiple credentials (linked OAuth providers + optional `access_link` for admins).
+All login methods. One user may have multiple credentials (linked OAuth providers + optional `access_link` for moderators).
 
 ```sql
 CREATE TABLE auth_credentials (
@@ -69,7 +69,7 @@ CREATE TABLE account_members (
   id          BIGSERIAL PRIMARY KEY,
   account_id  BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
   user_id     BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  role        TEXT NOT NULL CHECK (role IN ('owner', 'admin')),
+  role        TEXT NOT NULL CHECK (role IN ('owner', 'moderator')),
   is_active   BOOLEAN NOT NULL DEFAULT true,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -81,6 +81,8 @@ CREATE INDEX idx_members_account ON account_members(account_id);
 ```
 
 Exactly one `owner` per account (enforced in application layer for this epic).
+
+**Migration from `admin`:** `UPDATE account_members SET role = 'moderator' WHERE role = 'admin';` then alter CHECK to `('owner', 'moderator')`.
 
 ### `account_channels`
 
@@ -101,15 +103,15 @@ CREATE TABLE account_channels (
 CREATE INDEX idx_channels_account ON account_channels(account_id);
 ```
 
-## Revoke admin (atomic)
+## Revoke moderator (atomic)
 
 ```sql
 -- 1. Deactivate credential and membership
 UPDATE auth_credentials SET is_active = false, updated_at = now()
-  WHERE user_id = :admin_user_id AND provider = 'access_link';
+  WHERE user_id = :moderator_user_id AND provider = 'access_link';
 UPDATE account_members SET is_active = false, updated_at = now()
-  WHERE user_id = :admin_user_id AND account_id = :account_id;
--- 2. Destroy server sessions for :admin_user_id (implementation-specific)
+  WHERE user_id = :moderator_user_id AND account_id = :account_id;
+-- 2. Destroy server sessions for :moderator_user_id (implementation-specific)
 ```
 
 ## Removed from Epic 1 / 2 model
@@ -119,3 +121,4 @@ UPDATE account_members SET is_active = false, updated_at = now()
 | `users.email`, `users.password_hash` | `auth_credentials` |
 | `accounts.owner_user_id` | `account_members.role = 'owner'` |
 | `accounts.is_active` | `accounts.subscription_plan` |
+| `account_members.role = 'admin'` | `account_members.role = 'moderator'` |

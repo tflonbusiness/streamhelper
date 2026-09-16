@@ -14,7 +14,7 @@ import type { Request } from 'express';
 import { AuthService } from '../auth/auth.service.js';
 import type { SessionData } from '../auth/auth.types.js';
 
-type CreateAdminBody = {
+type CreateModeratorBody = {
   name?: string;
 };
 
@@ -86,10 +86,10 @@ export class AccountsController {
     return { members };
   }
 
-  @Post(':accountId/admins')
-  async createAdmin(
+  @Post(':accountId/moderators')
+  async createModerator(
     @Param('accountId', ParseIntPipe) accountId: number,
-    @Body() body: CreateAdminBody,
+    @Body() body: CreateModeratorBody,
     @Req() req: Request,
   ) {
     const session = req.session as SessionData;
@@ -97,7 +97,7 @@ export class AccountsController {
     this.authService.requireAccountContext(user);
 
     const name = body.name ?? '';
-    const result = await this.authService.createAdmin(
+    const result = await this.authService.createModerator(
       accountId,
       user.id,
       name,
@@ -115,7 +115,7 @@ export class AccountsController {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
 
-    return this.authService.getAdminInviteLink(
+    return this.authService.getModeratorInviteLink(
       accountId,
       user.id,
       memberUserId,
@@ -294,7 +294,7 @@ export class AccountsController {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
 
-    await this.authService.revokeAdmin(accountId, user.id, memberUserId);
+    await this.authService.revokeModerator(accountId, user.id, memberUserId);
     return { ok: true };
   }
 }

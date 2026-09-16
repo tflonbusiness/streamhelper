@@ -15,7 +15,7 @@ import {
 import { KickChannelService } from './kick-channel.service.js';
 import type { KickChannelDto } from './kick-channel.types.js';
 import { KickOAuthService } from './kick-oauth.service.js';
-import type { CreateAdminResult, KickProfile, SessionUser } from './auth.types.js';
+import type { CreateModeratorResult, KickProfile, SessionUser } from './auth.types.js';
 
 @Injectable()
 export class AuthService {
@@ -35,7 +35,7 @@ export class AuthService {
     membership?: {
       accountId: number;
       name: string;
-      role: 'owner' | 'admin';
+      role: 'owner' | 'moderator';
       subscriptionPlan: string;
     },
   ): SessionUser {
@@ -108,13 +108,13 @@ export class AuthService {
     return this.establishSessionForUserId(userId);
   }
 
-  async createAdmin(
+  async createModerator(
     accountId: number,
     ownerUserId: number,
     name: string,
-  ): Promise<CreateAdminResult> {
+  ): Promise<CreateModeratorResult> {
     try {
-      const result = await this.database.createAdminWithAccessLink(
+      const result = await this.database.createModeratorWithAccessLink(
         accountId,
         ownerUserId,
         name,
@@ -128,9 +128,9 @@ export class AuthService {
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === 'FORBIDDEN') {
-          throw new ForbiddenException('Only account owner can create admins');
+          throw new ForbiddenException('Only account owner can create moderators');
         }
-        if (error.message === 'INVALID_ADMIN_NAME') {
+        if (error.message === 'INVALID_MODERATOR_NAME') {
           throw new BadRequestException('Name must be 2-100 characters');
         }
       }
@@ -138,24 +138,24 @@ export class AuthService {
     }
   }
 
-  async revokeAdmin(
+  async revokeModerator(
     accountId: number,
     ownerUserId: number,
-    adminUserId: number,
+    moderatorUserId: number,
   ): Promise<void> {
     try {
-      await this.database.revokeAdminPermanently(
+      await this.database.revokeModeratorPermanently(
         accountId,
         ownerUserId,
-        adminUserId,
+        moderatorUserId,
       );
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === 'FORBIDDEN') {
-          throw new ForbiddenException('Only account owner can revoke admins');
+          throw new ForbiddenException('Only account owner can revoke moderators');
         }
-        if (error.message === 'ADMIN_NOT_FOUND') {
-          throw new NotFoundException('Admin not found');
+        if (error.message === 'MODERATOR_NOT_FOUND') {
+          throw new NotFoundException('Moderator not found');
         }
       }
       throw error;
@@ -651,16 +651,16 @@ export class AuthService {
     return this.kickChannel.getChannelForAccount(accountId);
   }
 
-  async getAdminInviteLink(
+  async getModeratorInviteLink(
     accountId: number,
     ownerUserId: number,
-    adminUserId: number,
+    moderatorUserId: number,
   ): Promise<{ joinUrl: string }> {
     try {
-      return await this.database.rotateAdminInviteLink(
+      return await this.database.rotateModeratorInviteLink(
         accountId,
         ownerUserId,
-        adminUserId,
+        moderatorUserId,
         this.getAppBaseUrl(),
       );
     } catch (error) {
@@ -668,11 +668,11 @@ export class AuthService {
         if (error.message === 'FORBIDDEN') {
           throw new ForbiddenException('Only account owner can copy invite links');
         }
-        if (error.message === 'ADMIN_NOT_FOUND') {
-          throw new NotFoundException('Admin not found');
+        if (error.message === 'MODERATOR_NOT_FOUND') {
+          throw new NotFoundException('Moderator not found');
         }
         if (error.message === 'INVITE_LINK_NOT_FOUND') {
-          throw new NotFoundException('Invite link not available for this admin');
+          throw new NotFoundException('Invite link not available for this moderator');
         }
       }
       throw error;

@@ -18,10 +18,10 @@ import { Link2, UserPlus, Users, UserX } from 'lucide-react'
 import type { RowAction } from '@/components/RowActionsMenu'
 import { type FormEvent, useCallback, useEffect, useState } from 'react'
 import {
-  createAdmin,
+  createModerator,
   fetchAccountMembers,
-  fetchAdminInviteLink,
-  revokeAdmin,
+  fetchModeratorInviteLink,
+  revokeModerator,
   type AccountMember,
 } from '@/api/auth'
 import { AppTable, type AppTableColumn } from '@/components/AppTable'
@@ -33,7 +33,7 @@ import { useNotification } from '@/context/NotificationContext'
 import { cardSx, inputFieldSx, mutedChipSx, toneChipSx } from '@/theme/colors'
 
 function roleBadge(role: AccountMember['role']) {
-  return role === 'owner' ? 'Owner' : 'Admin'
+  return role === 'owner' ? 'Owner' : 'Moderator'
 }
 
 function memberRoleChip(role: AccountMember['role'], palette: Theme['palette']) {
@@ -78,7 +78,7 @@ export function TeamPage() {
   const [loadingMembers, setLoadingMembers] = useState(true)
   const [membersError, setMembersError] = useState<string | null>(null)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
-  const [adminName, setAdminName] = useState('')
+  const [moderatorName, setModeratorName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [copyingMemberId, setCopyingMemberId] = useState<number | null>(null)
@@ -108,7 +108,7 @@ export function TeamPage() {
   }, [loadMembers])
 
   function resetCreateForm() {
-    setAdminName('')
+    setModeratorName('')
     setCreateError(null)
   }
 
@@ -119,7 +119,7 @@ export function TeamPage() {
     }
   }
 
-  async function handleCreateAdmin(event: FormEvent<HTMLFormElement>) {
+  async function handleCreateModerator(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!user?.accountId || user.role !== 'owner') {
       return
@@ -129,16 +129,16 @@ export function TeamPage() {
     setCreateError(null)
 
     try {
-      await createAdmin(user.accountId, adminName)
+      await createModerator(user.accountId, moderatorName)
       setCreateDialogOpen(false)
       resetCreateForm()
       await loadMembers()
       showSuccess(
-        'Copy the link and share it with the administrator.',
+        'Copy the link and share it with the moderator.',
       )
     } catch (error) {
       setCreateError(
-        error instanceof Error ? error.message : 'Could not create admin',
+        error instanceof Error ? error.message : 'Could not create moderator',
       )
     } finally {
       setIsCreating(false)
@@ -153,7 +153,7 @@ export function TeamPage() {
     setCopyingMemberId(member.userId)
 
     try {
-      const joinUrl = await fetchAdminInviteLink(user.accountId, member.userId)
+      const joinUrl = await fetchModeratorInviteLink(user.accountId, member.userId)
       await navigator.clipboard.writeText(joinUrl)
       showSuccess(`Link for ${member.name} copied.`)
     } catch (error) {
@@ -165,15 +165,15 @@ export function TeamPage() {
     }
   }
 
-  async function handleRevokeAdmin(member: AccountMember) {
-    if (!user?.accountId || member.role !== 'admin' || !member.isActive) {
+  async function handleRevokeModerator(member: AccountMember) {
+    if (!user?.accountId || member.role !== 'moderator' || !member.isActive) {
       return
     }
 
     try {
-      await revokeAdmin(user.accountId, member.userId)
+      await revokeModerator(user.accountId, member.userId)
       await loadMembers()
-      showSuccess('Administrator access revoked.')
+      showSuccess('Moderator access revoked.')
     } catch (error) {
       showError(
         error instanceof Error ? error.message : 'Could not revoke access',
@@ -182,7 +182,7 @@ export function TeamPage() {
   }
 
   function memberActions(member: AccountMember): RowAction[] {
-    if (member.role !== 'admin' || !member.isActive) {
+    if (member.role !== 'moderator' || !member.isActive) {
       return []
     }
 
@@ -204,7 +204,7 @@ export function TeamPage() {
       label: 'Revoke',
       icon: <UserX size={16} aria-hidden />,
       destructive: true,
-      onClick: () => void handleRevokeAdmin(member),
+      onClick: () => void handleRevokeModerator(member),
     })
 
     return actions
@@ -266,7 +266,7 @@ export function TeamPage() {
     <Stack spacing={4}>
       <PageHeader
         title="Team"
-        description="Invite admins and manage access"
+        description="Invite moderators and manage access"
         icon={Users}
         iconVariant="info"
       />
@@ -298,7 +298,7 @@ export function TeamPage() {
                   Members
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Manage administrator access
+                  Manage moderator access
                 </Typography>
               </Stack>
             </Stack>
@@ -349,9 +349,9 @@ export function TeamPage() {
         <DialogContent>
           <Stack spacing={1.5} sx={{ mb: 3 }}>
             <Typography variant="body2" color="text.secondary">
-              The administrator will get access to the team dashboard: view
+              The moderator will get access to the team dashboard: view
               the home page, manage streamer modules, and revoke access for
-              other admins. Only the owner can add new members.
+              other moderators. Only the owner can add new members.
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Enter a name and share the link — they will join the team
@@ -360,15 +360,15 @@ export function TeamPage() {
           </Stack>
           <Box
             component="form"
-            id="team-create-admin-form"
-            onSubmit={handleCreateAdmin}
+            id="team-create-moderator-form"
+            onSubmit={handleCreateModerator}
           >
             <Stack spacing={2.5}>
               <TextField
-                id="admin-name"
+                id="moderator-name"
                 label="Name"
-                value={adminName}
-                onChange={(event) => setAdminName(event.target.value)}
+                value={moderatorName}
+                onChange={(event) => setModeratorName(event.target.value)}
                 required
                 slotProps={{ htmlInput: { minLength: 2, maxLength: 100 } }}
                 autoFocus
@@ -377,9 +377,9 @@ export function TeamPage() {
                 sx={inputFieldSx}
               />
               <TextField
-                id="admin-role"
+                id="moderator-role"
                 label="Role"
-                value="Admin"
+                value="Moderator"
                 disabled
                 fullWidth
                 size="small"
@@ -402,7 +402,7 @@ export function TeamPage() {
           </Button>
           <Button
             type="submit"
-            form="team-create-admin-form"
+            form="team-create-moderator-form"
             variant="contained"
             disabled={isCreating}
           >

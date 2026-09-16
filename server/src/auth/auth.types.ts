@@ -3,7 +3,7 @@ export type SessionUser = {
   name: string;
   accountId?: number;
   accountName?: string;
-  role?: 'owner' | 'admin';
+  role?: 'owner' | 'moderator';
   subscriptionPlan?: string;
 };
 
@@ -22,7 +22,7 @@ export type KickProfile = {
   channelSlug: string;
 };
 
-export type CreateAdminResult = {
+export type CreateModeratorResult = {
   userId: number;
   name: string;
   joinUrl: string;

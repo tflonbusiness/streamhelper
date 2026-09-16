@@ -40,7 +40,7 @@ sources: []
 - **Scope** per `scope.md`: `app/src`, `app/index.html`, `landing/index.html`, server user-facing strings and tests; exclude `node_modules`, `_bmad-output`, and third-party OAuth screens.
 - **Brand:** product name stays **Caz Agent**; game names use the English library names (Wheel of Fortune, First Reaction, Growing Jackpot, Red vs Black, Tower, Safe Crack, Limit 50, Marathon).
 - **Prior BMad companions** with Russian UI copy (e.g. `spec-caz-team-dashboard/surfaces.md`, `spec-subscription-tab/surfaces.md`) are **not** batch-updated in this pass — refresh them only when that feature is next touched; until then, English from this spec wins in code.
-- **Role labels:** Owner / Admin (not Владелец / Админ).
+- **Role labels:** Owner / Moderator (not Владелец / Админ; not Admin).
 
 ## Non-goals
 
@@ -51,7 +51,7 @@ sources: []
 
 ## Success signal
 
-A fresh clone: operator opens landing → English hero and CTA → logs in via Kick → sidebar shows Home, Team, Modules, Subscription → all pages, toasts, errors, and stats labels are English → `rg '[а-яА-ЯёЁ]' app/src landing server/src server/test` returns no matches in user-facing strings → `npm run build` in `app/` passes.
+A fresh clone: operator opens landing → English hero and CTA → logs in via Kick → sidebar shows Home, Team, Modules, Subscription → all pages, toasts, errors, and stats labels are English → role badge shows **Moderator** not Admin → `rg '[а-яА-ЯёЁ]' app/src landing server/src server/test` returns no matches in user-facing strings → `npm run build` in `app/` passes.
 
 ## Assumptions
 

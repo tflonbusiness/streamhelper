@@ -3,19 +3,19 @@ export type AuthUser = {
   name: string
   accountId?: number
   accountName?: string
-  role?: 'owner' | 'admin'
+  role?: 'owner' | 'moderator'
   subscriptionPlan?: string
 }
 
 export type AccountMember = {
   userId: number
   name: string
-  role: 'owner' | 'admin'
+  role: 'owner' | 'moderator'
   isActive: boolean
   hasInviteLink: boolean
 }
 
-export type CreateAdminResult = {
+export type CreateModeratorResult = {
   userId: number
   name: string
   joinUrl: string
@@ -65,11 +65,11 @@ export async function fetchCurrentUser(): Promise<AuthUser | null> {
   return data.user
 }
 
-export async function createAdmin(
+export async function createModerator(
   accountId: number,
   name: string,
-): Promise<CreateAdminResult> {
-  const response = await fetch(`/accounts/${accountId}/admins`, {
+): Promise<CreateModeratorResult> {
+  const response = await fetch(`/accounts/${accountId}/moderators`, {
     method: 'POST',
     credentials: 'include',
     headers: jsonHeaders,
@@ -77,10 +77,10 @@ export async function createAdmin(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Could not create admin'))
+    throw new Error(await readErrorMessage(response, 'Could not create moderator'))
   }
 
-  return parseJson<CreateAdminResult>(response)
+  return parseJson<CreateModeratorResult>(response)
 }
 
 export async function fetchAccountMembers(
@@ -98,7 +98,7 @@ export async function fetchAccountMembers(
   return data.members
 }
 
-export async function fetchAdminInviteLink(
+export async function fetchModeratorInviteLink(
   accountId: number,
   memberUserId: number,
 ): Promise<string> {
@@ -119,7 +119,7 @@ export async function fetchAdminInviteLink(
   return data.joinUrl
 }
 
-export async function revokeAdmin(
+export async function revokeModerator(
   accountId: number,
   memberUserId: number,
 ): Promise<void> {
@@ -133,7 +133,7 @@ export async function revokeAdmin(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not revoke admin access'),
+      await readErrorMessage(response, 'Could not revoke moderator access'),
     )
   }
 }

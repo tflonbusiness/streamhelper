@@ -23,7 +23,7 @@ const features = [
     icon: Users,
     variant: 'info' as const,
     title: 'Team access',
-    description: 'Manage admins and permissions',
+    description: 'Manage moderators and permissions',
   },
   {
     icon: Layers,

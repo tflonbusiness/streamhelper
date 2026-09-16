@@ -9,10 +9,10 @@ import { DatabaseService } from './../src/database/database.service.js';
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication<App>;
-  let adminActive = true;
+  let moderatorActive = true;
 
   beforeEach(async () => {
-    adminActive = true;
+    moderatorActive = true;
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -22,7 +22,7 @@ describe('AuthController (e2e)', () => {
         onModuleInit: async () => undefined,
         onModuleDestroy: async () => undefined,
         hasActiveCredentials: async (userId: number) => {
-          if (userId === 1 || (userId === 3 && adminActive)) {
+          if (userId === 1 || (userId === 3 && moderatorActive)) {
             return true;
           }
           return false;
@@ -32,7 +32,7 @@ describe('AuthController (e2e)', () => {
             return { id: 1, name: 'demo_streamer' };
           }
           if (userId === 3) {
-            return { id: 3, name: 'demo_admin' };
+            return { id: 3, name: 'demo_moderator' };
           }
           return null;
         },
@@ -45,11 +45,11 @@ describe('AuthController (e2e)', () => {
               subscriptionPlan: 'free',
             };
           }
-          if (userId === 3 && adminActive) {
+          if (userId === 3 && moderatorActive) {
             return {
               accountId: 10,
               name: 'demo_streamer',
-              role: 'admin' as const,
+              role: 'moderator' as const,
               subscriptionPlan: 'free',
             };
           }
@@ -71,7 +71,7 @@ describe('AuthController (e2e)', () => {
           },
         }),
         findAccessLinkUserIdByToken: async (token: string) => {
-          if (token === 'valid-admin-token' && adminActive) {
+          if (token === 'valid-moderator-token' && moderatorActive) {
             return 3;
           }
           return null;
@@ -79,13 +79,13 @@ describe('AuthController (e2e)', () => {
         isAccountOwner: async () => true,
         hasActiveMembership: async () => true,
         listAccountMembers: async () => [],
-        createAdminWithAccessLink: async () => ({
+        createModeratorWithAccessLink: async () => ({
           userId: 99,
-          name: 'New Admin',
+          name: 'New Moderator',
           joinUrl: 'http://localhost:5173/join/test-token',
         }),
-        revokeAdminPermanently: async () => {
-          adminActive = false;
+        revokeModeratorPermanently: async () => {
+          moderatorActive = false;
         },
       })
       .compile();
@@ -131,11 +131,11 @@ describe('AuthController (e2e)', () => {
       });
   });
 
-  it('admin join creates session', async () => {
+  it('moderator join creates session', async () => {
     const agent = request.agent(app.getHttpServer());
 
     await agent
-      .get('/join/valid-admin-token')
+      .get('/join/valid-moderator-token')
       .expect(302)
       .expect('Location', 'http://localhost:5173/dashboard');
 
@@ -144,15 +144,15 @@ describe('AuthController (e2e)', () => {
       .expect(200)
       .expect(({ body }) => {
         expect(body.user.id).toBe(3);
-        expect(body.user.role).toBe('admin');
+        expect(body.user.role).toBe('moderator');
       });
   });
 
-  it('revoked admin cannot access me', async () => {
+  it('revoked moderator cannot access me', async () => {
     const agent = request.agent(app.getHttpServer());
 
-    await agent.get('/join/valid-admin-token');
-    adminActive = false;
+    await agent.get('/join/valid-moderator-token');
+    moderatorActive = false;
 
     await agent.get('/auth/me').expect(401);
   });

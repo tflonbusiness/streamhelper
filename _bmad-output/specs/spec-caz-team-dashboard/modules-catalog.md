@@ -4,7 +4,7 @@ Static catalog for `/modules`. IDs are stable for future backend mapping. Englis
 
 ## Module rows
 
-Exactly two cards render on `/modules` — no other catalog rows.
+Exactly two cards render on `/modules` — no other catalog rows and no connected-modules summary banner above the grid.
 
 | ID | Name | Description | Catalog status | Interaction |
 |----|------|-------------|----------------|-------------|
