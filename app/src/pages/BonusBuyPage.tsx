@@ -8,6 +8,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Grid,
   IconButton,
   Skeleton,
   Stack,
@@ -47,6 +48,45 @@ function formatDateTime(iso: string): string {
   }).format(new Date(iso))
 }
 
+function RecordExpandedDetails({ record }: { record: BonusBuyRecord }) {
+  return (
+    <Grid container spacing={2}>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            display: 'block',
+            color: 'text.secondary',
+            fontWeight: 600,
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+            mb: 0.5,
+          }}
+        >
+          Created by
+        </Typography>
+        <Typography variant="body2">{record.createdByName}</Typography>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            display: 'block',
+            color: 'text.secondary',
+            fontWeight: 600,
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+            mb: 0.5,
+          }}
+        >
+          Created
+        </Typography>
+        <Typography variant="body2">{formatDateTime(record.createdAt)}</Typography>
+      </Grid>
+    </Grid>
+  )
+}
+
 function recordStatusChip(
   isActive: boolean,
   palette: Theme['palette'],
@@ -79,6 +119,9 @@ export function BonusBuyPage() {
   const [startBalance, setStartBalance] = useState(DEFAULT_START_BALANCE)
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
+  const [expandedRecordIds, setExpandedRecordIds] = useState<Set<number>>(
+    new Set(),
+  )
 
   const loadRecords = useCallback(async () => {
     if (!user?.accountId) {
@@ -143,6 +186,18 @@ export function BonusBuyPage() {
     }
   }
 
+  function toggleRecordExpanded(recordId: number) {
+    setExpandedRecordIds((previous) => {
+      const next = new Set(previous)
+      if (next.has(recordId)) {
+        next.delete(recordId)
+      } else {
+        next.add(recordId)
+      }
+      return next
+    })
+  }
+
   const recordColumns: AppTableColumn<BonusBuyRecord>[] = [
     {
       id: 'title',
@@ -173,27 +228,6 @@ export function BonusBuyPage() {
       sx: { px: 1.5, whiteSpace: 'nowrap' },
       render: (record) =>
         recordStatusChip(record.isActive, theme.palette, theme),
-    },
-    {
-      id: 'createdBy',
-      header: 'Created by',
-      width: 140,
-      minWidth: 140,
-      sx: {
-        minWidth: 0,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-      },
-      render: (record) => record.createdByName,
-    },
-    {
-      id: 'createdAt',
-      header: 'Created',
-      width: 200,
-      minWidth: 200,
-      sx: { whiteSpace: 'nowrap' },
-      render: (record) => formatDateTime(record.createdAt),
     },
     {
       id: 'action',
@@ -299,6 +333,17 @@ export function BonusBuyPage() {
                 columns={recordColumns}
                 rows={records}
                 getRowKey={(record) => record.id}
+                expandable={{
+                  isExpanded: (record) => expandedRecordIds.has(record.id),
+                  onToggle: (record) => toggleRecordExpanded(record.id),
+                  ariaLabel: (record) =>
+                    expandedRecordIds.has(record.id)
+                      ? `Collapse details for ${record.title}`
+                      : `Expand details for ${record.title}`,
+                  renderDetail: (record) => (
+                    <RecordExpandedDetails record={record} />
+                  ),
+                }}
               />
             ) : null}
             {!loadingRecords && !recordsError && records.length === 0 ? (

@@ -63,7 +63,7 @@ const tableSx: SxProps<Theme> = {
     px: 2,
     whiteSpace: 'nowrap',
   },
-  '& .MuiTableBody-root .MuiTableCell-root': {
+  '& .MuiTableBody-root .MuiTableRow-root:not(.app-table-detail-row) .MuiTableCell-root': {
     borderBottom: '1px solid',
     borderColor: alpha(colors.neutral[100], 0.05),
     py: 1.5,
@@ -189,17 +189,17 @@ export function AppTable<T>({
                     </TableCell>
                   ))}
                 </TableRow>
-                {expandable ? (
-                  <TableRow key={`${rowKey}-details`}>
+                {expandable && expanded ? (
+                  <TableRow key={`${rowKey}-details`} className="app-table-detail-row">
                     <TableCell
                       colSpan={columns.length + 1}
                       sx={{
-                        py: 0,
-                        px: 0,
-                        borderBottom: expanded ? undefined : 0,
+                        p: 0,
+                        borderBottom: '1px solid',
+                        borderColor: alpha(colors.neutral[100], 0.05),
                       }}
                     >
-                      <Collapse in={expanded} timeout="auto" unmountOnExit>
+                      <Collapse in timeout="auto">
                         <Box
                           sx={{
                             px: 2,

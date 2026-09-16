@@ -48,7 +48,7 @@ sources: []
 
 - **CAP-6**
   - **intent:** An operator sees the history of bonus buy records for the current account on the history page.
-  - **success:** On load, `GET /accounts/:accountId/bonus-buys` populates an `AppTable` with columns title, start balance (`$X.XX`), active/inactive status chips, created by (user name), created date, and **Open** action; rows sorted newest first; **Open** links to `/bonus-buy/:id`; empty, loading, and error states handled; only the session account's records appear.
+  - **success:** On load, `GET /accounts/:accountId/bonus-buys` populates an `AppTable` with main columns title, start balance (`$X.XX`), active/inactive status chips, and **Open** action; expanding a row reveals **Created by** (`createdByName`) and **Created** (locale date-time) in a detail panel; rows sorted newest first; **Open** links to `/bonus-buy/:id`; empty, loading, and error states handled; only the session account's records appear.
 
 - **CAP-7**
   - **intent:** An operator opens a bonus buy session and sees the full session workspace for that record.
@@ -96,7 +96,7 @@ sources: []
 
 - **CAP-11**
   - **intent:** An operator reviews all slots, edits fields, records wins, and marks which slot is now playing on the widget.
-  - **success:** Section title **Bonus list (N)** where N matches slot count; empty state **No bonuses added yet.** when N = 0; populated rows show slot, nick, purchase, win, multiplier, **Now playing** chip when `is_now_playing`, created by, and created date per `bonus-buy-slots.md`; **Edit** dialog PATCHes any mutable field; **Set as playing** / **Clear playing** shortcuts PATCH `is_now_playing` (at most one playing slot per session); stats refresh without full page reload.
+  - **success:** Section title **Bonus list (N)** where N matches slot count; empty state **No bonuses added yet.** when N = 0; `AppTable` main columns show slot (with copy + **Now playing** chip), purchase, win, multiplier, and row actions; expanding a row reveals nickname, status, created by, and created date in `SlotExpandedDetails` per `bonus-buy-slots.md`; **Edit** dialog PATCHes any mutable field; **Set as playing** / **Clear playing** shortcuts PATCH `is_now_playing` (at most one playing slot per session); stats refresh without full page reload.
 
 - **CAP-13**
   - **intent:** The system records which slot is currently playing so the stream widget can display it.
@@ -108,7 +108,7 @@ sources: []
 
 - **CAP-12**
   - **intent:** An operator sees the Bonus Buy history page using the same shared table, card, chip, and dialog patterns as `/team`.
-  - **success:** `BonusBuyPage` uses `AppTable` with column config (no raw `Table` markup); status chips use `toneChipSx` / `mutedChipSx`; history section uses `cardSx` with icon tile header row; create dialog uses `TextField` + `inputFieldSx`; successful create fires a `NotificationContext` toast; visual parity with `TeamPage.tsx` at 1280px without horizontal scroll.
+  - **success:** `BonusBuyPage` uses `AppTable` with column config and `expandable` prop (no raw `Table` markup); expandable behavior matches **Bonus list** on `BonusBuySessionPage` (`expandedRecordIds` Set, chevron toggle, `Collapse` detail panel, `RecordExpandedDetails` with same Grid/caption typography as `SlotExpandedDetails`); main columns Title, Start balance, Status, Open only; **Created by** and **Created** in expandable detail; status chips use `toneChipSx` / `mutedChipSx`; history section uses `cardSx` with icon tile header row; create dialog uses `TextField` + `inputFieldSx`; successful create fires a `NotificationContext` toast; main table fits at 1280px without horizontal scroll.
 
 - **CAP-15**
   - **intent:** An operator edits the session title and start balance from the session workspace.
@@ -129,7 +129,8 @@ sources: []
 - **No hard delete:** slot `DELETE` sets `is_archived = true` — never `DELETE FROM bonus_buy_slot`.
 - **One playing slot:** at most one `bonus_buy_slot.is_now_playing = true` per `bonus_buy_id`; PATCH clears siblings; partial unique index per `bonus-buy-slots.md`.
 - **API:** account-scoped REST for records, nested slots, and widget settings including partial `PATCH` and `DELETE` on slots; session auth and membership check; SQL in `DatabaseService`.
-- **History page UI:** `AppTable`, `cardSx`, `inputFieldSx`, `toneChipSx`, `mutedChipSx`, `StatusAlert`, `NotificationContext` — pattern `TeamPage.tsx`; details in `bonus-buy-records.md` and `widget-page.md`.
+- **History page UI:** `AppTable` with `expandable` for per-row metadata, `cardSx`, `inputFieldSx`, `toneChipSx`, `mutedChipSx`, `StatusAlert`, `NotificationContext` — pattern `TeamPage.tsx` + session slot expandable detail; details in `bonus-buy-records.md` and `widget-page.md`.
+- **History expandable detail:** parity with **Bonus list** `AppTable` on `BonusBuySessionPage` — `useState<Set<number>>`, toggle helper, `expandable` config (`isExpanded`, `onToggle`, `ariaLabel`, `renderDetail`); main columns Title, Start balance, Status, Open only; **Created by** and **Created** in `RecordExpandedDetails` (same component pattern as `SlotExpandedDetails`); rows collapsed by default.
 - **Session page UI:** bespoke session header and panel layout per `session-page.md` — not `PageHeader` with `Gift` icon.
 - **Visual tokens:** dark MUI theme from `app/src/theme/colors.ts` — amber primary CTAs, emerald positive currency; session page emerald accents per adopted `design-tokens.md` mapping; overlay defaults in `bonus-buy-widget.md`.
 - **English UI:** all labels per `spec-app-english-only`; mockup Russian strings mapped in `session-page.md`.

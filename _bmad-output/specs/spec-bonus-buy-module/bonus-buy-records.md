@@ -104,22 +104,64 @@ On success: close dialog, refresh table, `NotificationContext.showSuccess` toast
 
 ### History table (`AppTable`)
 
-Define columns via `AppTableColumn<BonusBuyRecord>[]`. Use `AppTable` from `@/components/AppTable`.
+Define columns via `AppTableColumn<BonusBuyRecord>[]`. Use `AppTable` from `@/components/AppTable` with the `expandable` prop.
+
+**Canonical reference:** `BonusBuySessionPage` **Bonus list ({count})** table — copy its expandable mechanics verbatim; only column definitions and `RecordExpandedDetails` fields differ.
+
+| Bonus list (session page) | History table (`/bonus-buy`) |
+|---------------------------|------------------------------|
+| `expandedSlotIds` + `toggleSlotExpanded` | `expandedRecordIds` + `toggleRecordExpanded` |
+| `SlotExpandedDetails` | `RecordExpandedDetails` |
+| Main: Slot, Purchase, Win, Multiplier, Actions | Main: Title, Start balance, Status, Open |
+| Detail: Nickname, Status, Created by, Created | Detail: Created by, Created |
+
+Shared behavior (from `AppTable` + session page):
+
+- Chevron `IconButton` in leading column; rotates 180° when expanded
+- `Collapse` detail row with neutral `bgcolor` and top border (built into `AppTable`)
+- `ariaLabel`: `Expand details for {title}` / `Collapse details for {title}`
+- Rows collapsed by default; multiple rows may be expanded simultaneously
+- No persistence of expanded state across navigation
+
+#### Main columns
 
 | Column | Source | Display |
 |--------|--------|---------|
 | Title | `title` | Plain text, `fontWeight: 500`, ellipsis on overflow |
 | Start balance | `startBalance` | `$X,XXX.XX` (en-US, 2 decimals) |
 | Status | `isActive` | `Chip` — **Active** via `toneChipSx(success.light)`; **Inactive** via `mutedChipSx(theme)` |
-| Created by | `createdByName` | Plain text |
-| Created | `createdAt` | Locale date-time (`en-US`, medium date + short time) |
-| Action | — | Outlined `Button` as `Link` to `/bonus-buy/:id`, label **Open** |
+| Action | — | Icon `Button` as `Link` to `/bonus-buy/:id` (arrow), `aria-label` includes title |
+
+#### Expandable detail (`RecordExpandedDetails`)
+
+Chevron column from `AppTable` `expandable` config. Rows collapsed by default; `expandedRecordIds: Set<number>` tracks open rows.
+
+| Field | Source | Display |
+|-------|--------|---------|
+| Created by | `createdByName` | `Grid` cell with uppercase caption label **Created by** |
+| Created | `createdAt` | `Grid` cell with uppercase caption label **Created**; locale date-time (`en-US`, medium date + short time) |
+
+Layout: copy `SlotExpandedDetails` structure from `BonusBuySessionPage.tsx` — `Grid container spacing={2}`, each field `Grid size={{ xs: 12, sm: 6, md: 3 }}`, caption `Typography variant="caption"` (uppercase, `text.secondary`, `fontWeight: 600`, `letterSpacing: '0.04em'`), value `Typography variant="body2"`. History detail has two fields only (Created by, Created); session slot detail has four (Nickname, Status, Created by, Created).
+
+`expandable` config:
+
+```ts
+expandable={{
+  isExpanded: (record) => expandedRecordIds.has(record.id),
+  onToggle: (record) => toggleRecordExpanded(record.id),
+  ariaLabel: (record) =>
+    expandedRecordIds.has(record.id)
+      ? `Collapse details for ${record.title}`
+      : `Expand details for ${record.title}`,
+  renderDetail: (record) => <RecordExpandedDetails record={record} />,
+}}
+```
 
 Empty state when no records: `StatusAlert` tone info — **No bonus buy sessions yet**. Loading: three `Skeleton` rows. Fetch error: `StatusAlert` tone error above table area.
 
 Sort: `created_at` descending (newest first) — server-side on list endpoint.
 
-**Row actions:** single **Open** link per row — use inline `Button` in the Actions column, not `RowActionsMenu`.
+**Row actions:** single **Open** link per row in the Actions column — not `RowActionsMenu`.
 
 ## Out of scope (this companion)
 

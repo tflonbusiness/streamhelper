@@ -132,18 +132,28 @@ Archived rows (`is_archived = true`) contribute neither to Spent nor win sums an
 
 ## Bonus list columns (populated)
 
-Minimum columns when list has rows:
+`AppTable` with `expandable` prop on `BonusBuySessionPage`. **Canonical reference** for history table expandable on `/bonus-buy`.
+
+### Main columns
 
 | Column | Source |
 |--------|--------|
-| Slot | `slot_name` |
-| Nick / provider | `nick_provider` or em dash |
+| Slot | `slot_name` (+ copy button, **Now playing** chip inline when `is_now_playing`) |
 | Purchase | `$X.XX` from `purchase_amount` |
-| Win | `$X.XX` or pending if `win_amount` null |
+| Win | `$X.XX` or **Pending** if `win_amount` null |
 | Multiplier | `{multiplier}x` when `win_amount` set; em dash when pending |
-| Playing | **Now playing** chip (`toneChipSx` success) when `is_now_playing`; em dash otherwise |
+| Actions | Set playing, Edit, Delete icon buttons |
+
+### Expandable detail (`SlotExpandedDetails`)
+
+| Field | Source |
+|-------|--------|
+| Nickname | `nick_provider` or em dash |
+| Status | **Now playing** or em dash |
 | Created by | `created_by_name` |
 | Created | `created_at` locale date-time |
+
+Chevron toggle, `expandedSlotIds` Set, and `Collapse` panel styling come from shared `AppTable` — see `bonus-buy-records.md` history table for the parallel contract.
 
 ## Row actions (same slice)
 
