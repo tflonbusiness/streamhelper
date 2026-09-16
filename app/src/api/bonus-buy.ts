@@ -40,6 +40,55 @@ export type PatchBonusBuySlotInput = {
   is_now_playing?: boolean
 }
 
+export type BonusBuyWidgetSettings = {
+  id: number
+  accountId: number
+  width: number
+  height: number
+  backgroundColor: string
+  surfaceColor: string
+  borderColor: string
+  accentColor: string
+  positiveColor: string
+  negativeColor: string
+  liveColor: string
+  textMutedColor: string
+  borderRadius: number
+  padding: number
+  fontFamily: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type PatchBonusBuyWidgetInput = {
+  width?: number
+  height?: number
+  background_color?: string
+  surface_color?: string
+  border_color?: string
+  accent_color?: string
+  positive_color?: string
+  negative_color?: string
+  live_color?: string
+  text_muted_color?: string
+  border_radius?: number
+  padding?: number
+  font_family?: string
+}
+
+export type PublicBonusBuyRecord = {
+  id: number
+  title: string
+  startBalance: string
+  isActive: boolean
+}
+
+export type BonusBuyWidgetView = {
+  record: PublicBonusBuyRecord
+  slots: BonusBuySlot[]
+  settings: BonusBuyWidgetSettings
+}
+
 async function readErrorMessage(response: Response, fallback: string): Promise<string> {
   try {
     const data = await response.json()
@@ -249,4 +298,55 @@ export async function archiveBonusBuySlot(
       await readErrorMessage(response, 'Could not delete slot'),
     )
   }
+}
+
+export async function fetchBonusBuyWidget(
+  accountId: number,
+): Promise<BonusBuyWidgetSettings> {
+  const response = await fetch(`/accounts/${accountId}/bonus-buy-widget`, {
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, 'Could not load widget settings'),
+    )
+  }
+
+  return response.json() as Promise<BonusBuyWidgetSettings>
+}
+
+export async function patchBonusBuyWidget(
+  accountId: number,
+  body: PatchBonusBuyWidgetInput,
+): Promise<BonusBuyWidgetSettings> {
+  const response = await fetch(`/accounts/${accountId}/bonus-buy-widget`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: jsonHeaders,
+      body: JSON.stringify(body),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, 'Could not update widget settings'),
+    )
+  }
+
+  return response.json() as Promise<BonusBuyWidgetSettings>
+}
+
+export async function fetchPublicBonusBuyWidget(
+  bonusBuyId: number,
+): Promise<BonusBuyWidgetView> {
+  const response = await fetch(`/bonus-buys/${bonusBuyId}/widget`)
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, 'Could not load widget'),
+    )
+  }
+
+  return response.json() as Promise<BonusBuyWidgetView>
 }

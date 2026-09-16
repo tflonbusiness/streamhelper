@@ -8,17 +8,14 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControlLabel,
   Grid,
   IconButton,
   Skeleton,
   Stack,
-  Switch,
   TextField,
   Typography,
 } from '@mui/material'
 import {
-  ArrowLeft,
   Circle,
   CircleDot,
   CircleStop,
@@ -39,10 +36,13 @@ import {
   endBonusBuy,
   fetchBonusBuy,
   fetchBonusBuySlots,
+  fetchBonusBuyWidget,
   patchBonusBuy,
   patchBonusBuySlot,
+  patchBonusBuyWidget,
   type BonusBuyRecord,
   type BonusBuySlot,
+  type BonusBuyWidgetSettings,
 } from '@/api/bonus-buy'
 import { AppTable, type AppTableColumn } from '@/components/AppTable'
 import { PageHeader } from '@/components/PageHeader'
@@ -51,11 +51,19 @@ import { StatusAlert } from '@/components/StatusAlert'
 import { useAuth } from '@/context/AuthContext'
 import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
 import { useNotification } from '@/context/NotificationContext'
+import { HexColorField } from '@/components/bonus-buy/HexColorField'
+import { WidgetStylePreview } from '@/components/bonus-buy/WidgetStylePreview'
+import { WidgetThemePresetPicker } from '@/components/bonus-buy/WidgetThemePresetPicker'
 import {
   computeSessionStats,
   formatMultiplierDisplay,
 } from '@/lib/bonus-buy-stats'
-import { buildBonusBuyWidgetUrl } from '@/lib/bonus-buy-widget-dimensions'
+import {
+  applyBonusBuyWidgetPreset,
+  matchBonusBuyWidgetPreset,
+  type BonusBuyWidgetPresetId,
+} from '@/lib/bonus-buy-widget-presets'
+import { validateBonusBuyWidgetDraft } from '@/lib/bonus-buy-widget-validation'
 import { MODULE_CATALOG } from '@/lib/modules'
 import { cardSx, colors, inputFieldSx, toneChipSx } from '@/theme/colors'
 
@@ -298,6 +306,15 @@ export function BonusBuySessionPage() {
   const [endDialogOpen, setEndDialogOpen] = useState(false)
   const [isEnding, setIsEnding] = useState(false)
   const [endError, setEndError] = useState<string | null>(null)
+
+  const [widgetDialogOpen, setWidgetDialogOpen] = useState(false)
+  const [widgetPreviewDialogOpen, setWidgetPreviewDialogOpen] = useState(false)
+  const [widgetDraft, setWidgetDraft] = useState<BonusBuyWidgetSettings | null>(null)
+  const [lastValidWidgetDraft, setLastValidWidgetDraft] =
+    useState<BonusBuyWidgetSettings | null>(null)
+  const [widgetEditError, setWidgetEditError] = useState<string | null>(null)
+  const [isLoadingWidget, setIsLoadingWidget] = useState(false)
+  const [isSavingWidget, setIsSavingWidget] = useState(false)
 
   useSetBreadcrumbLabel(
     record ? `${record.title} #${record.id}` : null,
@@ -591,6 +608,119 @@ export function BonusBuySessionPage() {
 
   function showStub(message: string) {
     showSuccess(message)
+  }
+
+  async function openWidgetStyleDialog() {
+    if (!user?.accountId) {
+      return
+    }
+
+    setWidgetDialogOpen(true)
+    setWidgetEditError(null)
+    setIsLoadingWidget(true)
+
+    try {
+      const settings = await fetchBonusBuyWidget(user.accountId)
+      setWidgetDraft(settings)
+      setLastValidWidgetDraft(settings)
+    } catch (loadError) {
+      setWidgetEditError(
+        loadError instanceof Error
+          ? loadError.message
+          : 'Could not load widget settings',
+      )
+      setWidgetDraft(null)
+    } finally {
+      setIsLoadingWidget(false)
+    }
+  }
+
+  function updateWidgetDraft<K extends keyof BonusBuyWidgetSettings>(
+    key: K,
+    value: BonusBuyWidgetSettings[K],
+  ) {
+    setWidgetDraft((previous) =>
+      previous ? { ...previous, [key]: value } : previous,
+    )
+  }
+
+  useEffect(() => {
+    if (!widgetDraft) {
+      return
+    }
+
+    if (validateBonusBuyWidgetDraft(widgetDraft) === null) {
+      setLastValidWidgetDraft(widgetDraft)
+    }
+  }, [widgetDraft])
+
+  const widgetDraftValidationError = useMemo(() => {
+    if (!widgetDraft) {
+      return null
+    }
+    return validateBonusBuyWidgetDraft(widgetDraft)
+  }, [widgetDraft])
+
+  const widgetPreviewTheme = lastValidWidgetDraft ?? widgetDraft
+
+  const widgetPreviewDimensionLabel = widgetDraft
+    ? `${widgetDraft.width} × ${widgetDraft.height}`
+    : undefined
+
+  const activeWidgetPresetId = useMemo(() => {
+    if (!widgetDraft) {
+      return null
+    }
+    return matchBonusBuyWidgetPreset(widgetDraft)
+  }, [widgetDraft])
+
+  function applyWidgetPreset(presetId: BonusBuyWidgetPresetId) {
+    setWidgetDraft((previous) =>
+      previous ? applyBonusBuyWidgetPreset(previous, presetId) : previous,
+    )
+  }
+
+  async function handleSaveWidgetStyle() {
+    if (!user?.accountId || !widgetDraft) {
+      return
+    }
+
+    const validationError = validateBonusBuyWidgetDraft(widgetDraft)
+    if (validationError) {
+      setWidgetEditError(validationError)
+      return
+    }
+
+    setIsSavingWidget(true)
+    setWidgetEditError(null)
+
+    try {
+      await patchBonusBuyWidget(user.accountId, {
+        width: widgetDraft.width,
+        height: widgetDraft.height,
+        background_color: widgetDraft.backgroundColor.trim(),
+        surface_color: widgetDraft.surfaceColor.trim(),
+        border_color: widgetDraft.borderColor.trim(),
+        accent_color: widgetDraft.accentColor.trim(),
+        positive_color: widgetDraft.positiveColor.trim(),
+        negative_color: widgetDraft.negativeColor.trim(),
+        live_color: widgetDraft.liveColor.trim(),
+        text_muted_color: widgetDraft.textMutedColor.trim(),
+        border_radius: widgetDraft.borderRadius,
+        padding: widgetDraft.padding,
+        font_family: widgetDraft.fontFamily.trim(),
+      })
+      setWidgetDialogOpen(false)
+      showSuccess('Widget style saved')
+    } catch (saveError) {
+      setWidgetEditError(
+        saveError instanceof Error
+          ? saveError.message
+          : 'Could not save widget settings',
+      )
+    } finally {
+      setIsSavingWidget(false)
+    }
   }
 
   function toggleSlotExpanded(slotId: number) {
@@ -909,7 +1039,7 @@ export function BonusBuySessionPage() {
                 variant="outlined"
                 size="small"
                 startIcon={<Palette size={16} aria-hidden />}
-                onClick={() => showStub('Coming soon')}
+                onClick={() => void openWidgetStyleDialog()}
               >
                 Widget Style
               </Button>
@@ -924,7 +1054,7 @@ export function BonusBuySessionPage() {
               </Button>
               <Button
                 component={Link}
-                to={id ? buildBonusBuyWidgetUrl(id) : '/bonus-buy'}
+                to={id ? `/bonus-buy/${id}/widget` : '/bonus-buy'}
                 target="_blank"
                 rel="noopener noreferrer"
                 variant="outlined"
@@ -1154,6 +1284,204 @@ export function BonusBuySessionPage() {
           >
             {isSavingSession ? 'Saving…' : 'Save'}
           </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={widgetDialogOpen}
+        onClose={() => setWidgetDialogOpen(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>Widget style</DialogTitle>
+        <DialogContent>
+          {isLoadingWidget ? (
+            <Typography sx={{ py: 2, color: 'text.secondary' }}>
+              Loading settings…
+            </Typography>
+          ) : widgetDraft ? (
+            <Grid container spacing={3} sx={{ mt: 1 }}>
+              <Grid size={{ xs: 12 }}>
+                <WidgetThemePresetPicker
+                  activePresetId={activeWidgetPresetId}
+                  onSelectPreset={applyWidgetPreset}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Stack spacing={2}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                    Size
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        label="Width (px)"
+                        type="number"
+                        value={widgetDraft.width}
+                        onChange={(event) =>
+                          updateWidgetDraft(
+                            'width',
+                            Number.parseInt(event.target.value, 10) || 0,
+                          )
+                        }
+                        fullWidth
+                        sx={inputFieldSx}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        label="Height (px)"
+                        type="number"
+                        value={widgetDraft.height}
+                        onChange={(event) =>
+                          updateWidgetDraft(
+                            'height',
+                            Number.parseInt(event.target.value, 10) || 0,
+                          )
+                        }
+                        fullWidth
+                        sx={inputFieldSx}
+                      />
+                    </Grid>
+                  </Grid>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                    Colors
+                  </Typography>
+                  <Grid container spacing={2}>
+                    {(
+                      [
+                        ['backgroundColor', 'Background'],
+                        ['surfaceColor', 'Surface'],
+                        ['borderColor', 'Border'],
+                        ['accentColor', 'Accent'],
+                        ['positiveColor', 'Positive'],
+                        ['negativeColor', 'Negative'],
+                        ['liveColor', 'Live'],
+                        ['textMutedColor', 'Text muted'],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <Grid key={key} size={{ xs: 12, sm: 6 }}>
+                        <HexColorField
+                          label={label}
+                          value={widgetDraft[key]}
+                          onChange={(nextValue) => updateWidgetDraft(key, nextValue)}
+                        />
+                      </Grid>
+                    ))}
+                  </Grid>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                    Shape
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        label="Border radius (px)"
+                        type="number"
+                        value={widgetDraft.borderRadius}
+                        onChange={(event) =>
+                          updateWidgetDraft(
+                            'borderRadius',
+                            Number.parseInt(event.target.value, 10) || 0,
+                          )
+                        }
+                        fullWidth
+                        sx={inputFieldSx}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        label="Padding (px)"
+                        type="number"
+                        value={widgetDraft.padding}
+                        onChange={(event) =>
+                          updateWidgetDraft(
+                            'padding',
+                            Number.parseInt(event.target.value, 10) || 0,
+                          )
+                        }
+                        fullWidth
+                        sx={inputFieldSx}
+                      />
+                    </Grid>
+                  </Grid>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                    Typography
+                  </Typography>
+                  <TextField
+                    label="Font family"
+                    value={widgetDraft.fontFamily}
+                    onChange={(event) => updateWidgetDraft('fontFamily', event.target.value)}
+                    fullWidth
+                    sx={inputFieldSx}
+                  />
+                </Stack>
+              </Grid>
+              <Grid
+                size={{ xs: 12, md: 6 }}
+                sx={{ display: { xs: 'none', md: 'flex' }, flexDirection: 'column' }}
+              >
+                <WidgetStylePreview
+                  record={record}
+                  slots={slots}
+                  previewTheme={widgetPreviewTheme}
+                  dimensionLabel={widgetPreviewDimensionLabel}
+                  validationError={widgetDraftValidationError}
+                />
+              </Grid>
+            </Grid>
+          ) : null}
+          {widgetEditError ? (
+            <Box sx={{ mt: 2 }}>
+              <StatusAlert tone="error">{widgetEditError}</StatusAlert>
+            </Box>
+          ) : null}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, flexWrap: 'wrap', gap: 1 }}>
+          <Button
+            onClick={() => setWidgetPreviewDialogOpen(true)}
+            disabled={!widgetDraft || !record}
+            sx={{ display: { xs: 'inline-flex', md: 'none' } }}
+          >
+            Preview
+          </Button>
+          <Button
+            component={Link}
+            to={id ? `/bonus-buy/${id}/widget` : '/bonus-buy'}
+            target="_blank"
+            rel="noopener noreferrer"
+            disabled={!id}
+          >
+            Preview overlay
+          </Button>
+          <Button onClick={() => setWidgetDialogOpen(false)} disabled={isSavingWidget}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => void handleSaveWidgetStyle()}
+            disabled={isSavingWidget || isLoadingWidget || !widgetDraft}
+          >
+            {isSavingWidget ? 'Saving…' : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={widgetPreviewDialogOpen}
+        onClose={() => setWidgetPreviewDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Widget preview</DialogTitle>
+        <DialogContent>
+          <WidgetStylePreview
+            record={record}
+            slots={slots}
+            previewTheme={widgetPreviewTheme}
+            dimensionLabel={widgetPreviewDimensionLabel}
+            validationError={widgetDraftValidationError}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setWidgetPreviewDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
       <Dialog open={editSlot !== null} onClose={closeEditSlot} maxWidth="sm" fullWidth>

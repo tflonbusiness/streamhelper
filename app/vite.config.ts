@@ -19,6 +19,7 @@ export default defineConfig({
       '/auth': 'http://localhost:3000',
       '/accounts': 'http://localhost:3000',
       '/join': 'http://localhost:3000',
+      '/bonus-buys': 'http://localhost:3000',
     },
   },
 })

@@ -42,6 +42,22 @@ type PatchBonusBuySlotBody = {
   is_now_playing?: boolean;
 };
 
+type PatchBonusBuyWidgetBody = {
+  width?: number;
+  height?: number;
+  background_color?: string;
+  surface_color?: string;
+  border_color?: string;
+  accent_color?: string;
+  positive_color?: string;
+  negative_color?: string;
+  live_color?: string;
+  text_muted_color?: string;
+  border_radius?: number;
+  padding?: number;
+  font_family?: string;
+};
+
 @Controller('accounts')
 export class AccountsController {
   constructor(private readonly authService: AuthService) {}
@@ -163,6 +179,27 @@ export class AccountsController {
       bonusBuyId,
       body,
     );
+  }
+
+  @Get(':accountId/bonus-buy-widget')
+  async getBonusBuyWidget(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.authService.getBonusBuyWidget(accountId, user.id);
+  }
+
+  @Patch(':accountId/bonus-buy-widget')
+  async patchBonusBuyWidget(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Body() body: PatchBonusBuyWidgetBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.authService.patchBonusBuyWidget(accountId, user.id, body);
   }
 
   @Get(':accountId/bonus-buys/:bonusBuyId/slots')

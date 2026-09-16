@@ -46,6 +46,25 @@ describe('AccountsController (e2e)', () => {
   let nextSlotId = 1;
   let bonusBuyTitle = 'Friday stream';
   let bonusBuyStartBalance = '50.00';
+  let widgetSettings = {
+    id: 1,
+    accountId: 10,
+    width: 500,
+    height: 600,
+    backgroundColor: '#0A0A0C',
+    surfaceColor: '#121215',
+    borderColor: '#2F2F31',
+    accentColor: '#F59E0B',
+    positiveColor: '#10B981',
+    negativeColor: '#EF4444',
+    liveColor: '#FF2222',
+    textMutedColor: '#9CA3AF',
+    borderRadius: 20,
+    padding: 18,
+    fontFamily: 'Inter, system-ui, sans-serif',
+    createdAt: new Date('2026-09-14T12:00:00.000Z'),
+    updatedAt: new Date('2026-09-14T12:00:00.000Z'),
+  };
 
   beforeEach(async () => {
     members = [...MEMBERS];
@@ -53,6 +72,25 @@ describe('AccountsController (e2e)', () => {
     nextSlotId = 1;
     bonusBuyTitle = 'Friday stream';
     bonusBuyStartBalance = '50.00';
+    widgetSettings = {
+      id: 1,
+      bonusBuyId: 1,
+      width: 500,
+      height: 600,
+      backgroundColor: '#0A0A0C',
+      surfaceColor: '#121215',
+      borderColor: '#2F2F31',
+      accentColor: '#F59E0B',
+      positiveColor: '#10B981',
+      negativeColor: '#EF4444',
+      liveColor: '#FF2222',
+      textMutedColor: '#9CA3AF',
+      borderRadius: 20,
+      padding: 18,
+      fontFamily: 'Inter, system-ui, sans-serif',
+      createdAt: new Date('2026-09-14T12:00:00.000Z'),
+      updatedAt: new Date('2026-09-14T12:00:00.000Z'),
+    };
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -284,6 +322,41 @@ describe('AccountsController (e2e)', () => {
           createdByUserId,
           createdByName: 'demo_streamer',
         }),
+        getBonusBuyWidget: async (accountId: number) => {
+          if (accountId !== 10) {
+            throw new Error('NOT_FOUND');
+          }
+          return widgetSettings;
+        },
+        patchBonusBuyWidget: async (
+          accountId: number,
+          input: {
+            width?: number;
+            height?: number;
+            backgroundColor?: string;
+            surfaceColor?: string;
+            borderColor?: string;
+            accentColor?: string;
+            positiveColor?: string;
+            negativeColor?: string;
+            liveColor?: string;
+            textMutedColor?: string;
+            borderRadius?: number;
+            padding?: number;
+            fontFamily?: string;
+          },
+        ) => {
+          if (accountId !== 10) {
+            throw new Error('NOT_FOUND');
+          }
+          widgetSettings = {
+            ...widgetSettings,
+            ...input,
+            accountId: 10,
+            updatedAt: new Date('2026-09-14T13:00:00.000Z'),
+          };
+          return widgetSettings;
+        },
         endBonusBuy: async (accountId: number, bonusBuyId: number) => ({
           id: bonusBuyId,
           accountId,
@@ -542,6 +615,29 @@ describe('AccountsController (e2e)', () => {
       .expect(200)
       .expect(({ body }) => {
         expect(body).toEqual([]);
+      });
+  });
+
+  it('owner fetches and patches bonus buy widget settings', async () => {
+    const agent = request.agent(app.getHttpServer());
+    await loginOwner(agent);
+
+    await agent
+      .get('/accounts/10/bonus-buy-widget')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.width).toBe(500);
+        expect(body.backgroundColor).toBe('#0A0A0C');
+        expect(body.accountId).toBe(10);
+      });
+
+    await agent
+      .patch('/accounts/10/bonus-buy-widget')
+      .send({ width: 600, accent_color: '#FFFFFF' })
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.width).toBe(600);
+        expect(body.accentColor).toBe('#FFFFFF');
       });
   });
 

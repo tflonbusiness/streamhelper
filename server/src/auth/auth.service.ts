@@ -9,6 +9,7 @@ import {
   DatabaseService,
   type DbBonusBuy,
   type DbBonusBuySlot,
+  type DbBonusBuyWidget,
   type PatchBonusBuySlotInput,
 } from '../database/database.service.js';
 import { KickChannelService } from './kick-channel.service.js';
@@ -326,6 +327,43 @@ export class AuthService {
     };
   }
 
+  private formatBonusBuyWidget(row: DbBonusBuyWidget) {
+    return {
+      id: row.id,
+      accountId: row.accountId,
+      width: row.width,
+      height: row.height,
+      backgroundColor: row.backgroundColor,
+      surfaceColor: row.surfaceColor,
+      borderColor: row.borderColor,
+      accentColor: row.accentColor,
+      positiveColor: row.positiveColor,
+      negativeColor: row.negativeColor,
+      liveColor: row.liveColor,
+      textMutedColor: row.textMutedColor,
+      borderRadius: row.borderRadius,
+      padding: row.padding,
+      fontFamily: row.fontFamily,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    };
+  }
+
+  private mapWidgetMutationError(error: unknown): never {
+    if (error instanceof Error) {
+      if (error.message === 'NOT_FOUND') {
+        throw new NotFoundException('Bonus buy widget settings not found');
+      }
+      if (error.message.startsWith('INVALID_WIDGET_COLOR:')) {
+        throw new BadRequestException('Color must be a valid hex value (#RGB or #RRGGBB)');
+      }
+      if (error.message === 'INVALID_WIDGET_FONT_FAMILY') {
+        throw new BadRequestException('Font family must be 1-200 characters');
+      }
+    }
+    throw error;
+  }
+
   private async requireAccountMember(accountId: number, callerUserId: number) {
     const isMember = await this.database.hasActiveMembership(
       accountId,
@@ -505,6 +543,85 @@ export class AuthService {
     } catch (error) {
       this.mapSlotMutationError(error);
     }
+  }
+
+  async getBonusBuyWidget(accountId: number, callerUserId: number) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      const row = await this.database.getBonusBuyWidget(accountId);
+      return this.formatBonusBuyWidget(row);
+    } catch (error) {
+      this.mapWidgetMutationError(error);
+    }
+  }
+
+  async patchBonusBuyWidget(
+    accountId: number,
+    callerUserId: number,
+    body: {
+      width?: number;
+      height?: number;
+      background_color?: string;
+      surface_color?: string;
+      border_color?: string;
+      accent_color?: string;
+      positive_color?: string;
+      negative_color?: string;
+      live_color?: string;
+      text_muted_color?: string;
+      border_radius?: number;
+      padding?: number;
+      font_family?: string;
+    },
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    const input = {
+      width: body.width,
+      height: body.height,
+      backgroundColor: body.background_color,
+      surfaceColor: body.surface_color,
+      borderColor: body.border_color,
+      accentColor: body.accent_color,
+      positiveColor: body.positive_color,
+      negativeColor: body.negative_color,
+      liveColor: body.live_color,
+      textMutedColor: body.text_muted_color,
+      borderRadius: body.border_radius,
+      padding: body.padding,
+      fontFamily: body.font_family,
+    };
+
+    const defined = Object.entries(input).filter(([, value]) => value !== undefined);
+    if (defined.length === 0) {
+      throw new BadRequestException('At least one field is required');
+    }
+
+    try {
+      const row = await this.database.patchBonusBuyWidget(accountId, input);
+      return this.formatBonusBuyWidget(row);
+    } catch (error) {
+      this.mapWidgetMutationError(error);
+    }
+  }
+
+  async getPublicBonusBuyWidget(bonusBuyId: number) {
+    const view = await this.database.getPublicBonusBuyWidgetView(bonusBuyId);
+    if (!view) {
+      throw new NotFoundException('Bonus buy not found');
+    }
+
+    return {
+      record: {
+        id: view.record.id,
+        title: view.record.title,
+        startBalance: view.record.startBalance,
+        isActive: view.record.isActive,
+      },
+      slots: view.slots.map((row) => this.formatBonusBuySlot(row)),
+      settings: this.formatBonusBuyWidget(view.settings),
+    };
   }
 
   async getAccountMembers(accountId: number, callerUserId: number) {

@@ -14,7 +14,7 @@ Register in `App.tsx` as a top-level route **outside** `ProtectedRoute` and `App
 
 **URL:** `/bonus-buy/:id/widget` only — no `width`, `height`, `w`, or `h` query params. Card size comes from `bonus_buy_widget.width` / `height` via public API.
 
-`:id` loads live data from `GET /bonus-buys/:id/widget`. Unknown id → centered **Session not found.** on transparent canvas.
+`:id` loads live data from `GET /bonus-buys/:id/widget` (session slots + **account** widget settings). Unknown id → centered **Session not found.** on transparent canvas.
 
 ## Data
 

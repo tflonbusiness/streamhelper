@@ -52,7 +52,7 @@ Single horizontal bar spanning full content width. Background: card surface; sub
 
 **New session:** same create flow as `/bonus-buy` (dialog: title + start balance); on success navigate to new `/bonus-buy/:newId`.
 
-**Widget style:** opens **Widget style** dialog per [bonus-buy-widget.md](bonus-buy-widget.md) — loads `GET .../widget`, PATCH on save, **Preview overlay** link to `/bonus-buy/:id/widget`.
+**Widget style:** opens **Widget style** dialog per [bonus-buy-widget.md](bonus-buy-widget.md) — loads `GET /accounts/:accountId/bonus-buy-widget`, **Theme preset** row at top (CAP-22, [widget-theme-presets.md](widget-theme-presets.md)), live preview panel updates from `widgetDraft` on every change (CAP-21), PATCH on **Save**, **Preview overlay** link to `/bonus-buy/:id/widget` (saved settings, new tab).
 
 **OBS link:** stub — click shows `NotificationContext` toast **Coming soon**.
 

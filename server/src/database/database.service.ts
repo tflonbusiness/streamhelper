@@ -7,6 +7,10 @@ import {
   normalizePositiveMoney,
 } from '../bonus-buy/bonus-buy-math.js';
 import {
+  BONUS_BUY_WIDGET_INSERT_SQL,
+  bonusBuyWidgetInsertParams,
+} from '../bonus-buy/bonus-buy-widget-defaults.js';
+import {
   generateAccessToken,
   hashAccessToken,
   providerUserIdForAccessLink,
@@ -66,6 +70,52 @@ export type PatchBonusBuySlotInput = {
   isNowPlaying?: boolean;
 };
 
+export type DbBonusBuyWidget = {
+  id: number;
+  accountId: number;
+  width: number;
+  height: number;
+  backgroundColor: string;
+  surfaceColor: string;
+  borderColor: string;
+  accentColor: string;
+  positiveColor: string;
+  negativeColor: string;
+  liveColor: string;
+  textMutedColor: string;
+  borderRadius: number;
+  padding: number;
+  fontFamily: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type PatchBonusBuyWidgetInput = {
+  width?: number;
+  height?: number;
+  backgroundColor?: string;
+  surfaceColor?: string;
+  borderColor?: string;
+  accentColor?: string;
+  positiveColor?: string;
+  negativeColor?: string;
+  liveColor?: string;
+  textMutedColor?: string;
+  borderRadius?: number;
+  padding?: number;
+  fontFamily?: string;
+};
+
+export type DbPublicBonusBuyRecord = {
+  id: number;
+  title: string;
+  startBalance: string;
+  isActive: boolean;
+};
+
+const WIDGET_MIN_DIMENSION = 200;
+const WIDGET_MAX_DIMENSION = 2400;
+
 function toInt(value: string | number): number {
   return typeof value === 'number' ? value : Number.parseInt(value, 10);
 }
@@ -93,6 +143,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   private async initSchema(): Promise<void> {
     await this.pool.query(`
+      DROP TABLE IF EXISTS bonus_buy_widget CASCADE;
       DROP TABLE IF EXISTS bonus_buy_slot CASCADE;
       DROP TABLE IF EXISTS bonus_buy CASCADE;
       DROP TABLE IF EXISTS account_channels CASCADE;
@@ -194,6 +245,26 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       CREATE INDEX idx_bonus_buy_slot_list
         ON bonus_buy_slot (bonus_buy_id, created_at ASC)
         WHERE is_archived = false;
+
+      CREATE TABLE bonus_buy_widget (
+        id                  BIGSERIAL PRIMARY KEY,
+        account_id          BIGINT NOT NULL UNIQUE REFERENCES accounts(id) ON DELETE CASCADE,
+        width               INTEGER NOT NULL DEFAULT 500,
+        height              INTEGER NOT NULL DEFAULT 600,
+        background_color    TEXT NOT NULL DEFAULT '#0A0A0C',
+        surface_color       TEXT NOT NULL DEFAULT '#121215',
+        border_color        TEXT NOT NULL DEFAULT '#2F2F31',
+        accent_color        TEXT NOT NULL DEFAULT '#F59E0B',
+        positive_color      TEXT NOT NULL DEFAULT '#10B981',
+        negative_color      TEXT NOT NULL DEFAULT '#EF4444',
+        live_color          TEXT NOT NULL DEFAULT '#FF2222',
+        text_muted_color    TEXT NOT NULL DEFAULT '#9CA3AF',
+        border_radius       INTEGER NOT NULL DEFAULT 20,
+        padding             INTEGER NOT NULL DEFAULT 18,
+        font_family         TEXT NOT NULL DEFAULT 'Inter, system-ui, sans-serif',
+        created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
     `);
   }
 
@@ -336,6 +407,11 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           VALUES ($1, 'kick', $2, $3, true)
         `,
         [accountId, profile.channelId, profile.channelSlug],
+      );
+
+      await client.query(
+        BONUS_BUY_WIDGET_INSERT_SQL,
+        bonusBuyWidgetInsertParams(accountId),
       );
 
       await client.query('COMMIT');
@@ -688,45 +764,64 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
     const normalizedBalance = balanceValue.toFixed(2);
 
-    const result = await this.pool.query<{
-      id: string | number;
-      account_id: string | number;
-      title: string;
-      start_balance: string;
-      is_active: boolean;
-      created_at: Date;
-      created_by_user_id: string | number;
-      created_by_name: string;
-    }>(
-      `
-        INSERT INTO bonus_buy (
-          account_id, created_by_user_id, title, start_balance
-        )
-        VALUES ($1, $2, $3, $4)
-        RETURNING
-          id,
-          account_id,
-          title,
-          start_balance::text AS start_balance,
-          is_active,
-          created_at,
-          created_by_user_id,
-          (SELECT name FROM users WHERE id = $2) AS created_by_name
-      `,
-      [accountId, createdByUserId, trimmedTitle, normalizedBalance],
-    );
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    const row = result.rows[0];
-    return {
-      id: toInt(row.id),
-      accountId: toInt(row.account_id),
-      title: row.title,
-      startBalance: row.start_balance,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      createdByUserId: toInt(row.created_by_user_id),
-      createdByName: row.created_by_name,
-    };
+      const result = await client.query<{
+        id: string | number;
+        account_id: string | number;
+        title: string;
+        start_balance: string;
+        is_active: boolean;
+        created_at: Date;
+        created_by_user_id: string | number;
+        created_by_name: string;
+      }>(
+        `
+          INSERT INTO bonus_buy (
+            account_id, created_by_user_id, title, start_balance
+          )
+          VALUES ($1, $2, $3, $4)
+          RETURNING
+            id,
+            account_id,
+            title,
+            start_balance::text AS start_balance,
+            is_active,
+            created_at,
+            created_by_user_id,
+            (SELECT name FROM users WHERE id = $2) AS created_by_name
+        `,
+        [accountId, createdByUserId, trimmedTitle, normalizedBalance],
+      );
+
+      const row = result.rows[0];
+      const bonusBuyId = toInt(row.id);
+
+      await client.query(
+        BONUS_BUY_WIDGET_INSERT_SQL,
+        bonusBuyWidgetInsertParams(accountId),
+      );
+
+      await client.query('COMMIT');
+
+      return {
+        id: bonusBuyId,
+        accountId: toInt(row.account_id),
+        title: row.title,
+        startBalance: row.start_balance,
+        isActive: row.is_active,
+        createdAt: row.created_at,
+        createdByUserId: toInt(row.created_by_user_id),
+        createdByName: row.created_by_name,
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async endBonusBuy(
@@ -1153,6 +1248,299 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     } finally {
       client.release();
     }
+  }
+
+  private clampWidgetDimension(value: number): number {
+    return Math.min(
+      WIDGET_MAX_DIMENSION,
+      Math.max(WIDGET_MIN_DIMENSION, Math.trunc(value)),
+    );
+  }
+
+  private assertWidgetHexColor(value: string, field: string): string {
+    const trimmed = value.trim();
+    if (!/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(trimmed)) {
+      throw new Error(`INVALID_WIDGET_COLOR:${field}`);
+    }
+    return trimmed;
+  }
+
+  private async ensureAccountBonusBuyWidget(
+    accountId: number,
+  ): Promise<DbBonusBuyWidget> {
+    await this.pool.query(
+      BONUS_BUY_WIDGET_INSERT_SQL,
+      bonusBuyWidgetInsertParams(accountId),
+    );
+
+    const result = await this.pool.query(
+      `
+        SELECT ${this.widgetSelectColumns()}
+        FROM bonus_buy_widget w
+        WHERE w.account_id = $1
+      `,
+      [accountId],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new Error('NOT_FOUND');
+    }
+
+    return this.mapBonusBuyWidgetRow(row);
+  }
+
+  private mapBonusBuyWidgetRow(row: {
+    id: string | number;
+    account_id: string | number;
+    width: string | number;
+    height: string | number;
+    background_color: string;
+    surface_color: string;
+    border_color: string;
+    accent_color: string;
+    positive_color: string;
+    negative_color: string;
+    live_color: string;
+    text_muted_color: string;
+    border_radius: string | number;
+    padding: string | number;
+    font_family: string;
+    created_at: Date;
+    updated_at: Date;
+  }): DbBonusBuyWidget {
+    return {
+      id: toInt(row.id),
+      accountId: toInt(row.account_id),
+      width: toInt(row.width),
+      height: toInt(row.height),
+      backgroundColor: row.background_color,
+      surfaceColor: row.surface_color,
+      borderColor: row.border_color,
+      accentColor: row.accent_color,
+      positiveColor: row.positive_color,
+      negativeColor: row.negative_color,
+      liveColor: row.live_color,
+      textMutedColor: row.text_muted_color,
+      borderRadius: toInt(row.border_radius),
+      padding: toInt(row.padding),
+      fontFamily: row.font_family,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  private widgetSelectColumns(): string {
+    return `
+      w.id,
+      w.account_id,
+      w.width,
+      w.height,
+      w.background_color,
+      w.surface_color,
+      w.border_color,
+      w.accent_color,
+      w.positive_color,
+      w.negative_color,
+      w.live_color,
+      w.text_muted_color,
+      w.border_radius,
+      w.padding,
+      w.font_family,
+      w.created_at,
+      w.updated_at
+    `;
+  }
+
+  async getBonusBuyWidget(accountId: number): Promise<DbBonusBuyWidget> {
+    return this.ensureAccountBonusBuyWidget(accountId);
+  }
+
+  async patchBonusBuyWidget(
+    accountId: number,
+    input: PatchBonusBuyWidgetInput,
+  ): Promise<DbBonusBuyWidget> {
+    const existing = await this.ensureAccountBonusBuyWidget(accountId);
+
+    const next = {
+      width:
+        input.width !== undefined
+          ? this.clampWidgetDimension(input.width)
+          : existing.width,
+      height:
+        input.height !== undefined
+          ? this.clampWidgetDimension(input.height)
+          : existing.height,
+      backgroundColor:
+        input.backgroundColor !== undefined
+          ? this.assertWidgetHexColor(input.backgroundColor, 'background_color')
+          : existing.backgroundColor,
+      surfaceColor:
+        input.surfaceColor !== undefined
+          ? this.assertWidgetHexColor(input.surfaceColor, 'surface_color')
+          : existing.surfaceColor,
+      borderColor:
+        input.borderColor !== undefined
+          ? this.assertWidgetHexColor(input.borderColor, 'border_color')
+          : existing.borderColor,
+      accentColor:
+        input.accentColor !== undefined
+          ? this.assertWidgetHexColor(input.accentColor, 'accent_color')
+          : existing.accentColor,
+      positiveColor:
+        input.positiveColor !== undefined
+          ? this.assertWidgetHexColor(input.positiveColor, 'positive_color')
+          : existing.positiveColor,
+      negativeColor:
+        input.negativeColor !== undefined
+          ? this.assertWidgetHexColor(input.negativeColor, 'negative_color')
+          : existing.negativeColor,
+      liveColor:
+        input.liveColor !== undefined
+          ? this.assertWidgetHexColor(input.liveColor, 'live_color')
+          : existing.liveColor,
+      textMutedColor:
+        input.textMutedColor !== undefined
+          ? this.assertWidgetHexColor(input.textMutedColor, 'text_muted_color')
+          : existing.textMutedColor,
+      borderRadius:
+        input.borderRadius !== undefined
+          ? Math.min(100, Math.max(0, Math.trunc(input.borderRadius)))
+          : existing.borderRadius,
+      padding:
+        input.padding !== undefined
+          ? Math.min(100, Math.max(0, Math.trunc(input.padding)))
+          : existing.padding,
+      fontFamily:
+        input.fontFamily !== undefined
+          ? input.fontFamily.trim()
+          : existing.fontFamily,
+    };
+
+    if (next.fontFamily.length === 0 || next.fontFamily.length > 200) {
+      throw new Error('INVALID_WIDGET_FONT_FAMILY');
+    }
+
+    const result = await this.pool.query(
+      `
+        UPDATE bonus_buy_widget w
+        SET
+          width = $2,
+          height = $3,
+          background_color = $4,
+          surface_color = $5,
+          border_color = $6,
+          accent_color = $7,
+          positive_color = $8,
+          negative_color = $9,
+          live_color = $10,
+          text_muted_color = $11,
+          border_radius = $12,
+          padding = $13,
+          font_family = $14,
+          updated_at = now()
+        WHERE w.account_id = $1
+        RETURNING ${this.widgetSelectColumns()}
+      `,
+      [
+        accountId,
+        next.width,
+        next.height,
+        next.backgroundColor,
+        next.surfaceColor,
+        next.borderColor,
+        next.accentColor,
+        next.positiveColor,
+        next.negativeColor,
+        next.liveColor,
+        next.textMutedColor,
+        next.borderRadius,
+        next.padding,
+        next.fontFamily,
+      ],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new Error('NOT_FOUND');
+    }
+
+    return this.mapBonusBuyWidgetRow(row);
+  }
+
+  async getPublicBonusBuyWidgetView(bonusBuyId: number): Promise<{
+    record: DbPublicBonusBuyRecord;
+    slots: DbBonusBuySlot[];
+    settings: DbBonusBuyWidget;
+  } | null> {
+    const recordResult = await this.pool.query<{
+      id: string | number;
+      account_id: string | number;
+      title: string;
+      start_balance: string;
+      is_active: boolean;
+    }>(
+      `
+        SELECT id, account_id, title, start_balance::text AS start_balance, is_active
+        FROM bonus_buy
+        WHERE id = $1
+      `,
+      [bonusBuyId],
+    );
+
+    const recordRow = recordResult.rows[0];
+    if (!recordRow) {
+      return null;
+    }
+
+    const accountId = toInt(recordRow.account_id);
+    const settings = await this.ensureAccountBonusBuyWidget(accountId);
+
+    const slotsResult = await this.pool.query<{
+      id: string | number;
+      bonus_buy_id: string | number;
+      created_by_user_id: string | number;
+      created_by_name: string;
+      slot_name: string;
+      nick_provider: string | null;
+      purchase_amount: string;
+      win_amount: string | null;
+      multiplier: string | null;
+      is_now_playing: boolean;
+      created_at: Date;
+    }>(
+      `
+        SELECT
+          s.id,
+          s.bonus_buy_id,
+          s.created_by_user_id,
+          u.name AS created_by_name,
+          s.slot_name,
+          s.nick_provider,
+          s.purchase_amount::text AS purchase_amount,
+          s.win_amount::text AS win_amount,
+          s.multiplier::text AS multiplier,
+          s.is_now_playing,
+          s.created_at
+        FROM bonus_buy_slot s
+        JOIN users u ON u.id = s.created_by_user_id
+        WHERE s.bonus_buy_id = $1
+          AND s.is_archived = false
+        ORDER BY s.created_at ASC
+      `,
+      [bonusBuyId],
+    );
+
+    return {
+      record: {
+        id: toInt(recordRow.id),
+        title: recordRow.title,
+        startBalance: recordRow.start_balance,
+        isActive: recordRow.is_active,
+      },
+      slots: slotsResult.rows.map((row) => this.mapBonusBuySlotRow(row)),
+      settings,
+    };
   }
 
   async archiveBonusBuySlot(
