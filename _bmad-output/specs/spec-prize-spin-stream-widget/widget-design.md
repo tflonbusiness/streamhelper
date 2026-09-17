@@ -1,6 +1,8 @@
 # Prize Spin — overlay visual design
 
-Invented stream-overlay look for `/prize-spin/:id/widget`. Dark casino-wheel aesthetic aligned with Caz Agent tokens (`design-tokens.md`) and Prize Spin module purple (`colors.purple`). Sector fill colors always come from `prize_spin_sector.color`.
+Invented stream-overlay look for `/prize-spin/widget/:channelSlug`. Dark casino-wheel aesthetic aligned with Caz Agent tokens (`design-tokens.md`) and Prize Spin module purple (`colors.purple`). Sector fill colors always come from `prize_spin_sector.color`.
+
+**Warning state (no card):** centered **No live session.** — 16px/500, amber `#F59E0B` or `textMuted`; transparent canvas. Distinct from **Session not found.** (`textMuted` only).
 
 ## Design intent
 

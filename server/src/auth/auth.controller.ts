@@ -109,7 +109,7 @@ export class AuthController {
   async me(@Req() req: Request) {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
-    return { user };
+    return { user: await this.authService.enrichSessionUser(user) };
   }
 
   @Post('logout')

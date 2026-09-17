@@ -1,8 +1,10 @@
 import { Box, CircularProgress, Typography } from '@mui/material'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   fetchPublicPrizeSpinWidget,
+  PrizeSpinWidgetNotFoundError,
+  PrizeSpinWidgetNotLiveError,
   type PrizeSpinWidgetView,
 } from '@/api/prize-spin'
 import { PrizeSpinWidgetCard } from '@/components/prize-spin/PrizeSpinWidgetCard'
@@ -10,7 +12,15 @@ import { PRIZE_SPIN_WIDGET_THEME } from '@/lib/prize-spin-widget-theme'
 
 const WIDGET_POLL_MS = 5000
 
-function WidgetNotFound() {
+type WidgetState = 'loading' | 'ready' | 'not_found' | 'not_live'
+
+function WidgetMessage({
+  message,
+  tone,
+}: {
+  message: string
+  tone: 'muted' | 'warning'
+}) {
   return (
     <Box
       sx={{
@@ -22,8 +32,17 @@ function WidgetNotFound() {
         fontFamily: PRIZE_SPIN_WIDGET_THEME.fontFamily,
       }}
     >
-      <Typography sx={{ color: PRIZE_SPIN_WIDGET_THEME.textMuted, fontSize: '1rem' }}>
-        Session not found.
+      <Typography
+        sx={{
+          color:
+            tone === 'warning'
+              ? PRIZE_SPIN_WIDGET_THEME.pointerFill
+              : PRIZE_SPIN_WIDGET_THEME.textMuted,
+          fontSize: '1rem',
+          fontWeight: tone === 'warning' ? 500 : 400,
+        }}
+      >
+        {message}
       </Typography>
     </Box>
   )
@@ -49,69 +68,74 @@ function WidgetLoading() {
 }
 
 export function PrizeSpinStreamWidgetPage() {
-  const { id } = useParams<{ id: string }>()
-  const prizeSpinId = useMemo(() => {
-    if (!id) {
-      return null
-    }
-    const parsed = Number.parseInt(id, 10)
-    return Number.isFinite(parsed) ? parsed : null
-  }, [id])
-
+  const { channelSlug } = useParams<{ channelSlug: string }>()
   const [view, setView] = useState<PrizeSpinWidgetView | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
+  const [widgetState, setWidgetState] = useState<WidgetState>('loading')
+  const lastRecordIdRef = useRef<number | null>(null)
 
-  const loadView = useCallback(async () => {
-    if (prizeSpinId === null) {
-      setNotFound(true)
-      setLoading(false)
+  const loadView = useCallback(async (showLoading = false) => {
+    if (!channelSlug) {
+      setView(null)
+      setWidgetState('not_found')
       return
     }
 
-    try {
-      const data = await fetchPublicPrizeSpinWidget(prizeSpinId)
-      setView(data)
-      setNotFound(false)
-    } catch {
-      setView(null)
-      setNotFound(true)
-    } finally {
-      setLoading(false)
+    if (showLoading) {
+      setWidgetState('loading')
     }
-  }, [prizeSpinId])
+
+    try {
+      const data = await fetchPublicPrizeSpinWidget(channelSlug)
+      if (
+        lastRecordIdRef.current !== null &&
+        lastRecordIdRef.current !== data.record.id
+      ) {
+        lastRecordIdRef.current = data.record.id
+      } else if (lastRecordIdRef.current === null) {
+        lastRecordIdRef.current = data.record.id
+      }
+      setView(data)
+      setWidgetState('ready')
+    } catch (error) {
+      setView(null)
+      if (error instanceof PrizeSpinWidgetNotLiveError) {
+        setWidgetState('not_live')
+        return
+      }
+      if (error instanceof PrizeSpinWidgetNotFoundError) {
+        setWidgetState('not_found')
+        return
+      }
+      setWidgetState('not_found')
+    }
+  }, [channelSlug])
 
   useEffect(() => {
-    setLoading(true)
-    void loadView()
+    void loadView(true)
   }, [loadView])
 
   useEffect(() => {
-    if (prizeSpinId === null) {
+    if (!channelSlug) {
       return
     }
 
     const interval = window.setInterval(() => {
-      void fetchPublicPrizeSpinWidget(prizeSpinId)
-        .then((data) => {
-          setView(data)
-          setNotFound(false)
-        })
-        .catch(() => {
-          setView(null)
-          setNotFound(true)
-        })
+      void loadView(false)
     }, WIDGET_POLL_MS)
 
     return () => window.clearInterval(interval)
-  }, [prizeSpinId])
+  }, [channelSlug, loadView])
 
-  if (loading) {
+  if (widgetState === 'loading') {
     return <WidgetLoading />
   }
 
-  if (notFound || !view) {
-    return <WidgetNotFound />
+  if (widgetState === 'not_found') {
+    return <WidgetMessage message="Session not found." tone="muted" />
+  }
+
+  if (widgetState === 'not_live' || !view) {
+    return <WidgetMessage message="No live session." tone="warning" />
   }
 
   return (

@@ -5,6 +5,7 @@ export type AuthUser = {
   accountName?: string
   role?: 'owner' | 'moderator'
   subscriptionPlan?: string
+  channelSlug?: string
 }
 
 export type AccountMember = {

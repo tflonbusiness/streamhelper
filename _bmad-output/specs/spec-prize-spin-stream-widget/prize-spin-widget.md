@@ -1,6 +1,8 @@
 # Prize Spin — widget settings (`prize_spin_widget`)
 
-Account-level size configuration for stream overlays at `/prize-spin/:id/widget`. **One row per account** — shared across every prize spin session. Sector colors come from `prize_spin_sector.color`; this table controls overlay canvas size only.
+Account-level size configuration for stream overlays at `/prize-spin/widget/:channelSlug`. **One row per account** — shared across every prize spin session. Sector colors come from `prize_spin_sector.color`; this table controls overlay canvas size only.
+
+Live session selection uses `prize_spin.is_active` — see [live-session-control.md](live-session-control.md).
 
 ## Database
 
@@ -25,6 +27,25 @@ Table `prize_spin_widget` exists in `public` schema (brownfield). Columns today:
 
 No theme/color columns in this slice — defer full palette to a follow-on.
 
+**Live flag** on `prize_spin` (not `prize_spin_widget`):
+
+| Column | Semantics |
+|--------|-----------|
+| `is_active` | `true` = live on stream overlay; at most one per `account_id` |
+
+Consider changing insert default to `false` so new sessions do not auto-go-live.
+
+**Channel lookup** (public overlay):
+
+```sql
+SELECT account_id
+FROM account_channels
+WHERE provider = 'kick'
+  AND is_primary = true
+  AND channel_slug = $1
+LIMIT 1
+```
+
 ## API — authenticated
 
 Account-scoped REST; `hasActiveMembership(accountId, userId)`.
@@ -33,6 +54,8 @@ Account-scoped REST; `hasActiveMembership(accountId, userId)`.
 |--------|------|------|----------|
 | `GET` | `/accounts/:accountId/prize-spin-widget` | — | `PrizeSpinWidgetSettings` |
 | `PATCH` | `/accounts/:accountId/prize-spin-widget` | partial fields below | `PrizeSpinWidgetSettings` |
+| `POST` | `/accounts/:accountId/prize-spins/:prizeSpinId/go-live` | — | `PrizeSpinRecord` |
+| `POST` | `/accounts/:accountId/prize-spins/:prizeSpinId/deactivate` | — | `PrizeSpinRecord` |
 
 **PATCH body** (partial — at least one field):
 
@@ -56,11 +79,23 @@ interface PrizeSpinWidgetSettings {
 }
 ```
 
+Remove `POST .../prize-spins/:id/end` — replaced by deactivate.
+
+**Auth session:** add `channelSlug` to `SessionUser` / `AuthUser` from `getPrimaryKickChannel(accountId)` for dashboard Overlay link.
+
 ## API — public overlay
 
 | Method | Path | Auth | Response |
 |--------|------|------|----------|
-| `GET` | `/prize-spins/:prizeSpinId/widget` | none | `PrizeSpinWidgetView` |
+| `GET` | `/prize-spin/widget/:channelSlug` | none | `PrizeSpinWidgetView` |
+
+**Removed:** `GET /prize-spins/:prizeSpinId/widget`, `/prize-spin/:id/widget`.
+
+**Resolution:**
+
+1. Resolve `account_id` from `account_channels` by `:channelSlug` (primary Kick channel). Missing → `404`.
+2. Select `prize_spin` where `account_id = resolved AND is_active = true LIMIT 1`. None → `409` with `{ message: 'NOT_LIVE' }`.
+3. Join sectors, latest win, and `prize_spin_widget` settings.
 
 **Response shape:**
 
@@ -69,7 +104,7 @@ interface PrizeSpinWidgetView {
   record: {
     id: number
     title: string
-    isActive: boolean
+    isActive: boolean  // always true when returned
   }
   sectors: Array<{
     id: number
@@ -93,16 +128,21 @@ interface PrizeSpinWidgetView {
 ```
 
 - `sectors`: non-archived only; order by `sort_order ASC`.
-- `latestWin`: newest non-archived `prize_spin_win` for the session (`created_at DESC`); `null` when no wins.
-- `settings`: resolved via session's `account_id` (`ensureAccountPrizeSpinWidget`).
+- `latestWin`: newest non-archived `prize_spin_win` for the live session (`created_at DESC`); `null` when no wins.
+- `settings`: resolved via `account_id` (`ensureAccountPrizeSpinWidget`).
 
-**404:** unknown `prizeSpinId` → `NotFoundException` (client shows **Session not found.**).
+**Client error mapping:**
 
-Register controller at `server/src/prize-spin/prize-spin.controller.ts` with `@Controller('prize-spins')` — mirror `bonus-buy.controller.ts`.
+| HTTP | Overlay copy |
+|------|----------------|
+| `404` | **Session not found.** |
+| `409` / `NOT_LIVE` | **No live session.** |
+
+Register controller at `server/src/prize-spin/prize-spin.controller.ts` with `@Controller('prize-spin')` for the public widget route.
 
 ## Session workspace — Widget size dialog
 
-On `/prize-spin/:id` session header actions (alongside **Overlay**):
+On `/prize-spin/:id` session header actions (alongside **Overlay**, **Go live** / **Deactivate**):
 
 | Control | Label (English) | Behavior |
 |---------|-----------------|----------|

@@ -36,7 +36,7 @@ function App() {
           />
 
           <Route
-            path="/prize-spin/:id/widget"
+            path="/prize-spin/widget/:channelSlug"
             element={<PrizeSpinStreamWidgetPage />}
           />
 

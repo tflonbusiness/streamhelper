@@ -24,12 +24,11 @@ import {
   CircleStop,
   Download,
   Equal,
-  ExternalLink,
   History,
-  Link2,
   PieChart,
   Pencil,
   Plus,
+  Radio,
   Trash2,
   UserRound,
 } from 'lucide-react'
@@ -41,7 +40,8 @@ import {
   deletePrizeSpinSector,
   deleteAllPrizeSpinWins,
   deletePrizeSpinWin,
-  endPrizeSpin,
+  deactivatePrizeSpin,
+  goLivePrizeSpin,
   fetchPrizeSpin,
   fetchPrizeSpinSectors,
   fetchPrizeSpinWins,
@@ -52,6 +52,7 @@ import {
   type PrizeSpinWin,
 } from '@/api/prize-spin'
 import { AppTable, type AppTableColumn } from '@/components/AppTable'
+import { LiveStatusChip } from '@/components/LiveStatusChip'
 import { IconTile } from '@/components/IconTile'
 import { HexColorField } from '@/components/bonus-buy/HexColorField'
 import { PageHeader } from '@/components/PageHeader'
@@ -343,9 +344,11 @@ export function PrizeSpinSessionPage() {
   const [isExportingWinners, setIsExportingWinners] = useState(false)
   const [exportWinnersError, setExportWinnersError] = useState<string | null>(null)
 
-  const [endDialogOpen, setEndDialogOpen] = useState(false)
-  const [isEnding, setIsEnding] = useState(false)
-  const [endError, setEndError] = useState<string | null>(null)
+  const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false)
+  const [isDeactivating, setIsDeactivating] = useState(false)
+  const [deactivateError, setDeactivateError] = useState<string | null>(null)
+  const [isGoingLive, setIsGoingLive] = useState(false)
+  const [goLiveError, setGoLiveError] = useState<string | null>(null)
 
   useSetBreadcrumbLabel(record ? `${record.title} #${record.id}` : null)
 
@@ -700,32 +703,51 @@ export function PrizeSpinSessionPage() {
     }
   }
 
-  async function handleEndSession() {
+  async function handleGoLive() {
     if (!user?.accountId || !record) {
       return
     }
 
-    setIsEnding(true)
-    setEndError(null)
+    setIsGoingLive(true)
+    setGoLiveError(null)
 
     try {
-      const updated = await endPrizeSpin(user.accountId, record.id)
+      const updated = await goLivePrizeSpin(user.accountId, record.id)
       setRecord(updated)
-      setEndDialogOpen(false)
-      showSuccess('Prize spin session ended.')
-    } catch (endSessionError) {
-      setEndError(
-        endSessionError instanceof Error
-          ? endSessionError.message
-          : 'Could not end prize spin session',
+      showSuccess('Session is now live.')
+    } catch (goLiveSessionError) {
+      setGoLiveError(
+        goLiveSessionError instanceof Error
+          ? goLiveSessionError.message
+          : 'Could not go live',
       )
     } finally {
-      setIsEnding(false)
+      setIsGoingLive(false)
     }
   }
 
-  function showStub(message: string) {
-    showSuccess(message)
+  async function handleDeactivate() {
+    if (!user?.accountId || !record) {
+      return
+    }
+
+    setIsDeactivating(true)
+    setDeactivateError(null)
+
+    try {
+      const updated = await deactivatePrizeSpin(user.accountId, record.id)
+      setRecord(updated)
+      setDeactivateDialogOpen(false)
+      showSuccess('Session taken off air.')
+    } catch (deactivateSessionError) {
+      setDeactivateError(
+        deactivateSessionError instanceof Error
+          ? deactivateSessionError.message
+          : 'Could not deactivate session',
+      )
+    } finally {
+      setIsDeactivating(false)
+    }
   }
 
   const sectorColumns: AppTableColumn<PrizeSpinSector>[] = [
@@ -911,40 +933,9 @@ export function PrizeSpinSessionPage() {
                   #{record.id}
                 </Typography>
               </Typography>
-              {!record.isActive ? (
-                <Chip
-                  label="Ended"
-                  size="small"
-                  variant="outlined"
-                  sx={{
-                    flexShrink: 0,
-                    color: 'text.secondary',
-                    borderColor: 'divider',
-                  }}
-                />
-              ) : null}
+              {record.isActive ? <LiveStatusChip /> : null}
             </Stack>
             <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
-              <Button
-                type="button"
-                variant="outlined"
-                size="small"
-                startIcon={<Link2 size={16} aria-hidden />}
-                onClick={() => showStub('Coming soon')}
-              >
-                OBS link
-              </Button>
-              <Button
-                component={Link}
-                to={id ? `/prize-spin/${id}/widget` : '/prize-spin'}
-                target="_blank"
-                rel="noopener noreferrer"
-                variant="outlined"
-                size="small"
-                startIcon={<ExternalLink size={16} aria-hidden />}
-              >
-                Overlay
-              </Button>
               <Button
                 type="button"
                 variant="outlined"
@@ -962,8 +953,8 @@ export function PrizeSpinSessionPage() {
                   size="small"
                   startIcon={<CircleStop size={16} aria-hidden />}
                   onClick={() => {
-                    setEndError(null)
-                    setEndDialogOpen(true)
+                    setDeactivateError(null)
+                    setDeactivateDialogOpen(true)
                   }}
                   sx={{
                     borderColor: alpha(theme.palette.error.main, 0.4),
@@ -974,14 +965,38 @@ export function PrizeSpinSessionPage() {
                     },
                   }}
                 >
-                  End session
+                  Deactivate
                 </Button>
-              ) : null}
+              ) : (
+                <Button
+                  type="button"
+                  variant="outlined"
+                  size="small"
+                  startIcon={<Radio size={16} aria-hidden />}
+                  disabled={isGoingLive}
+                  onClick={() => void handleGoLive()}
+                  sx={{
+                    borderColor: alpha(theme.palette.success.main, 0.4),
+                    color: theme.palette.success.light,
+                    '&:hover': {
+                      borderColor: theme.palette.success.main,
+                      bgcolor: alpha(theme.palette.success.main, 0.1),
+                    },
+                  }}
+                >
+                  {isGoingLive ? 'Going live…' : 'Go live'}
+                </Button>
+              )}
             </Stack>
           </Stack>
           {exportWinnersError ? (
             <StatusAlert tone="error" sx={{ mt: 2 }}>
               {exportWinnersError}
+            </StatusAlert>
+          ) : null}
+          {goLiveError ? (
+            <StatusAlert tone="error" sx={{ mt: 2 }}>
+              {goLiveError}
             </StatusAlert>
           ) : null}
         </CardContent>
@@ -1338,19 +1353,19 @@ export function PrizeSpinSessionPage() {
       </Dialog>
 
       <Dialog
-        open={endDialogOpen}
-        onClose={() => setEndDialogOpen(false)}
+        open={deactivateDialogOpen}
+        onClose={() => setDeactivateDialogOpen(false)}
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle>End prize spin session?</DialogTitle>
+        <DialogTitle>Take session off air?</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
-            This marks the session as inactive. You can still open it from history.
+            The stream overlay will show no live session until you go live again.
           </Typography>
-          {endError ? (
+          {deactivateError ? (
             <StatusAlert tone="error" sx={{ mt: 2 }}>
-              {endError}
+              {deactivateError}
             </StatusAlert>
           ) : null}
         </DialogContent>
@@ -1358,8 +1373,8 @@ export function PrizeSpinSessionPage() {
           <Button
             type="button"
             variant="outlined"
-            onClick={() => setEndDialogOpen(false)}
-            disabled={isEnding}
+            onClick={() => setDeactivateDialogOpen(false)}
+            disabled={isDeactivating}
           >
             Cancel
           </Button>
@@ -1367,10 +1382,10 @@ export function PrizeSpinSessionPage() {
             type="button"
             variant="contained"
             color="error"
-            onClick={() => void handleEndSession()}
-            disabled={isEnding}
+            onClick={() => void handleDeactivate()}
+            disabled={isDeactivating}
           >
-            {isEnding ? 'Ending…' : 'End session'}
+            {isDeactivating ? 'Deactivating…' : 'Deactivate'}
           </Button>
         </DialogActions>
       </Dialog>

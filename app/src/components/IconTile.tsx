@@ -3,8 +3,9 @@ import { alpha, useTheme, type Theme } from '@mui/material/styles'
 import type { LucideIcon } from 'lucide-react'
 import { colors } from '@/theme/colors'
 
-type IconTileVariant =
+export type IconTileVariant =
   | 'primary'
+  | 'secondary'
   | 'success'
   | 'warning'
   | 'danger'
@@ -31,6 +32,11 @@ function getVariantColors(variant: IconTileVariant, theme: Theme) {
       return {
         bg: alpha(theme.palette.primary.main, 0.14),
         color: theme.palette.primary.light,
+      }
+    case 'secondary':
+      return {
+        bg: alpha(theme.palette.secondary.main, 0.14),
+        color: theme.palette.secondary.main,
       }
     case 'success':
       return {

@@ -348,8 +348,8 @@ export class AccountsController {
     );
   }
 
-  @Post(':accountId/prize-spins/:prizeSpinId/end')
-  async endPrizeSpin(
+  @Post(':accountId/prize-spins/:prizeSpinId/go-live')
+  async goLivePrizeSpin(
     @Param('accountId', ParseIntPipe) accountId: number,
     @Param('prizeSpinId', ParseIntPipe) prizeSpinId: number,
     @Req() req: Request,
@@ -357,7 +357,19 @@ export class AccountsController {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
 
-    return this.authService.endPrizeSpin(accountId, user.id, prizeSpinId);
+    return this.authService.goLivePrizeSpin(accountId, user.id, prizeSpinId);
+  }
+
+  @Post(':accountId/prize-spins/:prizeSpinId/deactivate')
+  async deactivatePrizeSpin(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('prizeSpinId', ParseIntPipe) prizeSpinId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.deactivatePrizeSpin(accountId, user.id, prizeSpinId);
   }
 
   @Get(':accountId/prize-spins/:prizeSpinId/sectors')

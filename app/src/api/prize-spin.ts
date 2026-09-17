@@ -110,12 +110,12 @@ export async function createPrizeSpin(
   return response.json() as Promise<PrizeSpinRecord>
 }
 
-export async function endPrizeSpin(
+export async function goLivePrizeSpin(
   accountId: number,
   prizeSpinId: number,
 ): Promise<PrizeSpinRecord> {
   const response = await fetch(
-    `/accounts/${accountId}/prize-spins/${prizeSpinId}/end`,
+    `/accounts/${accountId}/prize-spins/${prizeSpinId}/go-live`,
     {
       method: 'POST',
       credentials: 'include',
@@ -124,7 +124,28 @@ export async function endPrizeSpin(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not end prize spin'),
+      await readErrorMessage(response, 'Could not go live'),
+    )
+  }
+
+  return response.json() as Promise<PrizeSpinRecord>
+}
+
+export async function deactivatePrizeSpin(
+  accountId: number,
+  prizeSpinId: number,
+): Promise<PrizeSpinRecord> {
+  const response = await fetch(
+    `/accounts/${accountId}/prize-spins/${prizeSpinId}/deactivate`,
+    {
+      method: 'POST',
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, 'Could not deactivate session'),
     )
   }
 
@@ -377,10 +398,34 @@ export async function patchPrizeSpinWidget(
   return response.json() as Promise<PrizeSpinWidgetSettings>
 }
 
+export class PrizeSpinWidgetNotFoundError extends Error {
+  constructor() {
+    super('Session not found.')
+    this.name = 'PrizeSpinWidgetNotFoundError'
+  }
+}
+
+export class PrizeSpinWidgetNotLiveError extends Error {
+  constructor() {
+    super('No live session.')
+    this.name = 'PrizeSpinWidgetNotLiveError'
+  }
+}
+
 export async function fetchPublicPrizeSpinWidget(
-  prizeSpinId: number,
+  channelSlug: string,
 ): Promise<PrizeSpinWidgetView> {
-  const response = await fetch(`/prize-spins/${prizeSpinId}/widget`)
+  const response = await fetch(
+    `/prize-spin/widget/${encodeURIComponent(channelSlug)}`,
+  )
+
+  if (response.status === 404) {
+    throw new PrizeSpinWidgetNotFoundError()
+  }
+
+  if (response.status === 409) {
+    throw new PrizeSpinWidgetNotLiveError()
+  }
 
   if (!response.ok) {
     throw new Error(

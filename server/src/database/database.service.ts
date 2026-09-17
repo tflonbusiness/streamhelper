@@ -341,12 +341,16 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         account_id          BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
         created_by_user_id  BIGINT NOT NULL REFERENCES users(id),
         title               TEXT NOT NULL,
-        is_active           BOOLEAN NOT NULL DEFAULT true,
+        is_active           BOOLEAN NOT NULL DEFAULT false,
         created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
       );
 
       CREATE INDEX idx_prize_spin_account_created
         ON prize_spin (account_id, created_at DESC);
+
+      CREATE INDEX idx_prize_spin_account_live
+        ON prize_spin (account_id)
+        WHERE is_active = true;
 
       CREATE TABLE prize_spin_sector (
         id                  BIGSERIAL PRIMARY KEY,
@@ -1800,8 +1804,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         created_by_name: string;
       }>(
         `
-          INSERT INTO prize_spin (account_id, created_by_user_id, title)
-          VALUES ($1, $2, $3)
+          INSERT INTO prize_spin (account_id, created_by_user_id, title, is_active)
+          VALUES ($1, $2, $3, false)
           RETURNING
             id,
             account_id,
@@ -1839,7 +1843,115 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async endPrizeSpin(
+  async getAccountIdByChannelSlug(channelSlug: string): Promise<number | null> {
+    const result = await this.pool.query<{ account_id: string | number }>(
+      `
+        SELECT account_id
+        FROM account_channels
+        WHERE provider = 'kick'
+          AND is_primary = true
+          AND channel_slug = $1
+        LIMIT 1
+      `,
+      [channelSlug],
+    );
+
+    const row = result.rows[0];
+    return row ? toInt(row.account_id) : null;
+  }
+
+  async getActivePrizeSpinId(accountId: number): Promise<number | null> {
+    const result = await this.pool.query<{ id: string | number }>(
+      `
+        SELECT id
+        FROM prize_spin
+        WHERE account_id = $1
+          AND is_active = true
+        LIMIT 1
+      `,
+      [accountId],
+    );
+
+    const row = result.rows[0];
+    return row ? toInt(row.id) : null;
+  }
+
+  async goLivePrizeSpin(
+    accountId: number,
+    prizeSpinId: number,
+  ): Promise<DbPrizeSpin> {
+    const existing = await this.getPrizeSpinById(accountId, prizeSpinId);
+    if (!existing) {
+      throw new Error('NOT_FOUND');
+    }
+
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      await client.query(
+        `
+          UPDATE prize_spin
+          SET is_active = false
+          WHERE account_id = $1
+            AND is_active = true
+        `,
+        [accountId],
+      );
+
+      const result = await client.query<{
+        id: string | number;
+        account_id: string | number;
+        title: string;
+        is_active: boolean;
+        created_at: Date;
+        created_by_user_id: string | number;
+        created_by_name: string;
+      }>(
+        `
+          UPDATE prize_spin ps
+          SET is_active = true
+          FROM users u
+          WHERE ps.created_by_user_id = u.id
+            AND ps.account_id = $1
+            AND ps.id = $2
+          RETURNING
+            ps.id,
+            ps.account_id,
+            ps.title,
+            ps.is_active,
+            ps.created_at,
+            ps.created_by_user_id,
+            u.name AS created_by_name
+        `,
+        [accountId, prizeSpinId],
+      );
+
+      await client.query('COMMIT');
+
+      const row = result.rows[0];
+      if (!row) {
+        throw new Error('NOT_FOUND');
+      }
+
+      return {
+        id: toInt(row.id),
+        accountId: toInt(row.account_id),
+        title: row.title,
+        isActive: row.is_active,
+        createdAt: row.created_at,
+        createdByUserId: toInt(row.created_by_user_id),
+        createdByName: row.created_by_name,
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async deactivatePrizeSpin(
     accountId: number,
     prizeSpinId: number,
   ): Promise<DbPrizeSpin> {
@@ -1859,7 +1971,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         WHERE ps.created_by_user_id = u.id
           AND ps.account_id = $1
           AND ps.id = $2
-          AND ps.is_active = true
         RETURNING
           ps.id,
           ps.account_id,
@@ -1873,27 +1984,19 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     );
 
     const row = result.rows[0];
-    if (row) {
-      return {
-        id: toInt(row.id),
-        accountId: toInt(row.account_id),
-        title: row.title,
-        isActive: row.is_active,
-        createdAt: row.created_at,
-        createdByUserId: toInt(row.created_by_user_id),
-        createdByName: row.created_by_name,
-      };
-    }
-
-    const existing = await this.getPrizeSpinById(accountId, prizeSpinId);
-    if (!existing) {
+    if (!row) {
       throw new Error('NOT_FOUND');
     }
-    if (!existing.isActive) {
-      throw new Error('ALREADY_ENDED');
-    }
 
-    throw new Error('NOT_FOUND');
+    return {
+      id: toInt(row.id),
+      accountId: toInt(row.account_id),
+      title: row.title,
+      isActive: row.is_active,
+      createdAt: row.created_at,
+      createdByUserId: toInt(row.created_by_user_id),
+      createdByName: row.created_by_name,
+    };
   }
 
   private mapPrizeSpinSectorRow(row: {
@@ -2556,6 +2659,36 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     return this.mapPrizeSpinWidgetRow(row);
   }
 
+  async getPublicPrizeSpinWidgetViewByChannelSlug(
+    channelSlug: string,
+  ): Promise<
+    | {
+        record: DbPrizeSpin;
+        sectors: DbPrizeSpinSector[];
+        latestWin: DbPrizeSpinWin | null;
+        settings: DbPrizeSpinWidget;
+      }
+    | 'NOT_FOUND'
+    | 'NOT_LIVE'
+  > {
+    const accountId = await this.getAccountIdByChannelSlug(channelSlug);
+    if (accountId === null) {
+      return 'NOT_FOUND';
+    }
+
+    const prizeSpinId = await this.getActivePrizeSpinId(accountId);
+    if (prizeSpinId === null) {
+      return 'NOT_LIVE';
+    }
+
+    const view = await this.getPublicPrizeSpinWidgetView(prizeSpinId);
+    if (!view || !view.record.isActive) {
+      return 'NOT_LIVE';
+    }
+
+    return view;
+  }
+
   async getPublicPrizeSpinWidgetView(prizeSpinId: number): Promise<{
     record: DbPrizeSpin;
     sectors: DbPrizeSpinSector[];
@@ -2583,6 +2716,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         FROM prize_spin ps
         JOIN users u ON u.id = ps.created_by_user_id
         WHERE ps.id = $1
+          AND ps.is_active = true
       `,
       [prizeSpinId],
     );

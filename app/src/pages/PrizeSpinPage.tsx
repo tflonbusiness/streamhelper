@@ -13,25 +13,40 @@ import {
   Skeleton,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material'
 import { useTheme, alpha, type Theme } from '@mui/material/styles'
-import { ArrowRight, Maximize2, Plus, RotateCw } from 'lucide-react'
+import {
+  ArrowRight,
+  CircleStop,
+  ExternalLink,
+  Link2,
+  Monitor,
+  Plus,
+  Radio,
+  RotateCw,
+  Settings2,
+} from 'lucide-react'
 import { type FormEvent, useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   createPrizeSpin,
+  deactivatePrizeSpin,
   fetchPrizeSpinWidget,
   fetchPrizeSpins,
+  goLivePrizeSpin,
   patchPrizeSpinWidget,
   type PrizeSpinRecord,
 } from '@/api/prize-spin'
 import { AppTable, type AppTableColumn } from '@/components/AppTable'
+import { LiveStatusChip } from '@/components/LiveStatusChip'
 import { PageHeader } from '@/components/PageHeader'
+import { SectionHeader } from '@/components/SectionHeader'
 import { StatusAlert } from '@/components/StatusAlert'
 import { useAuth } from '@/context/AuthContext'
 import { useNotification } from '@/context/NotificationContext'
-import { cardSx, inputFieldSx, mutedChipSx, toneChipSx } from '@/theme/colors'
+import { cardSx, inputFieldSx, mutedChipSx } from '@/theme/colors'
 
 const DEFAULT_TITLE = 'Prize Spin'
 
@@ -81,23 +96,13 @@ function RecordExpandedDetails({ record }: { record: PrizeSpinRecord }) {
   )
 }
 
-function recordStatusChip(
-  isActive: boolean,
-  palette: Theme['palette'],
-  theme: Theme,
-) {
+function recordStatusChip(isActive: boolean, theme: Theme) {
   if (isActive) {
-    return (
-      <Chip
-        label="Active"
-        size="small"
-        sx={toneChipSx(palette.success.light)}
-      />
-    )
+    return <LiveStatusChip />
   }
 
   return (
-    <Chip label="Inactive" size="small" sx={mutedChipSx(theme)} />
+    <Chip label="Off air" size="small" sx={mutedChipSx(theme)} />
   )
 }
 
@@ -119,8 +124,16 @@ export function PrizeSpinPage() {
   const [widgetWidth, setWidgetWidth] = useState('500')
   const [widgetHeight, setWidgetHeight] = useState('500')
   const [widgetEditError, setWidgetEditError] = useState<string | null>(null)
-  const [isLoadingWidget, setIsLoadingWidget] = useState(false)
   const [isSavingWidget, setIsSavingWidget] = useState(false)
+  const [isDialogLoadingWidget, setIsDialogLoadingWidget] = useState(false)
+  const [liveActionRecordId, setLiveActionRecordId] = useState<number | null>(
+    null,
+  )
+  const [liveActionError, setLiveActionError] = useState<string | null>(null)
+
+  const overlayHref = user?.channelSlug
+    ? `/prize-spin/widget/${user.channelSlug}`
+    : null
 
   const loadRecords = useCallback(async () => {
     if (!user?.accountId) {
@@ -184,14 +197,18 @@ export function PrizeSpinPage() {
     }
   }
 
-  async function openWidgetSizeDialog() {
+  function showStub(message: string) {
+    showSuccess(message)
+  }
+
+  async function openWidgetSettingsDialog() {
     if (!user?.accountId) {
       return
     }
 
     setWidgetDialogOpen(true)
     setWidgetEditError(null)
-    setIsLoadingWidget(true)
+    setIsDialogLoadingWidget(true)
 
     try {
       const settings = await fetchPrizeSpinWidget(user.accountId)
@@ -204,7 +221,7 @@ export function PrizeSpinPage() {
           : 'Could not load widget settings',
       )
     } finally {
-      setIsLoadingWidget(false)
+      setIsDialogLoadingWidget(false)
     }
   }
 
@@ -232,7 +249,7 @@ export function PrizeSpinPage() {
     try {
       await patchPrizeSpinWidget(user.accountId, { width, height })
       setWidgetDialogOpen(false)
-      showSuccess('Widget size saved')
+      showSuccess('Widget settings saved')
     } catch (error) {
       setWidgetEditError(
         error instanceof Error
@@ -241,6 +258,57 @@ export function PrizeSpinPage() {
       )
     } finally {
       setIsSavingWidget(false)
+    }
+  }
+
+  async function handleGoLive(record: PrizeSpinRecord) {
+    if (!user?.accountId) {
+      return
+    }
+
+    setLiveActionRecordId(record.id)
+    setLiveActionError(null)
+
+    try {
+      await goLivePrizeSpin(user.accountId, record.id)
+      setRecords((previous) =>
+        previous.map((row) => ({
+          ...row,
+          isActive: row.id === record.id,
+        })),
+      )
+      showSuccess('Session is now live.')
+    } catch (error) {
+      setLiveActionError(
+        error instanceof Error ? error.message : 'Could not go live',
+      )
+    } finally {
+      setLiveActionRecordId(null)
+    }
+  }
+
+  async function handleDeactivate(record: PrizeSpinRecord) {
+    if (!user?.accountId) {
+      return
+    }
+
+    setLiveActionRecordId(record.id)
+    setLiveActionError(null)
+
+    try {
+      await deactivatePrizeSpin(user.accountId, record.id)
+      setRecords((previous) =>
+        previous.map((row) =>
+          row.id === record.id ? { ...row, isActive: false } : row,
+        ),
+      )
+      showSuccess('Session taken off air.')
+    } catch (error) {
+      setLiveActionError(
+        error instanceof Error ? error.message : 'Could not deactivate session',
+      )
+    } finally {
+      setLiveActionRecordId(null)
     }
   }
 
@@ -277,37 +345,94 @@ export function PrizeSpinPage() {
       minWidth: 100,
       sx: { px: 1.5, whiteSpace: 'nowrap' },
       render: (record) =>
-        recordStatusChip(record.isActive, theme.palette, theme),
+        recordStatusChip(record.isActive, theme),
     },
     {
       id: 'action',
       header: '',
       align: 'right',
-      width: 56,
-      minWidth: 56,
+      width: 96,
+      minWidth: 96,
       sx: { px: 1, whiteSpace: 'nowrap' },
-      render: (record) => (
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <IconButton
-            component={Link}
-            to={`/prize-spin/${record.id}`}
-            aria-label={`Open ${record.title}`}
-            size="small"
-            sx={{
-              bgcolor: 'primary.main',
-              color: 'primary.contrastText',
-              borderRadius: 1,
-              width: 28,
-              height: 28,
-              '&:hover': {
-                bgcolor: 'primary.dark',
-              },
-            }}
-          >
-            <ArrowRight size={14} aria-hidden />
-          </IconButton>
-        </Box>
-      ),
+      render: (record) => {
+        const isUpdating = liveActionRecordId === record.id
+
+        return (
+          <Stack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
+            {record.isActive ? (
+              <Tooltip title="Deactivate">
+                <span>
+                  <IconButton
+                    type="button"
+                    aria-label={`Deactivate ${record.title}`}
+                    size="small"
+                    disabled={isUpdating}
+                    onClick={() => void handleDeactivate(record)}
+                    sx={{
+                      borderRadius: 1,
+                      width: 28,
+                      height: 28,
+                      border: '1px solid',
+                      borderColor: alpha(theme.palette.error.main, 0.4),
+                      color: theme.palette.error.main,
+                      '&:hover': {
+                        bgcolor: alpha(theme.palette.error.main, 0.1),
+                        borderColor: theme.palette.error.main,
+                      },
+                    }}
+                  >
+                    <CircleStop size={14} aria-hidden />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            ) : (
+              <Tooltip title="Go live">
+                <span>
+                  <IconButton
+                    type="button"
+                    aria-label={`Go live with ${record.title}`}
+                    size="small"
+                    disabled={isUpdating}
+                    onClick={() => void handleGoLive(record)}
+                    sx={{
+                      borderRadius: 1,
+                      width: 28,
+                      height: 28,
+                      border: '1px solid',
+                      borderColor: alpha(theme.palette.success.main, 0.4),
+                      color: theme.palette.success.light,
+                      '&:hover': {
+                        bgcolor: alpha(theme.palette.success.main, 0.1),
+                        borderColor: theme.palette.success.main,
+                      },
+                    }}
+                  >
+                    <Radio size={14} aria-hidden />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
+            <IconButton
+              component={Link}
+              to={`/prize-spin/${record.id}`}
+              aria-label={`Open ${record.title}`}
+              size="small"
+              sx={{
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
+                borderRadius: 1,
+                width: 28,
+                height: 28,
+                '&:hover': {
+                  bgcolor: 'primary.dark',
+                },
+              }}
+            >
+              <ArrowRight size={14} aria-hidden />
+            </IconButton>
+          </Stack>
+        )
+      },
     },
   ]
 
@@ -322,46 +447,68 @@ export function PrizeSpinPage() {
 
       <Card elevation={0} sx={cardSx}>
         <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
-          <Stack
-            direction="row"
-            spacing={2}
-            sx={{ mb: 3, alignItems: 'flex-start', justifyContent: 'space-between' }}
-          >
-            <Stack direction="row" spacing={1.5}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  flexShrink: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: 1,
-                  bgcolor: alpha(theme.palette.secondary.main, 0.14),
-                  color: theme.palette.secondary.main,
-                }}
-              >
-                <RotateCw size={20} aria-hidden />
-              </Box>
-              <Stack spacing={0.5}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  History
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Prize spin sessions for this account
-                </Typography>
-              </Stack>
-            </Stack>
-            {user?.accountId ? (
-              <Stack direction="row" spacing={1}>
+          <SectionHeader
+            title="Stream widget"
+            description="OBS overlay settings and links for your live prize spin session"
+            icon={Monitor}
+            iconVariant="info"
+            action={
+              user?.accountId ? (
                 <Button
                   type="button"
                   variant="outlined"
-                  startIcon={<Maximize2 size={16} aria-hidden />}
-                  onClick={() => void openWidgetSizeDialog()}
+                  startIcon={<Settings2 size={16} aria-hidden />}
+                  onClick={() => void openWidgetSettingsDialog()}
                 >
-                  Widget size
+                  Widget settings
                 </Button>
+              ) : null
+            }
+          />
+
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+            {overlayHref ? (
+              <Button
+                component={Link}
+                to={overlayHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="outlined"
+                startIcon={<ExternalLink size={16} aria-hidden />}
+              >
+                Open overlay
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="outlined"
+                startIcon={<ExternalLink size={16} aria-hidden />}
+                disabled
+              >
+                Open overlay
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="outlined"
+              startIcon={<Link2 size={16} aria-hidden />}
+              onClick={() => showStub('Coming soon')}
+            >
+              OBS link
+            </Button>
+          </Stack>
+        </CardContent>
+      </Card>
+
+      <Card elevation={0} sx={cardSx}>
+        <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
+          <SectionHeader
+            title="History"
+            description="Prize spin sessions for this account"
+            icon={RotateCw}
+            iconVariant="secondary"
+            action={
+              user?.accountId ? (
                 <Button
                   type="button"
                   variant="contained"
@@ -373,9 +520,9 @@ export function PrizeSpinPage() {
                 >
                   New
                 </Button>
-              </Stack>
-            ) : null}
-          </Stack>
+              ) : null
+            }
+          />
 
           <Stack spacing={2}>
             {loadingRecords ? (
@@ -387,6 +534,9 @@ export function PrizeSpinPage() {
             ) : null}
             {recordsError ? (
               <StatusAlert tone="error">{recordsError}</StatusAlert>
+            ) : null}
+            {liveActionError ? (
+              <StatusAlert tone="error">{liveActionError}</StatusAlert>
             ) : null}
             {!loadingRecords && records.length > 0 ? (
               <AppTable
@@ -419,9 +569,9 @@ export function PrizeSpinPage() {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle>Widget size</DialogTitle>
+        <DialogTitle>Widget settings</DialogTitle>
         <DialogContent>
-          {isLoadingWidget ? (
+          {isDialogLoadingWidget ? (
             <Typography sx={{ py: 2, color: 'text.secondary' }}>
               Loading settings…
             </Typography>
@@ -470,7 +620,7 @@ export function PrizeSpinPage() {
             type="button"
             variant="contained"
             onClick={() => void handleSaveWidgetSize()}
-            disabled={isLoadingWidget || isSavingWidget}
+            disabled={isDialogLoadingWidget || isSavingWidget}
           >
             {isSavingWidget ? 'Saving…' : 'Save'}
           </Button>
