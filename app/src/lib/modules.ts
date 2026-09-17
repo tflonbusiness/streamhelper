@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { CircleDot, Gift } from 'lucide-react'
+import { Gift, RotateCw } from 'lucide-react'
 
 export type ModuleCatalogStatus = 'available' | 'coming_soon'
 
@@ -36,13 +36,15 @@ export const MODULE_CATALOG: ModuleDefinition[] = [
     hasToggle: false,
   },
   {
-    id: 'wheel-of-fortune',
-    name: 'Wheel of Fortune',
+    id: 'prize-spin',
+    name: 'Prize Spin',
     description:
-      'Spin-the-wheel chat game for Kick streams — prize segments and overlay coming later.',
-    status: 'coming_soon',
-    icon: CircleDot,
-    iconVariant: 'primary',
+      'Spin a weighted prize wheel for a viewer — enter their chat nick, set prize sectors and odds, show the result on stream.',
+    status: 'available',
+    icon: RotateCw,
+    iconVariant: 'purple',
+    widgetRoute: '/prize-spin',
+    hasToggle: false,
   },
 ]
 

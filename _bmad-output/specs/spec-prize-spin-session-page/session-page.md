@@ -1,0 +1,139 @@
+# Prize Spin — session page (`/prize-spin/:id`)
+
+Operator workspace for a single prize spin session. Extends the existing `PrizeSpinSessionPage` stub — replaces the placeholder info alert with sector management, nick input, spin control, and winners history.
+
+## Route
+
+| Path | Component | Guards |
+|------|-----------|--------|
+| `/prize-spin/:id` | `PrizeSpinSessionPage` | `ProtectedRoute` → `AppShell` → `AccountActiveRoute` |
+
+Load `prize_spin` by `:id` for the session account. Invalid id or foreign account → error state with link to `/prize-spin`.
+
+## Layout (top → bottom)
+
+Vertical `Stack spacing={4}` inside `AppShell` main. Reuse existing session header card (title, `#id`, **Ended** chip, **End session** when active). Below it:
+
+```
+SpinPanelCard          ← nick field + spin action
+SectorsCard            ← sector list + add form
+WinnersCard            ← winners list with remove
+```
+
+### Responsive
+
+- **Desktop:** spin panel = nick field and **Spin** button on one row (field grows, button right-aligned).
+- **Mobile:** nick field full width; **Spin** button full width below.
+
+## 1. Spin panel
+
+Panel title: **Spin for viewer**
+
+| Element | Behavior | Label (English) |
+|---------|----------|-----------------|
+| Nick field | `TextField`; required before spin | **Participant nick** |
+| Spin button | Primary; calls `POST .../spin` | **Spin** |
+
+Placeholder on nick field: **Viewer chat nick**
+
+**Spin disabled when:** nick empty/whitespace, fewer than two sectors, or request in flight.
+
+On success: append winner to **Winners** list, clear nick field, show success toast. On error: `StatusAlert` inline in panel.
+
+## 2. Sectors card
+
+Panel title: **Wheel sectors ({count})** — count = non-archived sectors.
+
+### Add form (match Bonus Buy quick-add pattern)
+
+| Field | Required | Control | Placeholder (English) |
+|-------|----------|---------|----------------------|
+| Label | yes | `TextField` | Prize label |
+| Win % | yes | `TextField` `type="number"`; min 0.01; max 100; step 0.01 | Win chance (%) |
+| Color | no | `HexColorField` (reuse from `app/src/components/bonus-buy/HexColorField.tsx`) | — |
+
+Submit: primary button **+ Add sector**
+
+Validation: inline on submit; disable while saving. Clear label and win % on success; reset color to next palette default.
+
+Show running total of win % for active sectors (e.g. **Total: 75% / 100%**) so the operator sees remaining headroom before the server rejects `> 100%`.
+
+### Sector list
+
+| Column | Source |
+|--------|--------|
+| Color | swatch from `sector.color` |
+| Label | `sector.label` |
+| Win % | `sector.winPercent` with `%` suffix |
+| Actions | **Edit** icon; **Delete** icon |
+
+Empty state centered muted text: **No sectors yet. Add at least two to spin.**
+
+Populated list updates immediately after add, edit, or delete without full page reload.
+
+### Edit sector dialog
+
+Opened from row **Edit**. Fields mirror add form:
+
+| Field | Label (English) |
+|-------|-----------------|
+| Label | **Label** |
+| Win % | **Win %** |
+| Color | **Color** (`HexColorField`) |
+
+Actions: **Cancel** / **Save** — `PATCH .../sectors/:sectorId` on save; close and refresh row on success; `StatusAlert` on validation error.
+
+### Delete sector
+
+Row **Delete** archives the sector (`DELETE .../sectors/:sectorId`). Confirm dialog optional (implementation choice). Row disappears from list; total win % indicator updates; success toast.
+
+## 3. Winners card
+
+Panel title: **Winners ({count})**
+
+### Empty state
+
+Centered muted text: **No winners yet.**
+
+### Populated state
+
+Table or stacked rows:
+
+| Column | Source |
+|--------|--------|
+| Nick | `win.participantNick` |
+| Prize | `win.sectorLabel` |
+| Time | locale date-time from `win.createdAt` |
+| Action | **Remove** icon/button |
+
+**Remove:** confirm dialog optional (implementation choice); calls `DELETE .../wins/:winId`; row disappears from list; success toast.
+
+Newest winners first (`created_at DESC`).
+
+## States
+
+| State | UI |
+|-------|------|
+| Loading | Skeleton for header, three panels |
+| Error (bad id, network) | `StatusAlert` error; **Back to history** link |
+| Loaded, zero sectors | Empty sector message; spin disabled |
+| Session ended | Existing **Ended** chip in header only — no extra disable logic in this slice |
+
+## Visual contract
+
+Match existing Prize Spin and Bonus Buy session patterns:
+
+| Token / pattern | Usage |
+|-----------------|-------|
+| `cardSx` | All three panels |
+| `inputFieldSx` | Nick, sector fields |
+| `HexColorField` | Sector color on add form and edit dialog |
+| `primary` | **Spin**, **+ Add sector**, **Save** |
+| `AppTable` or `Stack` rows | Sector and winner lists |
+| `StatusAlert` | Errors; remove placeholder info alert |
+
+English copy only per adopted `spec-app-english-only`.
+
+## Brownfield note
+
+`PrizeSpinSessionPage` already loads the session record and supports **End session**. This companion adds the three workspace panels beneath the existing header card without changing history page (`/prize-spin`) behavior.

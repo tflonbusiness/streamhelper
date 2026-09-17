@@ -11,6 +11,9 @@ import {
   type DbBonusBuySlot,
   type DbBonusBuyWidget,
   type PatchBonusBuySlotInput,
+  type PatchPrizeSpinSectorInput,
+  type DbPrizeSpinSector,
+  type DbPrizeSpinWin,
 } from '../database/database.service.js';
 import { KickChannelService } from './kick-channel.service.js';
 import type { KickChannelDto } from './kick-channel.types.js';
@@ -374,6 +377,73 @@ export class AuthService {
     }
   }
 
+  private formatPrizeSpinSector(row: DbPrizeSpinSector) {
+    return {
+      id: row.id,
+      prizeSpinId: row.prizeSpinId,
+      label: row.label,
+      winPercent: row.winPercent,
+      color: row.color,
+      sortOrder: row.sortOrder,
+      createdAt: row.createdAt.toISOString(),
+    };
+  }
+
+  private formatPrizeSpinWin(row: DbPrizeSpinWin) {
+    return {
+      id: row.id,
+      prizeSpinId: row.prizeSpinId,
+      sectorId: row.sectorId,
+      sectorLabel: row.sectorLabel,
+      participantNick: row.participantNick,
+      spunByName: row.spunByName,
+      createdAt: row.createdAt.toISOString(),
+    };
+  }
+
+  private mapPrizeSpinMutationError(error: unknown): never {
+    if (error instanceof Error) {
+      if (error.message === 'NOT_FOUND') {
+        throw new NotFoundException('Prize spin resource not found');
+      }
+      if (error.message === 'INVALID_LABEL') {
+        throw new BadRequestException('Label must be 1-100 characters');
+      }
+      if (error.message === 'INVALID_WIN_PERCENT') {
+        throw new BadRequestException(
+          'Win percent must be greater than 0 and at most 100 with up to 2 decimal places',
+        );
+      }
+      if (error.message === 'WIN_PERCENT_SUM_EXCEEDED') {
+        throw new BadRequestException(
+          'Total win percent for active sectors cannot exceed 100',
+        );
+      }
+      if (error.message === 'WIN_PERCENT_SUM_INCOMPLETE') {
+        throw new BadRequestException(
+          'Sector win percentages must total 100% before spinning',
+        );
+      }
+      if (error.message === 'INVALID_COLOR') {
+        throw new BadRequestException('Color must be a valid #RRGGBB hex value');
+      }
+      if (error.message === 'INVALID_PARTICIPANT_NICK') {
+        throw new BadRequestException(
+          'Participant nick must be 1-100 characters',
+        );
+      }
+      if (error.message === 'INSUFFICIENT_SECTORS') {
+        throw new BadRequestException(
+          'At least two wheel sectors are required to spin',
+        );
+      }
+      if (error.message === 'NO_SECTORS') {
+        throw new BadRequestException('Add at least one wheel sector first');
+      }
+    }
+    throw error;
+  }
+
   private mapSlotMutationError(error: unknown): never {
     if (error instanceof Error) {
       if (error.message === 'NOT_FOUND') {
@@ -699,5 +769,334 @@ export class AuthService {
       throw new BadRequestException('No account context');
     }
     return user;
+  }
+
+  async getPrizeSpin(
+    accountId: number,
+    callerUserId: number,
+    prizeSpinId: number,
+  ) {
+    const isMember = await this.database.hasActiveMembership(
+      accountId,
+      callerUserId,
+    );
+    if (!isMember) {
+      throw new ForbiddenException('Not a member of this account');
+    }
+
+    const row = await this.database.getPrizeSpinById(accountId, prizeSpinId);
+    if (!row) {
+      throw new NotFoundException('Prize spin not found');
+    }
+
+    return {
+      id: row.id,
+      accountId: row.accountId,
+      title: row.title,
+      isActive: row.isActive,
+      createdAt: row.createdAt.toISOString(),
+      createdByUserId: row.createdByUserId,
+      createdByName: row.createdByName,
+    };
+  }
+
+  async listPrizeSpins(accountId: number, callerUserId: number) {
+    const isMember = await this.database.hasActiveMembership(
+      accountId,
+      callerUserId,
+    );
+    if (!isMember) {
+      throw new ForbiddenException('Not a member of this account');
+    }
+
+    const rows = await this.database.listPrizeSpins(accountId);
+    return rows.map((row) => ({
+      id: row.id,
+      accountId: row.accountId,
+      title: row.title,
+      isActive: row.isActive,
+      createdAt: row.createdAt.toISOString(),
+      createdByUserId: row.createdByUserId,
+      createdByName: row.createdByName,
+    }));
+  }
+
+  async createPrizeSpin(
+    accountId: number,
+    callerUserId: number,
+    title: string,
+  ) {
+    const isMember = await this.database.hasActiveMembership(
+      accountId,
+      callerUserId,
+    );
+    if (!isMember) {
+      throw new ForbiddenException('Not a member of this account');
+    }
+
+    try {
+      const row = await this.database.createPrizeSpin(
+        accountId,
+        callerUserId,
+        title,
+      );
+      return {
+        id: row.id,
+        accountId: row.accountId,
+        title: row.title,
+        isActive: row.isActive,
+        createdAt: row.createdAt.toISOString(),
+        createdByUserId: row.createdByUserId,
+        createdByName: row.createdByName,
+      };
+    } catch (error) {
+      if (error instanceof Error && error.message === 'INVALID_TITLE') {
+        throw new BadRequestException('Title must be 1-200 characters');
+      }
+      throw error;
+    }
+  }
+
+  async endPrizeSpin(
+    accountId: number,
+    callerUserId: number,
+    prizeSpinId: number,
+  ) {
+    const isMember = await this.database.hasActiveMembership(
+      accountId,
+      callerUserId,
+    );
+    if (!isMember) {
+      throw new ForbiddenException('Not a member of this account');
+    }
+
+    try {
+      const row = await this.database.endPrizeSpin(accountId, prizeSpinId);
+      return {
+        id: row.id,
+        accountId: row.accountId,
+        title: row.title,
+        isActive: row.isActive,
+        createdAt: row.createdAt.toISOString(),
+        createdByUserId: row.createdByUserId,
+        createdByName: row.createdByName,
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === 'NOT_FOUND') {
+          throw new NotFoundException('Prize spin not found');
+        }
+        if (error.message === 'ALREADY_ENDED') {
+          throw new BadRequestException('Prize spin session already ended');
+        }
+      }
+      throw error;
+    }
+  }
+
+  async listPrizeSpinSectors(
+    accountId: number,
+    callerUserId: number,
+    prizeSpinId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      const rows = await this.database.listPrizeSpinSectors(
+        accountId,
+        prizeSpinId,
+      );
+      return { sectors: rows.map((row) => this.formatPrizeSpinSector(row)) };
+    } catch (error) {
+      if (error instanceof Error && error.message === 'NOT_FOUND') {
+        throw new NotFoundException('Prize spin not found');
+      }
+      throw error;
+    }
+  }
+
+  async createPrizeSpinSector(
+    accountId: number,
+    callerUserId: number,
+    prizeSpinId: number,
+    label: string,
+    winPercent: string,
+    color?: string,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      const row = await this.database.createPrizeSpinSector(
+        accountId,
+        prizeSpinId,
+        label,
+        winPercent,
+        color,
+      );
+      return this.formatPrizeSpinSector(row);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'NOT_FOUND') {
+        throw new NotFoundException('Prize spin not found');
+      }
+      this.mapPrizeSpinMutationError(error);
+    }
+  }
+
+  async patchPrizeSpinSector(
+    accountId: number,
+    callerUserId: number,
+    prizeSpinId: number,
+    sectorId: number,
+    body: {
+      label?: string;
+      win_percent?: string | number;
+      color?: string | null;
+    },
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    const input: PatchPrizeSpinSectorInput = {};
+    if (body.label !== undefined) {
+      input.label = body.label;
+    }
+    if (body.win_percent !== undefined) {
+      input.winPercent =
+        typeof body.win_percent === 'number'
+          ? body.win_percent.toString()
+          : body.win_percent;
+    }
+    if (body.color !== undefined) {
+      input.color = body.color;
+    }
+
+    if (Object.keys(input).length === 0) {
+      throw new BadRequestException('At least one field is required');
+    }
+
+    try {
+      const row = await this.database.patchPrizeSpinSector(
+        accountId,
+        prizeSpinId,
+        sectorId,
+        input,
+      );
+      return this.formatPrizeSpinSector(row);
+    } catch (error) {
+      this.mapPrizeSpinMutationError(error);
+    }
+  }
+
+  async archivePrizeSpinSector(
+    accountId: number,
+    callerUserId: number,
+    prizeSpinId: number,
+    sectorId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      await this.database.archivePrizeSpinSector(
+        accountId,
+        prizeSpinId,
+        sectorId,
+      );
+    } catch (error) {
+      this.mapPrizeSpinMutationError(error);
+    }
+  }
+
+  async distributePrizeSpinSectorsEqually(
+    accountId: number,
+    callerUserId: number,
+    prizeSpinId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      const rows = await this.database.distributePrizeSpinSectorsEqually(
+        accountId,
+        prizeSpinId,
+      );
+      return { sectors: rows.map((row) => this.formatPrizeSpinSector(row)) };
+    } catch (error) {
+      if (error instanceof Error && error.message === 'NOT_FOUND') {
+        throw new NotFoundException('Prize spin not found');
+      }
+      this.mapPrizeSpinMutationError(error);
+    }
+  }
+
+  async listPrizeSpinWins(
+    accountId: number,
+    callerUserId: number,
+    prizeSpinId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      const rows = await this.database.listPrizeSpinWins(accountId, prizeSpinId);
+      return { wins: rows.map((row) => this.formatPrizeSpinWin(row)) };
+    } catch (error) {
+      if (error instanceof Error && error.message === 'NOT_FOUND') {
+        throw new NotFoundException('Prize spin not found');
+      }
+      throw error;
+    }
+  }
+
+  async archivePrizeSpinWin(
+    accountId: number,
+    callerUserId: number,
+    prizeSpinId: number,
+    winId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      await this.database.archivePrizeSpinWin(accountId, prizeSpinId, winId);
+    } catch (error) {
+      this.mapPrizeSpinMutationError(error);
+    }
+  }
+
+  async archiveAllPrizeSpinWins(
+    accountId: number,
+    callerUserId: number,
+    prizeSpinId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      await this.database.archiveAllPrizeSpinWins(accountId, prizeSpinId);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'NOT_FOUND') {
+        throw new NotFoundException('Prize spin not found');
+      }
+      throw error;
+    }
+  }
+
+  async spinPrizeSpin(
+    accountId: number,
+    callerUserId: number,
+    prizeSpinId: number,
+    participantNick: string,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      const row = await this.database.spinPrizeSpin(
+        accountId,
+        prizeSpinId,
+        callerUserId,
+        participantNick,
+      );
+      return this.formatPrizeSpinWin(row);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'NOT_FOUND') {
+        throw new NotFoundException('Prize spin not found');
+      }
+      this.mapPrizeSpinMutationError(error);
+    }
   }
 }

@@ -20,6 +20,8 @@ export function buildBreadcrumbs(
       return [home, { label: 'Subscription' }]
     case '/bonus-buy':
       return [home, { label: 'Modules', to: '/modules' }, { label: 'Bonus Buy' }]
+    case '/prize-spin':
+      return [home, { label: 'Modules', to: '/modules' }, { label: 'Prize Spin' }]
     default:
       break
   }
@@ -29,6 +31,15 @@ export function buildBreadcrumbs(
       home,
       { label: 'Modules', to: '/modules' },
       { label: 'Bonus Buy', to: '/bonus-buy' },
+      { label: dynamicLabel ?? 'Session' },
+    ]
+  }
+
+  if (pathname.startsWith('/prize-spin/')) {
+    return [
+      home,
+      { label: 'Modules', to: '/modules' },
+      { label: 'Prize Spin', to: '/prize-spin' },
       { label: dynamicLabel ?? 'Session' },
     ]
   }

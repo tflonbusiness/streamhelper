@@ -58,6 +58,26 @@ type PatchBonusBuyWidgetBody = {
   font_family?: string;
 };
 
+type CreatePrizeSpinBody = {
+  title?: string;
+};
+
+type CreatePrizeSpinSectorBody = {
+  label?: string;
+  win_percent?: string | number;
+  color?: string;
+};
+
+type PatchPrizeSpinSectorBody = {
+  label?: string;
+  win_percent?: string | number;
+  color?: string | null;
+};
+
+type SpinPrizeSpinBody = {
+  participant_nick?: string;
+};
+
 @Controller('accounts')
 export class AccountsController {
   constructor(private readonly authService: AuthService) {}
@@ -283,6 +303,213 @@ export class AccountsController {
     const user = await this.authService.requireValidSessionUser(session.user);
 
     return this.authService.endBonusBuy(accountId, user.id, bonusBuyId);
+  }
+
+  @Get(':accountId/prize-spins')
+  async listPrizeSpins(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    const records = await this.authService.listPrizeSpins(accountId, user.id);
+    return { records };
+  }
+
+  @Get(':accountId/prize-spins/:prizeSpinId')
+  async getPrizeSpin(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('prizeSpinId', ParseIntPipe) prizeSpinId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.authService.getPrizeSpin(accountId, user.id, prizeSpinId);
+  }
+
+  @Post(':accountId/prize-spins')
+  async createPrizeSpin(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Body() body: CreatePrizeSpinBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.createPrizeSpin(
+      accountId,
+      user.id,
+      body.title ?? '',
+    );
+  }
+
+  @Post(':accountId/prize-spins/:prizeSpinId/end')
+  async endPrizeSpin(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('prizeSpinId', ParseIntPipe) prizeSpinId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.endPrizeSpin(accountId, user.id, prizeSpinId);
+  }
+
+  @Get(':accountId/prize-spins/:prizeSpinId/sectors')
+  async listPrizeSpinSectors(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('prizeSpinId', ParseIntPipe) prizeSpinId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.listPrizeSpinSectors(
+      accountId,
+      user.id,
+      prizeSpinId,
+    );
+  }
+
+  @Post(':accountId/prize-spins/:prizeSpinId/sectors')
+  async createPrizeSpinSector(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('prizeSpinId', ParseIntPipe) prizeSpinId: number,
+    @Body() body: CreatePrizeSpinSectorBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.createPrizeSpinSector(
+      accountId,
+      user.id,
+      prizeSpinId,
+      body.label ?? '',
+      body.win_percent?.toString() ?? '',
+      body.color,
+    );
+  }
+
+  @Post(':accountId/prize-spins/:prizeSpinId/sectors/distribute-equally')
+  async distributePrizeSpinSectorsEqually(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('prizeSpinId', ParseIntPipe) prizeSpinId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.distributePrizeSpinSectorsEqually(
+      accountId,
+      user.id,
+      prizeSpinId,
+    );
+  }
+
+  @Patch(':accountId/prize-spins/:prizeSpinId/sectors/:sectorId')
+  async patchPrizeSpinSector(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('prizeSpinId', ParseIntPipe) prizeSpinId: number,
+    @Param('sectorId', ParseIntPipe) sectorId: number,
+    @Body() body: PatchPrizeSpinSectorBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.patchPrizeSpinSector(
+      accountId,
+      user.id,
+      prizeSpinId,
+      sectorId,
+      body,
+    );
+  }
+
+  @Delete(':accountId/prize-spins/:prizeSpinId/sectors/:sectorId')
+  @HttpCode(204)
+  async archivePrizeSpinSector(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('prizeSpinId', ParseIntPipe) prizeSpinId: number,
+    @Param('sectorId', ParseIntPipe) sectorId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    await this.authService.archivePrizeSpinSector(
+      accountId,
+      user.id,
+      prizeSpinId,
+      sectorId,
+    );
+  }
+
+  @Get(':accountId/prize-spins/:prizeSpinId/wins')
+  async listPrizeSpinWins(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('prizeSpinId', ParseIntPipe) prizeSpinId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.listPrizeSpinWins(accountId, user.id, prizeSpinId);
+  }
+
+  @Delete(':accountId/prize-spins/:prizeSpinId/wins')
+  @HttpCode(204)
+  async archiveAllPrizeSpinWins(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('prizeSpinId', ParseIntPipe) prizeSpinId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    await this.authService.archiveAllPrizeSpinWins(
+      accountId,
+      user.id,
+      prizeSpinId,
+    );
+  }
+
+  @Delete(':accountId/prize-spins/:prizeSpinId/wins/:winId')
+  @HttpCode(204)
+  async archivePrizeSpinWin(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('prizeSpinId', ParseIntPipe) prizeSpinId: number,
+    @Param('winId', ParseIntPipe) winId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    await this.authService.archivePrizeSpinWin(
+      accountId,
+      user.id,
+      prizeSpinId,
+      winId,
+    );
+  }
+
+  @Post(':accountId/prize-spins/:prizeSpinId/spin')
+  async spinPrizeSpin(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('prizeSpinId', ParseIntPipe) prizeSpinId: number,
+    @Body() body: SpinPrizeSpinBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.spinPrizeSpin(
+      accountId,
+      user.id,
+      prizeSpinId,
+      body.participant_nick ?? '',
+    );
   }
 
   @Delete(':accountId/members/:memberUserId')

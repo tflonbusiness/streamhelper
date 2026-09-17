@@ -14,6 +14,8 @@ import { BonusBuyPage } from './pages/BonusBuyPage'
 import { BonusBuySessionPage } from './pages/BonusBuySessionPage'
 import { BonusBuyStreamWidgetPage } from './pages/BonusBuyStreamWidgetPage'
 import { ModulesPage } from './pages/ModulesPage'
+import { PrizeSpinPage } from './pages/PrizeSpinPage'
+import { PrizeSpinSessionPage } from './pages/PrizeSpinSessionPage'
 import { SubscriptionPage } from './pages/SubscriptionPage'
 import { TeamPage } from './pages/TeamPage'
 
@@ -39,6 +41,8 @@ function App() {
                 <Route path="/modules" element={<ModulesPage />} />
                 <Route path="/bonus-buy" element={<BonusBuyPage />} />
                 <Route path="/bonus-buy/:id" element={<BonusBuySessionPage />} />
+                <Route path="/prize-spin" element={<PrizeSpinPage />} />
+                <Route path="/prize-spin/:id" element={<PrizeSpinSessionPage />} />
                 <Route element={<OwnerRoute />}>
                   <Route path="/team" element={<TeamPage />} />
                   <Route path="/subscription" element={<SubscriptionPage />} />
