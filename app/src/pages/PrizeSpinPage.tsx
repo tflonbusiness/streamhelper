@@ -21,7 +21,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useTheme, alpha, type Theme } from '@mui/material/styles'
-import StopCircleOutlinedIcon from '@mui/icons-material/StopCircleOutlined'
+import { SquareRounded  as SquareRoundedIcon } from '@mui/icons-material'
 import {
   Archive,
   ArrowRight,
@@ -534,7 +534,7 @@ export function PrizeSpinPage() {
                       },
                     }}
                   >
-                    <StopCircleOutlinedIcon sx={{ fontSize: 14 }} aria-hidden />
+                    <SquareRoundedIcon sx={{ fontSize: 14 }} aria-hidden />
                   </IconButton>
                 </span>
               </Tooltip>
