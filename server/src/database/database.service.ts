@@ -63,12 +63,13 @@ export type DbBonusBuy = {
 
 export type PrizeSpinArchivedFilter = 'false' | 'true' | 'all';
 
+export type PrizeSpinStatus = 'live' | 'off_air' | 'archived';
+
 export type DbPrizeSpin = {
   id: number;
   accountId: number;
   title: string;
-  isActive: boolean;
-  isArchived: boolean;
+  status: PrizeSpinStatus;
   createdAt: Date;
   createdByUserId: number;
   createdByName: string;
@@ -353,18 +354,18 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         account_id          BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
         created_by_user_id  BIGINT NOT NULL REFERENCES users(id),
         title               TEXT NOT NULL,
-        is_active           BOOLEAN NOT NULL DEFAULT false,
-        is_archived         BOOLEAN NOT NULL DEFAULT false,
+        status              TEXT NOT NULL DEFAULT 'off_air'
+          CHECK (status IN ('live', 'off_air', 'archived')),
         created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
       );
 
       CREATE INDEX idx_prize_spin_account_created
         ON prize_spin (account_id, created_at DESC)
-        WHERE is_archived = false;
+        WHERE status != 'archived';
 
-      CREATE INDEX idx_prize_spin_account_live
+      CREATE UNIQUE INDEX idx_prize_spin_account_live
         ON prize_spin (account_id)
-        WHERE is_active = true AND is_archived = false;
+        WHERE status = 'live';
 
       CREATE TABLE prize_spin_sector (
         id                  BIGSERIAL PRIMARY KEY,
@@ -1725,6 +1726,40 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  private mapPrizeSpinRow(row: {
+    id: string | number;
+    account_id: string | number;
+    title: string;
+    status: string;
+    created_at: Date;
+    created_by_user_id: string | number;
+    created_by_name: string;
+  }): DbPrizeSpin {
+    return {
+      id: toInt(row.id),
+      accountId: toInt(row.account_id),
+      title: row.title,
+      status: row.status as PrizeSpinStatus,
+      createdAt: row.created_at,
+      createdByUserId: toInt(row.created_by_user_id),
+      createdByName: row.created_by_name,
+    };
+  }
+
+  private async requireMutablePrizeSpin(
+    accountId: number,
+    prizeSpinId: number,
+  ): Promise<DbPrizeSpin> {
+    const session = await this.getPrizeSpinById(accountId, prizeSpinId);
+    if (!session) {
+      throw new Error('NOT_FOUND');
+    }
+    if (session.status === 'archived') {
+      throw new Error('NOT_FOUND');
+    }
+    return session;
+  }
+
   async getPrizeSpinById(
     accountId: number,
     prizeSpinId: number,
@@ -1733,7 +1768,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       id: string | number;
       account_id: string | number;
       title: string;
-      is_active: boolean;
+      status: string;
       created_at: Date;
       created_by_user_id: string | number;
       created_by_name: string;
@@ -1743,7 +1778,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           ps.id,
           ps.account_id,
           ps.title,
-          ps.is_active,
+          ps.status,
           ps.created_at,
           ps.created_by_user_id,
           u.name AS created_by_name
@@ -1751,7 +1786,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         JOIN users u ON u.id = ps.created_by_user_id
         WHERE ps.account_id = $1
           AND ps.id = $2
-          AND ps.is_archived = false
       `,
       [accountId, prizeSpinId],
     );
@@ -1761,16 +1795,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       return null;
     }
 
-    return {
-      id: toInt(row.id),
-      accountId: toInt(row.account_id),
-      title: row.title,
-      isActive: row.is_active,
-      isArchived: false,
-      createdAt: row.created_at,
-      createdByUserId: toInt(row.created_by_user_id),
-      createdByName: row.created_by_name,
-    };
+    return this.mapPrizeSpinRow(row);
   }
 
   async listPrizeSpins(
@@ -1788,8 +1813,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       archived === 'all'
         ? ''
         : archived === 'true'
-          ? 'AND ps.is_archived = true'
-          : 'AND ps.is_archived = false';
+          ? "AND ps.status = 'archived'"
+          : "AND ps.status IN ('live', 'off_air')";
     const offset = (page - 1) * limit;
 
     const countResult = await this.pool.query<{ count: string | number }>(
@@ -1808,8 +1833,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       id: string | number;
       account_id: string | number;
       title: string;
-      is_active: boolean;
-      is_archived: boolean;
+      status: string;
       created_at: Date;
       created_by_user_id: string | number;
       created_by_name: string;
@@ -1819,8 +1843,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           ps.id,
           ps.account_id,
           ps.title,
-          ps.is_active,
-          ps.is_archived,
+          ps.status,
           ps.created_at,
           ps.created_by_user_id,
           u.name AS created_by_name
@@ -1835,16 +1858,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     );
 
     return {
-      records: result.rows.map((row) => ({
-        id: toInt(row.id),
-        accountId: toInt(row.account_id),
-        title: row.title,
-        isActive: row.is_active,
-        isArchived: row.is_archived,
-        createdAt: row.created_at,
-        createdByUserId: toInt(row.created_by_user_id),
-        createdByName: row.created_by_name,
-      })),
+      records: result.rows.map((row) => this.mapPrizeSpinRow(row)),
       total,
       page,
       limit,
@@ -1869,19 +1883,19 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         id: string | number;
         account_id: string | number;
         title: string;
-        is_active: boolean;
+        status: string;
         created_at: Date;
         created_by_user_id: string | number;
         created_by_name: string;
       }>(
         `
-          INSERT INTO prize_spin (account_id, created_by_user_id, title, is_active)
-          VALUES ($1, $2, $3, false)
+          INSERT INTO prize_spin (account_id, created_by_user_id, title)
+          VALUES ($1, $2, $3)
           RETURNING
             id,
             account_id,
             title,
-            is_active,
+            status,
             created_at,
             created_by_user_id,
             (SELECT name FROM users WHERE id = $2) AS created_by_name
@@ -1897,16 +1911,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       await client.query('COMMIT');
 
       const row = result.rows[0];
-      return {
-        id: toInt(row.id),
-        accountId: toInt(row.account_id),
-        title: row.title,
-        isActive: row.is_active,
-        isArchived: false,
-        createdAt: row.created_at,
-        createdByUserId: toInt(row.created_by_user_id),
-        createdByName: row.created_by_name,
-      };
+      return this.mapPrizeSpinRow(row);
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
@@ -1940,8 +1945,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         SELECT id
         FROM prize_spin
         WHERE account_id = $1
-          AND is_active = true
-          AND is_archived = false
+          AND status = 'live'
         LIMIT 1
       `,
       [accountId],
@@ -1955,10 +1959,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     accountId: number,
     prizeSpinId: number,
   ): Promise<DbPrizeSpin> {
-    const existing = await this.getPrizeSpinById(accountId, prizeSpinId);
-    if (!existing) {
-      throw new Error('NOT_FOUND');
-    }
+    await this.requireMutablePrizeSpin(accountId, prizeSpinId);
 
     const client = await this.pool.connect();
     try {
@@ -1967,10 +1968,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       await client.query(
         `
           UPDATE prize_spin
-          SET is_active = false
+          SET status = 'off_air'
           WHERE account_id = $1
-            AND is_active = true
-            AND is_archived = false
+            AND status = 'live'
         `,
         [accountId],
       );
@@ -1979,24 +1979,24 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         id: string | number;
         account_id: string | number;
         title: string;
-        is_active: boolean;
+        status: string;
         created_at: Date;
         created_by_user_id: string | number;
         created_by_name: string;
       }>(
         `
           UPDATE prize_spin ps
-          SET is_active = true
+          SET status = 'live'
           FROM users u
           WHERE ps.created_by_user_id = u.id
             AND ps.account_id = $1
             AND ps.id = $2
-            AND ps.is_archived = false
+            AND ps.status != 'archived'
           RETURNING
             ps.id,
             ps.account_id,
             ps.title,
-            ps.is_active,
+            ps.status,
             ps.created_at,
             ps.created_by_user_id,
             u.name AS created_by_name
@@ -2011,16 +2011,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         throw new Error('NOT_FOUND');
       }
 
-      return {
-        id: toInt(row.id),
-        accountId: toInt(row.account_id),
-        title: row.title,
-        isActive: row.is_active,
-        isArchived: false,
-        createdAt: row.created_at,
-        createdByUserId: toInt(row.created_by_user_id),
-        createdByName: row.created_by_name,
-      };
+      return this.mapPrizeSpinRow(row);
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
@@ -2033,28 +2024,30 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     accountId: number,
     prizeSpinId: number,
   ): Promise<DbPrizeSpin> {
+    await this.requireMutablePrizeSpin(accountId, prizeSpinId);
+
     const result = await this.pool.query<{
       id: string | number;
       account_id: string | number;
       title: string;
-      is_active: boolean;
+      status: string;
       created_at: Date;
       created_by_user_id: string | number;
       created_by_name: string;
     }>(
       `
         UPDATE prize_spin ps
-        SET is_active = false
+        SET status = 'off_air'
         FROM users u
         WHERE ps.created_by_user_id = u.id
           AND ps.account_id = $1
           AND ps.id = $2
-          AND ps.is_archived = false
+          AND ps.status != 'archived'
         RETURNING
           ps.id,
           ps.account_id,
           ps.title,
-          ps.is_active,
+          ps.status,
           ps.created_at,
           ps.created_by_user_id,
           u.name AS created_by_name
@@ -2067,16 +2060,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       throw new Error('NOT_FOUND');
     }
 
-    return {
-      id: toInt(row.id),
-      accountId: toInt(row.account_id),
-      title: row.title,
-      isActive: row.is_active,
-      isArchived: false,
-      createdAt: row.created_at,
-      createdByUserId: toInt(row.created_by_user_id),
-      createdByName: row.created_by_name,
-    };
+    return this.mapPrizeSpinRow(row);
   }
 
   async archivePrizeSpin(
@@ -2086,11 +2070,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     const result = await this.pool.query(
       `
         UPDATE prize_spin
-        SET is_archived = true,
-            is_active = false
+        SET status = 'archived'
         WHERE account_id = $1
           AND id = $2
-          AND is_archived = false
+          AND status IN ('live', 'off_air')
       `,
       [accountId, prizeSpinId],
     );
@@ -2206,10 +2189,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     winPercent: string,
     color: string | null | undefined,
   ): Promise<DbPrizeSpinSector> {
-    const session = await this.getPrizeSpinById(accountId, prizeSpinId);
-    if (!session) {
-      throw new Error('NOT_FOUND');
-    }
+    await this.requireMutablePrizeSpin(accountId, prizeSpinId);
 
     const trimmedLabel = label.trim();
     if (trimmedLabel.length === 0 || trimmedLabel.length > 100) {
@@ -2294,6 +2274,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     sectorId: number,
     input: PatchPrizeSpinSectorInput,
   ): Promise<DbPrizeSpinSector> {
+    await this.requireMutablePrizeSpin(accountId, prizeSpinId);
+
     const existing = await this.pool.query<{
       id: string | number;
       prize_spin_id: string | number;
@@ -2396,6 +2378,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     accountId: number,
     prizeSpinId: number,
   ): Promise<DbPrizeSpinSector[]> {
+    await this.requireMutablePrizeSpin(accountId, prizeSpinId);
+
     const sectors = await this.listPrizeSpinSectors(accountId, prizeSpinId);
     if (sectors.length === 0) {
       throw new Error('NO_SECTORS');
@@ -2439,6 +2423,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     prizeSpinId: number,
     sectorId: number,
   ): Promise<void> {
+    await this.requireMutablePrizeSpin(accountId, prizeSpinId);
+
     const result = await this.pool.query(
       `
         UPDATE prize_spin_sector s
@@ -2449,6 +2435,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           AND s.prize_spin_id = $2
           AND s.id = $3
           AND s.is_archived = false
+          AND ps.status != 'archived'
       `,
       [accountId, prizeSpinId, sectorId],
     );
@@ -2503,6 +2490,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     prizeSpinId: number,
     winId: number,
   ): Promise<void> {
+    await this.requireMutablePrizeSpin(accountId, prizeSpinId);
+
     const result = await this.pool.query(
       `
         UPDATE prize_spin_win w
@@ -2513,6 +2502,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           AND w.prize_spin_id = $2
           AND w.id = $3
           AND w.is_archived = false
+          AND ps.status != 'archived'
       `,
       [accountId, prizeSpinId, winId],
     );
@@ -2526,10 +2516,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     accountId: number,
     prizeSpinId: number,
   ): Promise<void> {
-    const session = await this.getPrizeSpinById(accountId, prizeSpinId);
-    if (!session) {
-      throw new Error('NOT_FOUND');
-    }
+    await this.requireMutablePrizeSpin(accountId, prizeSpinId);
 
     await this.pool.query(
       `
@@ -2540,6 +2527,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           AND ps.account_id = $1
           AND w.prize_spin_id = $2
           AND w.is_archived = false
+          AND ps.status != 'archived'
       `,
       [accountId, prizeSpinId],
     );
@@ -2551,10 +2539,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     spunByUserId: number,
     participantNick: string,
   ): Promise<DbPrizeSpinWin> {
-    const session = await this.getPrizeSpinById(accountId, prizeSpinId);
-    if (!session) {
-      throw new Error('NOT_FOUND');
-    }
+    await this.requireMutablePrizeSpin(accountId, prizeSpinId);
 
     const trimmedNick = participantNick.trim();
     if (trimmedNick.length === 0 || trimmedNick.length > 100) {
@@ -2783,7 +2768,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
 
     const view = await this.getPublicPrizeSpinWidgetView(prizeSpinId);
-    if (!view || !view.record.isActive) {
+    if (!view || view.record.status !== 'live') {
       return 'NOT_LIVE';
     }
 
@@ -2800,7 +2785,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       id: string | number;
       account_id: string | number;
       title: string;
-      is_active: boolean;
+      status: string;
       created_by_user_id: string | number;
       created_by_name: string;
       created_at: Date;
@@ -2810,15 +2795,14 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           ps.id,
           ps.account_id,
           ps.title,
-          ps.is_active,
+          ps.status,
           ps.created_by_user_id,
           u.name AS created_by_name,
           ps.created_at
         FROM prize_spin ps
         JOIN users u ON u.id = ps.created_by_user_id
         WHERE ps.id = $1
-          AND ps.is_active = true
-          AND ps.is_archived = false
+          AND ps.status = 'live'
       `,
       [prizeSpinId],
     );
@@ -2886,16 +2870,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       [prizeSpinId],
     );
 
-    const record: DbPrizeSpin = {
-      id: toInt(recordRow.id),
-      accountId,
-      title: recordRow.title,
-      isActive: recordRow.is_active,
-      isArchived: false,
-      createdByUserId: toInt(recordRow.created_by_user_id),
-      createdByName: recordRow.created_by_name,
-      createdAt: recordRow.created_at,
-    };
+    const record: DbPrizeSpin = this.mapPrizeSpinRow(recordRow);
 
     return {
       record,

@@ -21,10 +21,10 @@ import {
   Typography,
 } from '@mui/material'
 import { useTheme, alpha, type Theme } from '@mui/material/styles'
+import StopCircleOutlinedIcon from '@mui/icons-material/StopCircleOutlined'
 import {
   Archive,
   ArrowRight,
-  CircleStop,
   ExternalLink,
   Link2,
   Monitor,
@@ -42,6 +42,8 @@ import {
   fetchPrizeSpinWidget,
   fetchPrizeSpins,
   goLivePrizeSpin,
+  isPrizeSpinArchived,
+  isPrizeSpinLive,
   patchPrizeSpinWidget,
   type PrizeSpinArchivedFilter,
   type PrizeSpinRecord,
@@ -126,24 +128,18 @@ function liveSessionRowSx(theme: Theme) {
   }
 }
 
-function recordStatusChip(
-  record: PrizeSpinRecord,
-  theme: Theme,
-  showArchivedMark: boolean,
-) {
-  if (record.isArchived && showArchivedMark) {
+function recordStatusChip(record: PrizeSpinRecord, theme: Theme) {
+  if (isPrizeSpinArchived(record)) {
     return (
       <Chip label="Archived" size="small" sx={mutedChipSx(theme)} />
     )
   }
 
-  if (record.isActive) {
+  if (isPrizeSpinLive(record)) {
     return <LiveStatusChip />
   }
 
-  return (
-    <Chip label="Off air" size="small" sx={mutedChipSx(theme)} />
-  )
+  return <Chip label="Off Air" size="small" sx={mutedChipSx(theme)} />
 }
 
 export function PrizeSpinPage() {
@@ -223,10 +219,11 @@ export function PrizeSpinPage() {
         return
       }
 
+      const accountId = user.accountId
       let page = startPage ?? recordsPage
 
       const fetchPage = async (targetPage: number) =>
-        fetchPrizeSpins(user.accountId, {
+        fetchPrizeSpins(accountId, {
           archived: archivedFilter,
           page: targetPage,
           limit: HISTORY_PAGE_SIZE,
@@ -371,10 +368,15 @@ export function PrizeSpinPage() {
     try {
       await goLivePrizeSpin(user.accountId, record.id)
       setRecords((previous) =>
-        previous.map((row) => ({
-          ...row,
-          isActive: row.id === record.id,
-        })),
+        previous.map((row) => {
+          if (row.id === record.id) {
+            return { ...row, status: 'live' as const }
+          }
+          if (isPrizeSpinLive(row)) {
+            return { ...row, status: 'off_air' as const }
+          }
+          return row
+        }),
       )
       showSuccess('Session is now live.')
     } catch (error) {
@@ -398,7 +400,7 @@ export function PrizeSpinPage() {
       await deactivatePrizeSpin(user.accountId, record.id)
       setRecords((previous) =>
         previous.map((row) =>
-          row.id === record.id ? { ...row, isActive: false } : row,
+          row.id === record.id ? { ...row, status: 'off_air' as const } : row,
         ),
       )
       showSuccess('Session taken off air.')
@@ -462,8 +464,6 @@ export function PrizeSpinPage() {
     })
   }
 
-  const showArchivedMark = archivedFilter === 'all'
-
   const recordColumns: AppTableColumn<PrizeSpinRecord>[] = [
     {
       id: 'title',
@@ -481,10 +481,9 @@ export function PrizeSpinPage() {
           variant="body2"
           sx={{
             fontWeight: 500,
-            color:
-              showArchivedMark && record.isArchived
-                ? 'text.secondary'
-                : 'text.primary',
+            color: isPrizeSpinArchived(record)
+              ? 'text.secondary'
+              : 'text.primary',
           }}
         >
           {record.title}
@@ -498,7 +497,7 @@ export function PrizeSpinPage() {
       minWidth: 108,
       sx: { px: 1.5, whiteSpace: 'nowrap' },
       render: (record) =>
-        recordStatusChip(record, theme, showArchivedMark),
+        recordStatusChip(record, theme),
     },
     {
       id: 'action',
@@ -509,73 +508,19 @@ export function PrizeSpinPage() {
       sx: { px: 1, whiteSpace: 'nowrap' },
       render: (record) => {
         const isUpdating = liveActionRecordId === record.id
+        const readOnly = isPrizeSpinArchived(record)
 
         return (
           <Stack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
-            {!record.isArchived ? (
-              record.isActive ? (
-                <Tooltip title="Deactivate">
-                  <span>
-                    <IconButton
-                      type="button"
-                      aria-label={`Deactivate ${record.title}`}
-                      size="small"
-                      disabled={isUpdating}
-                      onClick={() => void handleDeactivate(record)}
-                      sx={{
-                        borderRadius: 1,
-                        width: 28,
-                        height: 28,
-                        border: '1px solid',
-                        borderColor: alpha(theme.palette.error.main, 0.4),
-                        color: theme.palette.error.main,
-                        '&:hover': {
-                          bgcolor: alpha(theme.palette.error.main, 0.1),
-                          borderColor: theme.palette.error.main,
-                        },
-                      }}
-                    >
-                      <CircleStop size={14} aria-hidden />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-              ) : (
-                <Tooltip title="Go live">
-                  <span>
-                    <IconButton
-                      type="button"
-                      aria-label={`Go live with ${record.title}`}
-                      size="small"
-                      disabled={isUpdating}
-                      onClick={() => void handleGoLive(record)}
-                      sx={{
-                        borderRadius: 1,
-                        width: 28,
-                        height: 28,
-                        border: '1px solid',
-                        borderColor: alpha(theme.palette.success.main, 0.4),
-                        color: theme.palette.success.light,
-                        '&:hover': {
-                          bgcolor: alpha(theme.palette.success.main, 0.1),
-                          borderColor: theme.palette.success.main,
-                        },
-                      }}
-                    >
-                      <Radio size={14} aria-hidden />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-              )
-            ) : null}
-            {!record.isArchived ? (
-              <Tooltip title="Archive">
+            {!readOnly && isPrizeSpinLive(record) ? (
+              <Tooltip title="Off Air">
                 <span>
                   <IconButton
                     type="button"
-                    aria-label={`Archive ${record.title}`}
+                    aria-label={`Take ${record.title} off Air`}
                     size="small"
                     disabled={isUpdating}
-                    onClick={() => openArchiveDialog(record)}
+                    onClick={() => void handleDeactivate(record)}
                     sx={{
                       borderRadius: 1,
                       width: 28,
@@ -589,11 +534,63 @@ export function PrizeSpinPage() {
                       },
                     }}
                   >
-                    <Archive size={14} aria-hidden />
+                    <StopCircleOutlinedIcon sx={{ fontSize: 14 }} aria-hidden />
                   </IconButton>
                 </span>
               </Tooltip>
             ) : null}
+            {!readOnly && !isPrizeSpinLive(record) ? (
+              <Tooltip title="Go live">
+                <span>
+                  <IconButton
+                    type="button"
+                    aria-label={`Go live with ${record.title}`}
+                    size="small"
+                    disabled={isUpdating}
+                    onClick={() => void handleGoLive(record)}
+                    sx={{
+                      borderRadius: 1,
+                      width: 28,
+                      height: 28,
+                      border: '1px solid',
+                      borderColor: alpha(theme.palette.success.main, 0.4),
+                      color: theme.palette.success.light,
+                      '&:hover': {
+                        bgcolor: alpha(theme.palette.success.main, 0.1),
+                        borderColor: theme.palette.success.main,
+                      },
+                    }}
+                  >
+                    <Radio size={14} aria-hidden />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            ) : null}
+            <Tooltip title="Archive">
+              <span>
+                <IconButton
+                  type="button"
+                  aria-label={`Archive ${record.title}`}
+                  size="small"
+                  disabled={readOnly || isUpdating}
+                  onClick={() => openArchiveDialog(record)}
+                  sx={{
+                    borderRadius: 1,
+                    width: 28,
+                    height: 28,
+                    border: '1px solid',
+                    borderColor: alpha(theme.palette.error.main, 0.4),
+                    color: theme.palette.error.main,
+                    '&:hover': {
+                      bgcolor: alpha(theme.palette.error.main, 0.1),
+                      borderColor: theme.palette.error.main,
+                    },
+                  }}
+                >
+                  <Archive size={14} aria-hidden />
+                </IconButton>
+              </span>
+            </Tooltip>
             <IconButton
               component={Link}
               to={`/prize-spin/${record.id}`}
@@ -751,7 +748,7 @@ export function PrizeSpinPage() {
                   </FormControl>
                 }
                 getRowSx={(record) =>
-                  record.isActive && !record.isArchived
+                  isPrizeSpinLive(record)
                     ? liveSessionRowSx(theme)
                     : undefined
                 }
@@ -852,8 +849,7 @@ export function PrizeSpinPage() {
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
             {archiveDialogRecord?.title} will be removed from the active list.
-            Archived sessions stay in the database but are no longer accessible
-            from the session page.
+            Archived sessions can be opened for review but not edited.
           </Typography>
           {archiveError ? (
             <StatusAlert tone="error" sx={{ mt: 2 }}>

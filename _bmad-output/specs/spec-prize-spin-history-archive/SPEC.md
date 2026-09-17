@@ -2,6 +2,7 @@
 id: SPEC-prize-spin-history-archive
 companions:
   - history-archive.md
+  - session-status.md
   - ../spec-prize-spin-session-page/SPEC.md
   - ../spec-prize-spin-stream-widget/SPEC.md
   - ../spec-app-english-only/SPEC.md
@@ -15,7 +16,7 @@ sources: []
 
 ## Why
 
-**Pain:** The Prize Spin **History** table on `/prize-spin` lists every session ever created with no way to remove finished or mistaken entries. Operators accumulate stale rows across streams; unlike winners and sectors (which support soft delete), sessions can only be hidden by scrolling. Long account histories become slow to load and hard to scan. Operators also need to review archived sessions without database access.
+**Pain:** The Prize Spin **History** table on `/prize-spin` lists every session ever created with no way to remove finished or mistaken entries. Operators accumulate stale rows across streams; unlike winners and sectors (which support soft delete), sessions can only be hidden by scrolling. Long account histories become slow to load and hard to scan. Operators need to review archived sessions — open and read sectors, winners, and history — without changing them. Two boolean flags (`is_active`, `is_archived`) allow an invalid combined state and split one lifecycle across columns — a single `status` enum makes transitions explicit.
 
 **Who:** Owner or moderator on an active Caz Agent account (English UI, existing MUI dark theme).
 
@@ -30,8 +31,8 @@ sources: []
   - **success:** `GET /accounts/:accountId/prize-spins?archived=false` is the default when the param is omitted; `archived=true` returns only archived rows; `archived=all` returns both; list re-fetches when the filter changes; empty states match the selected filter per `history-archive.md`.
 
 - **CAP-3**
-  - **intent:** Archived sessions remain inaccessible through account-scoped session detail APIs and deep links even when visible in the filtered History list.
-  - **success:** `GET /accounts/:accountId/prize-spins/:id` returns not found for archived id; nested sector/win/spin routes reject archived parent; `/prize-spin/:id` shows the existing invalid-session error path; archiving a live session clears `is_active` so the stream overlay no longer resolves that session.
+  - **intent:** An operator opens an archived session to review its data without modifying it.
+  - **success:** `GET /accounts/:accountId/prize-spins/:id` returns the session when `status = 'archived'`; `/prize-spin/:id` loads the workspace in read-only mode with **Archived** indicator; sectors, winners, and spin history remain visible; all mutate actions (go live, deactivate, spin, add/edit/archive sector or winner, widget settings) remain visible but **disabled**; mutating APIs return `404` for archived parent; public overlay still resolves only `status = 'live'`; archiving a live session sets `status = 'archived'` in one step.
 
 - **CAP-4**
   - **intent:** An operator chooses which archived status to show in History using a dropdown above the History table.
@@ -45,14 +46,15 @@ sources: []
 
 - **English UI** copy on dialog, tooltips, toasts, filter labels, and pagination per adopted `spec-app-english-only`.
 - **Account-scoped auth** on list and archive endpoints; verify `prize_spin.account_id = :accountId`.
-- **Soft delete only** — set `is_archived = true` on `prize_spin`; no hard delete; child sectors and wins are not cascade-archived.
-- **List archived filter** — optional query param `archived` with values `false` | `true` | `all`; invalid values → `400`; omit → `false`.
+- **Session status enum** — replace `is_active` and `is_archived` with `status TEXT NOT NULL DEFAULT 'off_air' CHECK (status IN ('live', 'off_air', 'archived'))` per `session-status.md`; partial unique index on `(account_id) WHERE status = 'live'`.
+- **Soft delete only** — archive sets `status = 'archived'`; no hard delete; child sectors and wins are not cascade-archived.
+- **Read-only archived workspace** — GET session, sectors, and wins succeed for `status = 'archived'`; POST/PATCH/DELETE on session, sectors, wins, spin, go-live, and deactivate reject with `404` when parent is archived; UI controls stay visible but **disabled**, not hidden, per `session-status.md`.
+- **List archived filter** — optional query param `archived` with values `false` | `true` | `all`; maps to `status != 'archived'`, `status = 'archived'`, and no filter respectively; invalid values → `400`; omit → `false`.
 - **List pagination** — optional `page` (1-based, default `1`) and `limit` (default `10`, max `50`); invalid `page` or `limit` → `400`; response shape `{ records, total, page, limit }`; order `created_at DESC` within each page.
-- **Get-by-id filter** — `getPrizeSpinById` always requires `is_archived = false`; archived rows appear in list only, not in session workspace APIs.
-- **Archive endpoint** — `DELETE /accounts/:accountId/prize-spins/:prizeSpinId`; `204` on success; `404` when missing, foreign, or already archived.
-- **Live session on archive** — same transaction sets `is_active = false` when archiving a live session; operator does not need a separate deactivate step.
-- **Archived row actions** — when `isArchived=true` in list response, hide **Archive**, **Go live**, and **Deactivate**; keep **Open** (session route shows not-found per CAP-3).
-- **Row visuals** — live row (`isActive`): orange inset border and tint (Bonus Buy now-playing parity); when filter is **All**, archived rows show muted title and **Archived** status chip per `history-archive.md`.
+- **Archive endpoint** — `DELETE /accounts/:accountId/prize-spins/:prizeSpinId`; sets `status = 'archived'`; `204` on success; `404` when missing, foreign, or already archived.
+- **Archive from live** — same transaction sets `status = 'archived'` when current status is `live` or `off_air`; operator does not need a separate deactivate step.
+- **Archived row actions** — when `status = 'archived'`, disable **Archive**, **Go live**, and **Deactivate** in History; keep **Open** enabled (read-only workspace per CAP-3).
+- **Row visuals** — `status = 'live'`: orange inset border and tint (Bonus Buy now-playing parity); when filter is **All**, `status = 'archived'`: muted title and **Archived** status chip per `history-archive.md`.
 - **MUI patterns** — `AppTable` toolbar, **TablePagination**, Archive icon button, and confirmation dialog consistent with `PrizeSpinPage` History card.
 - **Filter and page not persisted** — dropdown and pagination reset to **Active** / page `1` on every full page load; no URL param, localStorage, or user preference storage.
 - **Fixed page size** — `limit=10` only in UI; no rows-per-page selector in this slice.
@@ -61,20 +63,24 @@ sources: []
 
 - Unarchive or restore archived sessions.
 - Bulk archive (select many or archive all).
+- Recording who archived or when (`archived_by_user_id`, `archived_at`, or equivalent audit fields).
+- Editing archived session data (sectors, winners, spins, title, widget settings).
 - Free-text search or custom sort beyond `created_at DESC`.
 - Cursor-based or infinite-scroll pagination.
 - User-configurable page size or page-size selector.
 - Persisting filter or page in URL, localStorage, or user preferences.
 - Bonus Buy History session archive or pagination — explicitly out of scope; Prize Spin only.
 - Hard delete or data purge from the database.
-- Changes to winner/sector archive behavior on the session workspace page.
+- Keeping `is_active` / `is_archived` columns alongside `status`.
 
 ## Success signal
 
-An operator opens `/prize-spin` with **Active** on page 1, archives an off-air session — the row vanishes. With 15+ sessions they use pagination to reach older rows. They switch to **All** — archived rows show **Archived** chip and muted title; the live row has an orange inset border. Direct navigation to `/prize-spin/{archivedId}` still shows the not-found error.
+An operator opens `/prize-spin` with **Active** on page 1, archives an off-air session — the row vanishes. With 15+ sessions they use pagination to reach older rows. They switch to **Archived**, click **Open** — `/prize-spin/:id` loads with **Archived** banner, sectors and winners visible, spin and edit controls visible but disabled. A live row shows orange border and **Live** chip. Public overlay never serves archived sessions.
 
 ## Assumptions
 
 - Archive is one-way from the operator UI; no admin restore path in this slice.
-- Public overlay behavior is correct once `is_active` is cleared on archive — no separate widget changes required.
+- Public overlay resolves `status = 'live'` only — archived sessions are viewable in dashboard only.
 - Ten rows per page is sufficient for stream operators; server max `50` guards abuse only.
+- Stream widget and session-page specs adopt `session-status.md` on implement; `live-session-control.md` `is_active` wording is superseded.
+- Session status enum finalized as `live` | `off_air` | `archived`; default `off_air`.

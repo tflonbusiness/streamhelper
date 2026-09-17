@@ -4,6 +4,8 @@ const jsonHeaders = {
 
 export type PrizeSpinArchivedFilter = 'false' | 'true' | 'all'
 
+export type PrizeSpinStatus = 'live' | 'off_air' | 'archived'
+
 export type PrizeSpinListResult = {
   records: PrizeSpinRecord[]
   total: number
@@ -15,11 +17,28 @@ export type PrizeSpinRecord = {
   id: number
   accountId: number
   title: string
-  isActive: boolean
-  isArchived: boolean
+  status: PrizeSpinStatus
   createdAt: string
   createdByUserId: number
   createdByName: string
+}
+
+export function isPrizeSpinLive(
+  record: Pick<PrizeSpinRecord, 'status'>,
+): boolean {
+  return record.status === 'live'
+}
+
+export function isPrizeSpinArchived(
+  record: Pick<PrizeSpinRecord, 'status'>,
+): boolean {
+  return record.status === 'archived'
+}
+
+export function isPrizeSpinReadOnly(
+  record: Pick<PrizeSpinRecord, 'status'>,
+): boolean {
+  return record.status === 'archived'
 }
 
 export type PrizeSpinSector = {

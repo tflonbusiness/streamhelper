@@ -17,6 +17,7 @@ import {
   type DbPrizeSpinSector,
   type DbPrizeSpinWin,
   type DbPrizeSpinWidget,
+  type PrizeSpinStatus,
 } from '../database/database.service.js';
 import { KickChannelService } from './kick-channel.service.js';
 import type { KickChannelDto } from './kick-channel.types.js';
@@ -788,7 +789,7 @@ export class AuthService {
       record: {
         id: view.record.id,
         title: view.record.title,
-        isActive: view.record.isActive,
+        isActive: view.record.status === 'live',
       },
       sectors: view.sectors.map((row) => this.formatPrizeSpinSector(row)),
       latestWin: view.latestWin
@@ -920,8 +921,7 @@ export class AuthService {
       id: row.id,
       accountId: row.accountId,
       title: row.title,
-      isActive: row.isActive,
-      isArchived: row.isArchived,
+      status: row.status,
       createdAt: row.createdAt.toISOString(),
       createdByUserId: row.createdByUserId,
       createdByName: row.createdByName,
@@ -967,16 +967,7 @@ export class AuthService {
     );
 
     return {
-      records: result.records.map((row) => ({
-        id: row.id,
-        accountId: row.accountId,
-        title: row.title,
-        isActive: row.isActive,
-        isArchived: row.isArchived,
-        createdAt: row.createdAt.toISOString(),
-        createdByUserId: row.createdByUserId,
-        createdByName: row.createdByName,
-      })),
+      records: result.records.map((row) => this.formatPrizeSpinRecord(row)),
       total: result.total,
       page: result.page,
       limit: result.limit,
@@ -1002,16 +993,7 @@ export class AuthService {
         callerUserId,
         title,
       );
-      return {
-        id: row.id,
-        accountId: row.accountId,
-        title: row.title,
-        isActive: row.isActive,
-        isArchived: row.isArchived,
-        createdAt: row.createdAt.toISOString(),
-        createdByUserId: row.createdByUserId,
-        createdByName: row.createdByName,
-      };
+      return this.formatPrizeSpinRecord(row);
     } catch (error) {
       if (error instanceof Error && error.message === 'INVALID_TITLE') {
         throw new BadRequestException('Title must be 1-200 characters');
@@ -1024,8 +1006,7 @@ export class AuthService {
     id: number;
     accountId: number;
     title: string;
-    isActive: boolean;
-    isArchived: boolean;
+    status: PrizeSpinStatus;
     createdAt: Date;
     createdByUserId: number;
     createdByName: string;
@@ -1034,8 +1015,7 @@ export class AuthService {
       id: row.id,
       accountId: row.accountId,
       title: row.title,
-      isActive: row.isActive,
-      isArchived: row.isArchived,
+      status: row.status,
       createdAt: row.createdAt.toISOString(),
       createdByUserId: row.createdByUserId,
       createdByName: row.createdByName,

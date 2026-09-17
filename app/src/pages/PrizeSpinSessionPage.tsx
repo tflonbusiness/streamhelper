@@ -17,11 +17,11 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
+import StopCircleOutlinedIcon from '@mui/icons-material/StopCircleOutlined'
 import { alpha, useTheme } from '@mui/material/styles'
 import {
   Archive,
   BarChart3,
-  CircleStop,
   Download,
   Equal,
   History,
@@ -47,6 +47,8 @@ import {
   fetchPrizeSpinWins,
   spinPrizeSpin,
   updatePrizeSpinSector,
+  isPrizeSpinLive,
+  isPrizeSpinReadOnly,
   type PrizeSpinRecord,
   type PrizeSpinSector,
   type PrizeSpinWin,
@@ -352,9 +354,13 @@ export function PrizeSpinSessionPage() {
 
   useSetBreadcrumbLabel(record ? `${record.title} #${record.id}` : null)
 
+  const readOnly = record !== null && isPrizeSpinReadOnly(record)
+  const isLive = record !== null && isPrizeSpinLive(record)
+
   const totalWinPercent = useMemo(() => sumWinPercent(sectors), [sectors])
   const isWinPercentComplete = isCompleteWinPercentTotal(totalWinPercent)
   const canSpin =
+    !readOnly &&
     participantNick.trim().length > 0 &&
     sectors.length >= 2 &&
     isWinPercentComplete &&
@@ -786,6 +792,7 @@ export function PrizeSpinSessionPage() {
             type="button"
             size="small"
             aria-label={`Edit ${sector.label}`}
+            disabled={readOnly}
             onClick={() => openEditDialog(sector)}
           >
             <Pencil size={16} aria-hidden />
@@ -794,6 +801,7 @@ export function PrizeSpinSessionPage() {
             type="button"
             size="small"
             aria-label={`Delete ${sector.label}`}
+            disabled={readOnly}
             onClick={() => void handleDeleteSector(sector.id)}
             sx={{ color: theme.palette.error.main }}
           >
@@ -851,6 +859,7 @@ export function PrizeSpinSessionPage() {
           type="button"
           size="small"
           aria-label={`Remove ${win.participantNick}`}
+          disabled={readOnly}
           onClick={() => void handleDeleteWin(win.id)}
           sx={{ color: theme.palette.error.main }}
         >
@@ -933,7 +942,10 @@ export function PrizeSpinSessionPage() {
                   #{record.id}
                 </Typography>
               </Typography>
-              {record.isActive ? <LiveStatusChip /> : null}
+              {isLive ? <LiveStatusChip /> : null}
+              {readOnly ? (
+                <Chip label="Archived" size="small" sx={mutedChipSx(theme)} />
+              ) : null}
             </Stack>
             <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
               <Button
@@ -946,12 +958,13 @@ export function PrizeSpinSessionPage() {
               >
                 {isExportingWinners ? 'Downloading…' : 'Download History'}
               </Button>
-              {record.isActive ? (
+              {!readOnly && isLive ? (
                 <Button
                   type="button"
                   variant="outlined"
                   size="small"
-                  startIcon={<CircleStop size={16} aria-hidden />}
+                  startIcon={<StopCircleOutlinedIcon sx={{ fontSize: 16 }} aria-hidden />}
+                  disabled={isDeactivating}
                   onClick={() => {
                     setDeactivateError(null)
                     setDeactivateDialogOpen(true)
@@ -965,9 +978,10 @@ export function PrizeSpinSessionPage() {
                     },
                   }}
                 >
-                  Deactivate
+                  Off Air
                 </Button>
-              ) : (
+              ) : null}
+              {!readOnly && !isLive ? (
                 <Button
                   type="button"
                   variant="outlined"
@@ -986,9 +1000,14 @@ export function PrizeSpinSessionPage() {
                 >
                   {isGoingLive ? 'Going live…' : 'Go live'}
                 </Button>
-              )}
+              ) : null}
             </Stack>
           </Stack>
+          {readOnly ? (
+            <StatusAlert tone="info" sx={{ mt: 2 }}>
+              This session is archived. View only.
+            </StatusAlert>
+          ) : null}
           {exportWinnersError ? (
             <StatusAlert tone="error" sx={{ mt: 2 }}>
               {exportWinnersError}
@@ -1028,6 +1047,7 @@ export function PrizeSpinSessionPage() {
                     placeholder="Viewer chat nick"
                     value={participantNick}
                     onChange={(event) => setParticipantNick(event.target.value)}
+                    disabled={readOnly}
                     fullWidth
                     size="small"
                     sx={inputFieldSx}
@@ -1084,7 +1104,9 @@ export function PrizeSpinSessionPage() {
                       variant="outlined"
                       size="small"
                       startIcon={<Equal size={16} aria-hidden />}
-                      disabled={sectors.length === 0 || isDistributingSectors}
+                      disabled={
+                        readOnly || sectors.length === 0 || isDistributingSectors
+                      }
                       onClick={() => void handleDistributeSectorsEqually()}
                     >
                       {isDistributingSectors ? 'Splitting…' : 'Split 100%'}
@@ -1094,6 +1116,7 @@ export function PrizeSpinSessionPage() {
                       variant="contained"
                       size="small"
                       startIcon={<Plus size={16} aria-hidden />}
+                      disabled={readOnly}
                       onClick={openAddSectorDialog}
                     >
                       Add sector
@@ -1141,6 +1164,7 @@ export function PrizeSpinSessionPage() {
                       variant="outlined"
                       size="small"
                       startIcon={<Archive size={16} aria-hidden />}
+                      disabled={readOnly}
                       onClick={() => {
                         setArchiveAllError(null)
                         setArchiveAllDialogOpen(true)
@@ -1385,7 +1409,7 @@ export function PrizeSpinSessionPage() {
             onClick={() => void handleDeactivate()}
             disabled={isDeactivating}
           >
-            {isDeactivating ? 'Deactivating…' : 'Deactivate'}
+            {isDeactivating ? 'Taking off air…' : 'Off air'}
           </Button>
         </DialogActions>
       </Dialog>

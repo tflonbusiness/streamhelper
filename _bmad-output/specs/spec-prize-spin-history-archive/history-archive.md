@@ -2,15 +2,17 @@
 
 ## Schema
 
-Add to `prize_spin`:
+On `prize_spin` (see `session-status.md` for full status model):
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `is_archived` | `BOOLEAN NOT NULL DEFAULT false` | Soft delete; same pattern as `prize_spin_sector` and `prize_spin_win` |
+| `status` | `TEXT NOT NULL DEFAULT 'off_air'` | `CHECK (status IN ('live', 'off_air', 'archived'))` — replaces `is_active` and `is_archived` |
 
-Index: partial on `(account_id, created_at DESC) WHERE is_archived = false` — replace or supplement `idx_prize_spin_account_created` for active-only list queries.
+Partial unique index: `(account_id) WHERE status = 'live'`.
 
-Migration runs in `database.service.ts` bootstrap alongside existing table DDL.
+Partial list index: `(account_id, created_at DESC) WHERE status != 'archived'`.
+
+DDL in `database.service.ts` bootstrap alongside existing table definitions.
 
 ## API
 
@@ -20,7 +22,7 @@ Migration runs in `database.service.ts` bootstrap alongside existing table DDL.
 
 | Param | Values | Default | Notes |
 |-------|--------|---------|-------|
-| `archived` | `false` \| `true` \| `all` | `false` | Filter by archive status |
+| `archived` | `false` \| `true` \| `all` | `false` | Maps to status filter per `session-status.md` |
 | `page` | integer ≥ 1 | `1` | 1-based page index |
 | `limit` | integer 1–50 | `10` | Page size |
 
@@ -35,24 +37,26 @@ Migration runs in `database.service.ts` bootstrap alongside existing table DDL.
 }
 ```
 
-Each record includes `isArchived: boolean`. Ordered `created_at DESC`. Invalid `archived`, `page`, or `limit` → `400`.
+Each record includes `status`: `'live' | 'off_air' | 'archived'`. Ordered `created_at DESC`. Invalid `archived`, `page`, or `limit` → `400`.
 
-**Database:** `COUNT(*)` with same `archived` filter; `LIMIT` / `OFFSET (page - 1) * limit` on list query.
+**Database:** `COUNT(*)` with same status filter; `LIMIT` / `OFFSET (page - 1) * limit` on list query.
 
 ### Archive
 
 | Method | Route | Behavior |
 |--------|-------|----------|
-| `DELETE` | `/accounts/:accountId/prize-spins/:prizeSpinId` | Archive session. Sets `is_archived = true`. If `is_active = true`, also sets `is_active = false`. Returns `204`. `404` when id not found, wrong account, or already archived. |
+| `DELETE` | `/accounts/:accountId/prize-spins/:prizeSpinId` | Sets `status = 'archived'`. Works from `live` or `off_air`. Returns `204`. `404` when id not found, wrong account, or already `archived`. |
 
-**Get filter:** `getPrizeSpinById` requires `is_archived = false`.
+**Get session / sectors / wins:** allowed for `status = 'archived'` (read-only review).
 
-**Go live:** rejects archived rows (`404`).
+**Mutations** (go live, deactivate, spin, sector/win CRUD, title edit, widget settings): `404` when parent `status = 'archived'`.
 
 **Client helpers** (`app/src/api/prize-spin.ts`):
 
 - `fetchPrizeSpins(accountId, { archived?, page?, limit? })` → `{ records, total, page, limit }`
 - `archivePrizeSpin(accountId, prizeSpinId)` — `DELETE`
+
+**Server types:** `DbPrizeSpin.status`.
 
 ## UI (`PrizeSpinPage` History card)
 
@@ -88,17 +92,19 @@ MUI `TablePagination` directly below `AppTable` (outside table container, aligne
 
 | Condition | Treatment |
 |-----------|-----------|
-| `isActive && !isArchived` | Orange inset `box-shadow` + light warning tint on row (Bonus Buy `playingSlotRowSx` parity) |
-| `isArchived` when filter is **All** | Muted title (`text.secondary`); **Archived** chip in Status column |
-| Other rows | Default table styling |
+| `status = 'live'` | Orange inset `box-shadow` + light warning tint on row (Bonus Buy `playingSlotRowSx` parity) |
+| `status = 'archived'` when filter is **All** | Muted title (`text.secondary`); **Archived** chip in Status column |
+| `status = 'off_air'` | Default table styling |
 
-### Row actions (non-archived)
+Expanded row keeps **Created by** / **Created** only.
 
-**Archive** — red outlined icon after Go live/Deactivate, before Open.
+### Row actions
 
-### Row actions (archived)
-
-Hide **Archive**, **Go live**, **Deactivate**; keep **Open**.
+| `status` | Actions |
+|----------|---------|
+| `live` | Deactivate, Archive, Open |
+| `off_air` | Go live, Archive, Open |
+| `archived` | Open enabled; Go live, Archive, Deactivate visible, disabled |
 
 ### Empty states
 
@@ -111,13 +117,30 @@ Hide **Archive**, **Go live**, **Deactivate**; keep **Open**.
 ### Confirmation dialog
 
 - Title: **Archive session?**
-- Body: session removed from active list; archived data stays in DB but session page is inaccessible
+- Body: session removed from active list; archived session can be opened for review but not edited
 - **Archive** button `color="error"`
+
+## Read-only session workspace (`/prize-spin/:id`)
+
+When `status = 'archived'`, all interactive controls remain **visible but disabled** (`disabled` prop / equivalent — not `display: none` or conditional unmount):
+
+| Area | Behavior |
+|------|----------|
+| Header | **Archived** chip (muted); Go live / Deactivate visible, disabled |
+| Wheel / sectors | Visible; add, edit, delete, reorder controls visible, disabled |
+| Spin | Visible, disabled |
+| Winners | Visible; remove / archive actions visible, disabled |
+| Title edit | Visible, disabled |
+| Widget settings link | Visible, disabled |
+
+Optional subtle banner: **This session is archived. View only.**
 
 ## Out of scope (this companion)
 
 - Unarchive / restore
 - Bulk archive
+- Archive audit (who / when)
+- Editing archived data
 - Cursor / infinite-scroll pagination
 - Configurable page size in UI
 - Filter or page persistence
