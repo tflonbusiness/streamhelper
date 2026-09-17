@@ -1,15 +1,23 @@
-export const FORTUNE_WHEEL_COLORS = {
-  frameRed: '#D32F2F',
-  frameRedDark: '#9A1B1B',
-  frameRedLight: '#EF5350',
-  goldLight: '#FFE082',
+import { polarToCartesian } from '@/lib/prize-spin-wheel-geometry'
+
+export const PREMIUM_WHEEL_COLORS = {
+  goldLight: '#FFF8E1',
   goldMid: '#FFC107',
-  goldDark: '#E65100',
-  stud: '#FFD54F',
-  studStroke: '#F57F17',
-  notch: '#FFFFFF',
-  hubShadow: '#8D6E00',
+  goldDark: '#B8860B',
+  goldDeep: '#8B6914',
+  ruby: '#C62828',
+  rubyLight: '#EF5350',
+  rubyDark: '#7F0000',
+  pointerRed: '#D32F2F',
+  pointerRedDark: '#B71C1C',
+  divider: '#212121',
+  hubStroke: '#8B6914',
 } as const
+
+/** @deprecated Use PREMIUM_WHEEL_COLORS */
+export const FORTUNE_WHEEL_COLORS = PREMIUM_WHEEL_COLORS
+
+export const RIM_GEM_COUNT = 20
 
 export function parseHexColor(hex: string): { r: number; g: number; b: number } | null {
   const normalized = hex.trim().replace('#', '')
@@ -55,32 +63,80 @@ export function sectorLabelColor(hex: string): string {
 }
 
 export function sectorGradientId(sectorId: number): string {
-  return `fortune-sector-${sectorId}`
+  return `premium-sector-${sectorId}`
 }
 
-export function describeFrameNotch(
-  centerX: number,
-  centerY: number,
-  innerRadius: number,
-  angle: number,
-  depth: number,
-  halfWidthDegrees: number,
-): string {
-  const tip = polar(centerX, centerY, innerRadius, angle)
-  const left = polar(centerX, centerY, innerRadius - depth, angle - halfWidthDegrees)
-  const right = polar(centerX, centerY, innerRadius - depth, angle + halfWidthDegrees)
-  return `M ${tip.x} ${tip.y} L ${left.x} ${left.y} L ${right.x} ${right.y} Z`
-}
-
-function polar(
+export function describeArcStroke(
   centerX: number,
   centerY: number,
   radius: number,
-  angleDegrees: number,
-): { x: number; y: number } {
-  const radians = (angleDegrees * Math.PI) / 180
-  return {
-    x: centerX + radius * Math.cos(radians),
-    y: centerY + radius * Math.sin(radians),
-  }
+  startAngle: number,
+  endAngle: number,
+): string {
+  const start = polarToCartesian(centerX, centerY, radius, startAngle)
+  const end = polarToCartesian(centerX, centerY, radius, endAngle)
+  const largeArc = endAngle - startAngle > 180 ? 1 : 0
+  return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArc} 1 ${end.x} ${end.y}`
 }
+
+export function describeSegmentDivider(
+  centerX: number,
+  centerY: number,
+  innerRadius: number,
+  outerRadius: number,
+  angle: number,
+): string {
+  const inner = polarToCartesian(centerX, centerY, innerRadius, angle)
+  const outer = polarToCartesian(centerX, centerY, outerRadius, angle)
+  return `M ${inner.x} ${inner.y} L ${outer.x} ${outer.y}`
+}
+
+export function rimStudAngles(count = RIM_GEM_COUNT): number[] {
+  return Array.from({ length: count }, (_, index) => -90 + (360 / count) * index)
+}
+
+/** Filled annulus path (even-odd) for a solid gold rim band. */
+export function describeDonut(
+  centerX: number,
+  centerY: number,
+  outerRadius: number,
+  innerRadius: number,
+): string {
+  return [
+    `M ${centerX + outerRadius} ${centerY}`,
+    `A ${outerRadius} ${outerRadius} 0 1 1 ${centerX - outerRadius} ${centerY}`,
+    `A ${outerRadius} ${outerRadius} 0 1 1 ${centerX + outerRadius} ${centerY}`,
+    `M ${centerX + innerRadius} ${centerY}`,
+    `A ${innerRadius} ${innerRadius} 0 1 0 ${centerX - innerRadius} ${centerY}`,
+    `A ${innerRadius} ${innerRadius} 0 1 0 ${centerX + innerRadius} ${centerY}`,
+  ].join(' ')
+}
+
+export type RimHighlightSpot = {
+  angle: number
+  span: number
+  outerOffset: number
+  opacity: number
+  width: number
+}
+
+/** Specular arc highlights on the outer gold rim. */
+export const RIM_OUTER_HIGHLIGHTS: RimHighlightSpot[] = [
+  { angle: -90, span: 58, outerOffset: 3, opacity: 0.58, width: 3 },
+  { angle: -18, span: 34, outerOffset: 2, opacity: 0.4, width: 2.2 },
+  { angle: 52, span: 40, outerOffset: 2, opacity: 0.34, width: 2 },
+  { angle: 128, span: 44, outerOffset: 2, opacity: 0.32, width: 1.9 },
+  { angle: 205, span: 38, outerOffset: 2, opacity: 0.28, width: 1.7 },
+  { angle: 248, span: 30, outerOffset: 3, opacity: 0.22, width: 1.5 },
+]
+
+/** Softer inner-edge highlights on the gold rim. */
+export const RIM_INNER_HIGHLIGHTS: RimHighlightSpot[] = [
+  { angle: -82, span: 48, outerOffset: 0, opacity: 0.28, width: 2.4 },
+  { angle: 35, span: 36, outerOffset: 0, opacity: 0.2, width: 1.8 },
+  { angle: 158, span: 40, outerOffset: 0, opacity: 0.18, width: 1.7 },
+  { angle: 232, span: 32, outerOffset: 0, opacity: 0.16, width: 1.5 },
+]
+
+/** Point specular glints on the rim surface. */
+export const RIM_GLINT_ANGLES = [-72, -8, 68, 142, 218, 272] as const
