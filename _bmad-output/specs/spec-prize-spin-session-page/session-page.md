@@ -87,13 +87,22 @@ Actions: **Cancel** / **Save** — `PATCH .../sectors/:sectorId` on save; close 
 
 Row **Delete** archives the sector (`DELETE .../sectors/:sectorId`). Confirm dialog optional (implementation choice). Row disappears from list; total win % indicator updates; success toast.
 
-## 3. Winners card
+## 3. History card (winners)
 
-Panel title: **Winners ({count})**
+Panel title: **History ({count})**
+
+### Header actions
+
+When `wins.length > 0`:
+
+| Button | Label (English) | Behavior |
+|--------|-----------------|----------|
+| Export | **Download XLSX** | Client-side `.xlsx` build per `winners-export.md`; left of **Archive all** |
+| Archive all | **Archive all** | Existing bulk soft-delete flow |
 
 ### Empty state
 
-Centered muted text: **No winners yet.**
+Centered muted text: **No winners yet.** No header action buttons.
 
 ### Populated state
 
@@ -103,7 +112,7 @@ Table or stacked rows:
 |--------|--------|
 | Nick | `win.participantNick` |
 | Prize | `win.sectorLabel` |
-| Time | locale date-time from `win.createdAt` |
+| Time | locale date-time from `win.createdAt` (in expandable detail) |
 | Action | **Remove** icon/button |
 
 **Remove:** confirm dialog optional (implementation choice); calls `DELETE .../wins/:winId`; row disappears from list; success toast.

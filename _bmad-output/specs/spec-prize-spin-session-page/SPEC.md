@@ -3,6 +3,7 @@ id: SPEC-prize-spin-session-page
 companions:
   - session-page.md
   - prize-spin-sectors.md
+  - winners-export.md
   - ../spec-app-english-only/SPEC.md
   - ../spec-caz-agent-ui-improvement/design-tokens.md
 sources: []
@@ -14,7 +15,7 @@ sources: []
 
 ## Why
 
-**Pain:** The Prize Spin session route (`/prize-spin/:id`) exists but only shows a placeholder — operators cannot configure wheel sectors, enter a viewer nick, run a spin, or review winners. The module description promises a weighted prize wheel for stream engagement; without a session workspace the feature is unusable during a live stream.
+**Pain:** The Prize Spin session route (`/prize-spin/:id`) exists but only shows a placeholder — operators cannot configure wheel sectors, enter a viewer nick, run a spin, or review winners. The module description promises a weighted prize wheel for stream engagement; without a session workspace the feature is unusable during a live stream. Operators also need to share winner records outside the dashboard (reports, fulfillment) without manual copy-paste.
 
 **Who:** Owner or moderator on an active Caz Agent account (English UI, existing MUI dark theme).
 
@@ -40,6 +41,10 @@ sources: []
   - **intent:** An operator opens a prize spin session and sees the full session workspace layout for that record.
   - **success:** `/prize-spin/:id` loads account-scoped `prize_spin`; layout matches `session-page.md` (existing header + spin panel + sectors card + winners card); invalid or foreign id shows error with path to `/prize-spin`; loading uses skeletons per companion.
 
+- **CAP-6**
+  - **intent:** An operator downloads the current session winner history as an XLSX spreadsheet from the History panel.
+  - **success:** **Download XLSX** in the History card header (visible when at least one winner exists) builds a `.xlsx` file client-side from the loaded winner list and triggers a browser download; worksheet columns and filename match `winners-export.md`; exported rows match the on-screen History list order and fields.
+
 ## Constraints
 
 - **English UI** copy on all labels, buttons, and empty states per adopted `spec-app-english-only`.
@@ -52,6 +57,8 @@ sources: []
 - **Brownfield schema** — use existing `prize_spin_sector` and `prize_spin_win` tables; add API and client helpers per `prize-spin-sectors.md`.
 - **Client validation** — Yup schemas in `app/src/lib/prize-spin-validation.ts`; sector add/edit and participant nick validate before API calls; rules mirror `prize-spin-sectors.md`.
 - **Spin readiness** — disabled **Spin** and `StatusAlert` messages (nick, ≥2 sectors, 100% total) stay inline on the page.
+- **Client-side XLSX** — add `xlsx` (SheetJS) to app dependencies; export helper in `app/src/lib/prize-spin-winners-export.ts`; no server export endpoint.
+- **Export scope** — XLSX includes only visible (non-archived) wins currently shown in History; archived rows are excluded — export mirrors the on-screen list exactly.
 
 ## Non-goals
 
@@ -61,13 +68,15 @@ sources: []
 - Automatic bonus/promo fulfillment to winners.
 - Prize Spin history page changes (`/prize-spin` list/create flow already shipped).
 - **Ended-session policy** — no special read-only or blocking behavior when `is_active = false`; defer to a follow-on slice.
+- CSV or PDF export formats; multi-sheet workbooks with stats; exporting archived/hidden winner rows.
 
 ## Success signal
 
-An operator opens a prize spin session, adds three sectors with distinct colors totaling 100% win weight, edits one sector's percentage, deletes another and replaces it, enters a viewer nick, clicks **Spin**, sees the winner in the list with the correct prize label, and removes a mistaken entry — all without leaving `/prize-spin/:id` or reloading the page.
+An operator opens a prize spin session, adds three sectors with distinct colors totaling 100% win weight, edits one sector's percentage, deletes another and replaces it, enters a viewer nick, clicks **Spin**, sees the winner in the list with the correct prize label, removes a mistaken entry, and clicks **Download XLSX** to save a spreadsheet whose rows match the History list — all without leaving `/prize-spin/:id` or reloading the page.
 
 ## Assumptions
 
 - Default sector colors cycle from a server-side palette when `color` is omitted on create.
 - Weighted random selection on the server is sufficient for MVP; no seed display on this page.
 - Existing winner rows keep their stored `sector_id` and label snapshot even if the sector is later archived.
+- XLSX export uses a single **Winners** worksheet; time column uses the same `formatDateTime` display format as the expanded row detail.

@@ -22,6 +22,7 @@ import {
   Archive,
   BarChart3,
   CircleStop,
+  Download,
   Equal,
   History,
   PieChart,
@@ -57,6 +58,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
 import { useNotification } from '@/context/NotificationContext'
 import { defaultSectorColor } from '@/lib/prize-spin-sector-colors'
+import { downloadWinnersXlsx } from '@/lib/prize-spin-winners-export'
 import {
   validateParticipantNick,
   validatePrizeSpinSectorDraft,
@@ -336,6 +338,8 @@ export function PrizeSpinSessionPage() {
   const [archiveAllDialogOpen, setArchiveAllDialogOpen] = useState(false)
   const [isArchivingAll, setIsArchivingAll] = useState(false)
   const [archiveAllError, setArchiveAllError] = useState<string | null>(null)
+  const [isExportingWinners, setIsExportingWinners] = useState(false)
+  const [exportWinnersError, setExportWinnersError] = useState<string | null>(null)
 
   const [endDialogOpen, setEndDialogOpen] = useState(false)
   const [isEnding, setIsEnding] = useState(false)
@@ -550,7 +554,7 @@ export function PrizeSpinSessionPage() {
         previousPercent: Number.parseFloat(editSector.winPercent),
       },
     )
-    
+
     if (validationError) {
       setEditError(validationError)
       return
@@ -644,6 +648,29 @@ export function PrizeSpinSessionPage() {
           ? deleteError.message
           : 'Could not remove winner',
       )
+    }
+  }
+
+  function handleDownloadWinners() {
+    if (wins.length === 0 || isExportingWinners) {
+      return
+    }
+
+    setIsExportingWinners(true)
+    setExportWinnersError(null)
+
+    try {
+      downloadWinnersXlsx(wins, prizeSpinId)
+      showSuccess('Winners exported.')
+    } catch (exportError) {
+      const message =
+        exportError instanceof Error
+          ? exportError.message
+          : 'Could not export winners'
+      setExportWinnersError(message)
+      showError(message)
+    } finally {
+      setIsExportingWinners(false)
     }
   }
 
@@ -891,29 +918,46 @@ export function PrizeSpinSessionPage() {
                 />
               ) : null}
             </Stack>
-            {record.isActive ? (
+            <Stack direction="row" spacing={1}>
               <Button
                 type="button"
                 variant="outlined"
                 size="small"
-                startIcon={<CircleStop size={16} aria-hidden />}
-                onClick={() => {
-                  setEndError(null)
-                  setEndDialogOpen(true)
-                }}
-                sx={{
-                  borderColor: alpha(theme.palette.error.main, 0.4),
-                  color: theme.palette.error.main,
-                  '&:hover': {
-                    borderColor: theme.palette.error.main,
-                    bgcolor: alpha(theme.palette.error.main, 0.1),
-                  },
-                }}
+                startIcon={<Download size={16} aria-hidden />}
+                disabled={wins.length === 0 || isExportingWinners}
+                onClick={handleDownloadWinners}
               >
-                End session
+                {isExportingWinners ? 'Downloading…' : 'Download History'}
               </Button>
-            ) : null}
+              {record.isActive ? (
+                <Button
+                  type="button"
+                  variant="outlined"
+                  size="small"
+                  startIcon={<CircleStop size={16} aria-hidden />}
+                  onClick={() => {
+                    setEndError(null)
+                    setEndDialogOpen(true)
+                  }}
+                  sx={{
+                    borderColor: alpha(theme.palette.error.main, 0.4),
+                    color: theme.palette.error.main,
+                    '&:hover': {
+                      borderColor: theme.palette.error.main,
+                      bgcolor: alpha(theme.palette.error.main, 0.1),
+                    },
+                  }}
+                >
+                  End session
+                </Button>
+              ) : null}
+            </Stack>
           </Stack>
+          {exportWinnersError ? (
+            <StatusAlert tone="error" sx={{ mt: 2 }}>
+              {exportWinnersError}
+            </StatusAlert>
+          ) : null}
         </CardContent>
       </Card>
 
