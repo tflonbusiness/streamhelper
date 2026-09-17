@@ -16,7 +16,6 @@ import {
   Select,
   Skeleton,
   Stack,
-  TablePagination,
   TextField,
   Tooltip,
   Typography,
@@ -756,31 +755,12 @@ export function PrizeSpinPage() {
                     ? liveSessionRowSx(theme)
                     : undefined
                 }
-                footer={
-                  recordsTotal > 0 ? (
-                    <TablePagination
-                      component="div"
-                      count={recordsTotal}
-                      page={recordsPage - 1}
-                      onPageChange={(_, newPage) => setRecordsPage(newPage + 1)}
-                      rowsPerPage={HISTORY_PAGE_SIZE}
-                      rowsPerPageOptions={[HISTORY_PAGE_SIZE]}
-                      labelRowsPerPage=""
-                      slotProps={{
-                        select: {
-                          sx: { display: 'none' },
-                        },
-                      }}
-                      sx={{
-                        border: 0,
-                        width: '100%',
-                        '.MuiTablePagination-selectLabel': { display: 'none' },
-                        '.MuiTablePagination-select': { display: 'none' },
-                        '.MuiTablePagination-displayedRows': { ml: 'auto' },
-                      }}
-                    />
-                  ) : null
-                }
+                pagination={{
+                  count: recordsTotal,
+                  page: recordsPage,
+                  onPageChange: setRecordsPage,
+                  rowsPerPage: HISTORY_PAGE_SIZE,
+                }}
                 expandable={{
                   isExpanded: (record) => expandedRecordIds.has(record.id),
                   onToggle: (record) => toggleRecordExpanded(record.id),
