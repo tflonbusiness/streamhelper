@@ -61,11 +61,14 @@ export type DbBonusBuy = {
   createdByName: string;
 };
 
+export type PrizeSpinArchivedFilter = 'false' | 'true' | 'all';
+
 export type DbPrizeSpin = {
   id: number;
   accountId: number;
   title: string;
   isActive: boolean;
+  isArchived: boolean;
   createdAt: Date;
   createdByUserId: number;
   createdByName: string;
@@ -351,15 +354,17 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         created_by_user_id  BIGINT NOT NULL REFERENCES users(id),
         title               TEXT NOT NULL,
         is_active           BOOLEAN NOT NULL DEFAULT false,
+        is_archived         BOOLEAN NOT NULL DEFAULT false,
         created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
       );
 
       CREATE INDEX idx_prize_spin_account_created
-        ON prize_spin (account_id, created_at DESC);
+        ON prize_spin (account_id, created_at DESC)
+        WHERE is_archived = false;
 
       CREATE INDEX idx_prize_spin_account_live
         ON prize_spin (account_id)
-        WHERE is_active = true;
+        WHERE is_active = true AND is_archived = false;
 
       CREATE TABLE prize_spin_sector (
         id                  BIGSERIAL PRIMARY KEY,
@@ -1744,7 +1749,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           u.name AS created_by_name
         FROM prize_spin ps
         JOIN users u ON u.id = ps.created_by_user_id
-        WHERE ps.account_id = $1 AND ps.id = $2
+        WHERE ps.account_id = $1
+          AND ps.id = $2
+          AND ps.is_archived = false
       `,
       [accountId, prizeSpinId],
     );
@@ -1759,18 +1766,50 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       accountId: toInt(row.account_id),
       title: row.title,
       isActive: row.is_active,
+      isArchived: false,
       createdAt: row.created_at,
       createdByUserId: toInt(row.created_by_user_id),
       createdByName: row.created_by_name,
     };
   }
 
-  async listPrizeSpins(accountId: number): Promise<DbPrizeSpin[]> {
+  async listPrizeSpins(
+    accountId: number,
+    archived: PrizeSpinArchivedFilter = 'false',
+    page = 1,
+    limit = 10,
+  ): Promise<{
+    records: DbPrizeSpin[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const archivedClause =
+      archived === 'all'
+        ? ''
+        : archived === 'true'
+          ? 'AND ps.is_archived = true'
+          : 'AND ps.is_archived = false';
+    const offset = (page - 1) * limit;
+
+    const countResult = await this.pool.query<{ count: string | number }>(
+      `
+        SELECT COUNT(*)::text AS count
+        FROM prize_spin ps
+        WHERE ps.account_id = $1
+          ${archivedClause}
+      `,
+      [accountId],
+    );
+
+    const total = toInt(countResult.rows[0]?.count ?? 0);
+
     const result = await this.pool.query<{
       id: string | number;
       account_id: string | number;
       title: string;
       is_active: boolean;
+      is_archived: boolean;
       created_at: Date;
       created_by_user_id: string | number;
       created_by_name: string;
@@ -1781,26 +1820,35 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           ps.account_id,
           ps.title,
           ps.is_active,
+          ps.is_archived,
           ps.created_at,
           ps.created_by_user_id,
           u.name AS created_by_name
         FROM prize_spin ps
         JOIN users u ON u.id = ps.created_by_user_id
         WHERE ps.account_id = $1
+          ${archivedClause}
         ORDER BY ps.created_at DESC
+        LIMIT $2 OFFSET $3
       `,
-      [accountId],
+      [accountId, limit, offset],
     );
 
-    return result.rows.map((row) => ({
-      id: toInt(row.id),
-      accountId: toInt(row.account_id),
-      title: row.title,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      createdByUserId: toInt(row.created_by_user_id),
-      createdByName: row.created_by_name,
-    }));
+    return {
+      records: result.rows.map((row) => ({
+        id: toInt(row.id),
+        accountId: toInt(row.account_id),
+        title: row.title,
+        isActive: row.is_active,
+        isArchived: row.is_archived,
+        createdAt: row.created_at,
+        createdByUserId: toInt(row.created_by_user_id),
+        createdByName: row.created_by_name,
+      })),
+      total,
+      page,
+      limit,
+    };
   }
 
   async createPrizeSpin(
@@ -1854,6 +1902,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         accountId: toInt(row.account_id),
         title: row.title,
         isActive: row.is_active,
+        isArchived: false,
         createdAt: row.created_at,
         createdByUserId: toInt(row.created_by_user_id),
         createdByName: row.created_by_name,
@@ -1892,6 +1941,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         FROM prize_spin
         WHERE account_id = $1
           AND is_active = true
+          AND is_archived = false
         LIMIT 1
       `,
       [accountId],
@@ -1920,6 +1970,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           SET is_active = false
           WHERE account_id = $1
             AND is_active = true
+            AND is_archived = false
         `,
         [accountId],
       );
@@ -1940,6 +1991,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           WHERE ps.created_by_user_id = u.id
             AND ps.account_id = $1
             AND ps.id = $2
+            AND ps.is_archived = false
           RETURNING
             ps.id,
             ps.account_id,
@@ -1964,6 +2016,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         accountId: toInt(row.account_id),
         title: row.title,
         isActive: row.is_active,
+        isArchived: false,
         createdAt: row.created_at,
         createdByUserId: toInt(row.created_by_user_id),
         createdByName: row.created_by_name,
@@ -1996,6 +2049,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         WHERE ps.created_by_user_id = u.id
           AND ps.account_id = $1
           AND ps.id = $2
+          AND ps.is_archived = false
         RETURNING
           ps.id,
           ps.account_id,
@@ -2018,10 +2072,32 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       accountId: toInt(row.account_id),
       title: row.title,
       isActive: row.is_active,
+      isArchived: false,
       createdAt: row.created_at,
       createdByUserId: toInt(row.created_by_user_id),
       createdByName: row.created_by_name,
     };
+  }
+
+  async archivePrizeSpin(
+    accountId: number,
+    prizeSpinId: number,
+  ): Promise<void> {
+    const result = await this.pool.query(
+      `
+        UPDATE prize_spin
+        SET is_archived = true,
+            is_active = false
+        WHERE account_id = $1
+          AND id = $2
+          AND is_archived = false
+      `,
+      [accountId, prizeSpinId],
+    );
+
+    if (result.rowCount === 0) {
+      throw new Error('NOT_FOUND');
+    }
   }
 
   private mapPrizeSpinSectorRow(row: {
@@ -2742,6 +2818,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         JOIN users u ON u.id = ps.created_by_user_id
         WHERE ps.id = $1
           AND ps.is_active = true
+          AND ps.is_archived = false
       `,
       [prizeSpinId],
     );
@@ -2814,6 +2891,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       accountId,
       title: recordRow.title,
       isActive: recordRow.is_active,
+      isArchived: false,
       createdByUserId: toInt(recordRow.created_by_user_id),
       createdByName: recordRow.created_by_name,
       createdAt: recordRow.created_at,

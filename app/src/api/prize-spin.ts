@@ -2,11 +2,21 @@ const jsonHeaders = {
   'Content-Type': 'application/json',
 }
 
+export type PrizeSpinArchivedFilter = 'false' | 'true' | 'all'
+
+export type PrizeSpinListResult = {
+  records: PrizeSpinRecord[]
+  total: number
+  page: number
+  limit: number
+}
+
 export type PrizeSpinRecord = {
   id: number
   accountId: number
   title: string
   isActive: boolean
+  isArchived: boolean
   createdAt: string
   createdByUserId: number
   createdByName: string
@@ -75,10 +85,30 @@ export async function fetchPrizeSpin(
 
 export async function fetchPrizeSpins(
   accountId: number,
-): Promise<PrizeSpinRecord[]> {
-  const response = await fetch(`/accounts/${accountId}/prize-spins`, {
-    credentials: 'include',
-  })
+  options?: {
+    archived?: PrizeSpinArchivedFilter
+    page?: number
+    limit?: number
+  },
+): Promise<PrizeSpinListResult> {
+  const params = new URLSearchParams()
+  if (options?.archived) {
+    params.set('archived', options.archived)
+  }
+  if (options?.page !== undefined) {
+    params.set('page', String(options.page))
+  }
+  if (options?.limit !== undefined) {
+    params.set('limit', String(options.limit))
+  }
+
+  const query = params.toString()
+  const response = await fetch(
+    `/accounts/${accountId}/prize-spins${query ? `?${query}` : ''}`,
+    {
+      credentials: 'include',
+    },
+  )
 
   if (!response.ok) {
     throw new Error(
@@ -86,8 +116,7 @@ export async function fetchPrizeSpins(
     )
   }
 
-  const data = (await response.json()) as { records: PrizeSpinRecord[] }
-  return data.records
+  return response.json() as Promise<PrizeSpinListResult>
 }
 
 export async function createPrizeSpin(
@@ -150,6 +179,25 @@ export async function deactivatePrizeSpin(
   }
 
   return response.json() as Promise<PrizeSpinRecord>
+}
+
+export async function archivePrizeSpin(
+  accountId: number,
+  prizeSpinId: number,
+): Promise<void> {
+  const response = await fetch(
+    `/accounts/${accountId}/prize-spins/${prizeSpinId}`,
+    {
+      method: 'DELETE',
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, 'Could not archive session'),
+    )
+  }
 }
 
 export async function fetchPrizeSpinSectors(

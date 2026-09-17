@@ -8,6 +8,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   Req,
 } from '@nestjs/common';
 import type { Request } from 'express';
@@ -313,12 +314,20 @@ export class AccountsController {
   @Get(':accountId/prize-spins')
   async listPrizeSpins(
     @Param('accountId', ParseIntPipe) accountId: number,
+    @Query('archived') archived: string | undefined,
+    @Query('page') page: string | undefined,
+    @Query('limit') limit: string | undefined,
     @Req() req: Request,
   ) {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
-    const records = await this.authService.listPrizeSpins(accountId, user.id);
-    return { records };
+    return this.authService.listPrizeSpins(
+      accountId,
+      user.id,
+      archived,
+      page,
+      limit,
+    );
   }
 
   @Get(':accountId/prize-spins/:prizeSpinId')
@@ -370,6 +379,19 @@ export class AccountsController {
     const user = await this.authService.requireValidSessionUser(session.user);
 
     return this.authService.deactivatePrizeSpin(accountId, user.id, prizeSpinId);
+  }
+
+  @Delete(':accountId/prize-spins/:prizeSpinId')
+  @HttpCode(204)
+  async archivePrizeSpin(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('prizeSpinId', ParseIntPipe) prizeSpinId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    await this.authService.archivePrizeSpin(accountId, user.id, prizeSpinId);
   }
 
   @Get(':accountId/prize-spins/:prizeSpinId/sectors')

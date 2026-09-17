@@ -35,6 +35,8 @@ type AppTableProps<T> = {
   rows: T[]
   getRowKey: (row: T) => string | number
   emptyMessage?: React.ReactNode
+  toolbar?: React.ReactNode
+  footer?: React.ReactNode
   expandable?: AppTableExpandableConfig<T>
   getRowSx?: (row: T) => SxProps<Theme> | undefined
 }
@@ -84,26 +86,41 @@ const tableSx: SxProps<Theme> = {
 
 const expandColumnWidth = 40
 
+const tableToolbarSx: SxProps<Theme> = {
+  px: 2,
+  py: 1.5,
+  borderBottom: '1px solid',
+  borderColor: 'divider',
+}
+
+const tableFooterSx: SxProps<Theme> = {
+  borderTop: '1px solid',
+  borderColor: 'divider',
+}
+
+const tableEmptySx: SxProps<Theme> = {
+  px: 2,
+  py: 3,
+  textAlign: 'center',
+  color: 'text.secondary',
+  fontSize: '0.875rem',
+}
+
 export function AppTable<T>({
   columns,
   rows,
   getRowKey,
   emptyMessage,
+  toolbar,
+  footer,
   expandable,
   getRowSx,
 }: AppTableProps<T>) {
-  if (rows.length === 0 && emptyMessage) {
+  const isEmpty = rows.length === 0
+
+  if (isEmpty && emptyMessage && !toolbar) {
     return (
-      <Box
-        sx={{
-          ...tableContainerSx,
-          px: 2,
-          py: 3,
-          textAlign: 'center',
-          color: 'text.secondary',
-          fontSize: '0.875rem',
-        }}
-      >
+      <Box sx={{ ...tableContainerSx, ...tableEmptySx }}>
         {emptyMessage}
       </Box>
     )
@@ -111,6 +128,10 @@ export function AppTable<T>({
 
   return (
     <TableContainer sx={tableContainerSx}>
+      {toolbar ? <Box sx={tableToolbarSx}>{toolbar}</Box> : null}
+      {isEmpty && emptyMessage ? (
+        <Box sx={tableEmptySx}>{emptyMessage}</Box>
+      ) : (
       <Table size="small" sx={{ ...tableSx, tableLayout: 'fixed', width: '100%' }}>
         <colgroup>
           {expandable ? (
@@ -220,6 +241,8 @@ export function AppTable<T>({
           })}
         </TableBody>
       </Table>
+      )}
+      {footer ? <Box sx={tableFooterSx}>{footer}</Box> : null}
     </TableContainer>
   )
 }

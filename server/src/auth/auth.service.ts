@@ -921,13 +921,20 @@ export class AuthService {
       accountId: row.accountId,
       title: row.title,
       isActive: row.isActive,
+      isArchived: row.isArchived,
       createdAt: row.createdAt.toISOString(),
       createdByUserId: row.createdByUserId,
       createdByName: row.createdByName,
     };
   }
 
-  async listPrizeSpins(accountId: number, callerUserId: number) {
+  async listPrizeSpins(
+    accountId: number,
+    callerUserId: number,
+    archived?: string,
+    page?: string,
+    limit?: string,
+  ) {
     const isMember = await this.database.hasActiveMembership(
       accountId,
       callerUserId,
@@ -936,16 +943,44 @@ export class AuthService {
       throw new ForbiddenException('Not a member of this account');
     }
 
-    const rows = await this.database.listPrizeSpins(accountId);
-    return rows.map((row) => ({
-      id: row.id,
-      accountId: row.accountId,
-      title: row.title,
-      isActive: row.isActive,
-      createdAt: row.createdAt.toISOString(),
-      createdByUserId: row.createdByUserId,
-      createdByName: row.createdByName,
-    }));
+    const filter = archived ?? 'false';
+    if (filter !== 'false' && filter !== 'true' && filter !== 'all') {
+      throw new BadRequestException('Invalid archived filter');
+    }
+
+    const pageNumber = page === undefined ? 1 : Number.parseInt(page, 10);
+    const limitNumber = limit === undefined ? 10 : Number.parseInt(limit, 10);
+
+    if (!Number.isFinite(pageNumber) || pageNumber < 1) {
+      throw new BadRequestException('Invalid page');
+    }
+
+    if (!Number.isFinite(limitNumber) || limitNumber < 1 || limitNumber > 50) {
+      throw new BadRequestException('Invalid limit');
+    }
+
+    const result = await this.database.listPrizeSpins(
+      accountId,
+      filter as 'false' | 'true' | 'all',
+      pageNumber,
+      limitNumber,
+    );
+
+    return {
+      records: result.records.map((row) => ({
+        id: row.id,
+        accountId: row.accountId,
+        title: row.title,
+        isActive: row.isActive,
+        isArchived: row.isArchived,
+        createdAt: row.createdAt.toISOString(),
+        createdByUserId: row.createdByUserId,
+        createdByName: row.createdByName,
+      })),
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    };
   }
 
   async createPrizeSpin(
@@ -972,6 +1007,7 @@ export class AuthService {
         accountId: row.accountId,
         title: row.title,
         isActive: row.isActive,
+        isArchived: row.isArchived,
         createdAt: row.createdAt.toISOString(),
         createdByUserId: row.createdByUserId,
         createdByName: row.createdByName,
@@ -989,6 +1025,7 @@ export class AuthService {
     accountId: number;
     title: string;
     isActive: boolean;
+    isArchived: boolean;
     createdAt: Date;
     createdByUserId: number;
     createdByName: string;
@@ -998,6 +1035,7 @@ export class AuthService {
       accountId: row.accountId,
       title: row.title,
       isActive: row.isActive,
+      isArchived: row.isArchived,
       createdAt: row.createdAt.toISOString(),
       createdByUserId: row.createdByUserId,
       createdByName: row.createdByName,
@@ -1044,6 +1082,29 @@ export class AuthService {
     try {
       const row = await this.database.deactivatePrizeSpin(accountId, prizeSpinId);
       return this.formatPrizeSpinRecord(row);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'NOT_FOUND') {
+        throw new NotFoundException('Prize spin not found');
+      }
+      throw error;
+    }
+  }
+
+  async archivePrizeSpin(
+    accountId: number,
+    callerUserId: number,
+    prizeSpinId: number,
+  ) {
+    const isMember = await this.database.hasActiveMembership(
+      accountId,
+      callerUserId,
+    );
+    if (!isMember) {
+      throw new ForbiddenException('Not a member of this account');
+    }
+
+    try {
+      await this.database.archivePrizeSpin(accountId, prizeSpinId);
     } catch (error) {
       if (error instanceof Error && error.message === 'NOT_FOUND') {
         throw new NotFoundException('Prize spin not found');
