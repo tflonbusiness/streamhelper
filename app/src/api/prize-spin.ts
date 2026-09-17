@@ -416,7 +416,7 @@ export async function fetchPublicPrizeSpinWidget(
   channelSlug: string,
 ): Promise<PrizeSpinWidgetView> {
   const response = await fetch(
-    `/prize-spin/widget/${encodeURIComponent(channelSlug)}`,
+    `/prize-spins/widget/${encodeURIComponent(channelSlug)}`,
   )
 
   if (response.status === 404) {
