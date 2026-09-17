@@ -57,6 +57,10 @@ import { useAuth } from '@/context/AuthContext'
 import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
 import { useNotification } from '@/context/NotificationContext'
 import { defaultSectorColor } from '@/lib/prize-spin-sector-colors'
+import {
+  validateParticipantNick,
+  validatePrizeSpinSectorDraft,
+} from '@/lib/prize-spin-validation'
 import { MODULE_CATALOG } from '@/lib/modules'
 import { cardSx, inputFieldSx, mutedChipSx } from '@/theme/colors'
 
@@ -421,7 +425,16 @@ export function PrizeSpinSessionPage() {
   }, [loadSession])
 
   async function handleSpin() {
-    if (!user?.accountId || !canSpin) {
+    if (!user?.accountId || isSpinning) {
+      return
+    }
+
+    const nickError = validateParticipantNick(participantNick)
+    if (nickError) {
+      setSpinError(nickError)
+      return
+    }
+    if (!canSpin) {
       return
     }
 
@@ -471,6 +484,19 @@ export function PrizeSpinSessionPage() {
       return
     }
 
+    const validationError = validatePrizeSpinSectorDraft(
+      {
+        label: sectorLabel,
+        winPercent: sectorWinPercent,
+        color: sectorColor,
+      },
+      { existingTotal: totalWinPercent },
+    )
+    if (validationError) {
+      setSectorFormError(validationError)
+      return
+    }
+
     setIsAddingSector(true)
     setSectorFormError(null)
 
@@ -510,6 +536,23 @@ export function PrizeSpinSessionPage() {
 
   async function handleSaveEdit() {
     if (!user?.accountId || !editSector) {
+      return
+    }
+
+    const validationError = validatePrizeSpinSectorDraft(
+      {
+        label: editLabel,
+        winPercent: editWinPercent,
+        color: editColor,
+      },
+      {
+        existingTotal: totalWinPercent,
+        previousPercent: Number.parseFloat(editSector.winPercent),
+      },
+    )
+    
+    if (validationError) {
+      setEditError(validationError)
       return
     }
 

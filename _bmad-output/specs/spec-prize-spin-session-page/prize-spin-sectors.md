@@ -138,3 +138,14 @@ Extend `app/src/api/prize-spin.ts` with:
 - `spinPrizeSpin`
 
 Reuse `HexColorField` on add form and edit dialog.
+
+## Client validation (`app/src/lib/prize-spin-validation.ts`)
+
+Yup schemas; helpers return `string | null` (first error message).
+
+| Validator | When | Rules |
+|-----------|------|-------|
+| `validatePrizeSpinSectorDraft` | Add/edit sector submit | `label` non-empty, max 100 chars; `win_percent` `> 0` and `<= 100`, max 2 decimal places; `color` `#RRGGBB` hex; `existingTotal` + optional `previousPercent` reject when new total would exceed 100% |
+| `validateParticipantNick` | Spin submit | Non-empty after trim; max 100 chars |
+
+Spin panel readiness (disabled **Spin**, `StatusAlert` messages) remains inline in `PrizeSpinSessionPage`.

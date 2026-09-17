@@ -50,6 +50,8 @@ sources: []
 - **Streamer-initiated spin** — operator clicks **Spin** in the dashboard; viewers do not trigger spins from chat in this slice.
 - **MUI patterns** — reuse `PageHeader`, `Card`, `TextField`, `AppTable`/`Stack`, `StatusAlert`, `inputFieldSx`, `cardSx` consistent with Bonus Buy session page.
 - **Brownfield schema** — use existing `prize_spin_sector` and `prize_spin_win` tables; add API and client helpers per `prize-spin-sectors.md`.
+- **Client validation** — Yup schemas in `app/src/lib/prize-spin-validation.ts`; sector add/edit and participant nick validate before API calls; rules mirror `prize-spin-sectors.md`.
+- **Spin readiness** — disabled **Spin** and `StatusAlert` messages (nick, ≥2 sectors, 100% total) stay inline on the page.
 
 ## Non-goals
 
