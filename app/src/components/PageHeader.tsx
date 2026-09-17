@@ -211,7 +211,6 @@ export function PageHeader({
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
-              gap: 0.375,
               ...(icon && !description
                 ? {
                     height: ICON_TILE_HEIGHT,
