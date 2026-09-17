@@ -16,12 +16,14 @@ import {
   Typography,
 } from '@mui/material'
 import { useTheme, alpha, type Theme } from '@mui/material/styles'
-import { ArrowRight, Plus, RotateCw } from 'lucide-react'
+import { ArrowRight, Maximize2, Plus, RotateCw } from 'lucide-react'
 import { type FormEvent, useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   createPrizeSpin,
+  fetchPrizeSpinWidget,
   fetchPrizeSpins,
+  patchPrizeSpinWidget,
   type PrizeSpinRecord,
 } from '@/api/prize-spin'
 import { AppTable, type AppTableColumn } from '@/components/AppTable'
@@ -113,6 +115,12 @@ export function PrizeSpinPage() {
   const [expandedRecordIds, setExpandedRecordIds] = useState<Set<number>>(
     new Set(),
   )
+  const [widgetDialogOpen, setWidgetDialogOpen] = useState(false)
+  const [widgetWidth, setWidgetWidth] = useState('500')
+  const [widgetHeight, setWidgetHeight] = useState('500')
+  const [widgetEditError, setWidgetEditError] = useState<string | null>(null)
+  const [isLoadingWidget, setIsLoadingWidget] = useState(false)
+  const [isSavingWidget, setIsSavingWidget] = useState(false)
 
   const loadRecords = useCallback(async () => {
     if (!user?.accountId) {
@@ -173,6 +181,66 @@ export function PrizeSpinPage() {
       )
     } finally {
       setIsCreating(false)
+    }
+  }
+
+  async function openWidgetSizeDialog() {
+    if (!user?.accountId) {
+      return
+    }
+
+    setWidgetDialogOpen(true)
+    setWidgetEditError(null)
+    setIsLoadingWidget(true)
+
+    try {
+      const settings = await fetchPrizeSpinWidget(user.accountId)
+      setWidgetWidth(String(settings.width))
+      setWidgetHeight(String(settings.height))
+    } catch (error) {
+      setWidgetEditError(
+        error instanceof Error
+          ? error.message
+          : 'Could not load widget settings',
+      )
+    } finally {
+      setIsLoadingWidget(false)
+    }
+  }
+
+  async function handleSaveWidgetSize() {
+    if (!user?.accountId) {
+      return
+    }
+
+    const width = Number.parseInt(widgetWidth, 10)
+    const height = Number.parseInt(widgetHeight, 10)
+
+    if (!Number.isFinite(width) || width < 200 || width > 2400) {
+      setWidgetEditError('Width must be between 200 and 2400 px.')
+      return
+    }
+
+    if (!Number.isFinite(height) || height < 200 || height > 2400) {
+      setWidgetEditError('Height must be between 200 and 2400 px.')
+      return
+    }
+
+    setIsSavingWidget(true)
+    setWidgetEditError(null)
+
+    try {
+      await patchPrizeSpinWidget(user.accountId, { width, height })
+      setWidgetDialogOpen(false)
+      showSuccess('Widget size saved')
+    } catch (error) {
+      setWidgetEditError(
+        error instanceof Error
+          ? error.message
+          : 'Could not save widget settings',
+      )
+    } finally {
+      setIsSavingWidget(false)
     }
   }
 
@@ -285,17 +353,27 @@ export function PrizeSpinPage() {
               </Stack>
             </Stack>
             {user?.accountId ? (
-              <Button
-                type="button"
-                variant="contained"
-                startIcon={<Plus size={16} aria-hidden />}
-                onClick={() => {
-                  resetCreateForm()
-                  setCreateDialogOpen(true)
-                }}
-              >
-                New
-              </Button>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  startIcon={<Maximize2 size={16} aria-hidden />}
+                  onClick={() => void openWidgetSizeDialog()}
+                >
+                  Widget size
+                </Button>
+                <Button
+                  type="button"
+                  variant="contained"
+                  startIcon={<Plus size={16} aria-hidden />}
+                  onClick={() => {
+                    resetCreateForm()
+                    setCreateDialogOpen(true)
+                  }}
+                >
+                  New
+                </Button>
+              </Stack>
             ) : null}
           </Stack>
 
@@ -334,6 +412,70 @@ export function PrizeSpinPage() {
           </Stack>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={widgetDialogOpen}
+        onClose={() => setWidgetDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Widget size</DialogTitle>
+        <DialogContent>
+          {isLoadingWidget ? (
+            <Typography sx={{ py: 2, color: 'text.secondary' }}>
+              Loading settings…
+            </Typography>
+          ) : (
+            <Stack spacing={2} sx={{ pt: 1 }}>
+              <TextField
+                label="Width"
+                type="number"
+                value={widgetWidth}
+                onChange={(event) => setWidgetWidth(event.target.value)}
+                slotProps={{
+                  htmlInput: { min: 200, max: 2400, step: 1 },
+                }}
+                fullWidth
+                size="small"
+                sx={inputFieldSx}
+              />
+              <TextField
+                label="Height"
+                type="number"
+                value={widgetHeight}
+                onChange={(event) => setWidgetHeight(event.target.value)}
+                slotProps={{
+                  htmlInput: { min: 200, max: 2400, step: 1 },
+                }}
+                fullWidth
+                size="small"
+                sx={inputFieldSx}
+              />
+              {widgetEditError ? (
+                <StatusAlert tone="error">{widgetEditError}</StatusAlert>
+              ) : null}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={() => setWidgetDialogOpen(false)}
+            disabled={isSavingWidget}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="contained"
+            onClick={() => void handleSaveWidgetSize()}
+            disabled={isLoadingWidget || isSavingWidget}
+          >
+            {isSavingWidget ? 'Saving…' : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={createDialogOpen}

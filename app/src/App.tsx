@@ -16,6 +16,7 @@ import { BonusBuyStreamWidgetPage } from './pages/BonusBuyStreamWidgetPage'
 import { ModulesPage } from './pages/ModulesPage'
 import { PrizeSpinPage } from './pages/PrizeSpinPage'
 import { PrizeSpinSessionPage } from './pages/PrizeSpinSessionPage'
+import { PrizeSpinStreamWidgetPage } from './pages/PrizeSpinStreamWidgetPage'
 import { SubscriptionPage } from './pages/SubscriptionPage'
 import { TeamPage } from './pages/TeamPage'
 
@@ -32,6 +33,11 @@ function App() {
           <Route
             path="/bonus-buy/:id/widget"
             element={<BonusBuyStreamWidgetPage />}
+          />
+
+          <Route
+            path="/prize-spin/:id/widget"
+            element={<PrizeSpinStreamWidgetPage />}
           />
 
           <Route element={<ProtectedRoute />}>

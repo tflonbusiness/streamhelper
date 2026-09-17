@@ -72,7 +72,7 @@ export class AuthController {
     const session = req.session as SessionData;
     let codeVerifier: string | undefined;
 
-    if (!this.kickOAuth.isMockMode() && code !== 'mock-kick-code') {
+    if (!this.kickOAuth.isMockMode()) {
       if (
         !state ||
         !session.kickOAuth ||

@@ -29,8 +29,12 @@ const DEFAULT_WIDGET = {
 
 describe('BonusBuyController (e2e)', () => {
   let app: INestApplication<App>;
+  let previousMockEnv: string | undefined;
 
   beforeEach(async () => {
+    previousMockEnv = process.env.KICK_OAUTH_MOCK;
+    process.env.KICK_OAUTH_MOCK = 'true';
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
@@ -69,10 +73,6 @@ describe('BonusBuyController (e2e)', () => {
     await app.init();
   });
 
-  afterEach(async () => {
-    await app.close();
-  });
-
   it('returns public widget view without auth', async () => {
     await request(app.getHttpServer())
       .get('/bonus-buys/1/widget')
@@ -87,5 +87,14 @@ describe('BonusBuyController (e2e)', () => {
 
   it('returns 404 for unknown bonus buy', async () => {
     await request(app.getHttpServer()).get('/bonus-buys/999/widget').expect(404);
+  });
+
+  afterEach(async () => {
+    await app.close();
+    if (previousMockEnv === undefined) {
+      delete process.env.KICK_OAUTH_MOCK;
+    } else {
+      process.env.KICK_OAUTH_MOCK = previousMockEnv;
+    }
   });
 });

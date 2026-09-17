@@ -41,6 +41,7 @@ type MockSlot = {
 
 describe('AccountsController (e2e)', () => {
   let app: INestApplication<App>;
+  let previousMockEnv: string | undefined;
   let members = [...MEMBERS];
   let slots: MockSlot[] = [];
   let nextSlotId = 1;
@@ -67,6 +68,8 @@ describe('AccountsController (e2e)', () => {
   };
 
   beforeEach(async () => {
+    previousMockEnv = process.env.KICK_OAUTH_MOCK;
+    process.env.KICK_OAUTH_MOCK = 'true';
     members = [...MEMBERS];
     slots = [];
     nextSlotId = 1;
@@ -384,6 +387,11 @@ describe('AccountsController (e2e)', () => {
 
   afterEach(async () => {
     await app.close();
+    if (previousMockEnv === undefined) {
+      delete process.env.KICK_OAUTH_MOCK;
+    } else {
+      process.env.KICK_OAUTH_MOCK = previousMockEnv;
+    }
   });
 
   async function loginOwner(agent: request.SuperAgentTest) {

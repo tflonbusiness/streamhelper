@@ -103,6 +103,11 @@ export type DbPrizeSpinWidget = {
   updatedAt: Date;
 };
 
+export type PatchPrizeSpinWidgetInput = {
+  width?: number;
+  height?: number;
+};
+
 export type PatchPrizeSpinSectorInput = {
   label?: string;
   winPercent?: string;
@@ -2452,5 +2457,216 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     if (result.rowCount === 0) {
       throw new Error('MODERATOR_NOT_FOUND');
     }
+  }
+
+  private mapPrizeSpinWidgetRow(row: {
+    id: string | number;
+    account_id: string | number;
+    width: string | number;
+    height: string | number;
+    created_at: Date;
+    updated_at: Date;
+  }): DbPrizeSpinWidget {
+    return {
+      id: toInt(row.id),
+      accountId: toInt(row.account_id),
+      width: toInt(row.width),
+      height: toInt(row.height),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  private async ensureAccountPrizeSpinWidget(
+    accountId: number,
+  ): Promise<DbPrizeSpinWidget> {
+    await this.pool.query(
+      PRIZE_SPIN_WIDGET_INSERT_SQL,
+      prizeSpinWidgetInsertParams(accountId),
+    );
+
+    const result = await this.pool.query(
+      `
+        SELECT
+          w.id,
+          w.account_id,
+          w.width,
+          w.height,
+          w.created_at,
+          w.updated_at
+        FROM prize_spin_widget w
+        WHERE w.account_id = $1
+      `,
+      [accountId],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new Error('NOT_FOUND');
+    }
+
+    return this.mapPrizeSpinWidgetRow(row);
+  }
+
+  async getPrizeSpinWidget(accountId: number): Promise<DbPrizeSpinWidget> {
+    return this.ensureAccountPrizeSpinWidget(accountId);
+  }
+
+  async patchPrizeSpinWidget(
+    accountId: number,
+    input: PatchPrizeSpinWidgetInput,
+  ): Promise<DbPrizeSpinWidget> {
+    const existing = await this.ensureAccountPrizeSpinWidget(accountId);
+
+    const next = {
+      width:
+        input.width !== undefined
+          ? this.clampWidgetDimension(input.width)
+          : existing.width,
+      height:
+        input.height !== undefined
+          ? this.clampWidgetDimension(input.height)
+          : existing.height,
+    };
+
+    const result = await this.pool.query(
+      `
+        UPDATE prize_spin_widget w
+        SET
+          width = $2,
+          height = $3,
+          updated_at = now()
+        WHERE w.account_id = $1
+        RETURNING
+          w.id,
+          w.account_id,
+          w.width,
+          w.height,
+          w.created_at,
+          w.updated_at
+      `,
+      [accountId, next.width, next.height],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new Error('NOT_FOUND');
+    }
+
+    return this.mapPrizeSpinWidgetRow(row);
+  }
+
+  async getPublicPrizeSpinWidgetView(prizeSpinId: number): Promise<{
+    record: DbPrizeSpin;
+    sectors: DbPrizeSpinSector[];
+    latestWin: DbPrizeSpinWin | null;
+    settings: DbPrizeSpinWidget;
+  } | null> {
+    const recordResult = await this.pool.query<{
+      id: string | number;
+      account_id: string | number;
+      title: string;
+      is_active: boolean;
+      created_by_user_id: string | number;
+      created_by_name: string;
+      created_at: Date;
+    }>(
+      `
+        SELECT
+          ps.id,
+          ps.account_id,
+          ps.title,
+          ps.is_active,
+          ps.created_by_user_id,
+          u.name AS created_by_name,
+          ps.created_at
+        FROM prize_spin ps
+        JOIN users u ON u.id = ps.created_by_user_id
+        WHERE ps.id = $1
+      `,
+      [prizeSpinId],
+    );
+
+    const recordRow = recordResult.rows[0];
+    if (!recordRow) {
+      return null;
+    }
+
+    const accountId = toInt(recordRow.account_id);
+    const settings = await this.ensureAccountPrizeSpinWidget(accountId);
+
+    const sectorsResult = await this.pool.query<{
+      id: string | number;
+      prize_spin_id: string | number;
+      label: string;
+      win_percent: string;
+      color: string | null;
+      sort_order: number;
+      created_at: Date;
+    }>(
+      `
+        SELECT
+          id,
+          prize_spin_id,
+          label,
+          win_percent::text AS win_percent,
+          color,
+          sort_order,
+          created_at
+        FROM prize_spin_sector
+        WHERE prize_spin_id = $1
+          AND is_archived = false
+        ORDER BY sort_order ASC, id ASC
+      `,
+      [prizeSpinId],
+    );
+
+    const latestWinResult = await this.pool.query<{
+      id: string | number;
+      prize_spin_id: string | number;
+      sector_id: string | number;
+      sector_label: string;
+      participant_nick: string;
+      spun_by_name: string;
+      created_at: Date;
+    }>(
+      `
+        SELECT
+          w.id,
+          w.prize_spin_id,
+          w.sector_id,
+          s.label AS sector_label,
+          w.participant_nick,
+          u.name AS spun_by_name,
+          w.created_at
+        FROM prize_spin_win w
+        JOIN prize_spin_sector s ON s.id = w.sector_id
+        JOIN users u ON u.id = w.spun_by_user_id
+        WHERE w.prize_spin_id = $1
+          AND w.is_archived = false
+        ORDER BY w.created_at DESC
+        LIMIT 1
+      `,
+      [prizeSpinId],
+    );
+
+    const record: DbPrizeSpin = {
+      id: toInt(recordRow.id),
+      accountId,
+      title: recordRow.title,
+      isActive: recordRow.is_active,
+      createdByUserId: toInt(recordRow.created_by_user_id),
+      createdByName: recordRow.created_by_name,
+      createdAt: recordRow.created_at,
+    };
+
+    return {
+      record,
+      sectors: sectorsResult.rows.map((row) => this.mapPrizeSpinSectorRow(row)),
+      latestWin: latestWinResult.rows[0]
+        ? this.mapPrizeSpinWinRow(latestWinResult.rows[0])
+        : null,
+      settings,
+    };
   }
 }

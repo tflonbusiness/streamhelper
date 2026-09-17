@@ -7,8 +7,12 @@ import { DatabaseService } from './../src/database/database.service.js';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
+  let previousMockEnv: string | undefined;
 
   beforeEach(async () => {
+    previousMockEnv = process.env.KICK_OAUTH_MOCK;
+    process.env.KICK_OAUTH_MOCK = 'true';
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
@@ -33,5 +37,10 @@ describe('AppController (e2e)', () => {
 
   afterEach(async () => {
     await app.close();
+    if (previousMockEnv === undefined) {
+      delete process.env.KICK_OAUTH_MOCK;
+    } else {
+      process.env.KICK_OAUTH_MOCK = previousMockEnv;
+    }
   });
 });

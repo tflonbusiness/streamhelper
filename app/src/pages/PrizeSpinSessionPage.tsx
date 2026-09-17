@@ -24,7 +24,9 @@ import {
   CircleStop,
   Download,
   Equal,
+  ExternalLink,
   History,
+  Link2,
   PieChart,
   Pencil,
   Plus,
@@ -722,6 +724,10 @@ export function PrizeSpinSessionPage() {
     }
   }
 
+  function showStub(message: string) {
+    showSuccess(message)
+  }
+
   const sectorColumns: AppTableColumn<PrizeSpinSector>[] = [
     {
       id: 'color',
@@ -918,7 +924,27 @@ export function PrizeSpinSessionPage() {
                 />
               ) : null}
             </Stack>
-            <Stack direction="row" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+              <Button
+                type="button"
+                variant="outlined"
+                size="small"
+                startIcon={<Link2 size={16} aria-hidden />}
+                onClick={() => showStub('Coming soon')}
+              >
+                OBS link
+              </Button>
+              <Button
+                component={Link}
+                to={id ? `/prize-spin/${id}/widget` : '/prize-spin'}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="outlined"
+                size="small"
+                startIcon={<ExternalLink size={16} aria-hidden />}
+              >
+                Overlay
+              </Button>
               <Button
                 type="button"
                 variant="outlined"

@@ -78,6 +78,11 @@ type SpinPrizeSpinBody = {
   participant_nick?: string;
 };
 
+type PatchPrizeSpinWidgetBody = {
+  width?: number;
+  height?: number;
+};
+
 @Controller('accounts')
 export class AccountsController {
   constructor(private readonly authService: AuthService) {}
@@ -510,6 +515,27 @@ export class AccountsController {
       prizeSpinId,
       body.participant_nick ?? '',
     );
+  }
+
+  @Get(':accountId/prize-spin-widget')
+  async getPrizeSpinWidget(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.authService.getPrizeSpinWidget(accountId, user.id);
+  }
+
+  @Patch(':accountId/prize-spin-widget')
+  async patchPrizeSpinWidget(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Body() body: PatchPrizeSpinWidgetBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.authService.patchPrizeSpinWidget(accountId, user.id, body);
   }
 
   @Delete(':accountId/members/:memberUserId')

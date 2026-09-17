@@ -305,6 +305,92 @@ export async function deleteAllPrizeSpinWins(
   }
 }
 
+export type PrizeSpinWidgetSettings = {
+  id: number
+  accountId: number
+  width: number
+  height: number
+  createdAt: string
+  updatedAt: string
+}
+
+export type PrizeSpinWidgetLatestWin = {
+  id: number
+  sectorId: number
+  sectorLabel: string
+  participantNick: string
+  createdAt: string
+}
+
+export type PrizeSpinWidgetView = {
+  record: {
+    id: number
+    title: string
+    isActive: boolean
+  }
+  sectors: PrizeSpinSector[]
+  latestWin: PrizeSpinWidgetLatestWin | null
+  settings: {
+    width: number
+    height: number
+  }
+}
+
+export type PatchPrizeSpinWidgetInput = {
+  width?: number
+  height?: number
+}
+
+export async function fetchPrizeSpinWidget(
+  accountId: number,
+): Promise<PrizeSpinWidgetSettings> {
+  const response = await fetch(`/accounts/${accountId}/prize-spin-widget`, {
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, 'Could not load widget settings'),
+    )
+  }
+
+  return response.json() as Promise<PrizeSpinWidgetSettings>
+}
+
+export async function patchPrizeSpinWidget(
+  accountId: number,
+  body: PatchPrizeSpinWidgetInput,
+): Promise<PrizeSpinWidgetSettings> {
+  const response = await fetch(`/accounts/${accountId}/prize-spin-widget`, {
+    method: 'PATCH',
+    credentials: 'include',
+    headers: jsonHeaders,
+    body: JSON.stringify(body),
+  })
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, 'Could not update widget settings'),
+    )
+  }
+
+  return response.json() as Promise<PrizeSpinWidgetSettings>
+}
+
+export async function fetchPublicPrizeSpinWidget(
+  prizeSpinId: number,
+): Promise<PrizeSpinWidgetView> {
+  const response = await fetch(`/prize-spins/${prizeSpinId}/widget`)
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, 'Could not load widget'),
+    )
+  }
+
+  return response.json() as Promise<PrizeSpinWidgetView>
+}
+
 export async function spinPrizeSpin(
   accountId: number,
   prizeSpinId: number,

@@ -10,8 +10,11 @@ import { DatabaseService } from './../src/database/database.service.js';
 describe('AuthController (e2e)', () => {
   let app: INestApplication<App>;
   let moderatorActive = true;
+  let previousMockEnv: string | undefined;
 
   beforeEach(async () => {
+    previousMockEnv = process.env.KICK_OAUTH_MOCK;
+    process.env.KICK_OAUTH_MOCK = 'true';
     moderatorActive = true;
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -104,6 +107,11 @@ describe('AuthController (e2e)', () => {
 
   afterEach(async () => {
     await app.close();
+    if (previousMockEnv === undefined) {
+      delete process.env.KICK_OAUTH_MOCK;
+    } else {
+      process.env.KICK_OAUTH_MOCK = previousMockEnv;
+    }
   });
 
   it('redirects kick OAuth authorize', () => {

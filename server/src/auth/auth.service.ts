@@ -14,6 +14,7 @@ import {
   type PatchPrizeSpinSectorInput,
   type DbPrizeSpinSector,
   type DbPrizeSpinWin,
+  type DbPrizeSpinWidget,
 } from '../database/database.service.js';
 import { KickChannelService } from './kick-channel.service.js';
 import type { KickChannelDto } from './kick-channel.types.js';
@@ -691,6 +692,91 @@ export class AuthService {
       },
       slots: view.slots.map((row) => this.formatBonusBuySlot(row)),
       settings: this.formatBonusBuyWidget(view.settings),
+    };
+  }
+
+  private formatPrizeSpinWidget(row: DbPrizeSpinWidget) {
+    return {
+      id: row.id,
+      accountId: row.accountId,
+      width: row.width,
+      height: row.height,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    };
+  }
+
+  private mapPrizeSpinWidgetMutationError(error: unknown): never {
+    if (error instanceof Error) {
+      if (error.message === 'NOT_FOUND') {
+        throw new NotFoundException('Prize spin widget settings not found');
+      }
+    }
+    throw error;
+  }
+
+  async getPrizeSpinWidget(accountId: number, callerUserId: number) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      const row = await this.database.getPrizeSpinWidget(accountId);
+      return this.formatPrizeSpinWidget(row);
+    } catch (error) {
+      this.mapPrizeSpinWidgetMutationError(error);
+    }
+  }
+
+  async patchPrizeSpinWidget(
+    accountId: number,
+    callerUserId: number,
+    body: { width?: number; height?: number },
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    const input = {
+      width: body.width,
+      height: body.height,
+    };
+
+    const defined = Object.entries(input).filter(([, value]) => value !== undefined);
+    if (defined.length === 0) {
+      throw new BadRequestException('At least one field is required');
+    }
+
+    try {
+      const row = await this.database.patchPrizeSpinWidget(accountId, input);
+      return this.formatPrizeSpinWidget(row);
+    } catch (error) {
+      this.mapPrizeSpinWidgetMutationError(error);
+    }
+  }
+
+  async getPublicPrizeSpinWidget(prizeSpinId: number) {
+    const view = await this.database.getPublicPrizeSpinWidgetView(prizeSpinId);
+    if (!view) {
+      throw new NotFoundException('Prize spin not found');
+    }
+
+    return {
+      record: {
+        id: view.record.id,
+        title: view.record.title,
+        isActive: view.record.isActive,
+      },
+      sectors: view.sectors.map((row) => this.formatPrizeSpinSector(row)),
+      latestWin: view.latestWin
+        ? {
+            id: view.latestWin.id,
+            sectorId: view.latestWin.sectorId,
+            sectorLabel: view.latestWin.sectorLabel,
+            participantNick: view.latestWin.participantNick,
+            createdAt: view.latestWin.createdAt.toISOString(),
+          }
+        : null,
+      settings: {
+        width: view.settings.width,
+        height: view.settings.height,
+      },
     };
   }
 

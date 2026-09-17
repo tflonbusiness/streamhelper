@@ -48,23 +48,23 @@ export class KickOAuthService implements OnModuleInit {
   }
 
   isMockMode(): boolean {
-    return process.env.KICK_OAUTH_MOCK !== 'false';
+    return process.env.KICK_OAUTH_MOCK === 'true';
   }
 
   logStartupMode(): void {
     if (this.isMockMode()) {
       console.warn(
-        '[Kick OAuth] MOCK mode — requests stay local. Set KICK_OAUTH_MOCK=false in server/.env for real Kick.',
+        '[Kick OAuth] MOCK mode — local callback only. Unset KICK_OAUTH_MOCK or set KICK_OAUTH_MOCK=false for real Kick.',
       );
       return;
     }
 
     const clientId = process.env.KICK_CLIENT_ID;
-    if (!clientId || !process.env.KICK_CLIENT_SECRET) {
-      console.error(
-        '[Kick OAuth] Real mode enabled but KICK_CLIENT_ID / KICK_CLIENT_SECRET missing in server/.env',
+    const clientSecret = process.env.KICK_CLIENT_SECRET;
+    if (!clientId || !clientSecret) {
+      throw new Error(
+        '[Kick OAuth] KICK_CLIENT_ID and KICK_CLIENT_SECRET are required. Set them in server/.env or enable KICK_OAUTH_MOCK=true for local mock login.',
       );
-      return;
     }
 
     console.log(
@@ -129,7 +129,11 @@ export class KickOAuthService implements OnModuleInit {
     code: string,
     codeVerifier?: string,
   ): Promise<KickProfile> {
-    if (this.isMockMode() || code === 'mock-kick-code') {
+    if (this.isMockMode()) {
+      if (code !== 'mock-kick-code') {
+        throw new UnauthorizedException('Mock OAuth expects code mock-kick-code');
+      }
+
       return {
         providerUserId: 'kick-mock-user',
         username: 'kick_user_mock',
