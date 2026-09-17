@@ -36,6 +36,7 @@ export type DbUser = {
 
 export type DbMembership = {
   accountId: number;
+  ucid: string;
   name: string;
   role: 'owner' | 'moderator';
   subscriptionPlan: string;
@@ -182,6 +183,13 @@ export type DbPublicBonusBuyRecord = {
 const WIDGET_MIN_DIMENSION = 200;
 const WIDGET_MAX_DIMENSION = 2400;
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isUuid(value: string): boolean {
+  return UUID_REGEX.test(value);
+}
+
 function toInt(value: string | number): number {
   return typeof value === 'number' ? value : Number.parseInt(value, 10);
 }
@@ -248,6 +256,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
       CREATE TABLE accounts (
         id                BIGSERIAL PRIMARY KEY,
+        ucid              UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
         name              TEXT NOT NULL CHECK (char_length(btrim(name)) BETWEEN 2 AND 100),
         subscription_plan TEXT NOT NULL DEFAULT 'free',
         created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -443,12 +452,13 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   async getPrimaryMembership(userId: number): Promise<DbMembership | null> {
     const result = await this.pool.query<{
       account_id: string | number;
+      ucid: string;
       name: string;
       role: 'owner' | 'moderator';
       subscription_plan: string;
     }>(
       `
-        SELECT a.id AS account_id, a.name, am.role, a.subscription_plan
+        SELECT a.id AS account_id, a.ucid, a.name, am.role, a.subscription_plan
         FROM account_members am
         JOIN accounts a ON a.id = am.account_id
         WHERE am.user_id = $1 AND am.is_active = true
@@ -465,10 +475,20 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
     return {
       accountId: toInt(row.account_id),
+      ucid: row.ucid,
       name: row.name,
       role: row.role,
       subscriptionPlan: row.subscription_plan,
     };
+  }
+
+  async getAccountUcid(accountId: number): Promise<string | null> {
+    const result = await this.pool.query<{ ucid: string }>(
+      `SELECT ucid FROM accounts WHERE id = $1 LIMIT 1`,
+      [accountId],
+    );
+
+    return result.rows[0]?.ucid ?? null;
   }
 
   async provisionOwnerFromKick(profile: KickProfile): Promise<{
@@ -508,15 +528,17 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         [userId, profile.providerUserId, profile.username],
       );
 
-      const accountResult = await client.query<{ id: number }>(
+      const accountResult = await client.query<{ id: number; ucid: string }>(
         `
           INSERT INTO accounts (name, subscription_plan)
           VALUES ($1, 'free')
-          RETURNING id
+          RETURNING id, ucid
         `,
         [accountName],
       );
+
       const accountId = toInt(accountResult.rows[0].id);
+      const accountUcid = accountResult.rows[0].ucid;
 
       await client.query(
         `
@@ -550,6 +572,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         userId,
         membership: {
           accountId,
+          ucid: accountUcid,
           name: accountName,
           role: 'owner',
           subscriptionPlan: 'free',
@@ -1843,21 +1866,23 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async getAccountIdByChannelSlug(channelSlug: string): Promise<number | null> {
-    const result = await this.pool.query<{ account_id: string | number }>(
+  async getAccountIdByUcid(ucid: string): Promise<number | null> {
+    if (!isUuid(ucid)) {
+      return null;
+    }
+
+    const result = await this.pool.query<{ id: string | number }>(
       `
-        SELECT account_id
-        FROM account_channels
-        WHERE provider = 'kick'
-          AND is_primary = true
-          AND channel_slug = $1
+        SELECT id
+        FROM accounts
+        WHERE ucid = $1
         LIMIT 1
       `,
-      [channelSlug],
+      [ucid],
     );
 
     const row = result.rows[0];
-    return row ? toInt(row.account_id) : null;
+    return row ? toInt(row.id) : null;
   }
 
   async getActivePrizeSpinId(accountId: number): Promise<number | null> {
@@ -2659,8 +2684,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     return this.mapPrizeSpinWidgetRow(row);
   }
 
-  async getPublicPrizeSpinWidgetViewByChannelSlug(
-    channelSlug: string,
+  async getPublicPrizeSpinWidgetViewByUcid(
+    ucid: string,
   ): Promise<
     | {
         record: DbPrizeSpin;
@@ -2671,7 +2696,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     | 'NOT_FOUND'
     | 'NOT_LIVE'
   > {
-    const accountId = await this.getAccountIdByChannelSlug(channelSlug);
+    const accountId = await this.getAccountIdByUcid(ucid);
     if (accountId === null) {
       return 'NOT_FOUND';
     }

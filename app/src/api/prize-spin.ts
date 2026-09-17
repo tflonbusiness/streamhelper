@@ -413,10 +413,10 @@ export class PrizeSpinWidgetNotLiveError extends Error {
 }
 
 export async function fetchPublicPrizeSpinWidget(
-  channelSlug: string,
+  ucid: string,
 ): Promise<PrizeSpinWidgetView> {
   const response = await fetch(
-    `/prize-spins/widget/${encodeURIComponent(channelSlug)}`,
+    `/prize-spins/widget/${encodeURIComponent(ucid)}`,
   )
 
   if (response.status === 404) {

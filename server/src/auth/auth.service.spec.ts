@@ -58,6 +58,7 @@ describe('AuthService', () => {
     findUserById.mockResolvedValue({ id: 1, name: 'demo_streamer' });
     getPrimaryMembership.mockResolvedValue({
       accountId: 10,
+      ucid: '550e8400-e29b-41d4-a716-446655440000',
       name: 'demo_streamer',
       role: 'owner',
       subscriptionPlan: 'free',
@@ -70,6 +71,7 @@ describe('AuthService', () => {
       accountName: 'demo_streamer',
       role: 'owner',
       subscriptionPlan: 'free',
+      ucid: '550e8400-e29b-41d4-a716-446655440000',
     });
   });
 

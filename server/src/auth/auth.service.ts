@@ -11,6 +11,7 @@ import {
   type DbBonusBuy,
   type DbBonusBuySlot,
   type DbBonusBuyWidget,
+  type DbMembership,
   type PatchBonusBuySlotInput,
   type PatchPrizeSpinSectorInput,
   type DbPrizeSpinSector,
@@ -37,12 +38,7 @@ export class AuthService {
   buildSessionUser(
     id: number,
     name: string,
-    membership?: {
-      accountId: number;
-      name: string;
-      role: 'owner' | 'moderator';
-      subscriptionPlan: string;
-    },
+    membership?: DbMembership,
     channelSlug?: string,
   ): SessionUser {
     if (!membership) {
@@ -56,6 +52,7 @@ export class AuthService {
       accountName: membership.name,
       role: membership.role,
       subscriptionPlan: membership.subscriptionPlan,
+      ucid: membership.ucid,
       channelSlug,
     };
   }
@@ -66,16 +63,24 @@ export class AuthService {
   }
 
   async enrichSessionUser(user: SessionUser): Promise<SessionUser> {
-    if (!user.accountId || user.channelSlug) {
+    if (!user.accountId) {
       return user;
     }
 
-    const channelSlug = await this.resolveChannelSlug(user.accountId);
-    if (!channelSlug) {
+    const channelSlug =
+      user.channelSlug ?? (await this.resolveChannelSlug(user.accountId));
+    const ucid =
+      user.ucid ?? (await this.database.getAccountUcid(user.accountId));
+
+    if (channelSlug === user.channelSlug && ucid === user.ucid) {
       return user;
     }
 
-    return { ...user, channelSlug };
+    return {
+      ...user,
+      ...(channelSlug ? { channelSlug } : {}),
+      ...(ucid ? { ucid } : {}),
+    };
   }
 
   async establishSessionForUserId(userId: number): Promise<SessionUser> {
@@ -802,9 +807,9 @@ export class AuthService {
     };
   }
 
-  async getPublicPrizeSpinWidgetByChannelSlug(channelSlug: string) {
+  async getPublicPrizeSpinWidgetByUcid(ucid: string) {
     const view =
-      await this.database.getPublicPrizeSpinWidgetViewByChannelSlug(channelSlug);
+      await this.database.getPublicPrizeSpinWidgetViewByUcid(ucid);
 
     if (view === 'NOT_FOUND') {
       throw new NotFoundException('Prize spin not found');

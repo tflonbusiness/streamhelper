@@ -68,13 +68,13 @@ function WidgetLoading() {
 }
 
 export function PrizeSpinStreamWidgetPage() {
-  const { channelSlug } = useParams<{ channelSlug: string }>()
+  const { ucid } = useParams<{ ucid: string }>()
   const [view, setView] = useState<PrizeSpinWidgetView | null>(null)
   const [widgetState, setWidgetState] = useState<WidgetState>('loading')
   const lastRecordIdRef = useRef<number | null>(null)
 
   const loadView = useCallback(async (showLoading = false) => {
-    if (!channelSlug) {
+    if (!ucid) {
       setView(null)
       setWidgetState('not_found')
       return
@@ -85,7 +85,7 @@ export function PrizeSpinStreamWidgetPage() {
     }
 
     try {
-      const data = await fetchPublicPrizeSpinWidget(channelSlug)
+      const data = await fetchPublicPrizeSpinWidget(ucid)
       if (
         lastRecordIdRef.current !== null &&
         lastRecordIdRef.current !== data.record.id
@@ -108,14 +108,14 @@ export function PrizeSpinStreamWidgetPage() {
       }
       setWidgetState('not_found')
     }
-  }, [channelSlug])
+  }, [ucid])
 
   useEffect(() => {
     void loadView(true)
   }, [loadView])
 
   useEffect(() => {
-    if (!channelSlug) {
+    if (!ucid) {
       return
     }
 
@@ -124,7 +124,7 @@ export function PrizeSpinStreamWidgetPage() {
     }, WIDGET_POLL_MS)
 
     return () => window.clearInterval(interval)
-  }, [channelSlug, loadView])
+  }, [ucid, loadView])
 
   if (widgetState === 'loading') {
     return <WidgetLoading />

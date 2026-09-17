@@ -46,6 +46,10 @@ import { SectionHeader } from '@/components/SectionHeader'
 import { StatusAlert } from '@/components/StatusAlert'
 import { useAuth } from '@/context/AuthContext'
 import { useNotification } from '@/context/NotificationContext'
+import {
+  buildPrizeSpinObsOverlayUrl,
+  buildPrizeSpinOverlayPath,
+} from '@/lib/prize-spin-overlay-url'
 import { cardSx, inputFieldSx, mutedChipSx } from '@/theme/colors'
 
 const DEFAULT_TITLE = 'Prize Spin'
@@ -109,7 +113,7 @@ function recordStatusChip(isActive: boolean, theme: Theme) {
 export function PrizeSpinPage() {
   const theme = useTheme()
   const { user } = useAuth()
-  const { showSuccess } = useNotification()
+  const { showSuccess, showError } = useNotification()
   const [records, setRecords] = useState<PrizeSpinRecord[]>([])
   const [loadingRecords, setLoadingRecords] = useState(true)
   const [recordsError, setRecordsError] = useState<string | null>(null)
@@ -131,9 +135,8 @@ export function PrizeSpinPage() {
   )
   const [liveActionError, setLiveActionError] = useState<string | null>(null)
 
-  const overlayHref = user?.channelSlug
-    ? `/prize-spin/widget/${user.channelSlug}`
-    : null
+  const overlayHref = user?.ucid ? buildPrizeSpinOverlayPath(user.ucid) : null
+  const obsOverlayUrl = user?.ucid ? buildPrizeSpinObsOverlayUrl(user.ucid) : null
 
   const loadRecords = useCallback(async () => {
     if (!user?.accountId) {
@@ -197,8 +200,17 @@ export function PrizeSpinPage() {
     }
   }
 
-  function showStub(message: string) {
-    showSuccess(message)
+  async function handleCopyObsLink() {
+    if (!obsOverlayUrl) {
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(obsOverlayUrl)
+      showSuccess('OBS link copied.')
+    } catch {
+      showError('Could not copy OBS link.')
+    }
   }
 
   async function openWidgetSettingsDialog() {
@@ -448,7 +460,7 @@ export function PrizeSpinPage() {
       <Card elevation={0} sx={cardSx}>
         <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
           <SectionHeader
-            title="Stream widget"
+            title="Stream Widget"
             description="OBS overlay settings and links for your live prize spin session"
             icon={Monitor}
             iconVariant="info"
@@ -492,7 +504,8 @@ export function PrizeSpinPage() {
               type="button"
               variant="outlined"
               startIcon={<Link2 size={16} aria-hidden />}
-              onClick={() => showStub('Coming soon')}
+              disabled={!obsOverlayUrl}
+              onClick={() => void handleCopyObsLink()}
             >
               OBS link
             </Button>
