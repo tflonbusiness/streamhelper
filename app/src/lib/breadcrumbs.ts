@@ -22,6 +22,8 @@ export function buildBreadcrumbs(
       return [home, { label: 'Modules', to: '/modules' }, { label: 'Bonus Buy' }]
     case '/prize-spin':
       return [home, { label: 'Modules', to: '/modules' }, { label: 'Prize Spin' }]
+    case '/chat-roll':
+      return [home, { label: 'Modules', to: '/modules' }, { label: 'Chat Roll' }]
     default:
       break
   }

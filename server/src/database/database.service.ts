@@ -11,6 +11,10 @@ import {
   bonusBuyWidgetInsertParams,
 } from '../bonus-buy/bonus-buy-widget-defaults.js';
 import {
+  CHAT_ROLL_WIDGET_INSERT_SQL,
+  chatRollWidgetInsertParams,
+} from '../chat-roll/chat-roll-widget-defaults.js';
+import {
   PRIZE_SPIN_WIDGET_INSERT_SQL,
   prizeSpinWidgetInsertParams,
 } from '../prize-spin/prize-spin-widget-defaults.js';
@@ -221,6 +225,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   private async initSchema(): Promise<void> {
     await this.pool.query(`
+      DROP TABLE IF EXISTS chat_roll_win CASCADE;
+      DROP TABLE IF EXISTS chat_roll_participant CASCADE;
+      DROP TABLE IF EXISTS chat_roll_widget CASCADE;
+      DROP TABLE IF EXISTS chat_roll CASCADE;
       DROP TABLE IF EXISTS prize_spin_win CASCADE;
       DROP TABLE IF EXISTS prize_spin_sector CASCADE;
       DROP TABLE IF EXISTS prize_spin_widget CASCADE;
@@ -405,6 +413,83 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
       );
+
+      CREATE TABLE chat_roll (
+        id                          BIGSERIAL PRIMARY KEY,
+        account_id                  BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+        created_by_user_id          BIGINT NOT NULL REFERENCES users(id),
+        title                       TEXT NOT NULL,
+        status                      TEXT NOT NULL DEFAULT 'off_air'
+          CHECK (status IN ('live', 'off_air', 'archived')),
+        keyword                     TEXT NOT NULL DEFAULT '!roll',
+        combine_mode                TEXT NOT NULL DEFAULT 'highest'
+          CHECK (combine_mode IN ('highest', 'sum')),
+        exclude_winner_after_roll   BOOLEAN NOT NULL DEFAULT true,
+        is_accepting_participants   BOOLEAN NOT NULL DEFAULT true,
+        role_settings               JSONB NOT NULL DEFAULT '{
+          "moderator":         { "enabled": false, "weight": 1 },
+          "vip":               { "enabled": true,  "weight": 2 },
+          "og":                { "enabled": false, "weight": 1.5 },
+          "channel_follower":  { "enabled": false, "weight": 1 },
+          "paid_subscriber":   { "enabled": true,  "weight": 2 }
+        }'::jsonb,
+        created_at                  TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+
+      CREATE INDEX idx_chat_roll_account_created
+        ON chat_roll (account_id, created_at DESC)
+        WHERE status != 'archived';
+
+      CREATE UNIQUE INDEX idx_chat_roll_account_live
+        ON chat_roll (account_id)
+        WHERE status = 'live';
+
+      CREATE TABLE chat_roll_participant (
+        id                  BIGSERIAL PRIMARY KEY,
+        chat_roll_id        BIGINT NOT NULL REFERENCES chat_roll(id) ON DELETE CASCADE,
+        provider            TEXT
+          CHECK (provider IS NULL OR provider IN ('kick', 'twitch', 'youtube')),
+        provider_user_id    TEXT,
+        display_name        TEXT NOT NULL,
+        role_ids            TEXT[] NOT NULL DEFAULT '{}',
+        is_archived         BOOLEAN NOT NULL DEFAULT false,
+        joined_at           TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+
+      CREATE INDEX idx_chat_roll_participant_list
+        ON chat_roll_participant (chat_roll_id, joined_at ASC)
+        WHERE is_archived = false;
+
+      CREATE UNIQUE INDEX idx_chat_roll_participant_dedup
+        ON chat_roll_participant (chat_roll_id, provider, provider_user_id)
+        WHERE provider IS NOT NULL
+          AND provider_user_id IS NOT NULL
+          AND is_archived = false;
+
+      CREATE TABLE chat_roll_win (
+        id                  BIGSERIAL PRIMARY KEY,
+        chat_roll_id        BIGINT NOT NULL REFERENCES chat_roll(id) ON DELETE CASCADE,
+        participant_id      BIGINT NOT NULL REFERENCES chat_roll_participant(id),
+        display_name        TEXT NOT NULL,
+        coefficient_at_pick NUMERIC(5, 1) NOT NULL,
+        rolled_by_user_id   BIGINT NOT NULL REFERENCES users(id),
+        roll_index          INTEGER NOT NULL DEFAULT 1,
+        is_archived         BOOLEAN NOT NULL DEFAULT false,
+        created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+
+      CREATE INDEX idx_chat_roll_win_history
+        ON chat_roll_win (chat_roll_id, created_at DESC)
+        WHERE is_archived = false;
+
+      CREATE TABLE chat_roll_widget (
+        id                  BIGSERIAL PRIMARY KEY,
+        account_id          BIGINT NOT NULL UNIQUE REFERENCES accounts(id) ON DELETE CASCADE,
+        width               INTEGER NOT NULL DEFAULT 500,
+        height              INTEGER NOT NULL DEFAULT 500,
+        created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
     `);
   }
 
@@ -570,6 +655,11 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       await client.query(
         PRIZE_SPIN_WIDGET_INSERT_SQL,
         prizeSpinWidgetInsertParams(accountId),
+      );
+
+      await client.query(
+        CHAT_ROLL_WIDGET_INSERT_SQL,
+        chatRollWidgetInsertParams(accountId),
       );
 
       await client.query('COMMIT');

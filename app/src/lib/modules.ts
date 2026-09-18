@@ -1,6 +1,7 @@
 import type { SvgIconComponent } from '@mui/icons-material'
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
 import AutorenewIcon from '@mui/icons-material/Autorenew'
+import CasinoIcon from '@mui/icons-material/Casino'
 
 export type ModuleCatalogStatus = 'available' | 'coming_soon'
 
@@ -45,6 +46,17 @@ export const MODULE_CATALOG: ModuleDefinition[] = [
     icon: AutorenewIcon,
     iconVariant: 'purple',
     widgetRoute: '/prize-spin',
+    hasToggle: false,
+  },
+  {
+    id: 'chat-roll',
+    name: 'Chat Roll',
+    description:
+      'Weighted chat giveaway — viewers join with a keyword; pick a random winner with VIP and subscriber boost.',
+    status: 'available',
+    icon: CasinoIcon,
+    iconVariant: 'info',
+    widgetRoute: '/chat-roll',
     hasToggle: false,
   },
 ]
