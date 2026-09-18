@@ -4,7 +4,8 @@ import CardContent from '@mui/material/CardContent'
 import CardActions from '@mui/material/CardActions'
 import Typography from '@mui/material/Typography'
 import { alpha, useTheme } from '@mui/material/styles'
-import { Check, CreditCard } from 'lucide-react'
+import CheckIcon from '@mui/icons-material/Check'
+import CreditCardIcon from '@mui/icons-material/CreditCard'
 import type { ReactNode } from 'react'
 import { PlanBadge } from '@/components/PlanBadge'
 import { getPlanFeatures, isFreePlan } from '@/lib/subscription-plan'
@@ -56,7 +57,7 @@ export function SubscriptionPlanCard({
               color: free ? theme.palette.text.secondary : theme.palette.primary.main,
             }}
           >
-            <CreditCard size={20} aria-hidden />
+            <CreditCardIcon sx={{ fontSize: 20 }} aria-hidden />
           </Box>
           <Box sx={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
@@ -83,14 +84,14 @@ export function SubscriptionPlanCard({
                 key={feature}
                 sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}
               >
-                <Check
-                  size={16}
-                  aria-hidden
-                  style={{
-                    marginTop: 2,
+                <CheckIcon
+                  sx={{
+                    fontSize: 16,
+                    mt: 0.25,
                     flexShrink: 0,
                     color: theme.palette.primary.main,
                   }}
+                  aria-hidden
                 />
                 <Typography variant="body2" color="text.secondary">
                   {feature}

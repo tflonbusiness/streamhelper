@@ -16,7 +16,9 @@ import {
   Typography,
 } from '@mui/material'
 import { useTheme, alpha, type Theme } from '@mui/material/styles'
-import { ArrowRight, Gift, Plus } from 'lucide-react'
+import AddIcon from '@mui/icons-material/Add'
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
+import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
 import { type FormEvent, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { type BonusBuyRecord } from '@/api/bonus-buy'
@@ -235,7 +237,7 @@ export function BonusBuyPage() {
               },
             }}
           >
-            <ArrowRight size={14} aria-hidden />
+            <ArrowForwardIcon sx={{ fontSize: 14 }} aria-hidden />
           </IconButton>
         </Box>
       ),
@@ -247,7 +249,7 @@ export function BonusBuyPage() {
       <PageHeader
         title="Bonus Buy"
         description="Bonus buy widget for your stream"
-        icon={Gift}
+        icon={CardGiftcardIcon}
         iconVariant="warning"
       />
 
@@ -272,7 +274,7 @@ export function BonusBuyPage() {
                   color: theme.palette.warning.main,
                 }}
               >
-                <Gift size={20} aria-hidden />
+                <CardGiftcardIcon sx={{ fontSize: 20 }} aria-hidden />
               </Box>
               <Stack spacing={0.5}>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -287,7 +289,7 @@ export function BonusBuyPage() {
               <Button
                 type="button"
                 variant="contained"
-                startIcon={<Plus size={16} aria-hidden />}
+                startIcon={<AddIcon fontSize="small" aria-hidden />}
                 onClick={() => {
                   resetCreateForm()
                   setCreateDialogOpen(true)

@@ -4,7 +4,9 @@ import CardContent from '@mui/material/CardContent'
 import Grid from '@mui/material/Grid'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { Gamepad2, Layers, Users } from 'lucide-react'
+import GroupIcon from '@mui/icons-material/Group'
+import LayersIcon from '@mui/icons-material/Layers'
+import SportsEsportsIcon from '@mui/icons-material/SportsEsports'
 import { useSearchParams } from 'react-router-dom'
 import { BrandHeader } from '@/components/BrandHeader'
 import { IconTile } from '@/components/IconTile'
@@ -14,19 +16,19 @@ import { StatusAlert } from '@/components/StatusAlert'
 
 const features = [
   {
-    icon: Gamepad2,
+    icon: SportsEsportsIcon,
     variant: 'primary' as const,
     title: 'Chat games',
     description: 'Interactive games for Kick chat',
   },
   {
-    icon: Users,
+    icon: GroupIcon,
     variant: 'info' as const,
     title: 'Team access',
     description: 'Manage moderators and permissions',
   },
   {
-    icon: Layers,
+    icon: LayersIcon,
     variant: 'purple' as const,
     title: 'OBS overlays',
     description: 'Browser sources for your stream',

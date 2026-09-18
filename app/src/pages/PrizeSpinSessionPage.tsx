@@ -17,21 +17,19 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
+import AddIcon from '@mui/icons-material/Add'
+import ArchiveIcon from '@mui/icons-material/Archive'
+import BalanceIcon from '@mui/icons-material/Balance'
+import BarChartIcon from '@mui/icons-material/BarChart'
+import DeleteIcon from '@mui/icons-material/Delete'
+import DownloadIcon from '@mui/icons-material/Download'
+import EditIcon from '@mui/icons-material/Edit'
+import HistoryIcon from '@mui/icons-material/History'
+import PersonIcon from '@mui/icons-material/Person'
+import PieChartIcon from '@mui/icons-material/PieChart'
+import PodcastsIcon from '@mui/icons-material/Podcasts'
 import { SquareRounded as SquareRoundedIcon } from '@mui/icons-material'
 import { alpha, useTheme } from '@mui/material/styles'
-import {
-  Archive,
-  BarChart3,
-  Download,
-  Equal,
-  History,
-  PieChart,
-  Pencil,
-  Plus,
-  Radio,
-  Trash2,
-  UserRound,
-} from 'lucide-react'
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
@@ -176,7 +174,7 @@ function PrizeSpinStatsCard({
           sx={{ alignItems: 'center', justifyContent: 'space-between' }}
         >
           <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-            <IconTile icon={BarChart3} variant="info" size="sm" />
+            <IconTile icon={BarChartIcon} variant="info" size="sm" />
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
               Stats
             </Typography>
@@ -786,7 +784,7 @@ export function PrizeSpinSessionPage() {
             disabled={readOnly}
             onClick={() => openEditDialog(sector)}
           >
-            <Pencil size={16} aria-hidden />
+            <EditIcon fontSize="small" aria-hidden />
           </IconButton>
           <IconButton
             type="button"
@@ -796,7 +794,7 @@ export function PrizeSpinSessionPage() {
             onClick={() => void handleDeleteSector(sector.id)}
             sx={{ color: theme.palette.error.main }}
           >
-            <Trash2 size={16} aria-hidden />
+            <DeleteIcon fontSize="small" aria-hidden />
           </IconButton>
         </Stack>
       ),
@@ -854,7 +852,7 @@ export function PrizeSpinSessionPage() {
           onClick={() => void handleDeleteWin(win.id)}
           sx={{ color: theme.palette.error.main }}
         >
-          <Trash2 size={16} aria-hidden />
+          <DeleteIcon fontSize="small" aria-hidden />
         </IconButton>
       ),
     },
@@ -943,7 +941,7 @@ export function PrizeSpinSessionPage() {
                 type="button"
                 variant="outlined"
                 size="small"
-                startIcon={<Download size={16} aria-hidden />}
+                startIcon={<DownloadIcon fontSize="small" aria-hidden />}
                 disabled={wins.length === 0 || isExportingWinners}
                 onClick={handleDownloadWinners}
               >
@@ -977,7 +975,7 @@ export function PrizeSpinSessionPage() {
                   type="button"
                   variant="outlined"
                   size="small"
-                  startIcon={<Radio size={16} aria-hidden />}
+                  startIcon={<PodcastsIcon fontSize="small" aria-hidden />}
                   disabled={goLiveMutation.isPending}
                   onClick={() => void handleGoLive()}
                   sx={{
@@ -997,7 +995,7 @@ export function PrizeSpinSessionPage() {
                   type="button"
                   variant="outlined"
                   size="small"
-                  startIcon={<Archive size={16} aria-hidden />}
+                  startIcon={<ArchiveIcon fontSize="small" aria-hidden />}
                   disabled={
                     archiveSessionMutation.isPending ||
                     deactivateMutation.isPending ||
@@ -1049,7 +1047,7 @@ export function PrizeSpinSessionPage() {
                   spacing={1.5}
                   sx={{ alignItems: 'center' }}
                 >
-                  <IconTile icon={UserRound} variant="purple" size="sm" />
+                  <IconTile icon={PersonIcon} variant="purple" size="sm" />
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>
                     Spin For Viewer
                   </Typography>
@@ -1109,7 +1107,7 @@ export function PrizeSpinSessionPage() {
                   sx={{ alignItems: 'center', justifyContent: 'space-between' }}
                 >
                   <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-start' }}>
-                    <IconTile icon={PieChart} variant="purple" size="sm" />
+                    <IconTile icon={PieChartIcon} variant="purple" size="sm" />
                     <Stack>
                       <Typography variant="h6" sx={{ fontWeight: 600 }}>
                         Wheel Sectors ({sectors.length})
@@ -1121,7 +1119,7 @@ export function PrizeSpinSessionPage() {
                       type="button"
                       variant="outlined"
                       size="small"
-                      startIcon={<Equal size={16} aria-hidden />}
+                      startIcon={<BalanceIcon fontSize="small" aria-hidden />}
                       disabled={
                         readOnly ||
                         sectors.length === 0 ||
@@ -1137,7 +1135,7 @@ export function PrizeSpinSessionPage() {
                       type="button"
                       variant="contained"
                       size="small"
-                      startIcon={<Plus size={16} aria-hidden />}
+                      startIcon={<AddIcon fontSize="small" aria-hidden />}
                       disabled={readOnly}
                       onClick={openAddSectorDialog}
                     >
@@ -1175,7 +1173,7 @@ export function PrizeSpinSessionPage() {
                   sx={{ alignItems: 'center', justifyContent: 'space-between' }}
                 >
                   <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-                    <IconTile icon={History} variant="warning" size="sm" />
+                    <IconTile icon={HistoryIcon} variant="warning" size="sm" />
                     <Typography variant="h6" sx={{ fontWeight: 600 }}>
                       History ({wins.length})
                     </Typography>
@@ -1185,7 +1183,7 @@ export function PrizeSpinSessionPage() {
                       type="button"
                       variant="outlined"
                       size="small"
-                      startIcon={<Archive size={16} aria-hidden />}
+                      startIcon={<ArchiveIcon fontSize="small" aria-hidden />}
                       disabled={readOnly}
                       onClick={() => {
                         setArchiveAllError(null)
@@ -1429,7 +1427,7 @@ export function PrizeSpinSessionPage() {
             type="button"
             variant="contained"
             color="warning"
-            startIcon={<Archive size={16} aria-hidden />}
+            startIcon={<ArchiveIcon fontSize="small" aria-hidden />}
             onClick={() => void handleArchiveSession()}
             disabled={archiveSessionMutation.isPending}
           >

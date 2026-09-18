@@ -1,5 +1,6 @@
-import type { LucideIcon } from 'lucide-react'
-import { Gift, RotateCw } from 'lucide-react'
+import type { SvgIconComponent } from '@mui/icons-material'
+import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
+import AutorenewIcon from '@mui/icons-material/Autorenew'
 
 export type ModuleCatalogStatus = 'available' | 'coming_soon'
 
@@ -17,7 +18,7 @@ export type ModuleDefinition = {
   name: string
   description: string
   status: ModuleCatalogStatus
-  icon: LucideIcon
+  icon: SvgIconComponent
   iconVariant: ModuleIconVariant
   widgetRoute?: string
   hasToggle?: boolean
@@ -30,7 +31,7 @@ export const MODULE_CATALOG: ModuleDefinition[] = [
     description:
       'Slot bonus-buy rounds for stream engagement — viewers trigger bonus features during live play.',
     status: 'available',
-    icon: Gift,
+    icon: CardGiftcardIcon,
     iconVariant: 'warning',
     widgetRoute: '/bonus-buy',
     hasToggle: false,
@@ -41,7 +42,7 @@ export const MODULE_CATALOG: ModuleDefinition[] = [
     description:
       'Spin a weighted prize wheel for a viewer — enter their chat nick, set prize sectors and odds, show the result on stream.',
     status: 'available',
-    icon: RotateCw,
+    icon: AutorenewIcon,
     iconVariant: 'purple',
     widgetRoute: '/prize-spin',
     hasToggle: false,

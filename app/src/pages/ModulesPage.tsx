@@ -9,7 +9,7 @@ import {
   Typography,
 } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { Gamepad2 } from 'lucide-react'
+import SportsEsportsIcon from '@mui/icons-material/SportsEsports'
 import { Link } from 'react-router-dom'
 import { IconTile } from '@/components/IconTile'
 import { PageHeader } from '@/components/PageHeader'
@@ -24,7 +24,7 @@ export function ModulesPage() {
       <PageHeader
         title="Modules"
         description="Tools for your team's streamers"
-        icon={Gamepad2}
+        icon={SportsEsportsIcon}
         iconVariant="primary"
       />
 

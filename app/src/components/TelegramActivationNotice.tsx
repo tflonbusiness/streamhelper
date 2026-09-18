@@ -3,8 +3,9 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
+import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+import SendIcon from '@mui/icons-material/Send'
 import { alpha, useTheme } from '@mui/material/styles'
-import { ExternalLink, Send } from 'lucide-react'
 import {
   getTelegramSupportUrl,
   getTelegramSupportUsername,
@@ -37,7 +38,7 @@ export function TelegramActivationNotice() {
               color: theme.palette.primary.main,
             }}
           >
-            <Send size={20} aria-hidden />
+            <SendIcon sx={{ fontSize: 20 }} aria-hidden />
           </Box>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             <Typography variant="subtitle1" component="h3">
@@ -60,7 +61,7 @@ export function TelegramActivationNotice() {
           target="_blank"
           rel="noopener noreferrer"
           variant="contained"
-          endIcon={<ExternalLink size={16} aria-hidden />}
+          endIcon={<OpenInNewIcon fontSize="small" aria-hidden />}
           sx={{ alignSelf: 'flex-start', width: 'auto' }}
         >
           Message @{username}

@@ -1,13 +1,12 @@
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import type { SxProps, Theme } from '@mui/material/styles'
-import type { LucideIcon } from 'lucide-react'
-import { IconTile, type IconTileVariant } from '@/components/IconTile'
+import { IconTile, type IconTileVariant, type TileIcon } from '@/components/IconTile'
 
 type SectionHeaderProps = {
   title: string
   description?: string
-  icon: LucideIcon
+  icon: TileIcon
   iconVariant?: IconTileVariant
   action?: React.ReactNode
   titleComponent?: React.ElementType

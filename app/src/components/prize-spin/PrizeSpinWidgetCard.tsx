@@ -1,5 +1,5 @@
 import { Box, Typography } from '@mui/material'
-import { RotateCw } from 'lucide-react'
+import AutorenewIcon from '@mui/icons-material/Autorenew'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PrizeSpinWidgetLatestWin, PrizeSpinSector } from '@/api/prize-spin'
 import {
@@ -136,10 +136,10 @@ export function PrizeSpinWidgetCard({
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: `${scaledPx(10, scale)}px`, minWidth: 0 }}>
-          <RotateCw
-            size={scaledPx(28, scale)}
-            color={theme.moduleAccent}
-            style={{
+          <AutorenewIcon
+            sx={{
+              fontSize: scaledPx(28, scale),
+              color: theme.moduleAccent,
               flexShrink: 0,
               filter: `drop-shadow(0 0 ${scaledPx(8, scale)}px ${theme.moduleAccentGlow})`,
             }}

@@ -3,14 +3,14 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import { alpha, useTheme } from '@mui/material/styles'
-import type { LucideIcon } from 'lucide-react'
+import type { SvgIconComponent } from '@mui/icons-material'
 import { IconTile } from '@/components/IconTile'
 
 type StatCardProps = {
   value: string
   label: string
   subtext?: string
-  icon: LucideIcon
+  icon: SvgIconComponent
   variant?: 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'purple' | 'muted'
   highlight?: boolean
   className?: string

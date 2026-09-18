@@ -1,5 +1,5 @@
 import Button from '@mui/material/Button'
-import { ArrowRight } from 'lucide-react'
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import { Link } from 'react-router-dom'
 import { SubscriptionPlanCard } from '@/components/SubscriptionPlanCard'
 
@@ -23,7 +23,7 @@ export function DashboardTariffCard({
             to="/subscription"
             variant="outlined"
             size="small"
-            endIcon={<ArrowRight size={16} aria-hidden />}
+            endIcon={<ArrowForwardIcon fontSize="small" aria-hidden />}
             sx={{ width: { xs: '100%', sm: 'auto' } }}
           >
             Manage subscription

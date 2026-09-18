@@ -5,7 +5,7 @@ import {
   Menu,
   MenuItem,
 } from '@mui/material'
-import { ChevronDown } from 'lucide-react'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { useId, useState } from 'react'
 
 export type RowAction = {
@@ -54,7 +54,7 @@ export function RowActionsMenu({
           },
         }}
       >
-        <ChevronDown size={14} aria-hidden />
+        <ExpandMoreIcon sx={{ fontSize: 14 }} aria-hidden />
       </IconButton>
       <Menu
         id={menuId}

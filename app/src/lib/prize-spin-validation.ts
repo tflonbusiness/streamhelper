@@ -104,3 +104,34 @@ export function validateParticipantNick(participantNick: string): string | null 
     return validationErrorMessage(error)
   }
 }
+
+export type CreatePrizeSpinFormValues = {
+  title: string
+}
+
+export const createPrizeSpinFormSchema = yup.object({
+  title: yup
+    .string()
+    .trim()
+    .required('Title is required')
+    .max(200, 'Title must be at most 200 characters'),
+})
+
+export type PrizeSpinWidgetSettingsFormValues = {
+  width: number
+  height: number
+}
+
+const widgetDimensionSchema = (label: string) =>
+  yup
+    .number()
+    .typeError(`${label} must be a number`)
+    .required(`${label} is required`)
+    .integer(`${label} must be a whole number`)
+    .min(200, `${label} must be between 200 and 2400 px.`)
+    .max(2400, `${label} must be between 200 and 2400 px.`)
+
+export const prizeSpinWidgetSettingsFormSchema = yup.object({
+  width: widgetDimensionSchema('Width'),
+  height: widgetDimensionSchema('Height'),
+})

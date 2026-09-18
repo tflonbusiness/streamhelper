@@ -1,5 +1,5 @@
 import { Stack } from '@mui/material'
-import { CreditCard } from 'lucide-react'
+import CreditCardIcon from '@mui/icons-material/CreditCard'
 import { PageHeader } from '@/components/PageHeader'
 import { SubscriptionPlanCard } from '@/components/SubscriptionPlanCard'
 import { TelegramActivationNotice } from '@/components/TelegramActivationNotice'
@@ -13,7 +13,7 @@ export function SubscriptionPage() {
       <PageHeader
         title="Subscription"
         description="Your team's plan and features"
-        icon={CreditCard}
+        icon={CreditCardIcon}
         iconVariant="warning"
       />
 

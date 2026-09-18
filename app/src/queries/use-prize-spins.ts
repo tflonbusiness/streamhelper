@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import {
   archivePrizeSpin,
   createPrizeSpin,
@@ -20,6 +25,7 @@ export function usePrizeSpins(
     queryKey: prizeSpinKeys.list(accountId ?? 0, params),
     queryFn: () => fetchPrizeSpins(accountId!, params),
     enabled: accountId !== undefined,
+    placeholderData: keepPreviousData,
   })
 }
 

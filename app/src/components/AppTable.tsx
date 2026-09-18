@@ -1,5 +1,6 @@
 import Box from '@mui/material/Box'
 import Collapse from '@mui/material/Collapse'
+import LinearProgress from '@mui/material/LinearProgress'
 import IconButton from '@mui/material/IconButton'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
@@ -10,7 +11,7 @@ import TablePagination from '@mui/material/TablePagination'
 import TableRow from '@mui/material/TableRow'
 import type { SxProps, Theme } from '@mui/material/styles'
 import { alpha, styled } from '@mui/material/styles'
-import { ChevronDown } from 'lucide-react'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { Fragment } from 'react'
 import { colors } from '@/theme/colors'
 
@@ -48,6 +49,7 @@ type AppTableProps<T> = {
   pagination?: AppTablePaginationConfig
   expandable?: AppTableExpandableConfig<T>
   getRowSx?: (row: T) => SxProps<Theme> | undefined
+  loading?: boolean
 }
 
 const expandColumnWidth = 40
@@ -72,6 +74,22 @@ const StyledTableToolbar = styled(Box)(({ theme }) => ({
 const StyledTableFooter = styled(Box)(({ theme }) => ({
   borderTop: '1px solid',
   borderColor: theme.palette.divider,
+}))
+
+const StyledTableLoadingSpacer = styled(Box)(({ theme }) => ({
+  minHeight: theme.spacing(15),
+}))
+
+const StyledProgressSlot = styled(Box)({
+  height: 4,
+  flexShrink: 0,
+})
+
+const StyledTableProgress = styled(LinearProgress, {
+  shouldForwardProp: (prop) => prop !== 'active',
+})<{ active?: boolean }>(({ active }) => ({
+  height: 4,
+  visibility: active ? 'visible' : 'hidden',
 }))
 
 const StyledTableEmpty = styled(Box)(({ theme }) => ({
@@ -225,21 +243,25 @@ export function AppTable<T>({
   pagination,
   expandable,
   getRowSx,
+  loading = false,
 }: AppTableProps<T>) {
   const isEmpty = rows.length === 0
   const showPagination = pagination != null && pagination.count > 0
   const showFooter = Boolean(footer) || showPagination
 
-  if (isEmpty && emptyMessage && !toolbar) {
+  if (isEmpty && emptyMessage && !toolbar && !loading) {
     return <StyledTableEmptyContainer>{emptyMessage}</StyledTableEmptyContainer>
   }
 
   return (
     <StyledTableContainer>
       {toolbar ? <StyledTableToolbar>{toolbar}</StyledTableToolbar> : null}
-      {isEmpty && emptyMessage ? (
+      <StyledProgressSlot aria-hidden={!loading}>
+        <StyledTableProgress active={loading} aria-hidden={!loading} />
+      </StyledProgressSlot>
+      {isEmpty && !loading && emptyMessage ? (
         <StyledTableEmpty>{emptyMessage}</StyledTableEmpty>
-      ) : (
+      ) : !isEmpty ? (
         <StyledTable size="small">
           <colgroup>
             {expandable ? (
@@ -291,7 +313,7 @@ export function AppTable<T>({
                           aria-expanded={expanded}
                           onClick={() => expandable.onToggle(row)}
                         >
-                          <ChevronDown size={16} aria-hidden />
+                          <ExpandMoreIcon sx={{ fontSize: 16 }} aria-hidden />
                         </StyledExpandButton>
                       </StyledExpandBodyCell>
                     ) : null}
@@ -323,7 +345,9 @@ export function AppTable<T>({
             })}
           </TableBody>
         </StyledTable>
-      )}
+      ) : loading ? (
+        <StyledTableLoadingSpacer />
+      ) : null}
       {showFooter ? (
         <StyledTableFooter>
           {footer}

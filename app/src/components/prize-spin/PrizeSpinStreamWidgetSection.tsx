@@ -1,5 +1,9 @@
 import { Button, Card, CardContent, Stack } from '@mui/material'
-import { ExternalLink, Link2, Monitor, Settings2 } from 'lucide-react'
+import LinkIcon from '@mui/icons-material/Link'
+import MonitorIcon from '@mui/icons-material/Monitor'
+import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+import SettingsIcon from '@mui/icons-material/Settings'
+import { styled } from '@mui/material/styles'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PrizeSpinWidgetSettingsDialog } from '@/components/prize-spin/PrizeSpinWidgetSettingsDialog'
@@ -9,101 +13,102 @@ import {
   buildPrizeSpinObsOverlayUrl,
   buildPrizeSpinOverlayPath,
 } from '@/lib/prize-spin-overlay-url'
-import { cardSx } from '@/theme/colors'
 
 type PrizeSpinStreamWidgetSectionProps = {
-  accountId?: number
-  ucid?: string
+  accountId: number
+  ucid: string
 }
 
-export function PrizeSpinStreamWidgetSection({
-  accountId,
-  ucid,
-}: PrizeSpinStreamWidgetSectionProps) {
-  const { showSuccess, showError } = useNotification()
+const StyledCard = styled(Card)(({ theme }) => ({
+  backgroundColor: theme.palette.background.paper,
+  border: '1px solid',
+  borderColor: theme.palette.divider,
+  borderRadius: theme.spacing(1),
+  boxShadow: 'none',
+}))
+
+const StyledCardContent = styled(CardContent)(({ theme }) => ({
+  padding: theme.spacing(3),
+  '&:last-child': {
+    paddingBottom: theme.spacing(3),
+  },
+}))
+
+const StyledActionsStack = styled(Stack)(({ theme }) => ({
+  gap: theme.spacing(1),
+  alignItems: 'flex-start',
+}))
+
+const ActionButton = styled(Button)(() => ({
+  minHeight: 36.5,
+}))
+
+export const PrizeSpinStreamWidgetSection = (
+  props: PrizeSpinStreamWidgetSectionProps,
+) => {
+  const { showSuccess } = useNotification()
   const [widgetDialogOpen, setWidgetDialogOpen] = useState(false)
+  const overlayHref = buildPrizeSpinOverlayPath(props.ucid);
+  const obsOverlayUrl = buildPrizeSpinObsOverlayUrl(props.ucid);
 
-  const overlayHref = ucid ? buildPrizeSpinOverlayPath(ucid) : null
-  const obsOverlayUrl = ucid ? buildPrizeSpinObsOverlayUrl(ucid) : null
-
-  async function handleCopyObsLink() {
-    if (!obsOverlayUrl) {
-      return
-    }
-
-    try {
-      await navigator.clipboard.writeText(obsOverlayUrl)
-      showSuccess('OBS link copied.')
-    } catch {
-      showError('Could not copy OBS link.')
-    }
+  const handleCopyObsLink = async () => {
+    await navigator.clipboard.writeText(obsOverlayUrl)
+    showSuccess('OBS link copied.')
   }
 
   return (
     <>
-      <Card elevation={0} sx={cardSx}>
-        <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
+      <StyledCard elevation={0}>
+        <StyledCardContent>
           <SectionHeader
             title="Stream Widget"
             description="OBS overlay settings and links for your live prize spin session"
-            icon={Monitor}
+            icon={MonitorIcon}
             iconVariant="info"
             action={
-              accountId ? (
-                <Button
-                  type="button"
-                  variant="outlined"
-                  startIcon={<Settings2 size={16} aria-hidden />}
-                  onClick={() => setWidgetDialogOpen(true)}
-                >
-                  Widget settings
-                </Button>
-              ) : null
-            }
-          />
-
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-            {overlayHref ? (
-              <Button
-                component={Link}
-                to={overlayHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                variant="outlined"
-                startIcon={<ExternalLink size={16} aria-hidden />}
-              >
-                Open overlay
-              </Button>
-            ) : (
               <Button
                 type="button"
                 variant="outlined"
-                startIcon={<ExternalLink size={16} aria-hidden />}
-                disabled
+                startIcon={<SettingsIcon fontSize="small" aria-hidden />}
+                onClick={() => setWidgetDialogOpen(true)}
               >
-                Open overlay
+                Widget settings
               </Button>
-            )}
-            <Button
+            }
+          />
+          <StyledActionsStack direction={{ xs: 'column', sm: 'row' }}>
+            <ActionButton
+              variant="outlined"
+              disabled={!overlayHref}
+              startIcon={<OpenInNewIcon fontSize="small" aria-hidden />}
+              {...(overlayHref
+                ? {
+                    component: Link,
+                    to: overlayHref,
+                    target: '_blank',
+                    rel: 'noopener noreferrer',
+                  }
+                : { type: 'button' })}
+            >
+              Open overlay
+            </ActionButton>
+            <ActionButton
               type="button"
               variant="outlined"
-              startIcon={<Link2 size={16} aria-hidden />}
+              startIcon={<LinkIcon fontSize="small" aria-hidden />}
               disabled={!obsOverlayUrl}
               onClick={() => void handleCopyObsLink()}
             >
               OBS link
-            </Button>
-          </Stack>
-        </CardContent>
-      </Card>
-
-      {accountId !== undefined ? (
-        <PrizeSpinWidgetSettingsDialog
-          accountId={accountId}
-          open={widgetDialogOpen}
-          onClose={() => setWidgetDialogOpen(false)}
-        />
-      ) : null}
+            </ActionButton>
+          </StyledActionsStack>
+        </StyledCardContent>
+      </StyledCard>
+      <PrizeSpinWidgetSettingsDialog
+        accountId={props.accountId}
+        open={widgetDialogOpen}
+        onClose={() => setWidgetDialogOpen(false)}
+      />
     </>
   )
 }

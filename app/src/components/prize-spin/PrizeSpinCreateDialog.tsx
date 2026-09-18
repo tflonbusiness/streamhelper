@@ -10,9 +10,14 @@ import {
   Typography,
 } from '@mui/material'
 import { styled } from '@mui/material/styles'
-import { type SubmitEvent, useState } from 'react'
+import { yupResolver } from '@hookform/resolvers/yup'
+import { Controller, useForm } from 'react-hook-form'
 import { PRIZE_SPIN_DEFAULT_TITLE } from '@/components/prize-spin/prize-spin-page-utils'
 import { useNotification } from '@/context/NotificationContext'
+import {
+  type CreatePrizeSpinFormValues,
+  createPrizeSpinFormSchema,
+} from '@/lib/prize-spin-validation'
 import { useCreatePrizeSpin } from '@/queries/use-prize-spins'
 
 type PrizeSpinCreateDialogProps = {
@@ -20,6 +25,10 @@ type PrizeSpinCreateDialogProps = {
   open: boolean
   onClose: () => void
   onCreated?: () => void
+}
+
+const defaultValues: CreatePrizeSpinFormValues = {
+  title: PRIZE_SPIN_DEFAULT_TITLE,
 }
 
 const StyledDescription = styled(Typography)(({ theme }) => ({
@@ -45,22 +54,30 @@ const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
 
 export const PrizeSpinCreateDialog = (props: PrizeSpinCreateDialogProps) => {
   const { showSuccess, showError } = useNotification()
-  const [title, setTitle] = useState(PRIZE_SPIN_DEFAULT_TITLE)
   const createMutation = useCreatePrizeSpin(props.accountId)
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { isValid },
+  } = useForm({
+    defaultValues,
+    resolver: yupResolver(createPrizeSpinFormSchema),
+    mode: 'onChange',
+  })
 
   const handleClose = () => {
     props.onClose()
-    setTitle(PRIZE_SPIN_DEFAULT_TITLE)
+    reset(defaultValues)
 
     if (!createMutation.isPending) {
       createMutation.reset()
     }
   }
 
-  const handleCreate = (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault()
-
-    createMutation.mutate(title, {
+  const onSubmit = handleSubmit((values) => {
+    createMutation.mutate(values.title, {
       onSuccess: () => {
         showSuccess('Prize spin session created.')
         props.onCreated?.()
@@ -69,7 +86,7 @@ export const PrizeSpinCreateDialog = (props: PrizeSpinCreateDialogProps) => {
       },
       onError: () => showError('Could not create prize spin session.'),
     })
-  }
+  })
 
   return (
     <Dialog
@@ -86,19 +103,24 @@ export const PrizeSpinCreateDialog = (props: PrizeSpinCreateDialogProps) => {
         <Box
           component="form"
           id="prize-spin-create-form"
-          onSubmit={handleCreate}
+          onSubmit={onSubmit}
         >
           <StyledFormStack>
-            <StyledTitleField
-              id="prize-spin-title"
-              label="Title"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              required
-              slotProps={{ htmlInput: { maxLength: 200 } }}
-              autoFocus
-              fullWidth
-              size="small"
+            <Controller
+              name="title"
+              control={control}
+              render={({ field, fieldState }) => (
+                <StyledTitleField
+                  {...field}
+                  id="prize-spin-title"
+                  label="Title"
+                  error={Boolean(fieldState.error)}
+                  helperText={fieldState.error?.message}
+                  autoFocus
+                  fullWidth
+                  size="small"
+                />
+              )}
             />
           </StyledFormStack>
         </Box>
@@ -117,6 +139,7 @@ export const PrizeSpinCreateDialog = (props: PrizeSpinCreateDialogProps) => {
           variant="contained"
           loading={createMutation.isPending}
           loadingPosition="start"
+          disabled={!isValid}
         >
           Create
         </Button>

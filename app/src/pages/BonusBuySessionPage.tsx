@@ -15,18 +15,16 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import {
-  Circle,
-  CircleDot,
-  CircleStop,
-  Copy,
-  ExternalLink,
-  Link2,
-  Palette,
-  Pencil,
-  Plus,
-  Trash2,
-} from 'lucide-react'
+import AddIcon from '@mui/icons-material/Add'
+import AdjustIcon from '@mui/icons-material/Adjust'
+import CircleOutlinedIcon from '@mui/icons-material/CircleOutlined'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+import DeleteIcon from '@mui/icons-material/Delete'
+import EditIcon from '@mui/icons-material/Edit'
+import LinkIcon from '@mui/icons-material/Link'
+import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+import PaletteIcon from '@mui/icons-material/Palette'
+import StopCircleIcon from '@mui/icons-material/StopCircle'
 import { alpha, type Theme, useTheme } from '@mui/material/styles'
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
@@ -733,7 +731,7 @@ export function BonusBuySessionPage() {
                 },
               }}
             >
-              <Copy size={12} aria-hidden />
+              <ContentCopyIcon sx={{ fontSize: 12 }} aria-hidden />
             </IconButton>
             {slot.isNowPlaying ? (
               <Chip
@@ -828,9 +826,9 @@ export function BonusBuySessionPage() {
               )}
             >
               {slot.isNowPlaying ? (
-                <CircleDot size={14} aria-hidden />
+                <AdjustIcon sx={{ fontSize: 14 }} aria-hidden />
               ) : (
-                <Circle size={14} aria-hidden />
+                <CircleOutlinedIcon sx={{ fontSize: 14 }} aria-hidden />
               )}
             </IconButton>
             <IconButton
@@ -839,7 +837,7 @@ export function BonusBuySessionPage() {
               onClick={() => openEditSlot(slot)}
               sx={slotActionIconButtonSx('info', theme)}
             >
-              <Pencil size={14} aria-hidden />
+              <EditIcon sx={{ fontSize: 14 }} aria-hidden />
             </IconButton>
             <IconButton
               size="small"
@@ -850,7 +848,7 @@ export function BonusBuySessionPage() {
               }}
               sx={slotActionIconButtonSx('error', theme)}
             >
-              <Trash2 size={14} aria-hidden />
+              <DeleteIcon sx={{ fontSize: 14 }} aria-hidden />
             </IconButton>
           </Box>
         ),
@@ -953,7 +951,7 @@ export function BonusBuySessionPage() {
                   type="button"
                   variant="outlined"
                   size="small"
-                  startIcon={<CircleStop size={16} aria-hidden />}
+                  startIcon={<StopCircleIcon fontSize="small" aria-hidden />}
                   onClick={() => setEndDialogOpen(true)}
                   sx={{
                     borderColor: alpha(theme.palette.error.main, 0.4),
@@ -972,7 +970,7 @@ export function BonusBuySessionPage() {
                   type="button"
                   variant="outlined"
                   size="small"
-                  startIcon={<Pencil size={16} aria-hidden />}
+                  startIcon={<EditIcon fontSize="small" aria-hidden />}
                   onClick={openSessionEdit}
                 >
                   Edit
@@ -982,7 +980,7 @@ export function BonusBuySessionPage() {
                 type="button"
                 variant="outlined"
                 size="small"
-                startIcon={<Palette size={16} aria-hidden />}
+                startIcon={<PaletteIcon fontSize="small" aria-hidden />}
                 onClick={() => void openWidgetStyleDialog()}
               >
                 Widget Style
@@ -991,7 +989,7 @@ export function BonusBuySessionPage() {
                 type="button"
                 variant="outlined"
                 size="small"
-                startIcon={<Link2 size={16} aria-hidden />}
+                startIcon={<LinkIcon fontSize="small" aria-hidden />}
                 onClick={() => showStub('Coming soon')}
               >
                 OBS Link
@@ -1003,7 +1001,7 @@ export function BonusBuySessionPage() {
                 rel="noopener noreferrer"
                 variant="outlined"
                 size="small"
-                startIcon={<ExternalLink size={16} aria-hidden />}
+                startIcon={<OpenInNewIcon fontSize="small" aria-hidden />}
               >
                 Overlay
               </Button>
@@ -1069,7 +1067,7 @@ export function BonusBuySessionPage() {
                   flex: 1,
                 }}
               >
-                <IconTile icon={Plus} variant="success" />
+                <IconTile icon={AddIcon} variant="success" />
                 <Box sx={{ minWidth: 0 }}>
                   <Typography sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
                     Quick add slot
@@ -1083,7 +1081,7 @@ export function BonusBuySessionPage() {
                 type="submit"
                 variant="contained"
                 disabled={!record.isActive || createSlotMutation.isPending}
-                startIcon={<Plus size={16} aria-hidden />}
+                startIcon={<AddIcon fontSize="small" aria-hidden />}
                 sx={{ alignSelf: { xs: 'flex-end', sm: 'auto' }, flexShrink: 0 }}
               >
                 {createSlotMutation.isPending ? 'Adding…' : 'Add slot'}

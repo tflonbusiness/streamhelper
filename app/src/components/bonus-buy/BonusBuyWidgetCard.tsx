@@ -3,7 +3,9 @@ import SentimentSatisfiedAltIcon from '@mui/icons-material/SentimentSatisfiedAlt
 import SentimentVeryDissatisfiedIcon from '@mui/icons-material/SentimentVeryDissatisfied'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { Crown, Gift, ShoppingBasket } from 'lucide-react'
+import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
+import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket'
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium'
 import type { BonusBuySlot } from '@/api/bonus-buy'
 import { formatMultiplierDisplay } from '@/lib/bonus-buy-stats'
 import type {
@@ -198,7 +200,7 @@ export function BonusBuyWidgetCard({
               color: theme.accentColor,
             }}
           >
-            <Gift size={28} aria-hidden />
+            <CardGiftcardIcon sx={{ fontSize: 28 }} aria-hidden />
           </Box>
           <Typography
             sx={{
@@ -225,7 +227,7 @@ export function BonusBuyWidgetCard({
             py: '6px',
           }}
         >
-          <Gift size={30} color={theme.accentColor} aria-hidden />
+          <CardGiftcardIcon sx={{ fontSize: 30, color: theme.accentColor }} aria-hidden />
           <Typography sx={{ fontWeight: 600, fontSize: '26px', color: '#FFFFFF' }}>
             {slots.length}
           </Typography>
@@ -234,7 +236,7 @@ export function BonusBuyWidgetCard({
 
       <Box sx={{ display: 'flex', gap: '12px' }}>
         <Box sx={{ ...cellSx(theme, 54), flex: 1 }}>
-          <ShoppingBasket size={36} color={theme.accentColor} aria-hidden />
+          <ShoppingBasketIcon sx={{ fontSize: 36, color: theme.accentColor }} aria-hidden />
           <Typography
             sx={{ ml: '10px', fontWeight: 600, fontSize: '26px', color: '#FFFFFF' }}
           >
@@ -258,7 +260,7 @@ export function BonusBuyWidgetCard({
 
       {playingSlot && playingSlot.winAmount !== null ? (
         <Box sx={{ ...cellSx(theme, 68) }}>
-          <Crown size={36} color={theme.accentColor} aria-hidden />
+          <WorkspacePremiumIcon sx={{ fontSize: 36, color: theme.accentColor }} aria-hidden />
           <Box sx={{ flex: 1, ml: '10px', minWidth: 0 }}>
             <Typography
               sx={{

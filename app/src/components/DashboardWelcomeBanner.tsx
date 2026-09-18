@@ -6,7 +6,10 @@ import Divider from '@mui/material/Divider'
 import Link from '@mui/material/Link'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
-import { Crown, ExternalLink, Shield, Tv } from 'lucide-react'
+import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+import ShieldIcon from '@mui/icons-material/Shield'
+import TvIcon from '@mui/icons-material/Tv'
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium'
 import { KickChannelNotFoundError } from '@/api/kick-channel'
 import { IconTile } from '@/components/IconTile'
 import { useKickChannel } from '@/queries/use-kick-channel'
@@ -65,7 +68,7 @@ export function DashboardWelcomeBanner({
         >
           <Box sx={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <IconTile icon={Tv} variant="primary" size="sm" />
+              <IconTile icon={TvIcon} variant="primary" size="sm" />
               <Typography variant="body2" color="text.secondary">
                 Channel
               </Typography>
@@ -119,7 +122,7 @@ export function DashboardWelcomeBanner({
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <IconTile
-                  icon={role === 'owner' ? Crown : Shield}
+                  icon={role === 'owner' ? WorkspacePremiumIcon : ShieldIcon}
                   variant={role === 'owner' ? 'warning' : 'info'}
                   size="sm"
                 />
@@ -132,7 +135,7 @@ export function DashboardWelcomeBanner({
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <IconTile icon={ExternalLink} variant="muted" size="sm" />
+                <IconTile icon={OpenInNewIcon} variant="muted" size="sm" />
                 <Typography variant="body2" color="text.secondary">
                   Link
                 </Typography>
@@ -155,7 +158,7 @@ export function DashboardWelcomeBanner({
                   }}
                 >
                   kick.com/{slug}
-                  <ExternalLink size={14} aria-hidden />
+                  <OpenInNewIcon sx={{ fontSize: 14 }} aria-hidden />
                 </Link>
               ) : (
                 <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1 }}>

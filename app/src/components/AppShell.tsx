@@ -2,14 +2,13 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import ListItemButton from '@mui/material/ListItemButton'
 import Typography from '@mui/material/Typography'
-import {
-  CreditCard,
-  LayoutDashboard,
-  LogOut,
-  Puzzle,
-  Users,
-} from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import type { SvgIconComponent } from '@mui/icons-material'
+import CreditCardIcon from '@mui/icons-material/CreditCard'
+import DashboardIcon from '@mui/icons-material/Dashboard'
+import ExtensionIcon from '@mui/icons-material/Extension'
+import GroupIcon from '@mui/icons-material/Group'
+import LogoutIcon from '@mui/icons-material/Logout'
+import { styled } from '@mui/material/styles'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { BrandHeader } from '@/components/BrandHeader'
 import { BreadcrumbProvider } from '@/context/BreadcrumbContext'
@@ -18,7 +17,7 @@ import { useAuth } from '@/context/AuthContext'
 type NavItem = {
   to: string
   label: string
-  icon: LucideIcon
+  icon: SvgIconComponent
   end: boolean
   requiresAccount: boolean
   requiresOwner?: boolean
@@ -28,21 +27,21 @@ const navItems: NavItem[] = [
   {
     to: '/dashboard',
     label: 'Home',
-    icon: LayoutDashboard,
+    icon: DashboardIcon,
     end: true,
     requiresAccount: false,
   },
   {
     to: '/modules',
     label: 'Modules',
-    icon: Puzzle,
+    icon: ExtensionIcon,
     end: true,
     requiresAccount: true,
   },
   {
     to: '/team',
     label: 'Team',
-    icon: Users,
+    icon: GroupIcon,
     end: true,
     requiresAccount: true,
     requiresOwner: true,
@@ -50,17 +49,171 @@ const navItems: NavItem[] = [
   {
     to: '/subscription',
     label: 'Subscription',
-    icon: CreditCard,
+    icon: CreditCardIcon,
     end: true,
     requiresAccount: true,
     requiresOwner: true,
   },
 ]
 
+const ShellRoot = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  minHeight: '100svh',
+  flexDirection: 'column',
+  [theme.breakpoints.up('md')]: {
+    flexDirection: 'row',
+  },
+}))
+
+const MobileHeader = styled('header')(({ theme }) => ({
+  display: 'block',
+  borderBottom: '1px solid',
+  borderColor: theme.palette.divider,
+  backgroundColor: theme.palette.background.paper,
+  [theme.breakpoints.up('md')]: {
+    display: 'none',
+  },
+}))
+
+const MobileHeaderInner = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: theme.spacing(1.5, 2),
+}))
+
+const MobileLogoutButton = styled(Button)({
+  minWidth: 0,
+  paddingLeft: 8,
+  paddingRight: 8,
+})
+
+const StyledLogoutIcon = styled(LogoutIcon)({
+  fontSize: 16,
+})
+
+const MobileNav = styled('nav')(({ theme }) => ({
+  display: 'flex',
+  gap: theme.spacing(0.5),
+  overflowX: 'auto',
+  borderBottom: '1px solid',
+  borderColor: theme.palette.divider,
+  padding: theme.spacing(1),
+  [theme.breakpoints.up('md')]: {
+    display: 'none',
+  },
+}))
+
+const SidebarRouterLink = styled(NavLink)({
+  textDecoration: 'none',
+  color: 'inherit',
+  display: 'block',
+})
+
+const MobileRouterLink = styled(NavLink)({
+  textDecoration: 'none',
+  color: 'inherit',
+  flex: 1,
+  minWidth: 0,
+})
+
+const SidebarNavButton = styled(ListItemButton)(({ theme }) => ({
+  borderRadius: theme.shape.borderRadius,
+  gap: theme.spacing(1),
+  padding: theme.spacing(1, 1.5),
+}))
+
+const MobileNavButton = styled(ListItemButton)(({ theme }) => ({
+  flex: 1,
+  borderRadius: theme.shape.borderRadius,
+  gap: theme.spacing(0.75),
+  padding: theme.spacing(0.75, 1),
+  color: theme.palette.text.secondary,
+  '&.Mui-selected': {
+    color: theme.palette.text.primary,
+  },
+}))
+
+const DisabledMobileNavButton = styled(ListItemButton)(({ theme }) => ({
+  flex: 1,
+  borderRadius: theme.shape.borderRadius,
+  gap: theme.spacing(0.75),
+  padding: theme.spacing(0.75, 1),
+  opacity: 0.5,
+  color: theme.palette.text.secondary,
+}))
+
+const NavIconSlot = styled('span')({
+  display: 'inline-flex',
+  flexShrink: 0,
+  fontSize: 16,
+  '& .MuiSvgIcon-root': {
+    fontSize: 16,
+  },
+})
+
+const Sidebar = styled('aside')(({ theme }) => ({
+  display: 'none',
+  width: 224,
+  flexDirection: 'column',
+  borderRight: '1px solid',
+  borderColor: theme.palette.divider,
+  backgroundColor: theme.palette.background.paper,
+  padding: theme.spacing(2),
+  [theme.breakpoints.up('md')]: {
+    display: 'flex',
+  },
+}))
+
+const SidebarNavList = styled(Box)(({ theme }) => ({
+  marginTop: theme.spacing(3),
+  marginBottom: theme.spacing(2),
+  display: 'flex',
+  flex: 1,
+  flexDirection: 'column',
+  gap: theme.spacing(0.5),
+}))
+
+const DisabledSidebarNavButton = styled(ListItemButton)(({ theme }) => ({
+  borderRadius: theme.shape.borderRadius,
+  gap: theme.spacing(1),
+  padding: theme.spacing(1, 1.5),
+  justifyContent: 'flex-start',
+  opacity: 0.5,
+  color: theme.palette.text.secondary,
+}))
+
+const SidebarFooter = styled(Box)(({ theme }) => ({
+  marginTop: 'auto',
+  paddingTop: theme.spacing(2),
+}))
+
+const SidebarLogoutButton = styled(Button)({
+  justifyContent: 'flex-start',
+})
+
+const MainColumn = styled(Box)({
+  display: 'flex',
+  minHeight: 0,
+  flex: 1,
+  flexDirection: 'column',
+})
+
+const MainContent = styled('main')(({ theme }) => ({
+  flex: 1,
+  overflow: 'auto',
+  padding: theme.spacing(3),
+}))
+
+const MainInner = styled(Box)({
+  marginLeft: 'auto',
+  marginRight: 'auto',
+  width: '100%',
+  maxWidth: 1024,
+})
+
 function ShellBrand({ compact = false }: { compact?: boolean }) {
-  return (
-    <BrandHeader compact={compact} horizontal={compact} />
-  )
+  return <BrandHeader compact={compact} horizontal={compact} />
 }
 
 function SidebarNavLink({
@@ -71,30 +224,20 @@ function SidebarNavLink({
 }: {
   to: string
   label: string
-  icon: LucideIcon
+  icon: SvgIconComponent
   end: boolean
 }) {
   return (
-    <NavLink
-      to={to}
-      end={end}
-      style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
-    >
+    <SidebarRouterLink to={to} end={end}>
       {({ isActive }) => (
-        <ListItemButton
-          selected={isActive}
-          sx={{
-            borderRadius: 1,
-            gap: 1,
-            px: 1.5,
-            py: 1,
-          }}
-        >
-          <Icon size={16} aria-hidden style={{ flexShrink: 0 }} />
+        <SidebarNavButton selected={isActive}>
+          <NavIconSlot>
+            <Icon aria-hidden />
+          </NavIconSlot>
           <Typography variant="body2">{label}</Typography>
-        </ListItemButton>
+        </SidebarNavButton>
       )}
-    </NavLink>
+    </SidebarRouterLink>
   )
 }
 
@@ -106,34 +249,22 @@ function MobileNavLink({
 }: {
   to: string
   label: string
-  icon: LucideIcon
+  icon: SvgIconComponent
   end: boolean
 }) {
   return (
-    <NavLink
-      to={to}
-      end={end}
-      style={{ textDecoration: 'none', color: 'inherit', flex: 1, minWidth: 0 }}
-    >
+    <MobileRouterLink to={to} end={end}>
       {({ isActive }) => (
-        <ListItemButton
-          selected={isActive}
-          sx={{
-            flex: 1,
-            borderRadius: 1,
-            gap: 0.75,
-            px: 1,
-            py: 0.75,
-            color: isActive ? 'text.primary' : 'text.secondary',
-          }}
-        >
-          <Icon size={16} aria-hidden style={{ flexShrink: 0 }} />
+        <MobileNavButton selected={isActive}>
+          <NavIconSlot>
+            <Icon aria-hidden />
+          </NavIconSlot>
           <Typography variant="body2" noWrap>
             {label}
           </Typography>
-        </ListItemButton>
+        </MobileNavButton>
       )}
-    </NavLink>
+    </MobileRouterLink>
   )
 }
 
@@ -152,79 +283,35 @@ export function AppShell() {
   )
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        minHeight: '100svh',
-        flexDirection: { xs: 'column', md: 'row' },
-      }}
-    >
-      <Box
-        component="header"
-        sx={{
-          display: { xs: 'block', md: 'none' },
-          borderBottom: 1,
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            px: 2,
-            py: 1.5,
-          }}
-        >
+    <ShellRoot>
+      <MobileHeader>
+        <MobileHeaderInner>
           <ShellBrand compact />
-          <Button
+          <MobileLogoutButton
             type="button"
             variant="text"
             size="small"
             onClick={() => void handleLogout()}
-            sx={{ minWidth: 0, px: 1 }}
           >
-            <LogOut size={16} aria-hidden />
-          </Button>
-        </Box>
-      </Box>
+            <StyledLogoutIcon aria-hidden />
+          </MobileLogoutButton>
+        </MobileHeaderInner>
+      </MobileHeader>
 
-      <Box
-        component="nav"
-        sx={{
-          display: { xs: 'flex', md: 'none' },
-          gap: 0.5,
-          overflowX: 'auto',
-          borderBottom: 1,
-          borderColor: 'divider',
-          px: 1,
-          py: 1,
-        }}
-      >
+      <MobileNav>
         {visibleNavItems.map((item) => {
           const disabled = item.requiresAccount && !hasAccount
 
           if (disabled) {
             return (
-              <ListItemButton
-                key={item.to}
-                disabled
-                sx={{
-                  flex: 1,
-                  borderRadius: 1,
-                  gap: 0.75,
-                  px: 1,
-                  py: 0.75,
-                  opacity: 0.5,
-                  color: 'text.secondary',
-                }}
-              >
-                <item.icon size={16} aria-hidden style={{ flexShrink: 0 }} />
+              <DisabledMobileNavButton key={item.to} disabled>
+                <NavIconSlot>
+                  <item.icon aria-hidden />
+                </NavIconSlot>
                 <Typography variant="body2" noWrap>
                   {item.label}
                 </Typography>
-              </ListItemButton>
+              </DisabledMobileNavButton>
             )
           }
 
@@ -238,44 +325,25 @@ export function AppShell() {
             />
           )
         })}
-      </Box>
-      <Box
-        component="aside"
-        sx={{
-          display: { xs: 'none', md: 'flex' },
-          width: 224,
-          flexDirection: 'column',
-          borderRight: 1,
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
-          p: 2,
-        }}
-      >
+      </MobileNav>
+
+      <Sidebar>
         <ShellBrand compact />
-        <Box sx={{ mb: 2, mt: 3, display: 'flex', flex: 1, flexDirection: 'column', gap: 0.5 }}>
+        <SidebarNavList>
           {visibleNavItems.map((item) => {
             const disabled = item.requiresAccount && !hasAccount
 
             if (disabled) {
               return (
-                <ListItemButton
-                  key={item.to}
-                  disabled
-                  sx={{
-                    borderRadius: 1,
-                    gap: 1,
-                    px: 1.5,
-                    py: 1,
-                    justifyContent: 'flex-start',
-                    opacity: 0.5,
-                    color: 'text.secondary',
-                  }}
-                >
-                  <item.icon size={16} aria-hidden style={{ flexShrink: 0 }} />
+                <DisabledSidebarNavButton key={item.to} disabled>
+                  <NavIconSlot>
+                    <item.icon aria-hidden />
+                  </NavIconSlot>
                   <Typography variant="body2">{item.label}</Typography>
-                </ListItemButton>
+                </DisabledSidebarNavButton>
               )
             }
+
             return (
               <SidebarNavLink
                 key={item.to}
@@ -286,29 +354,29 @@ export function AppShell() {
               />
             )
           })}
-        </Box>
-        <Box sx={{ mt: 'auto', pt: 2 }}>
-          <Button
+        </SidebarNavList>
+        <SidebarFooter>
+          <SidebarLogoutButton
             type="button"
             variant="text"
             fullWidth
             onClick={() => void handleLogout()}
-            startIcon={<LogOut size={16} aria-hidden />}
-            sx={{ justifyContent: 'flex-start' }}
+            startIcon={<StyledLogoutIcon aria-hidden />}
           >
             Sign out
-          </Button>
-        </Box>
-      </Box>
-      <Box sx={{ display: 'flex', minHeight: 0, flex: 1, flexDirection: 'column' }}>
-        <Box component="main" sx={{ flex: 1, overflow: 'auto', p: 3 }}>
+          </SidebarLogoutButton>
+        </SidebarFooter>
+      </Sidebar>
+
+      <MainColumn>
+        <MainContent>
           <BreadcrumbProvider>
-            <Box sx={{ mx: 'auto', width: '100%', maxWidth: 1024 }}>
+            <MainInner>
               <Outlet />
-            </Box>
+            </MainInner>
           </BreadcrumbProvider>
-        </Box>
-      </Box>
-    </Box>
+        </MainContent>
+      </MainColumn>
+    </ShellRoot>
   )
 }

@@ -10,9 +10,14 @@ import {
   Typography,
 } from '@mui/material'
 import { styled } from '@mui/material/styles'
-import { type FormEvent, useEffect, useState } from 'react'
-import { StatusAlert } from '@/components/StatusAlert'
+import { yupResolver } from '@hookform/resolvers/yup'
+import { useEffect } from 'react'
+import { Controller, useForm } from 'react-hook-form'
 import { useNotification } from '@/context/NotificationContext'
+import {
+  type PrizeSpinWidgetSettingsFormValues,
+  prizeSpinWidgetSettingsFormSchema,
+} from '@/lib/prize-spin-validation'
 import {
   usePatchPrizeSpinWidget,
   usePrizeSpinWidget,
@@ -22,6 +27,11 @@ type PrizeSpinWidgetSettingsDialogProps = {
   accountId: number
   open: boolean
   onClose: () => void
+}
+
+const defaultValues: PrizeSpinWidgetSettingsFormValues = {
+  width: 500,
+  height: 500,
 }
 
 const StyledLoadingText = styled(Typography)(({ theme }) => ({
@@ -51,9 +61,6 @@ export const PrizeSpinWidgetSettingsDialog = (
   props: PrizeSpinWidgetSettingsDialogProps,
 ) => {
   const { showSuccess, showError } = useNotification()
-  const [width, setWidth] = useState('500')
-  const [height, setHeight] = useState('500')
-  const [validationError, setValidationError] = useState<string | null>(null)
 
   const {
     data: widgetSettings,
@@ -63,70 +70,60 @@ export const PrizeSpinWidgetSettingsDialog = (
 
   const patchMutation = usePatchPrizeSpinWidget(props.accountId)
 
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { isValid },
+  } = useForm({
+    defaultValues,
+    resolver: yupResolver(prizeSpinWidgetSettingsFormSchema),
+    mode: 'onChange',
+  })
+
   useEffect(() => {
     if (props.open && widgetSettings) {
-      setWidth(String(widgetSettings.width))
-      setHeight(String(widgetSettings.height))
+      reset({
+        width: widgetSettings.width,
+        height: widgetSettings.height,
+      })
     }
-  }, [props.open, widgetSettings])
+  }, [props.open, widgetSettings, reset])
 
   useEffect(() => {
-    if (!loadError) {
-      return
+    if (loadError) {
+      showError('Could not load widget settings.')
     }
-
-    showError(
-      loadError instanceof Error
-        ? loadError.message
-        : 'Could not load widget settings',
-    )
   }, [loadError, showError])
 
   const handleClose = () => {
     props.onClose()
-    setValidationError(null)
+    reset(
+      widgetSettings
+        ? { width: widgetSettings.width, height: widgetSettings.height }
+        : defaultValues,
+    )
 
     if (!patchMutation.isPending) {
       patchMutation.reset()
     }
   }
 
-  const handleSave = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-
-    const parsedWidth = Number.parseInt(width, 10)
-    const parsedHeight = Number.parseInt(height, 10)
-
-    if (!Number.isFinite(parsedWidth) || parsedWidth < 200 || parsedWidth > 2400) {
-      setValidationError('Width must be between 200 and 2400 px.')
-      return
-    }
-
-    if (!Number.isFinite(parsedHeight) || parsedHeight < 200 || parsedHeight > 2400) {
-      setValidationError('Height must be between 200 and 2400 px.')
-      return
-    }
-
-    setValidationError(null)
-
+  const onSubmit = handleSubmit((values) => {
     patchMutation.mutate(
-      { width: parsedWidth, height: parsedHeight },
+      { width: values.width, height: values.height },
       {
         onSuccess: () => {
-          showSuccess('Widget settings saved')
+          showSuccess('Widget settings saved.')
           handleClose()
           patchMutation.reset()
         },
-        onError: (error) => {
-          showError(
-            error instanceof Error
-              ? error.message
-              : 'Could not save widget settings',
-          )
+        onError: () => {
+          showError('Could not save widget settings.')
         },
       },
     )
-  }
+  })
 
   return (
     <Dialog open={props.open} onClose={handleClose} maxWidth="xs" fullWidth>
@@ -138,34 +135,59 @@ export const PrizeSpinWidgetSettingsDialog = (
           <Box
             component="form"
             id="prize-spin-widget-settings-form"
-            onSubmit={handleSave}
+            onSubmit={onSubmit}
           >
             <StyledFormStack>
-              <StyledSizeField
-                label="Width"
-                type="number"
-                value={width}
-                onChange={(event) => setWidth(event.target.value)}
-                slotProps={{
-                  htmlInput: { min: 200, max: 2400, step: 1 },
-                }}
-                fullWidth
-                size="small"
+              <Controller
+                name="width"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <StyledSizeField
+                    {...field}
+                    label="Width"
+                    type="number"
+                    value={field.value}
+                    onChange={(event) => {
+                      const value = event.target.value
+                      field.onChange(
+                        value === '' ? Number.NaN : Number.parseInt(value, 10),
+                      )
+                    }}
+                    error={Boolean(fieldState.error)}
+                    helperText={fieldState.error?.message}
+                    slotProps={{
+                      htmlInput: { min: 200, max: 2400, step: 1 },
+                    }}
+                    fullWidth
+                    size="small"
+                  />
+                )}
               />
-              <StyledSizeField
-                label="Height"
-                type="number"
-                value={height}
-                onChange={(event) => setHeight(event.target.value)}
-                slotProps={{
-                  htmlInput: { min: 200, max: 2400, step: 1 },
-                }}
-                fullWidth
-                size="small"
+              <Controller
+                name="height"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <StyledSizeField
+                    {...field}
+                    label="Height"
+                    type="number"
+                    value={field.value}
+                    onChange={(event) => {
+                      const value = event.target.value
+                      field.onChange(
+                        value === '' ? Number.NaN : Number.parseInt(value, 10),
+                      )
+                    }}
+                    error={Boolean(fieldState.error)}
+                    helperText={fieldState.error?.message}
+                    slotProps={{
+                      htmlInput: { min: 200, max: 2400, step: 1 },
+                    }}
+                    fullWidth
+                    size="small"
+                  />
+                )}
               />
-              {validationError ? (
-                <StatusAlert tone="error">{validationError}</StatusAlert>
-              ) : null}
             </StyledFormStack>
           </Box>
         )}
@@ -180,7 +202,7 @@ export const PrizeSpinWidgetSettingsDialog = (
           variant="contained"
           loading={patchMutation.isPending}
           loadingPosition="start"
-          disabled={isLoading}
+          disabled={isLoading || !isValid}
         >
           Save
         </Button>

@@ -1,7 +1,9 @@
+import type { SvgIconComponent } from '@mui/icons-material'
 import Box from '@mui/material/Box'
 import { alpha, useTheme, type Theme } from '@mui/material/styles'
-import type { LucideIcon } from 'lucide-react'
 import { colors } from '@/theme/colors'
+
+export type TileIcon = SvgIconComponent
 
 export type IconTileVariant =
   | 'primary'
@@ -14,7 +16,7 @@ export type IconTileVariant =
   | 'muted'
 
 type IconTileProps = {
-  icon: LucideIcon
+  icon: TileIcon
   variant?: IconTileVariant
   size?: 'sm' | 'md' | 'lg'
   className?: string
@@ -96,7 +98,7 @@ export function IconTile({
         color: variantColors.color,
       }}
     >
-      <Icon size={sizes.icon} aria-hidden />
+      <Icon sx={{ fontSize: sizes.icon }} aria-hidden />
     </Box>
   )
 }

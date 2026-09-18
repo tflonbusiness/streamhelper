@@ -14,7 +14,10 @@ import {
   Typography,
 } from '@mui/material'
 import { useTheme, alpha, type Theme } from '@mui/material/styles'
-import { Link2, UserPlus, Users, UserX } from 'lucide-react'
+import GroupIcon from '@mui/icons-material/Group'
+import LinkIcon from '@mui/icons-material/Link'
+import PersonAddIcon from '@mui/icons-material/PersonAdd'
+import PersonRemoveIcon from '@mui/icons-material/PersonRemove'
 import type { RowAction } from '@/components/RowActionsMenu'
 import { type FormEvent, useState } from 'react'
 import { type AccountMember } from '@/api/auth'
@@ -177,7 +180,7 @@ export function TeamPage() {
         id: 'copy-link',
         label:
           copyingMemberId === member.userId ? 'Copying…' : 'Copy link',
-        icon: <Link2 size={16} aria-hidden />,
+        icon: <LinkIcon fontSize="small" aria-hidden />,
         disabled: copyingMemberId === member.userId,
         onClick: () => void handleCopyInviteLink(member),
       })
@@ -186,7 +189,7 @@ export function TeamPage() {
     actions.push({
       id: 'revoke',
       label: 'Revoke',
-      icon: <UserX size={16} aria-hidden />,
+      icon: <PersonRemoveIcon fontSize="small" aria-hidden />,
       destructive: true,
       onClick: () => void handleRevokeModerator(member),
     })
@@ -251,7 +254,7 @@ export function TeamPage() {
       <PageHeader
         title="Team"
         description="Invite moderators and manage access"
-        icon={Users}
+        icon={GroupIcon}
         iconVariant="info"
       />
       <Card elevation={0} sx={cardSx}>
@@ -275,7 +278,7 @@ export function TeamPage() {
                   color: theme.palette.info.light,
                 }}
               >
-                <Users size={20} aria-hidden />
+                <GroupIcon sx={{ fontSize: 20 }} aria-hidden />
               </Box>
               <Stack spacing={0.5}>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -290,7 +293,7 @@ export function TeamPage() {
               <Button
                 type="button"
                 variant="contained"
-                startIcon={<UserPlus size={16} aria-hidden />}
+                startIcon={<PersonAddIcon fontSize="small" aria-hidden />}
                 onClick={() => setCreateDialogOpen(true)}
               >
                 Add

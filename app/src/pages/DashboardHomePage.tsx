@@ -1,5 +1,5 @@
 import { Stack } from '@mui/material'
-import { LayoutDashboard } from 'lucide-react'
+import DashboardIcon from '@mui/icons-material/Dashboard'
 import { DashboardTariffCard } from '@/components/DashboardTariffCard'
 import { DashboardWelcomeBanner } from '@/components/DashboardWelcomeBanner'
 import { KickChannelStatsSection } from '@/components/KickChannelStatsSection'
@@ -15,7 +15,7 @@ export function DashboardHomePage() {
       <PageHeader
         title="Home"
         description="Team overview and activity"
-        icon={LayoutDashboard}
+        icon={DashboardIcon}
         iconVariant="primary"
       />
 

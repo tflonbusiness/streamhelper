@@ -14,7 +14,7 @@ import { useArchivePrizeSpin } from '@/queries/use-prize-spins'
 type PrizeSpinArchiveDialogProps = {
   accountId: number
   open: boolean
-  record: PrizeSpinRecord | null
+  record?: PrizeSpinRecord | null
   onClose: () => void
   onArchived?: () => void
 }
@@ -43,6 +43,7 @@ export const PrizeSpinArchiveDialog = (props: PrizeSpinArchiveDialogProps) => {
 
   const handleArchive = () => {
     if (!props.record) {
+      showError('No session to archive.')
       return
     }
 
@@ -53,11 +54,7 @@ export const PrizeSpinArchiveDialog = (props: PrizeSpinArchiveDialogProps) => {
         handleClose()
         archiveMutation.reset()
       },
-      onError: (error) => {
-        showError(
-          error instanceof Error ? error.message : 'Could not archive session',
-        )
-      },
+      onError: () => showError('Could not archive session.'),
     })
   }
 
@@ -71,7 +68,7 @@ export const PrizeSpinArchiveDialog = (props: PrizeSpinArchiveDialogProps) => {
       <DialogTitle>Archive Session?</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
-          {props.record?.title} will be removed from the active list. Archived
+          <b>{props.record?.title}</b> will be removed from the active list. Archived
           sessions can be opened for review but not edited.
         </StyledDescription>
       </DialogContent>

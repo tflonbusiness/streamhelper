@@ -3,15 +3,13 @@ import Breadcrumbs from '@mui/material/Breadcrumbs'
 import Link from '@mui/material/Link'
 import Typography from '@mui/material/Typography'
 import { alpha, useTheme } from '@mui/material/styles'
-import {
-  ChevronRight,
-  CreditCard,
-  Gift,
-  LayoutDashboard,
-  Puzzle,
-  Users,
-  type LucideIcon,
-} from 'lucide-react'
+import type { SvgIconComponent } from '@mui/icons-material'
+import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import CreditCardIcon from '@mui/icons-material/CreditCard'
+import DashboardIcon from '@mui/icons-material/Dashboard'
+import ExtensionIcon from '@mui/icons-material/Extension'
+import GroupIcon from '@mui/icons-material/Group'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { IconTile } from '@/components/IconTile'
 import { useBreadcrumbDynamicLabel } from '@/context/BreadcrumbContext'
@@ -21,18 +19,18 @@ import { cardSx, colors } from '@/theme/colors'
 
 const ICON_TILE_HEIGHT = 40
 
-const breadcrumbIcons: Record<string, LucideIcon> = {
-  Home: LayoutDashboard,
-  Team: Users,
-  Modules: Puzzle,
-  Subscription: CreditCard,
-  'Bonus Buy': Gift,
+const breadcrumbIcons: Record<string, SvgIconComponent> = {
+  Home: DashboardIcon,
+  Team: GroupIcon,
+  Modules: ExtensionIcon,
+  Subscription: CreditCardIcon,
+  'Bonus Buy': CardGiftcardIcon,
 }
 
 type PageHeaderProps = {
   title: string
   description?: string
-  icon?: LucideIcon
+  icon?: SvgIconComponent
   iconVariant?: ModuleIconVariant
   action?: React.ReactNode
   showBreadcrumbs?: boolean
@@ -53,10 +51,9 @@ function PageHeaderBreadcrumbs() {
     <Breadcrumbs
       aria-label="Breadcrumb"
       separator={
-        <ChevronRight
-          size={13}
+        <ChevronRightIcon
+          sx={{ fontSize: 13, color: alpha(colors.neutral[400], 0.55) }}
           aria-hidden
-          color={alpha(colors.neutral[400], 0.55)}
         />
       }
       sx={{
@@ -93,7 +90,7 @@ function PageHeaderBreadcrumbs() {
                 borderColor: alpha(theme.palette.text.primary, 0.06),
               }}
             >
-              {Icon ? <Icon size={12} aria-hidden style={{ flexShrink: 0, opacity: 0.8 }} /> : null}
+              {Icon ? <Icon sx={{ fontSize: 12, flexShrink: 0, opacity: 0.8 }} aria-hidden /> : null}
               <Typography
                 variant="caption"
                 color="text.secondary"
@@ -137,7 +134,7 @@ function PageHeaderBreadcrumbs() {
               },
             }}
           >
-            {Icon ? <Icon size={12} aria-hidden style={{ flexShrink: 0 }} /> : null}
+            {Icon ? <Icon sx={{ fontSize: 12, flexShrink: 0 }} aria-hidden /> : null}
             {item.label}
           </Link>
         )

@@ -4,7 +4,11 @@ import CardContent from '@mui/material/CardContent'
 import Link from '@mui/material/Link'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
-import { Eye, ExternalLink, Gift, Radio, Users } from 'lucide-react'
+import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
+import GroupIcon from '@mui/icons-material/Group'
+import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+import PodcastsIcon from '@mui/icons-material/Podcasts'
+import VisibilityIcon from '@mui/icons-material/Visibility'
 import { KickChannelNotFoundError } from '@/api/kick-channel'
 import { SectionHeader } from '@/components/PageHeader'
 import { StatCard } from '@/components/StatCard'
@@ -83,7 +87,7 @@ export function KickChannelStatsSection({
               value={channel.isLive ? 'Live' : 'Offline'}
               label="Stream status"
               subtext={channel.streamTitle ?? channel.slug}
-              icon={Radio}
+              icon={PodcastsIcon}
               variant={channel.isLive ? 'success' : 'muted'}
               highlight={channel.isLive}
             />
@@ -95,7 +99,7 @@ export function KickChannelStatsSection({
               }
               label="Viewers"
               subtext={viewerSubtext}
-              icon={Eye}
+              icon={VisibilityIcon}
               variant="info"
             />
             <StatCard
@@ -105,7 +109,7 @@ export function KickChannelStatsSection({
                   : '—'
               }
               label="Subscribers"
-              icon={Users}
+              icon={GroupIcon}
               variant="purple"
             />
             <StatCard
@@ -116,7 +120,7 @@ export function KickChannelStatsSection({
               }
               label="Gifted"
               subtext="gifted subs"
-              icon={Gift}
+              icon={CardGiftcardIcon}
               variant="warning"
             />
           </>
@@ -138,7 +142,7 @@ export function KickChannelStatsSection({
           }}
         >
           kick.com/{channel.slug}
-          <ExternalLink size={14} aria-hidden />
+          <OpenInNewIcon sx={{ fontSize: 14 }} aria-hidden />
         </Link>
       ) : null}
     </Box>

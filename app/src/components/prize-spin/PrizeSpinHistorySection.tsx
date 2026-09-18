@@ -6,11 +6,11 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  Skeleton,
   Stack,
 } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
-import { Plus, RotateCw } from 'lucide-react'
+import AddIcon from '@mui/icons-material/Add'
+import HistoryIcon from '@mui/icons-material/History'
+import { styled, useTheme } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
 import {
   isPrizeSpinLive,
@@ -28,22 +28,49 @@ import {
 } from '@/components/prize-spin/prize-spin-page-utils'
 import { buildPrizeSpinRecordColumns } from '@/components/prize-spin/prizeSpinRecordColumns'
 import { SectionHeader } from '@/components/SectionHeader'
-import { StatusAlert } from '@/components/StatusAlert'
 import { useNotification } from '@/context/NotificationContext'
 import {
   useDeactivatePrizeSpin,
   useGoLivePrizeSpin,
   usePrizeSpins,
 } from '@/queries/use-prize-spins'
-import { cardSx, inputFieldSx } from '@/theme/colors'
 
 type PrizeSpinHistorySectionProps = {
-  accountId?: number
+  accountId: number
 }
 
-export function PrizeSpinHistorySection({
+const StyledCard = styled(Card)(({ theme }) => ({
+  backgroundColor: theme.palette.background.paper,
+  border: '1px solid',
+  borderColor: theme.palette.divider,
+  borderRadius: theme.spacing(1),
+  boxShadow: 'none',
+}))
+
+const StyledCardContent = styled(CardContent)(({ theme }) => ({
+  padding: theme.spacing(3),
+  '&:last-child': {
+    paddingBottom: theme.spacing(3),
+  },
+}))
+
+const StyledContentStack = styled(Stack)(({ theme }) => ({
+  gap: theme.spacing(2),
+}))
+
+const StyledFilterFormControl = styled(FormControl)({
+  minWidth: 140,
+})
+
+const StyledFilterSelect = styled(Select)(({ theme }) => ({
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: theme.palette.background.default,
+  },
+}))
+
+export const PrizeSpinHistorySection = ({
   accountId,
-}: PrizeSpinHistorySectionProps) {
+}: PrizeSpinHistorySectionProps) => {
   const theme = useTheme()
   const { showSuccess, showError } = useNotification()
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
@@ -56,17 +83,16 @@ export function PrizeSpinHistorySection({
     useState<PrizeSpinArchivedFilter>('false')
   const [recordsPage, setRecordsPage] = useState(1)
 
-  const listParams = {
-    archived: archivedFilter,
-    page: recordsPage,
-    limit: PRIZE_SPIN_HISTORY_PAGE_SIZE,
-  }
-
   const {
     data: recordsResult,
     isLoading: loadingRecords,
+    isFetching: fetchingRecords,
     error: recordsQueryError,
-  } = usePrizeSpins(accountId, listParams)
+  } = usePrizeSpins(accountId, {
+    archived: archivedFilter,
+    page: recordsPage,
+    limit: PRIZE_SPIN_HISTORY_PAGE_SIZE,
+  });
 
   const goLiveMutation = useGoLivePrizeSpin(accountId)
   const deactivateMutation = useDeactivatePrizeSpin(accountId)
@@ -76,12 +102,6 @@ export function PrizeSpinHistorySection({
     typeof recordsResult?.total === 'number'
       ? recordsResult.total
       : records.length
-  const recordsError =
-    recordsQueryError instanceof Error
-      ? recordsQueryError.message
-      : recordsQueryError
-        ? 'Could not load prize spin history'
-        : null
 
   const liveActionRecordId =
     goLiveMutation.isPending
@@ -89,6 +109,14 @@ export function PrizeSpinHistorySection({
       : deactivateMutation.isPending
         ? deactivateMutation.variables
         : null
+
+  useEffect(() => {
+    if (!recordsQueryError) {
+      return
+    }
+
+    showError('Could not load prize spin history.')
+  }, [recordsQueryError, showError])
 
   useEffect(() => {
     if (
@@ -101,11 +129,7 @@ export function PrizeSpinHistorySection({
     }
   }, [recordsResult, recordsPage])
 
-  function handleGoLive(record: PrizeSpinRecord) {
-    if (!accountId) {
-      return
-    }
-
+  const handleGoLive = (record: PrizeSpinRecord) => {
     goLiveMutation.reset()
     deactivateMutation.reset()
     goLiveMutation.mutate(record.id, {
@@ -118,11 +142,7 @@ export function PrizeSpinHistorySection({
     })
   }
 
-  function handleDeactivate(record: PrizeSpinRecord) {
-    if (!accountId) {
-      return
-    }
-
+  const handleDeactivate = (record: PrizeSpinRecord) => {
     goLiveMutation.reset()
     deactivateMutation.reset()
     deactivateMutation.mutate(record.id, {
@@ -135,11 +155,10 @@ export function PrizeSpinHistorySection({
     })
   }
 
-  function openArchiveDialog(record: PrizeSpinRecord) {
-    setArchiveDialogRecord(record)
-  }
+  const openArchiveDialog = (record: PrizeSpinRecord) => setArchiveDialogRecord(record);
+  
 
-  function toggleRecordExpanded(recordId: number) {
+  const toggleRecordExpanded = (recordId: number) => {
     setExpandedRecordIds((previous) => {
       const next = new Set(previous)
       if (next.has(recordId)) {
@@ -152,7 +171,6 @@ export function PrizeSpinHistorySection({
   }
 
   const recordColumns = buildPrizeSpinRecordColumns({
-    theme,
     liveActionRecordId,
     onGoLive: handleGoLive,
     onDeactivate: handleDeactivate,
@@ -161,112 +179,91 @@ export function PrizeSpinHistorySection({
 
   return (
     <>
-      <Card elevation={0} sx={cardSx}>
-        <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
+      <StyledCard elevation={0}>
+        <StyledCardContent>
           <SectionHeader
             title="History"
             description="Prize spin sessions for this account"
-            icon={RotateCw}
+            icon={HistoryIcon}
             iconVariant="secondary"
             action={
-              accountId ? (
-                <Button
-                  type="button"
-                  variant="contained"
-                  startIcon={<Plus size={16} aria-hidden />}
-                  onClick={() => setCreateDialogOpen(true)}
-                >
-                  New
-                </Button>
-              ) : null
+              <Button
+                type="button"
+                variant="contained"
+                startIcon={<AddIcon fontSize="small" />}
+                onClick={() => setCreateDialogOpen(true)}
+              >
+                New
+              </Button>
             }
           />
-
-          <Stack spacing={2}>
-            {loadingRecords ? (
-              <Stack spacing={1.5}>
-                <Skeleton variant="rounded" height={40} />
-                <Skeleton variant="rounded" height={40} />
-                <Skeleton variant="rounded" height={40} />
-              </Stack>
-            ) : null}
-            {recordsError ? (
-              <StatusAlert tone="error">{recordsError}</StatusAlert>
-            ) : null}
-            {!loadingRecords && !recordsError ? (
-              <AppTable
-                columns={recordColumns}
-                rows={records}
-                getRowKey={(record) => record.id}
-                emptyMessage={historyEmptyMessage(archivedFilter)}
-                toolbar={
-                  <FormControl size="small" sx={{ minWidth: 140 }}>
-                    <InputLabel id="prize-spin-archived-filter-label">
-                      Show
-                    </InputLabel>
-                    <Select
-                      labelId="prize-spin-archived-filter-label"
-                      label="Show"
-                      value={archivedFilter}
-                      onChange={(event) => {
-                        setArchivedFilter(
-                          event.target.value as PrizeSpinArchivedFilter,
-                        )
-                        setRecordsPage(1)
-                      }}
-                      sx={inputFieldSx}
-                    >
-                      <MenuItem value="false">Active</MenuItem>
-                      <MenuItem value="true">Archived</MenuItem>
-                      <MenuItem value="all">All</MenuItem>
-                    </Select>
-                  </FormControl>
-                }
-                getRowSx={(record) =>
-                  isPrizeSpinLive(record)
-                    ? liveSessionRowSx(theme)
-                    : undefined
-                }
-                pagination={{
-                  count: recordsTotal,
-                  page: recordsPage,
-                  onPageChange: setRecordsPage,
-                  rowsPerPage: PRIZE_SPIN_HISTORY_PAGE_SIZE,
-                }}
-                expandable={{
-                  isExpanded: (record) => expandedRecordIds.has(record.id),
-                  onToggle: (record) => toggleRecordExpanded(record.id),
-                  ariaLabel: (record) =>
-                    expandedRecordIds.has(record.id)
-                      ? `Collapse details for ${record.title}`
-                      : `Expand details for ${record.title}`,
-                  renderDetail: (record) => (
-                    <PrizeSpinRecordExpandedDetails record={record} />
-                  ),
-                }}
-              />
-            ) : null}
-          </Stack>
-        </CardContent>
-      </Card>
-
-      {accountId !== undefined ? (
-        <PrizeSpinArchiveDialog
-          accountId={accountId}
-          open={archiveDialogRecord !== null}
-          record={archiveDialogRecord}
-          onClose={() => setArchiveDialogRecord(null)}
-        />
-      ) : null}
-
-      {accountId !== undefined ? (
-        <PrizeSpinCreateDialog
-          accountId={accountId}
-          open={createDialogOpen}
-          onClose={() => setCreateDialogOpen(false)}
-          onCreated={() => setRecordsPage(1)}
-        />
-      ) : null}
+          <StyledContentStack>
+            <AppTable
+              columns={recordColumns}
+              rows={records}
+              loading={loadingRecords || fetchingRecords}
+              getRowKey={(record) => record.id}
+              emptyMessage={historyEmptyMessage(archivedFilter)}
+              toolbar={
+                <StyledFilterFormControl size="small">
+                  <InputLabel id="prize-spin-archived-filter-label">
+                    Show
+                  </InputLabel>
+                  <StyledFilterSelect
+                    labelId="prize-spin-archived-filter-label"
+                    label="Show"
+                    value={archivedFilter}
+                    onChange={(event) => {
+                      setArchivedFilter(
+                        event.target.value as PrizeSpinArchivedFilter,
+                      )
+                      setRecordsPage(1)
+                    }}
+                  >
+                    <MenuItem value="false">Active</MenuItem>
+                    <MenuItem value="true">Archived</MenuItem>
+                    <MenuItem value="all">All</MenuItem>
+                  </StyledFilterSelect>
+                </StyledFilterFormControl>
+              }
+              getRowSx={(record) =>
+                isPrizeSpinLive(record)
+                  ? liveSessionRowSx(theme)
+                  : undefined
+              }
+              pagination={{
+                count: recordsTotal,
+                page: recordsPage,
+                onPageChange: setRecordsPage,
+                rowsPerPage: PRIZE_SPIN_HISTORY_PAGE_SIZE,
+              }}
+              expandable={{
+                isExpanded: (record) => expandedRecordIds.has(record.id),
+                onToggle: (record) => toggleRecordExpanded(record.id),
+                ariaLabel: (record) =>
+                  expandedRecordIds.has(record.id)
+                    ? `Collapse details for ${record.title}`
+                    : `Expand details for ${record.title}`,
+                renderDetail: (record) => (
+                  <PrizeSpinRecordExpandedDetails record={record} />
+                ),
+              }}
+            />
+          </StyledContentStack>
+        </StyledCardContent>
+      </StyledCard>
+      <PrizeSpinArchiveDialog
+        accountId={accountId}
+        open={!!archiveDialogRecord}
+        record={archiveDialogRecord}
+        onClose={() => setArchiveDialogRecord(null)}
+      />
+      <PrizeSpinCreateDialog
+        accountId={accountId}
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        onCreated={() => setRecordsPage(1)}
+      />
     </>
   )
 }
