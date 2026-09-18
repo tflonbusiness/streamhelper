@@ -1,17 +1,14 @@
+import { useQueryClient } from '@tanstack/react-query'
 import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
   type ReactNode,
 } from 'react'
-import {
-  fetchCurrentUser,
-  logout as logoutRequest,
-  type AuthUser,
-} from '../api/auth'
+import { logout as logoutRequest, type AuthUser } from '../api/auth'
+import { authKeys } from '@/queries/keys'
+import { useCurrentUser } from '@/queries/use-auth'
 
 type AuthContextValue = {
   user: AuthUser | null
@@ -23,24 +20,17 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null)
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
+  const { data: user = null, isLoading: loading } = useCurrentUser()
 
   const refresh = useCallback(async () => {
-    const currentUser = await fetchCurrentUser()
-    setUser(currentUser)
-  }, [])
-
-  useEffect(() => {
-    refresh()
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false))
-  }, [refresh])
+    await queryClient.invalidateQueries({ queryKey: authKeys.currentUser() })
+  }, [queryClient])
 
   const logout = useCallback(async () => {
     await logoutRequest()
-    setUser(null)
-  }, [])
+    queryClient.setQueryData(authKeys.currentUser(), null)
+  }, [queryClient])
 
   const value = useMemo(
     () => ({

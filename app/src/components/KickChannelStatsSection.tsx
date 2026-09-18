@@ -5,15 +5,11 @@ import Link from '@mui/material/Link'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import { Eye, ExternalLink, Gift, Radio, Users } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import {
-  fetchKickChannel,
-  KickChannelNotFoundError,
-  type KickChannelDto,
-} from '@/api/kick-channel'
+import { KickChannelNotFoundError } from '@/api/kick-channel'
 import { SectionHeader } from '@/components/PageHeader'
 import { StatCard } from '@/components/StatCard'
 import { StatusAlert } from '@/components/StatusAlert'
+import { useKickChannel } from '@/queries/use-kick-channel'
 
 type KickChannelStatsSectionProps = {
   accountId: number
@@ -34,51 +30,15 @@ function StatCardSkeleton() {
 export function KickChannelStatsSection({
   accountId,
 }: KickChannelStatsSectionProps) {
-  const [channel, setChannel] = useState<KickChannelDto | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { data: channel, isLoading: loading, error } = useKickChannel(accountId)
 
-  useEffect(() => {
-    let cancelled = false
-
-    async function load() {
-      setLoading(true)
-      setError(null)
-      setNotFound(false)
-      setChannel(null)
-
-      try {
-        const data = await fetchKickChannel(accountId)
-        if (!cancelled) {
-          setChannel(data)
-        }
-      } catch (err) {
-        if (cancelled) {
-          return
-        }
-        if (err instanceof KickChannelNotFoundError) {
-          setNotFound(true)
-          return
-        }
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Could not load Kick channel',
-        )
-      } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
-      }
-    }
-
-    void load()
-
-    return () => {
-      cancelled = true
-    }
-  }, [accountId])
+  const notFound = error instanceof KickChannelNotFoundError
+  const fetchError =
+    error && !notFound
+      ? error instanceof Error
+        ? error.message
+        : 'Could not load Kick channel'
+      : null
 
   const viewerSubtext = channel?.isLive
     ? [channel.categoryName, channel.isMature ? '18+' : null]
@@ -93,8 +53,8 @@ export function KickChannelStatsSection({
         description="Live channel metrics from Kick"
       />
 
-      {error ? (
-        <StatusAlert tone="error">{error}</StatusAlert>
+      {fetchError ? (
+        <StatusAlert tone="error">{fetchError}</StatusAlert>
       ) : null}
 
       {notFound ? (

@@ -1,14 +1,9 @@
 import { Box, CircularProgress, Typography } from '@mui/material'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useParams } from 'react-router-dom'
-import {
-  fetchPublicBonusBuyWidget,
-  type BonusBuyWidgetView,
-} from '@/api/bonus-buy'
 import { BonusBuyWidgetCard } from '@/components/bonus-buy/BonusBuyWidgetCard'
 import { deriveBonusBuyWidgetCardProps } from '@/lib/bonus-buy-widget-presentation'
-
-const WIDGET_POLL_MS = 5000
+import { usePublicBonusBuyWidget } from '@/queries/use-bonus-buy'
 
 function WidgetNotFound({ textMutedColor }: { textMutedColor?: string }) {
   return (
@@ -55,53 +50,12 @@ export function BonusBuyStreamWidgetPage() {
     return Number.isFinite(parsed) ? parsed : null
   }, [id])
 
-  const [view, setView] = useState<BonusBuyWidgetView | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
-
-  const loadView = useCallback(async () => {
-    if (bonusBuyId === null) {
-      setNotFound(true)
-      setLoading(false)
-      return
-    }
-
-    try {
-      const data = await fetchPublicBonusBuyWidget(bonusBuyId)
-      setView(data)
-      setNotFound(false)
-    } catch {
-      setView(null)
-      setNotFound(true)
-    } finally {
-      setLoading(false)
-    }
-  }, [bonusBuyId])
-
-  useEffect(() => {
-    setLoading(true)
-    void loadView()
-  }, [loadView])
-
-  useEffect(() => {
-    if (bonusBuyId === null) {
-      return
-    }
-
-    const interval = window.setInterval(() => {
-      void fetchPublicBonusBuyWidget(bonusBuyId)
-        .then((data) => {
-          setView(data)
-          setNotFound(false)
-        })
-        .catch(() => {
-          setView(null)
-          setNotFound(true)
-        })
-    }, WIDGET_POLL_MS)
-
-    return () => window.clearInterval(interval)
-  }, [bonusBuyId])
+  const {
+    data: view,
+    isLoading,
+    isPending,
+    isError,
+  } = usePublicBonusBuyWidget(bonusBuyId)
 
   const cardProps = useMemo(() => {
     if (!view) {
@@ -115,11 +69,15 @@ export function BonusBuyStreamWidgetPage() {
     )
   }, [view])
 
-  if (loading) {
+  if (bonusBuyId === null) {
+    return <WidgetNotFound />
+  }
+
+  if (isPending && isLoading) {
     return <WidgetLoading />
   }
 
-  if (notFound || !view || !cardProps) {
+  if (isError || !view || !cardProps) {
     return <WidgetNotFound />
   }
 

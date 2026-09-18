@@ -16,20 +16,20 @@ import {
 import { useTheme, alpha, type Theme } from '@mui/material/styles'
 import { Link2, UserPlus, Users, UserX } from 'lucide-react'
 import type { RowAction } from '@/components/RowActionsMenu'
-import { type FormEvent, useCallback, useEffect, useState } from 'react'
-import {
-  createModerator,
-  fetchAccountMembers,
-  fetchModeratorInviteLink,
-  revokeModerator,
-  type AccountMember,
-} from '@/api/auth'
+import { type FormEvent, useState } from 'react'
+import { type AccountMember } from '@/api/auth'
 import { AppTable, type AppTableColumn } from '@/components/AppTable'
 import { PageHeader } from '@/components/PageHeader'
 import { RowActionsMenu } from '@/components/RowActionsMenu'
 import { StatusAlert } from '@/components/StatusAlert'
 import { useAuth } from '@/context/AuthContext'
 import { useNotification } from '@/context/NotificationContext'
+import {
+  useAccountMembers,
+  useCreateModerator,
+  useModeratorInviteLink,
+  useRevokeModerator,
+} from '@/queries/use-team'
 import { cardSx, inputFieldSx, mutedChipSx, toneChipSx } from '@/theme/colors'
 
 function roleBadge(role: AccountMember['role']) {
@@ -74,38 +74,27 @@ export function TeamPage() {
   const theme = useTheme()
   const { user } = useAuth()
   const { showSuccess, showError } = useNotification()
-  const [members, setMembers] = useState<AccountMember[]>([])
-  const [loadingMembers, setLoadingMembers] = useState(true)
-  const [membersError, setMembersError] = useState<string | null>(null)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [moderatorName, setModeratorName] = useState('')
-  const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [copyingMemberId, setCopyingMemberId] = useState<number | null>(null)
 
-  const loadMembers = useCallback(async () => {
-    if (!user?.accountId) {
-      return
-    }
+  const {
+    data: members = [],
+    isLoading: loadingMembers,
+    error: membersQueryError,
+  } = useAccountMembers(user?.accountId)
 
-    setLoadingMembers(true)
-    setMembersError(null)
+  const createMutation = useCreateModerator(user?.accountId)
+  const revokeMutation = useRevokeModerator(user?.accountId)
+  const inviteLinkMutation = useModeratorInviteLink(user?.accountId)
 
-    try {
-      const roster = await fetchAccountMembers(user.accountId)
-      setMembers(roster)
-    } catch (error) {
-      setMembersError(
-        error instanceof Error ? error.message : 'Could not load team',
-      )
-    } finally {
-      setLoadingMembers(false)
-    }
-  }, [user?.accountId])
-
-  useEffect(() => {
-    void loadMembers()
-  }, [loadMembers])
+  const membersError =
+    membersQueryError instanceof Error
+      ? membersQueryError.message
+      : membersQueryError
+        ? 'Could not load team'
+        : null
 
   function resetCreateForm() {
     setModeratorName('')
@@ -125,14 +114,12 @@ export function TeamPage() {
       return
     }
 
-    setIsCreating(true)
     setCreateError(null)
 
     try {
-      await createModerator(user.accountId, moderatorName)
+      await createMutation.mutateAsync(moderatorName)
       setCreateDialogOpen(false)
       resetCreateForm()
-      await loadMembers()
       showSuccess(
         'Copy the link and share it with the moderator.',
       )
@@ -140,8 +127,6 @@ export function TeamPage() {
       setCreateError(
         error instanceof Error ? error.message : 'Could not create moderator',
       )
-    } finally {
-      setIsCreating(false)
     }
   }
 
@@ -153,7 +138,7 @@ export function TeamPage() {
     setCopyingMemberId(member.userId)
 
     try {
-      const joinUrl = await fetchModeratorInviteLink(user.accountId, member.userId)
+      const joinUrl = await inviteLinkMutation.mutateAsync(member.userId)
       await navigator.clipboard.writeText(joinUrl)
       showSuccess(`Link for ${member.name} copied.`)
     } catch (error) {
@@ -171,8 +156,7 @@ export function TeamPage() {
     }
 
     try {
-      await revokeModerator(user.accountId, member.userId)
-      await loadMembers()
+      await revokeMutation.mutateAsync(member.userId)
       showSuccess('Moderator access revoked.')
     } catch (error) {
       showError(
@@ -396,7 +380,7 @@ export function TeamPage() {
             type="button"
             variant="outlined"
             onClick={() => handleCreateDialogChange(false)}
-            disabled={isCreating}
+            disabled={createMutation.isPending}
           >
             Cancel
           </Button>
@@ -404,9 +388,9 @@ export function TeamPage() {
             type="submit"
             form="team-create-moderator-form"
             variant="contained"
-            disabled={isCreating}
+            disabled={createMutation.isPending}
           >
-            {isCreating ? 'Adding…' : 'Add'}
+            {createMutation.isPending ? 'Adding…' : 'Add'}
           </Button>
         </DialogActions>
       </Dialog>

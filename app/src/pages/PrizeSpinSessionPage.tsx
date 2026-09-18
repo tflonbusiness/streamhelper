@@ -17,7 +17,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import StopCircleOutlinedIcon from '@mui/icons-material/StopCircleOutlined'
+import { SquareRounded as SquareRoundedIcon } from '@mui/icons-material'
 import { alpha, useTheme } from '@mui/material/styles'
 import {
   Archive,
@@ -32,24 +32,11 @@ import {
   Trash2,
   UserRound,
 } from 'lucide-react'
-import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
-  createPrizeSpinSector,
-  distributePrizeSpinSectorsEqually,
-  deletePrizeSpinSector,
-  deleteAllPrizeSpinWins,
-  deletePrizeSpinWin,
-  deactivatePrizeSpin,
-  goLivePrizeSpin,
-  fetchPrizeSpin,
-  fetchPrizeSpinSectors,
-  fetchPrizeSpinWins,
-  spinPrizeSpin,
-  updatePrizeSpinSector,
   isPrizeSpinLive,
   isPrizeSpinReadOnly,
-  type PrizeSpinRecord,
   type PrizeSpinSector,
   type PrizeSpinWin,
 } from '@/api/prize-spin'
@@ -62,6 +49,19 @@ import { StatusAlert, type StatusAlertTone } from '@/components/StatusAlert'
 import { useAuth } from '@/context/AuthContext'
 import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
 import { useNotification } from '@/context/NotificationContext'
+import {
+  useArchivePrizeSpinSession,
+  useCreatePrizeSpinSector,
+  useDeactivatePrizeSpinSession,
+  useDeleteAllPrizeSpinWins,
+  useDeletePrizeSpinSector,
+  useDeletePrizeSpinWin,
+  useDistributePrizeSpinSectors,
+  useGoLivePrizeSpinSession,
+  usePrizeSpinSession,
+  useSpinPrizeSpin,
+  useUpdatePrizeSpinSector,
+} from '@/queries/use-prize-spin-session'
 import { defaultSectorColor } from '@/lib/prize-spin-sector-colors'
 import { downloadWinnersXlsx } from '@/lib/prize-spin-winners-export'
 import {
@@ -308,51 +308,100 @@ export function PrizeSpinSessionPage() {
   const theme = useTheme()
   const { id } = useParams()
   const prizeSpinId = Number.parseInt(id ?? '', 10)
+  const isValidId = Number.isFinite(prizeSpinId)
   const { user } = useAuth()
   const { showSuccess, showError } = useNotification()
 
-  const [record, setRecord] = useState<PrizeSpinRecord | null>(null)
-  const [sectors, setSectors] = useState<PrizeSpinSector[]>([])
-  const [wins, setWins] = useState<PrizeSpinWin[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const {
+    data: session,
+    isLoading: loading,
+    error: sessionError,
+  } = usePrizeSpinSession(user?.accountId, isValidId ? prizeSpinId : Number.NaN)
+
+  const record = session?.record ?? null
+  const sectors = session?.sectors ?? []
+  const wins = session?.wins ?? []
+  const error = !isValidId
+    ? 'Session not found'
+    : sessionError instanceof Error
+      ? sessionError.message
+      : sessionError
+        ? 'Could not load prize spin session'
+        : null
+
+  const spinMutation = useSpinPrizeSpin(user?.accountId, prizeSpinId)
+  const createSectorMutation = useCreatePrizeSpinSector(
+    user?.accountId,
+    prizeSpinId,
+  )
+  const updateSectorMutation = useUpdatePrizeSpinSector(
+    user?.accountId,
+    prizeSpinId,
+  )
+  const deleteSectorMutation = useDeletePrizeSpinSector(
+    user?.accountId,
+    prizeSpinId,
+  )
+  const distributeSectorsMutation = useDistributePrizeSpinSectors(
+    user?.accountId,
+    prizeSpinId,
+  )
+  const deleteWinMutation = useDeletePrizeSpinWin(user?.accountId, prizeSpinId)
+  const deleteAllWinsMutation = useDeleteAllPrizeSpinWins(
+    user?.accountId,
+    prizeSpinId,
+  )
+  const goLiveMutation = useGoLivePrizeSpinSession(user?.accountId, prizeSpinId)
+  const deactivateMutation = useDeactivatePrizeSpinSession(
+    user?.accountId,
+    prizeSpinId,
+  )
+  const archiveSessionMutation = useArchivePrizeSpinSession(
+    user?.accountId,
+    prizeSpinId,
+  )
+
+  const isSpinning = spinMutation.isPending
 
   const [participantNick, setParticipantNick] = useState('')
   const [spinError, setSpinError] = useState<string | null>(null)
-  const [isSpinning, setIsSpinning] = useState(false)
 
   const [addSectorDialogOpen, setAddSectorDialogOpen] = useState(false)
   const [sectorLabel, setSectorLabel] = useState('')
   const [sectorWinPercent, setSectorWinPercent] = useState('')
   const [sectorColor, setSectorColor] = useState(defaultSectorColor(0))
   const [sectorFormError, setSectorFormError] = useState<string | null>(null)
-  const [isAddingSector, setIsAddingSector] = useState(false)
-  const [isDistributingSectors, setIsDistributingSectors] = useState(false)
 
   const [editSector, setEditSector] = useState<PrizeSpinSector | null>(null)
   const [editLabel, setEditLabel] = useState('')
   const [editWinPercent, setEditWinPercent] = useState('')
   const [editColor, setEditColor] = useState('#F59E0B')
   const [editError, setEditError] = useState<string | null>(null)
-  const [isSavingEdit, setIsSavingEdit] = useState(false)
 
   const [expandedWinnerIds, setExpandedWinnerIds] = useState<Set<number>>(
     new Set(),
   )
 
   const [archiveAllDialogOpen, setArchiveAllDialogOpen] = useState(false)
-  const [isArchivingAll, setIsArchivingAll] = useState(false)
   const [archiveAllError, setArchiveAllError] = useState<string | null>(null)
+  const [archiveSessionDialogOpen, setArchiveSessionDialogOpen] = useState(false)
+  const [archiveSessionError, setArchiveSessionError] = useState<string | null>(
+    null,
+  )
   const [isExportingWinners, setIsExportingWinners] = useState(false)
   const [exportWinnersError, setExportWinnersError] = useState<string | null>(null)
 
   const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false)
-  const [isDeactivating, setIsDeactivating] = useState(false)
   const [deactivateError, setDeactivateError] = useState<string | null>(null)
-  const [isGoingLive, setIsGoingLive] = useState(false)
   const [goLiveError, setGoLiveError] = useState<string | null>(null)
 
   useSetBreadcrumbLabel(record ? `${record.title} #${record.id}` : null)
+
+  useEffect(() => {
+    if (session?.sectors) {
+      setSectorColor(defaultSectorColor(session.sectors.length))
+    }
+  }, [session?.sectors])
 
   const readOnly = record !== null && isPrizeSpinReadOnly(record)
   const isLive = record !== null && isPrizeSpinLive(record)
@@ -401,44 +450,6 @@ export function PrizeSpinSessionPage() {
     }
   }, [isSpinning, participantNick, sectors.length, totalWinPercent])
 
-  const loadSession = useCallback(async () => {
-    if (!user?.accountId || !Number.isFinite(prizeSpinId)) {
-      setLoading(false)
-      setError('Session not found')
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-
-    try {
-      const [row, sectorRows, winRows] = await Promise.all([
-        fetchPrizeSpin(user.accountId, prizeSpinId),
-        fetchPrizeSpinSectors(user.accountId, prizeSpinId),
-        fetchPrizeSpinWins(user.accountId, prizeSpinId),
-      ])
-      setRecord(row)
-      setSectors(sectorRows)
-      setWins(winRows)
-      setSectorColor(defaultSectorColor(sectorRows.length))
-    } catch (loadError) {
-      setRecord(null)
-      setSectors([])
-      setWins([])
-      setError(
-        loadError instanceof Error
-          ? loadError.message
-          : 'Could not load prize spin session',
-      )
-    } finally {
-      setLoading(false)
-    }
-  }, [prizeSpinId, user?.accountId])
-
-  useEffect(() => {
-    void loadSession()
-  }, [loadSession])
-
   async function handleSpin() {
     if (!user?.accountId || isSpinning) {
       return
@@ -453,16 +464,10 @@ export function PrizeSpinSessionPage() {
       return
     }
 
-    setIsSpinning(true)
     setSpinError(null)
 
     try {
-      const win = await spinPrizeSpin(
-        user.accountId,
-        prizeSpinId,
-        participantNick.trim(),
-      )
-      setWins((previous) => [win, ...previous])
+      const win = await spinMutation.mutateAsync(participantNick.trim())
       setParticipantNick('')
       showSuccess(`Winner: ${win.participantNick} — ${win.sectorLabel}`)
     } catch (spinFailure) {
@@ -471,8 +476,6 @@ export function PrizeSpinSessionPage() {
           ? spinFailure.message
           : 'Could not spin prize wheel',
       )
-    } finally {
-      setIsSpinning(false)
     }
   }
 
@@ -512,18 +515,14 @@ export function PrizeSpinSessionPage() {
       return
     }
 
-    setIsAddingSector(true)
     setSectorFormError(null)
 
     try {
-      const created = await createPrizeSpinSector(
-        user.accountId,
-        prizeSpinId,
-        sectorLabel,
-        sectorWinPercent,
-        sectorColor,
-      )
-      setSectors((previous) => [...previous, created])
+      await createSectorMutation.mutateAsync({
+        label: sectorLabel,
+        winPercent: sectorWinPercent,
+        color: sectorColor,
+      })
       setAddSectorDialogOpen(false)
       resetAddSectorForm(sectors.length + 1)
       showSuccess('Sector added.')
@@ -531,8 +530,6 @@ export function PrizeSpinSessionPage() {
       setSectorFormError(
         addError instanceof Error ? addError.message : 'Could not add sector',
       )
-    } finally {
-      setIsAddingSector(false)
     }
   }
 
@@ -571,33 +568,23 @@ export function PrizeSpinSessionPage() {
       return
     }
 
-    setIsSavingEdit(true)
     setEditError(null)
 
     try {
-      const updated = await updatePrizeSpinSector(
-        user.accountId,
-        prizeSpinId,
-        editSector.id,
-        {
+      await updateSectorMutation.mutateAsync({
+        sectorId: editSector.id,
+        body: {
           label: editLabel,
           win_percent: editWinPercent,
           color: editColor,
         },
-      )
-      setSectors((previous) =>
-        previous.map((sector) =>
-          sector.id === updated.id ? updated : sector,
-        ),
-      )
+      })
       closeEditDialog()
       showSuccess('Sector updated.')
     } catch (saveError) {
       setEditError(
         saveError instanceof Error ? saveError.message : 'Could not update sector',
       )
-    } finally {
-      setIsSavingEdit(false)
     }
   }
 
@@ -607,8 +594,7 @@ export function PrizeSpinSessionPage() {
     }
 
     try {
-      await deletePrizeSpinSector(user.accountId, prizeSpinId, sectorId)
-      setSectors((previous) => previous.filter((sector) => sector.id !== sectorId))
+      await deleteSectorMutation.mutateAsync(sectorId)
       showSuccess('Sector removed.')
     } catch (deleteError) {
       showError(
@@ -624,14 +610,8 @@ export function PrizeSpinSessionPage() {
       return
     }
 
-    setIsDistributingSectors(true)
-
     try {
-      const updated = await distributePrizeSpinSectorsEqually(
-        user.accountId,
-        prizeSpinId,
-      )
-      setSectors(updated)
+      await distributeSectorsMutation.mutateAsync()
       showSuccess('Sector weights split evenly to 100%.')
     } catch (distributeError) {
       showError(
@@ -639,8 +619,6 @@ export function PrizeSpinSessionPage() {
           ? distributeError.message
           : 'Could not distribute sector weights',
       )
-    } finally {
-      setIsDistributingSectors(false)
     }
   }
 
@@ -650,8 +628,7 @@ export function PrizeSpinSessionPage() {
     }
 
     try {
-      await deletePrizeSpinWin(user.accountId, prizeSpinId, winId)
-      setWins((previous) => previous.filter((win) => win.id !== winId))
+      await deleteWinMutation.mutateAsync(winId)
       showSuccess('Winner removed.')
     } catch (deleteError) {
       showError(
@@ -690,12 +667,10 @@ export function PrizeSpinSessionPage() {
       return
     }
 
-    setIsArchivingAll(true)
     setArchiveAllError(null)
 
     try {
-      await deleteAllPrizeSpinWins(user.accountId, prizeSpinId)
-      setWins([])
+      await deleteAllWinsMutation.mutateAsync()
       setArchiveAllDialogOpen(false)
       showSuccess('All winners archived.')
     } catch (archiveError) {
@@ -704,8 +679,6 @@ export function PrizeSpinSessionPage() {
           ? archiveError.message
           : 'Could not archive winners',
       )
-    } finally {
-      setIsArchivingAll(false)
     }
   }
 
@@ -714,12 +687,10 @@ export function PrizeSpinSessionPage() {
       return
     }
 
-    setIsGoingLive(true)
     setGoLiveError(null)
 
     try {
-      const updated = await goLivePrizeSpin(user.accountId, record.id)
-      setRecord(updated)
+      await goLiveMutation.mutateAsync()
       showSuccess('Session is now live.')
     } catch (goLiveSessionError) {
       setGoLiveError(
@@ -727,8 +698,6 @@ export function PrizeSpinSessionPage() {
           ? goLiveSessionError.message
           : 'Could not go live',
       )
-    } finally {
-      setIsGoingLive(false)
     }
   }
 
@@ -737,12 +706,10 @@ export function PrizeSpinSessionPage() {
       return
     }
 
-    setIsDeactivating(true)
     setDeactivateError(null)
 
     try {
-      const updated = await deactivatePrizeSpin(user.accountId, record.id)
-      setRecord(updated)
+      await deactivateMutation.mutateAsync()
       setDeactivateDialogOpen(false)
       showSuccess('Session taken off air.')
     } catch (deactivateSessionError) {
@@ -751,8 +718,32 @@ export function PrizeSpinSessionPage() {
           ? deactivateSessionError.message
           : 'Could not deactivate session',
       )
-    } finally {
-      setIsDeactivating(false)
+    }
+  }
+
+  function closeArchiveSessionDialog() {
+    if (archiveSessionMutation.isPending) {
+      return
+    }
+    setArchiveSessionDialogOpen(false)
+    setArchiveSessionError(null)
+  }
+
+  async function handleArchiveSession() {
+    if (!user?.accountId || !record) {
+      return
+    }
+
+    setArchiveSessionError(null)
+
+    try {
+      await archiveSessionMutation.mutateAsync()
+      setArchiveSessionDialogOpen(false)
+      showSuccess('Session archived.')
+    } catch (error) {
+      setArchiveSessionError(
+        error instanceof Error ? error.message : 'Could not archive session',
+      )
     }
   }
 
@@ -963,8 +954,8 @@ export function PrizeSpinSessionPage() {
                   type="button"
                   variant="outlined"
                   size="small"
-                  startIcon={<StopCircleOutlinedIcon sx={{ fontSize: 16 }} aria-hidden />}
-                  disabled={isDeactivating}
+                  startIcon={<SquareRoundedIcon sx={{ fontSize: 16 }} aria-hidden />}
+                  disabled={deactivateMutation.isPending}
                   onClick={() => {
                     setDeactivateError(null)
                     setDeactivateDialogOpen(true)
@@ -987,7 +978,7 @@ export function PrizeSpinSessionPage() {
                   variant="outlined"
                   size="small"
                   startIcon={<Radio size={16} aria-hidden />}
-                  disabled={isGoingLive}
+                  disabled={goLiveMutation.isPending}
                   onClick={() => void handleGoLive()}
                   sx={{
                     borderColor: alpha(theme.palette.success.main, 0.4),
@@ -998,7 +989,34 @@ export function PrizeSpinSessionPage() {
                     },
                   }}
                 >
-                  {isGoingLive ? 'Going live…' : 'Go live'}
+                  {goLiveMutation.isPending ? 'Going live…' : 'Go live'}
+                </Button>
+              ) : null}
+              {!readOnly ? (
+                <Button
+                  type="button"
+                  variant="outlined"
+                  size="small"
+                  startIcon={<Archive size={16} aria-hidden />}
+                  disabled={
+                    archiveSessionMutation.isPending ||
+                    deactivateMutation.isPending ||
+                    goLiveMutation.isPending
+                  }
+                  onClick={() => {
+                    setArchiveSessionError(null)
+                    setArchiveSessionDialogOpen(true)
+                  }}
+                  sx={{
+                    borderColor: alpha(theme.palette.warning.main, 0.4),
+                    color: theme.palette.warning.main,
+                    '&:hover': {
+                      borderColor: theme.palette.warning.main,
+                      bgcolor: alpha(theme.palette.warning.main, 0.1),
+                    },
+                  }}
+                >
+                  Archive
                 </Button>
               ) : null}
             </Stack>
@@ -1105,11 +1123,15 @@ export function PrizeSpinSessionPage() {
                       size="small"
                       startIcon={<Equal size={16} aria-hidden />}
                       disabled={
-                        readOnly || sectors.length === 0 || isDistributingSectors
+                        readOnly ||
+                        sectors.length === 0 ||
+                        distributeSectorsMutation.isPending
                       }
                       onClick={() => void handleDistributeSectorsEqually()}
                     >
-                      {isDistributingSectors ? 'Splitting…' : 'Split 100%'}
+                      {distributeSectorsMutation.isPending
+                        ? 'Splitting…'
+                        : 'Split 100%'}
                     </Button>
                     <Button
                       type="button"
@@ -1170,11 +1192,11 @@ export function PrizeSpinSessionPage() {
                         setArchiveAllDialogOpen(true)
                       }}
                       sx={{
-                        borderColor: alpha(theme.palette.error.main, 0.4),
-                        color: theme.palette.error.main,
+                        borderColor: alpha(theme.palette.warning.main, 0.4),
+                        color: theme.palette.warning.main,
                         '&:hover': {
-                          borderColor: theme.palette.error.main,
-                          bgcolor: alpha(theme.palette.error.main, 0.1),
+                          borderColor: theme.palette.warning.main,
+                          bgcolor: alpha(theme.palette.warning.main, 0.1),
                         },
                       }}
                     >
@@ -1231,18 +1253,18 @@ export function PrizeSpinSessionPage() {
             type="button"
             variant="outlined"
             onClick={() => setArchiveAllDialogOpen(false)}
-            disabled={isArchivingAll}
+            disabled={deleteAllWinsMutation.isPending}
           >
             Cancel
           </Button>
           <Button
             type="button"
             variant="contained"
-            color="error"
+            color="warning"
             onClick={() => void handleArchiveAllWinners()}
-            disabled={isArchivingAll}
+            disabled={deleteAllWinsMutation.isPending}
           >
-            {isArchivingAll ? 'Archiving…' : 'Archive all'}
+            {deleteAllWinsMutation.isPending ? 'Archiving…' : 'Archive all'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1302,7 +1324,7 @@ export function PrizeSpinSessionPage() {
             type="button"
             variant="outlined"
             onClick={closeAddSectorDialog}
-            disabled={isAddingSector}
+            disabled={createSectorMutation.isPending}
           >
             Cancel
           </Button>
@@ -1310,9 +1332,9 @@ export function PrizeSpinSessionPage() {
             type="submit"
             form="prize-spin-add-sector-form"
             variant="contained"
-            disabled={isAddingSector}
+            disabled={createSectorMutation.isPending}
           >
-            {isAddingSector ? 'Adding…' : 'Add sector'}
+            {createSectorMutation.isPending ? 'Adding…' : 'Add sector'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1361,7 +1383,7 @@ export function PrizeSpinSessionPage() {
             type="button"
             variant="outlined"
             onClick={closeEditDialog}
-            disabled={isSavingEdit}
+            disabled={updateSectorMutation.isPending}
           >
             Cancel
           </Button>
@@ -1369,9 +1391,49 @@ export function PrizeSpinSessionPage() {
             type="button"
             variant="contained"
             onClick={() => void handleSaveEdit()}
-            disabled={isSavingEdit}
+            disabled={updateSectorMutation.isPending}
           >
-            {isSavingEdit ? 'Saving…' : 'Save'}
+            {updateSectorMutation.isPending ? 'Saving…' : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={archiveSessionDialogOpen}
+        onClose={closeArchiveSessionDialog}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Archive session?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            {record.title} will be removed from the active list. Archived sessions
+            can be opened for review but not edited.
+          </Typography>
+          {archiveSessionError ? (
+            <StatusAlert tone="error" sx={{ mt: 2 }}>
+              {archiveSessionError}
+            </StatusAlert>
+          ) : null}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={closeArchiveSessionDialog}
+            disabled={archiveSessionMutation.isPending}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="contained"
+            color="warning"
+            startIcon={<Archive size={16} aria-hidden />}
+            onClick={() => void handleArchiveSession()}
+            disabled={archiveSessionMutation.isPending}
+          >
+            {archiveSessionMutation.isPending ? 'Archiving…' : 'Archive'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1398,7 +1460,7 @@ export function PrizeSpinSessionPage() {
             type="button"
             variant="outlined"
             onClick={() => setDeactivateDialogOpen(false)}
-            disabled={isDeactivating}
+            disabled={deactivateMutation.isPending}
           >
             Cancel
           </Button>
@@ -1406,10 +1468,11 @@ export function PrizeSpinSessionPage() {
             type="button"
             variant="contained"
             color="error"
+            startIcon={<SquareRoundedIcon sx={{ fontSize: 16 }} aria-hidden />}
             onClick={() => void handleDeactivate()}
-            disabled={isDeactivating}
+            disabled={deactivateMutation.isPending}
           >
-            {isDeactivating ? 'Taking off air…' : 'Off air'}
+            {deactivateMutation.isPending ? 'Taking off air…' : 'Off air'}
           </Button>
         </DialogActions>
       </Dialog>

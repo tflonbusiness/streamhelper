@@ -33,18 +33,11 @@ import {
   RotateCw,
   Settings2,
 } from 'lucide-react'
-import { type FormEvent, useCallback, useEffect, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  archivePrizeSpin,
-  createPrizeSpin,
-  deactivatePrizeSpin,
-  fetchPrizeSpinWidget,
-  fetchPrizeSpins,
-  goLivePrizeSpin,
   isPrizeSpinArchived,
   isPrizeSpinLive,
-  patchPrizeSpinWidget,
   type PrizeSpinArchivedFilter,
   type PrizeSpinRecord,
 } from '@/api/prize-spin'
@@ -55,6 +48,15 @@ import { SectionHeader } from '@/components/SectionHeader'
 import { StatusAlert } from '@/components/StatusAlert'
 import { useAuth } from '@/context/AuthContext'
 import { useNotification } from '@/context/NotificationContext'
+import {
+  useArchivePrizeSpin,
+  useCreatePrizeSpin,
+  useDeactivatePrizeSpin,
+  useGoLivePrizeSpin,
+  usePatchPrizeSpinWidget,
+  usePrizeSpinWidget,
+  usePrizeSpins,
+} from '@/queries/use-prize-spins'
 import {
   buildPrizeSpinObsOverlayUrl,
   buildPrizeSpinOverlayPath,
@@ -146,12 +148,8 @@ export function PrizeSpinPage() {
   const theme = useTheme()
   const { user } = useAuth()
   const { showSuccess, showError } = useNotification()
-  const [records, setRecords] = useState<PrizeSpinRecord[]>([])
-  const [loadingRecords, setLoadingRecords] = useState(true)
-  const [recordsError, setRecordsError] = useState<string | null>(null)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [title, setTitle] = useState(DEFAULT_TITLE)
-  const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [expandedRecordIds, setExpandedRecordIds] = useState<Set<number>>(
     new Set(),
@@ -160,92 +158,79 @@ export function PrizeSpinPage() {
   const [widgetWidth, setWidgetWidth] = useState('500')
   const [widgetHeight, setWidgetHeight] = useState('500')
   const [widgetEditError, setWidgetEditError] = useState<string | null>(null)
-  const [isSavingWidget, setIsSavingWidget] = useState(false)
-  const [isDialogLoadingWidget, setIsDialogLoadingWidget] = useState(false)
-  const [liveActionRecordId, setLiveActionRecordId] = useState<number | null>(
-    null,
-  )
   const [liveActionError, setLiveActionError] = useState<string | null>(null)
   const [archiveDialogRecord, setArchiveDialogRecord] =
     useState<PrizeSpinRecord | null>(null)
   const [archiveError, setArchiveError] = useState<string | null>(null)
-  const [isArchiving, setIsArchiving] = useState(false)
   const [archivedFilter, setArchivedFilter] =
     useState<PrizeSpinArchivedFilter>('false')
   const [recordsPage, setRecordsPage] = useState(1)
-  const [recordsTotal, setRecordsTotal] = useState(0)
+
+  const listParams = {
+    archived: archivedFilter,
+    page: recordsPage,
+    limit: HISTORY_PAGE_SIZE,
+  }
+
+  const {
+    data: recordsResult,
+    isLoading: loadingRecords,
+    error: recordsQueryError,
+  } = usePrizeSpins(user?.accountId, listParams)
+
+  const createMutation = useCreatePrizeSpin(user?.accountId)
+  const goLiveMutation = useGoLivePrizeSpin(user?.accountId)
+  const deactivateMutation = useDeactivatePrizeSpin(user?.accountId)
+  const archiveMutation = useArchivePrizeSpin(user?.accountId)
+  const patchWidgetMutation = usePatchPrizeSpinWidget(user?.accountId)
+
+  const {
+    data: widgetSettings,
+    isLoading: isDialogLoadingWidget,
+    error: widgetLoadError,
+  } = usePrizeSpinWidget(user?.accountId, widgetDialogOpen)
+
+  const records = recordsResult?.records ?? []
+  const recordsTotal =
+    typeof recordsResult?.total === 'number'
+      ? recordsResult.total
+      : records.length
+  const recordsError =
+    recordsQueryError instanceof Error
+      ? recordsQueryError.message
+      : recordsQueryError
+        ? 'Could not load prize spin history'
+        : null
+
+  const liveActionRecordId =
+    goLiveMutation.isPending
+      ? goLiveMutation.variables
+      : deactivateMutation.isPending
+        ? deactivateMutation.variables
+        : archiveMutation.isPending
+          ? archiveMutation.variables
+          : null
 
   const overlayHref = user?.ucid ? buildPrizeSpinOverlayPath(user.ucid) : null
   const obsOverlayUrl = user?.ucid ? buildPrizeSpinObsOverlayUrl(user.ucid) : null
 
-  const loadRecords = useCallback(
-    async (pageOverride?: number) => {
-      if (!user?.accountId) {
-        return
-      }
-
-      const page = pageOverride ?? recordsPage
-
-      setLoadingRecords(true)
-      setRecordsError(null)
-
-      try {
-        const result = await fetchPrizeSpins(user.accountId, {
-          archived: archivedFilter,
-          page,
-          limit: HISTORY_PAGE_SIZE,
-        })
-        setRecords(result.records)
-        setRecordsTotal(
-          typeof result.total === 'number' ? result.total : result.records.length,
-        )
-        setRecordsPage(result.page ?? page)
-      } catch (error) {
-        setRecordsError(
-          error instanceof Error
-            ? error.message
-            : 'Could not load prize spin history',
-        )
-      } finally {
-        setLoadingRecords(false)
-      }
-    },
-    [user?.accountId, archivedFilter, recordsPage],
-  )
-
-  const reloadRecordsAfterMutation = useCallback(
-    async (startPage?: number) => {
-      if (!user?.accountId) {
-        return
-      }
-
-      const accountId = user.accountId
-      let page = startPage ?? recordsPage
-
-      const fetchPage = async (targetPage: number) =>
-        fetchPrizeSpins(accountId, {
-          archived: archivedFilter,
-          page: targetPage,
-          limit: HISTORY_PAGE_SIZE,
-        })
-
-      let result = await fetchPage(page)
-
-      if (result.records.length === 0 && result.total > 0 && page > 1) {
-        page -= 1
-        result = await fetchPage(page)
-      }
-
-      setRecords(result.records)
-      setRecordsTotal(result.total)
-      setRecordsPage(result.page)
-    },
-    [user?.accountId, archivedFilter, recordsPage],
-  )
+  useEffect(() => {
+    if (widgetSettings) {
+      setWidgetWidth(String(widgetSettings.width))
+      setWidgetHeight(String(widgetSettings.height))
+    }
+  }, [widgetSettings])
 
   useEffect(() => {
-    void loadRecords()
-  }, [loadRecords])
+    if (
+      recordsResult &&
+      recordsResult.records.length === 0 &&
+      recordsResult.total > 0 &&
+      recordsPage > 1
+    ) {
+      setRecordsPage(recordsPage - 1)
+    }
+  }, [recordsResult, recordsPage])
 
   function resetCreateForm() {
     setTitle(DEFAULT_TITLE)
@@ -265,22 +250,18 @@ export function PrizeSpinPage() {
       return
     }
 
-    setIsCreating(true)
     setCreateError(null)
 
     try {
-      await createPrizeSpin(user.accountId, title)
+      await createMutation.mutateAsync(title)
       setCreateDialogOpen(false)
       resetCreateForm()
       setRecordsPage(1)
-      await loadRecords(1)
       showSuccess('Prize spin session created.')
     } catch (error) {
       setCreateError(
         error instanceof Error ? error.message : 'Could not create prize spin',
       )
-    } finally {
-      setIsCreating(false)
     }
   }
 
@@ -297,28 +278,13 @@ export function PrizeSpinPage() {
     }
   }
 
-  async function openWidgetSettingsDialog() {
+  function openWidgetSettingsDialog() {
     if (!user?.accountId) {
       return
     }
 
     setWidgetDialogOpen(true)
     setWidgetEditError(null)
-    setIsDialogLoadingWidget(true)
-
-    try {
-      const settings = await fetchPrizeSpinWidget(user.accountId)
-      setWidgetWidth(String(settings.width))
-      setWidgetHeight(String(settings.height))
-    } catch (error) {
-      setWidgetEditError(
-        error instanceof Error
-          ? error.message
-          : 'Could not load widget settings',
-      )
-    } finally {
-      setIsDialogLoadingWidget(false)
-    }
   }
 
   async function handleSaveWidgetSize() {
@@ -339,11 +305,10 @@ export function PrizeSpinPage() {
       return
     }
 
-    setIsSavingWidget(true)
     setWidgetEditError(null)
 
     try {
-      await patchPrizeSpinWidget(user.accountId, { width, height })
+      await patchWidgetMutation.mutateAsync({ width, height })
       setWidgetDialogOpen(false)
       showSuccess('Widget settings saved')
     } catch (error) {
@@ -352,8 +317,6 @@ export function PrizeSpinPage() {
           ? error.message
           : 'Could not save widget settings',
       )
-    } finally {
-      setIsSavingWidget(false)
     }
   }
 
@@ -362,29 +325,15 @@ export function PrizeSpinPage() {
       return
     }
 
-    setLiveActionRecordId(record.id)
     setLiveActionError(null)
 
     try {
-      await goLivePrizeSpin(user.accountId, record.id)
-      setRecords((previous) =>
-        previous.map((row) => {
-          if (row.id === record.id) {
-            return { ...row, status: 'live' as const }
-          }
-          if (isPrizeSpinLive(row)) {
-            return { ...row, status: 'off_air' as const }
-          }
-          return row
-        }),
-      )
+      await goLiveMutation.mutateAsync(record.id)
       showSuccess('Session is now live.')
     } catch (error) {
       setLiveActionError(
         error instanceof Error ? error.message : 'Could not go live',
       )
-    } finally {
-      setLiveActionRecordId(null)
     }
   }
 
@@ -393,23 +342,15 @@ export function PrizeSpinPage() {
       return
     }
 
-    setLiveActionRecordId(record.id)
     setLiveActionError(null)
 
     try {
-      await deactivatePrizeSpin(user.accountId, record.id)
-      setRecords((previous) =>
-        previous.map((row) =>
-          row.id === record.id ? { ...row, status: 'off_air' as const } : row,
-        ),
-      )
+      await deactivateMutation.mutateAsync(record.id)
       showSuccess('Session taken off air.')
     } catch (error) {
       setLiveActionError(
         error instanceof Error ? error.message : 'Could not deactivate session',
       )
-    } finally {
-      setLiveActionRecordId(null)
     }
   }
 
@@ -419,7 +360,7 @@ export function PrizeSpinPage() {
   }
 
   function closeArchiveDialog() {
-    if (isArchiving) {
+    if (archiveMutation.isPending) {
       return
     }
     setArchiveDialogRecord(null)
@@ -432,23 +373,17 @@ export function PrizeSpinPage() {
     }
 
     const record = archiveDialogRecord
-    setIsArchiving(true)
-    setLiveActionRecordId(record.id)
     setArchiveError(null)
     setLiveActionError(null)
 
     try {
-      await archivePrizeSpin(user.accountId, record.id)
-      await reloadRecordsAfterMutation()
+      await archiveMutation.mutateAsync(record.id)
       setArchiveDialogRecord(null)
       showSuccess('Session archived.')
     } catch (error) {
       setArchiveError(
         error instanceof Error ? error.message : 'Could not archive session',
       )
-    } finally {
-      setIsArchiving(false)
-      setLiveActionRecordId(null)
     }
   }
 
@@ -579,11 +514,11 @@ export function PrizeSpinPage() {
                     width: 28,
                     height: 28,
                     border: '1px solid',
-                    borderColor: alpha(theme.palette.error.main, 0.4),
-                    color: theme.palette.error.main,
+                    borderColor: alpha(theme.palette.warning.main, 0.4),
+                    color: theme.palette.warning.main,
                     '&:hover': {
-                      bgcolor: alpha(theme.palette.error.main, 0.1),
-                      borderColor: theme.palette.error.main,
+                      bgcolor: alpha(theme.palette.warning.main, 0.1),
+                      borderColor: theme.palette.warning.main,
                     },
                   }}
                 >
@@ -813,6 +748,13 @@ export function PrizeSpinPage() {
                 size="small"
                 sx={inputFieldSx}
               />
+              {widgetLoadError ? (
+                <StatusAlert tone="error">
+                  {widgetLoadError instanceof Error
+                    ? widgetLoadError.message
+                    : 'Could not load widget settings'}
+                </StatusAlert>
+              ) : null}
               {widgetEditError ? (
                 <StatusAlert tone="error">{widgetEditError}</StatusAlert>
               ) : null}
@@ -824,7 +766,7 @@ export function PrizeSpinPage() {
             type="button"
             variant="outlined"
             onClick={() => setWidgetDialogOpen(false)}
-            disabled={isSavingWidget}
+            disabled={patchWidgetMutation.isPending}
           >
             Cancel
           </Button>
@@ -832,9 +774,9 @@ export function PrizeSpinPage() {
             type="button"
             variant="contained"
             onClick={() => void handleSaveWidgetSize()}
-            disabled={isDialogLoadingWidget || isSavingWidget}
+            disabled={isDialogLoadingWidget || patchWidgetMutation.isPending}
           >
-            {isSavingWidget ? 'Saving…' : 'Save'}
+            {patchWidgetMutation.isPending ? 'Saving…' : 'Save'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -862,18 +804,18 @@ export function PrizeSpinPage() {
             type="button"
             variant="outlined"
             onClick={closeArchiveDialog}
-            disabled={isArchiving}
+            disabled={archiveMutation.isPending}
           >
             Cancel
           </Button>
           <Button
             type="button"
             variant="contained"
-            color="error"
+            color="warning"
             onClick={() => void handleArchiveSession()}
-            disabled={isArchiving}
+            disabled={archiveMutation.isPending}
           >
-            {isArchiving ? 'Archiving…' : 'Archive'}
+            {archiveMutation.isPending ? 'Archiving…' : 'Archive'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -918,7 +860,7 @@ export function PrizeSpinPage() {
             type="button"
             variant="outlined"
             onClick={() => handleCreateDialogChange(false)}
-            disabled={isCreating}
+            disabled={createMutation.isPending}
           >
             Cancel
           </Button>
@@ -926,9 +868,9 @@ export function PrizeSpinPage() {
             type="submit"
             form="prize-spin-create-form"
             variant="contained"
-            disabled={isCreating}
+            disabled={createMutation.isPending}
           >
-            {isCreating ? 'Creating…' : 'Create'}
+            {createMutation.isPending ? 'Creating…' : 'Create'}
           </Button>
         </DialogActions>
       </Dialog>

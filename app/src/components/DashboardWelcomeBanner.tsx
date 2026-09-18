@@ -7,12 +7,9 @@ import Link from '@mui/material/Link'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import { Crown, ExternalLink, Shield, Tv } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import {
-  fetchKickChannel,
-  KickChannelNotFoundError,
-} from '@/api/kick-channel'
+import { KickChannelNotFoundError } from '@/api/kick-channel'
 import { IconTile } from '@/components/IconTile'
+import { useKickChannel } from '@/queries/use-kick-channel'
 
 type DashboardWelcomeBannerProps = {
   accountId: number
@@ -40,47 +37,11 @@ export function DashboardWelcomeBanner({
   accountName,
   role,
 }: DashboardWelcomeBannerProps) {
-  const [slug, setSlug] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
-  const [fetchError, setFetchError] = useState(false)
+  const { data: channel, isLoading: loading, error } = useKickChannel(accountId)
 
-  useEffect(() => {
-    let cancelled = false
-
-    async function load() {
-      setLoading(true)
-      setFetchError(false)
-      setNotFound(false)
-      setSlug(null)
-
-      try {
-        const data = await fetchKickChannel(accountId)
-        if (!cancelled) {
-          setSlug(data.slug)
-        }
-      } catch (err) {
-        if (cancelled) {
-          return
-        }
-        if (err instanceof KickChannelNotFoundError) {
-          setNotFound(true)
-          return
-        }
-        setFetchError(true)
-      } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
-      }
-    }
-
-    void load()
-
-    return () => {
-      cancelled = true
-    }
-  }, [accountId])
+  const slug = channel?.slug ?? null
+  const notFound = error instanceof KickChannelNotFoundError
+  const fetchError = error !== undefined && error !== null && !notFound
 
   const channelName = channelDisplayName(accountName, slug)
 

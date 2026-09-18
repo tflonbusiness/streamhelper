@@ -17,18 +17,18 @@ import {
 } from '@mui/material'
 import { useTheme, alpha, type Theme } from '@mui/material/styles'
 import { ArrowRight, Gift, Plus } from 'lucide-react'
-import { type FormEvent, useCallback, useEffect, useState } from 'react'
+import { type FormEvent, useState } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  createBonusBuy,
-  fetchBonusBuys,
-  type BonusBuyRecord,
-} from '@/api/bonus-buy'
+import { type BonusBuyRecord } from '@/api/bonus-buy'
 import { AppTable, type AppTableColumn } from '@/components/AppTable'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusAlert } from '@/components/StatusAlert'
 import { useAuth } from '@/context/AuthContext'
 import { useNotification } from '@/context/NotificationContext'
+import {
+  useBonusBuys,
+  useCreateBonusBuy,
+} from '@/queries/use-bonus-buy'
 import { cardSx, inputFieldSx, mutedChipSx, toneChipSx } from '@/theme/colors'
 
 function formatUsd(amount: string): string {
@@ -111,43 +111,28 @@ export function BonusBuyPage() {
   const theme = useTheme()
   const { user } = useAuth()
   const { showSuccess } = useNotification()
-  const [records, setRecords] = useState<BonusBuyRecord[]>([])
-  const [loadingRecords, setLoadingRecords] = useState(true)
-  const [recordsError, setRecordsError] = useState<string | null>(null)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [title, setTitle] = useState(DEFAULT_TITLE)
   const [startBalance, setStartBalance] = useState(DEFAULT_START_BALANCE)
-  const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [expandedRecordIds, setExpandedRecordIds] = useState<Set<number>>(
     new Set(),
   )
 
-  const loadRecords = useCallback(async () => {
-    if (!user?.accountId) {
-      return
-    }
+  const {
+    data: records = [],
+    isLoading: loadingRecords,
+    error: recordsQueryError,
+  } = useBonusBuys(user?.accountId)
 
-    setLoadingRecords(true)
-    setRecordsError(null)
+  const createMutation = useCreateBonusBuy(user?.accountId)
 
-    try {
-      const rows = await fetchBonusBuys(user.accountId)
-      setRecords(rows)
-    } catch (error) {
-      setRecordsError(
-        error instanceof Error
-          ? error.message
-          : 'Could not load bonus buy history',
-      )
-    } finally {
-      setLoadingRecords(false)
-    }
-  }, [user?.accountId])
-
-  useEffect(() => {
-    void loadRecords()
-  }, [loadRecords])
+  const recordsError =
+    recordsQueryError instanceof Error
+      ? recordsQueryError.message
+      : recordsQueryError
+        ? 'Could not load bonus buy history'
+        : null
 
   function resetCreateForm() {
     setTitle(DEFAULT_TITLE)
@@ -168,21 +153,17 @@ export function BonusBuyPage() {
       return
     }
 
-    setIsCreating(true)
     setCreateError(null)
 
     try {
-      await createBonusBuy(user.accountId, title, startBalance)
+      await createMutation.mutateAsync({ title, startBalance })
       setCreateDialogOpen(false)
       resetCreateForm()
-      await loadRecords()
       showSuccess('Bonus buy session created.')
     } catch (error) {
       setCreateError(
         error instanceof Error ? error.message : 'Could not create bonus buy',
       )
-    } finally {
-      setIsCreating(false)
     }
   }
 
@@ -407,7 +388,7 @@ export function BonusBuyPage() {
             type="button"
             variant="outlined"
             onClick={() => handleCreateDialogChange(false)}
-            disabled={isCreating}
+            disabled={createMutation.isPending}
           >
             Cancel
           </Button>
@@ -415,9 +396,9 @@ export function BonusBuyPage() {
             type="submit"
             form="bonus-buy-create-form"
             variant="contained"
-            disabled={isCreating}
+            disabled={createMutation.isPending}
           >
-            {isCreating ? 'Creating…' : 'Create'}
+            {createMutation.isPending ? 'Creating…' : 'Create'}
           </Button>
         </DialogActions>
       </Dialog>

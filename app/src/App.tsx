@@ -1,3 +1,4 @@
+import { QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import {
@@ -19,9 +20,11 @@ import { PrizeSpinSessionPage } from './pages/PrizeSpinSessionPage'
 import { PrizeSpinStreamWidgetPage } from './pages/PrizeSpinStreamWidgetPage'
 import { SubscriptionPage } from './pages/SubscriptionPage'
 import { TeamPage } from './pages/TeamPage'
+import { queryClient } from './queries/query-client'
 
 function App() {
   return (
+    <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <NotificationProvider>
         <BrowserRouter>
@@ -62,6 +65,7 @@ function App() {
       </BrowserRouter>
       </NotificationProvider>
     </AuthProvider>
+    </QueryClientProvider>
   )
 }
 

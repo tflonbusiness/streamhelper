@@ -1,18 +1,12 @@
 import { Box, CircularProgress, Typography } from '@mui/material'
-import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import {
-  fetchPublicPrizeSpinWidget,
   PrizeSpinWidgetNotFoundError,
   PrizeSpinWidgetNotLiveError,
-  type PrizeSpinWidgetView,
 } from '@/api/prize-spin'
 import { PrizeSpinWidgetCard } from '@/components/prize-spin/PrizeSpinWidgetCard'
 import { PRIZE_SPIN_WIDGET_THEME } from '@/lib/prize-spin-widget-theme'
-
-const WIDGET_POLL_MS = 5000
-
-type WidgetState = 'loading' | 'ready' | 'not_found' | 'not_live'
+import { usePublicPrizeSpinWidget } from '@/queries/use-prize-spins'
 
 function WidgetMessage({
   message,
@@ -69,73 +63,22 @@ function WidgetLoading() {
 
 export function PrizeSpinStreamWidgetPage() {
   const { ucid } = useParams<{ ucid: string }>()
-  const [view, setView] = useState<PrizeSpinWidgetView | null>(null)
-  const [widgetState, setWidgetState] = useState<WidgetState>('loading')
-  const lastRecordIdRef = useRef<number | null>(null)
+  const { data: view, error, isLoading, isPending } = usePublicPrizeSpinWidget(ucid)
 
-  const loadView = useCallback(async (showLoading = false) => {
-    if (!ucid) {
-      setView(null)
-      setWidgetState('not_found')
-      return
-    }
-
-    if (showLoading) {
-      setWidgetState('loading')
-    }
-
-    try {
-      const data = await fetchPublicPrizeSpinWidget(ucid)
-      if (
-        lastRecordIdRef.current !== null &&
-        lastRecordIdRef.current !== data.record.id
-      ) {
-        lastRecordIdRef.current = data.record.id
-      } else if (lastRecordIdRef.current === null) {
-        lastRecordIdRef.current = data.record.id
-      }
-      setView(data)
-      setWidgetState('ready')
-    } catch (error) {
-      setView(null)
-      if (error instanceof PrizeSpinWidgetNotLiveError) {
-        setWidgetState('not_live')
-        return
-      }
-      if (error instanceof PrizeSpinWidgetNotFoundError) {
-        setWidgetState('not_found')
-        return
-      }
-      setWidgetState('not_found')
-    }
-  }, [ucid])
-
-  useEffect(() => {
-    void loadView(true)
-  }, [loadView])
-
-  useEffect(() => {
-    if (!ucid) {
-      return
-    }
-
-    const interval = window.setInterval(() => {
-      void loadView(false)
-    }, WIDGET_POLL_MS)
-
-    return () => window.clearInterval(interval)
-  }, [ucid, loadView])
-
-  if (widgetState === 'loading') {
-    return <WidgetLoading />
-  }
-
-  if (widgetState === 'not_found') {
+  if (!ucid) {
     return <WidgetMessage message="Session not found." tone="muted" />
   }
 
-  if (widgetState === 'not_live' || !view) {
+  if (isPending && isLoading) {
+    return <WidgetLoading />
+  }
+
+  if (error instanceof PrizeSpinWidgetNotLiveError) {
     return <WidgetMessage message="No live session." tone="warning" />
+  }
+
+  if (error instanceof PrizeSpinWidgetNotFoundError || error || !view) {
+    return <WidgetMessage message="Session not found." tone="muted" />
   }
 
   return (

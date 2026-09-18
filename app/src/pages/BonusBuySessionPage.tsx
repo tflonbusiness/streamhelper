@@ -28,19 +28,9 @@ import {
   Trash2,
 } from 'lucide-react'
 import { alpha, type Theme, useTheme } from '@mui/material/styles'
-import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
-  archiveBonusBuySlot,
-  createBonusBuySlot,
-  endBonusBuy,
-  fetchBonusBuy,
-  fetchBonusBuySlots,
-  fetchBonusBuyWidget,
-  patchBonusBuy,
-  patchBonusBuySlot,
-  patchBonusBuyWidget,
-  type BonusBuyRecord,
   type BonusBuySlot,
   type BonusBuyWidgetSettings,
 } from '@/api/bonus-buy'
@@ -51,6 +41,16 @@ import { StatusAlert } from '@/components/StatusAlert'
 import { useAuth } from '@/context/AuthContext'
 import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
 import { useNotification } from '@/context/NotificationContext'
+import {
+  useArchiveBonusBuySlot,
+  useBonusBuySession,
+  useBonusBuyWidget,
+  useCreateBonusBuySlot,
+  useEndBonusBuy,
+  usePatchBonusBuy,
+  usePatchBonusBuySlot,
+  usePatchBonusBuyWidget,
+} from '@/queries/use-bonus-buy'
 import { HexColorField } from '@/components/bonus-buy/HexColorField'
 import { WidgetStylePreview } from '@/components/bonus-buy/WidgetStylePreview'
 import { WidgetThemePresetPicker } from '@/components/bonus-buy/WidgetThemePresetPicker'
@@ -272,54 +272,6 @@ export function BonusBuySessionPage() {
   const { user } = useAuth()
   const { showSuccess, showError } = useNotification()
 
-  const [record, setRecord] = useState<BonusBuyRecord | null>(null)
-  const [slots, setSlots] = useState<BonusBuySlot[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const [slotName, setSlotName] = useState('')
-  const [nickProvider, setNickProvider] = useState('')
-  const [purchaseAmount, setPurchaseAmount] = useState('')
-  const [formError, setFormError] = useState<string | null>(null)
-  const [isAddingSlot, setIsAddingSlot] = useState(false)
-
-  const [sessionDialogOpen, setSessionDialogOpen] = useState(false)
-  const [sessionTitleDraft, setSessionTitleDraft] = useState('')
-  const [sessionBalanceDraft, setSessionBalanceDraft] = useState('')
-  const [sessionEditError, setSessionEditError] = useState<string | null>(null)
-  const [isSavingSession, setIsSavingSession] = useState(false)
-
-  const [editSlot, setEditSlot] = useState<BonusBuySlot | null>(null)
-  const [editSlotName, setEditSlotName] = useState('')
-  const [editNickProvider, setEditNickProvider] = useState('')
-  const [editPurchaseAmount, setEditPurchaseAmount] = useState('')
-  const [editWinAmount, setEditWinAmount] = useState('')
-  const [editNowPlaying, setEditNowPlaying] = useState(false)
-  const [editSlotError, setEditSlotError] = useState<string | null>(null)
-  const [isSavingSlot, setIsSavingSlot] = useState(false)
-
-  const [deleteSlot, setDeleteSlot] = useState<BonusBuySlot | null>(null)
-  const [isDeletingSlot, setIsDeletingSlot] = useState(false)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
-  const [expandedSlotIds, setExpandedSlotIds] = useState<Set<number>>(new Set())
-
-  const [endDialogOpen, setEndDialogOpen] = useState(false)
-  const [isEnding, setIsEnding] = useState(false)
-  const [endError, setEndError] = useState<string | null>(null)
-
-  const [widgetDialogOpen, setWidgetDialogOpen] = useState(false)
-  const [widgetPreviewDialogOpen, setWidgetPreviewDialogOpen] = useState(false)
-  const [widgetDraft, setWidgetDraft] = useState<BonusBuyWidgetSettings | null>(null)
-  const [lastValidWidgetDraft, setLastValidWidgetDraft] =
-    useState<BonusBuyWidgetSettings | null>(null)
-  const [widgetEditError, setWidgetEditError] = useState<string | null>(null)
-  const [isLoadingWidget, setIsLoadingWidget] = useState(false)
-  const [isSavingWidget, setIsSavingWidget] = useState(false)
-
-  useSetBreadcrumbLabel(
-    record ? `${record.title} #${record.id}` : null,
-  )
-
   const bonusBuyId = useMemo(() => {
     if (!id) {
       return null
@@ -328,48 +280,78 @@ export function BonusBuySessionPage() {
     return Number.isFinite(parsed) ? parsed : null
   }, [id])
 
-  const loadData = useCallback(async () => {
-    if (!user?.accountId || bonusBuyId === null) {
-      return
-    }
+  const {
+    data: session,
+    isLoading: loading,
+    error: sessionError,
+  } = useBonusBuySession(user?.accountId, bonusBuyId)
 
-    setLoading(true)
-    setError(null)
+  const record = session?.record ?? null
+  const slots = session?.slots ?? []
+  const error =
+    bonusBuyId === null
+      ? 'Invalid bonus buy id'
+      : sessionError instanceof Error
+        ? sessionError.message
+        : sessionError
+          ? 'Could not load bonus buy'
+          : null
 
-    try {
-      const [row, slotRows] = await Promise.all([
-        fetchBonusBuy(user.accountId, bonusBuyId),
-        fetchBonusBuySlots(user.accountId, bonusBuyId),
-      ])
-      setRecord(row)
-      setSlots(slotRows)
-    } catch (loadError) {
-      setError(
-        loadError instanceof Error
-          ? loadError.message
-          : 'Could not load bonus buy',
-      )
-    } finally {
-      setLoading(false)
-    }
-  }, [bonusBuyId, user?.accountId])
+  const createSlotMutation = useCreateBonusBuySlot(user?.accountId, bonusBuyId)
+  const patchSessionMutation = usePatchBonusBuy(user?.accountId, bonusBuyId)
+  const patchSlotMutation = usePatchBonusBuySlot(user?.accountId, bonusBuyId)
+  const archiveSlotMutation = useArchiveBonusBuySlot(user?.accountId, bonusBuyId)
+  const endSessionMutation = useEndBonusBuy(user?.accountId, bonusBuyId)
+  const patchWidgetMutation = usePatchBonusBuyWidget(user?.accountId)
 
-  const refreshSlots = useCallback(async () => {
-    if (!user?.accountId || bonusBuyId === null) {
-      return
-    }
-    const slotRows = await fetchBonusBuySlots(user.accountId, bonusBuyId)
-    setSlots(slotRows)
-  }, [bonusBuyId, user?.accountId])
+  const [slotName, setSlotName] = useState('')
+  const [nickProvider, setNickProvider] = useState('')
+  const [purchaseAmount, setPurchaseAmount] = useState('')
+  const [formError, setFormError] = useState<string | null>(null)
+
+  const [sessionDialogOpen, setSessionDialogOpen] = useState(false)
+  const [sessionTitleDraft, setSessionTitleDraft] = useState('')
+  const [sessionBalanceDraft, setSessionBalanceDraft] = useState('')
+  const [sessionEditError, setSessionEditError] = useState<string | null>(null)
+
+  const [editSlot, setEditSlot] = useState<BonusBuySlot | null>(null)
+  const [editSlotName, setEditSlotName] = useState('')
+  const [editNickProvider, setEditNickProvider] = useState('')
+  const [editPurchaseAmount, setEditPurchaseAmount] = useState('')
+  const [editWinAmount, setEditWinAmount] = useState('')
+  const [editNowPlaying, setEditNowPlaying] = useState(false)
+  const [editSlotError, setEditSlotError] = useState<string | null>(null)
+
+  const [deleteSlot, setDeleteSlot] = useState<BonusBuySlot | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [expandedSlotIds, setExpandedSlotIds] = useState<Set<number>>(new Set())
+
+  const [endDialogOpen, setEndDialogOpen] = useState(false)
+  const [endError, setEndError] = useState<string | null>(null)
+
+  const [widgetDialogOpen, setWidgetDialogOpen] = useState(false)
+  const [widgetPreviewDialogOpen, setWidgetPreviewDialogOpen] = useState(false)
+  const [widgetDraft, setWidgetDraft] = useState<BonusBuyWidgetSettings | null>(null)
+  const [lastValidWidgetDraft, setLastValidWidgetDraft] =
+    useState<BonusBuyWidgetSettings | null>(null)
+  const [widgetEditError, setWidgetEditError] = useState<string | null>(null)
+
+  const {
+    data: widgetSettings,
+    isLoading: isLoadingWidget,
+    error: widgetLoadError,
+  } = useBonusBuyWidget(user?.accountId, widgetDialogOpen)
+
+  useSetBreadcrumbLabel(
+    record ? `${record.title} #${record.id}` : null,
+  )
 
   useEffect(() => {
-    if (bonusBuyId === null) {
-      setError('Invalid bonus buy id')
-      setLoading(false)
-      return
+    if (widgetSettings) {
+      setWidgetDraft(widgetSettings)
+      setLastValidWidgetDraft(widgetSettings)
     }
-    void loadData()
-  }, [bonusBuyId, loadData])
+  }, [widgetSettings])
 
   const stats = useMemo(() => {
     if (!record) {
@@ -420,26 +402,20 @@ export function BonusBuySessionPage() {
       return
     }
 
-    setIsAddingSlot(true)
     try {
-      await createBonusBuySlot(
-        user.accountId,
-        bonusBuyId,
-        trimmedSlot,
-        parsedPurchase.toFixed(2),
-        nickProvider.trim() || undefined,
-      )
+      await createSlotMutation.mutateAsync({
+        slotName: trimmedSlot,
+        purchaseAmount: parsedPurchase.toFixed(2),
+        nickProvider: nickProvider.trim() || undefined,
+      })
       setSlotName('')
       setNickProvider('')
       setPurchaseAmount('')
-      await refreshSlots()
       showSuccess('Slot added.')
     } catch (addError) {
       setFormError(
         addError instanceof Error ? addError.message : 'Could not add slot',
       )
-    } finally {
-      setIsAddingSlot(false)
     }
   }
 
@@ -471,22 +447,18 @@ export function BonusBuySessionPage() {
       return
     }
 
-    setIsSavingSession(true)
     setSessionEditError(null)
     try {
-      const updated = await patchBonusBuy(user.accountId, bonusBuyId, {
+      await patchSessionMutation.mutateAsync({
         title: trimmedTitle,
         start_balance: parsedBalance.toFixed(2),
       })
-      setRecord(updated)
       setSessionDialogOpen(false)
       showSuccess('Session updated.')
     } catch (saveError) {
       setSessionEditError(
         saveError instanceof Error ? saveError.message : 'Could not update session',
       )
-    } finally {
-      setIsSavingSession(false)
     }
   }
 
@@ -517,25 +489,24 @@ export function BonusBuySessionPage() {
       }
     }
 
-    setIsSavingSlot(true)
     setEditSlotError(null)
     try {
-      await patchBonusBuySlot(user.accountId, bonusBuyId, editSlot.id, {
-        slot_name: trimmedSlot,
-        nick_provider: editNickProvider.trim() || null,
-        purchase_amount: parsedPurchase.toFixed(2),
-        win_amount: trimmedWin ? Number.parseFloat(trimmedWin).toFixed(2) : null,
-        is_now_playing: editNowPlaying,
+      await patchSlotMutation.mutateAsync({
+        slotId: editSlot.id,
+        body: {
+          slot_name: trimmedSlot,
+          nick_provider: editNickProvider.trim() || null,
+          purchase_amount: parsedPurchase.toFixed(2),
+          win_amount: trimmedWin ? Number.parseFloat(trimmedWin).toFixed(2) : null,
+          is_now_playing: editNowPlaying,
+        },
       })
       closeEditSlot()
-      await refreshSlots()
       showSuccess('Slot updated.')
     } catch (saveError) {
       setEditSlotError(
         saveError instanceof Error ? saveError.message : 'Could not update slot',
       )
-    } finally {
-      setIsSavingSlot(false)
     }
   }
 
@@ -545,10 +516,10 @@ export function BonusBuySessionPage() {
     }
 
     try {
-      await patchBonusBuySlot(user.accountId, bonusBuyId, slot.id, {
-        is_now_playing: playing,
+      await patchSlotMutation.mutateAsync({
+        slotId: slot.id,
+        body: { is_now_playing: playing },
       })
-      await refreshSlots()
       showSuccess(playing ? 'Slot set as now playing.' : 'Now playing cleared.')
     } catch (playingError) {
       showError(
@@ -564,12 +535,10 @@ export function BonusBuySessionPage() {
       return
     }
 
-    setIsDeletingSlot(true)
     setDeleteError(null)
     try {
-      await archiveBonusBuySlot(user.accountId, bonusBuyId, deleteSlot.id)
+      await archiveSlotMutation.mutateAsync(deleteSlot.id)
       setDeleteSlot(null)
-      await refreshSlots()
       showSuccess('Slot deleted.')
     } catch (deleteSlotError) {
       setDeleteError(
@@ -577,8 +546,6 @@ export function BonusBuySessionPage() {
           ? deleteSlotError.message
           : 'Could not delete slot',
       )
-    } finally {
-      setIsDeletingSlot(false)
     }
   }
 
@@ -587,12 +554,10 @@ export function BonusBuySessionPage() {
       return
     }
 
-    setIsEnding(true)
     setEndError(null)
 
     try {
-      const updated = await endBonusBuy(user.accountId, record.id)
-      setRecord(updated)
+      await endSessionMutation.mutateAsync()
       setEndDialogOpen(false)
       showSuccess('Bonus buy session ended.')
     } catch (endSessionError) {
@@ -601,8 +566,6 @@ export function BonusBuySessionPage() {
           ? endSessionError.message
           : 'Could not end bonus buy session',
       )
-    } finally {
-      setIsEnding(false)
     }
   }
 
@@ -610,29 +573,13 @@ export function BonusBuySessionPage() {
     showSuccess(message)
   }
 
-  async function openWidgetStyleDialog() {
+  function openWidgetStyleDialog() {
     if (!user?.accountId) {
       return
     }
 
     setWidgetDialogOpen(true)
     setWidgetEditError(null)
-    setIsLoadingWidget(true)
-
-    try {
-      const settings = await fetchBonusBuyWidget(user.accountId)
-      setWidgetDraft(settings)
-      setLastValidWidgetDraft(settings)
-    } catch (loadError) {
-      setWidgetEditError(
-        loadError instanceof Error
-          ? loadError.message
-          : 'Could not load widget settings',
-      )
-      setWidgetDraft(null)
-    } finally {
-      setIsLoadingWidget(false)
-    }
   }
 
   function updateWidgetDraft<K extends keyof BonusBuyWidgetSettings>(
@@ -691,11 +638,10 @@ export function BonusBuySessionPage() {
       return
     }
 
-    setIsSavingWidget(true)
     setWidgetEditError(null)
 
     try {
-      await patchBonusBuyWidget(user.accountId, {
+      await patchWidgetMutation.mutateAsync({
         width: widgetDraft.width,
         height: widgetDraft.height,
         background_color: widgetDraft.backgroundColor.trim(),
@@ -718,8 +664,6 @@ export function BonusBuySessionPage() {
           ? saveError.message
           : 'Could not save widget settings',
       )
-    } finally {
-      setIsSavingWidget(false)
     }
   }
 
@@ -1138,11 +1082,11 @@ export function BonusBuySessionPage() {
               <Button
                 type="submit"
                 variant="contained"
-                disabled={!record.isActive || isAddingSlot}
+                disabled={!record.isActive || createSlotMutation.isPending}
                 startIcon={<Plus size={16} aria-hidden />}
                 sx={{ alignSelf: { xs: 'flex-end', sm: 'auto' }, flexShrink: 0 }}
               >
-                {isAddingSlot ? 'Adding…' : 'Add slot'}
+                {createSlotMutation.isPending ? 'Adding…' : 'Add slot'}
               </Button>
             </Stack>
             <Box
@@ -1164,7 +1108,7 @@ export function BonusBuySessionPage() {
                     required
                     value={slotName}
                     onChange={(event) => setSlotName(event.target.value)}
-                    disabled={!record.isActive || isAddingSlot}
+                    disabled={!record.isActive || createSlotMutation.isPending}
                     fullWidth
                     size="small"
                     sx={inputFieldSx}
@@ -1176,7 +1120,7 @@ export function BonusBuySessionPage() {
                     label="Nickname"
                     value={nickProvider}
                     onChange={(event) => setNickProvider(event.target.value)}
-                    disabled={!record.isActive || isAddingSlot}
+                    disabled={!record.isActive || createSlotMutation.isPending}
                     fullWidth
                     size="small"
                     sx={inputFieldSx}
@@ -1193,7 +1137,7 @@ export function BonusBuySessionPage() {
                     }}
                     value={purchaseAmount}
                     onChange={(event) => setPurchaseAmount(event.target.value)}
-                    disabled={!record.isActive || isAddingSlot}
+                    disabled={!record.isActive || createSlotMutation.isPending}
                     fullWidth
                     size="small"
                     sx={inputFieldSx}
@@ -1273,16 +1217,16 @@ export function BonusBuySessionPage() {
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button
             onClick={() => setSessionDialogOpen(false)}
-            disabled={isSavingSession}
+            disabled={patchSessionMutation.isPending}
           >
             Cancel
           </Button>
           <Button
             variant="contained"
             onClick={() => void handleSaveSession()}
-            disabled={isSavingSession}
+            disabled={patchSessionMutation.isPending}
           >
-            {isSavingSession ? 'Saving…' : 'Save'}
+            {patchSessionMutation.isPending ? 'Saving…' : 'Save'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1298,6 +1242,12 @@ export function BonusBuySessionPage() {
             <Typography sx={{ py: 2, color: 'text.secondary' }}>
               Loading settings…
             </Typography>
+          ) : widgetLoadError ? (
+            <StatusAlert tone="error" sx={{ mt: 1 }}>
+              {widgetLoadError instanceof Error
+                ? widgetLoadError.message
+                : 'Could not load widget settings'}
+            </StatusAlert>
           ) : widgetDraft ? (
             <Grid container spacing={3} sx={{ mt: 1 }}>
               <Grid size={{ xs: 12 }}>
@@ -1452,15 +1402,20 @@ export function BonusBuySessionPage() {
           >
             Preview overlay
           </Button>
-          <Button onClick={() => setWidgetDialogOpen(false)} disabled={isSavingWidget}>
+          <Button
+            onClick={() => setWidgetDialogOpen(false)}
+            disabled={patchWidgetMutation.isPending}
+          >
             Cancel
           </Button>
           <Button
             variant="contained"
             onClick={() => void handleSaveWidgetStyle()}
-            disabled={isSavingWidget || isLoadingWidget || !widgetDraft}
+            disabled={
+              patchWidgetMutation.isPending || isLoadingWidget || !widgetDraft
+            }
           >
-            {isSavingWidget ? 'Saving…' : 'Save'}
+            {patchWidgetMutation.isPending ? 'Saving…' : 'Save'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1533,15 +1488,15 @@ export function BonusBuySessionPage() {
           ) : null}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={closeEditSlot} disabled={isSavingSlot}>
+          <Button onClick={closeEditSlot} disabled={patchSlotMutation.isPending}>
             Cancel
           </Button>
           <Button
             variant="contained"
             onClick={() => void handleSaveEditSlot()}
-            disabled={isSavingSlot}
+            disabled={patchSlotMutation.isPending}
           >
-            {isSavingSlot ? 'Saving…' : 'Save'}
+            {patchSlotMutation.isPending ? 'Saving…' : 'Save'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1565,16 +1520,19 @@ export function BonusBuySessionPage() {
           ) : null}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setDeleteSlot(null)} disabled={isDeletingSlot}>
+          <Button
+            onClick={() => setDeleteSlot(null)}
+            disabled={archiveSlotMutation.isPending}
+          >
             Cancel
           </Button>
           <Button
             variant="contained"
             color="error"
             onClick={() => void handleConfirmDelete()}
-            disabled={isDeletingSlot}
+            disabled={archiveSlotMutation.isPending}
           >
-            {isDeletingSlot ? 'Deleting…' : 'Delete'}
+            {archiveSlotMutation.isPending ? 'Deleting…' : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1595,7 +1553,10 @@ export function BonusBuySessionPage() {
           ) : null}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setEndDialogOpen(false)} disabled={isEnding}>
+          <Button
+            onClick={() => setEndDialogOpen(false)}
+            disabled={endSessionMutation.isPending}
+          >
             Cancel
           </Button>
           <Button
@@ -1603,9 +1564,9 @@ export function BonusBuySessionPage() {
             variant="contained"
             color="error"
             onClick={() => void handleEndSession()}
-            disabled={isEnding}
+            disabled={endSessionMutation.isPending}
           >
-            {isEnding ? 'Ending…' : 'End session'}
+            {endSessionMutation.isPending ? 'Ending…' : 'End session'}
           </Button>
         </DialogActions>
       </Dialog>
