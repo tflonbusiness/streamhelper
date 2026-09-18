@@ -12,6 +12,7 @@ import {
 } from '@/api/prize-spin'
 import type { AppTableColumn } from '@/components/AppTable'
 import { LiveStatusChip } from '@/components/LiveStatusChip'
+import { colors } from '@/theme/colors'
 const titleColumnSx = {
   minWidth: 0,
   overflow: 'hidden',
@@ -77,16 +78,18 @@ const StyledActionIconButton = styled(IconButton, {
   }
 })
 
-const StyledOpenIconButton = styled(IconButton)<IconButtonProps & LinkProps>(({ theme }) => ({
-  bgcolor: theme.palette.primary.main,
-  color: theme.palette.primary.contrastText,
-  borderRadius: theme.shape.borderRadius,
-  width: 28,
-  height: 28,
-  '&:hover': {
-    bgcolor: theme.palette.primary.dark,
-  },
-}))
+const StyledOpenIconButton = styled(IconButton)<IconButtonProps & LinkProps>(
+  ({ theme }) => ({
+    backgroundColor: colors.brand[500],
+    color: colors.neutral[950],
+    borderRadius: theme.shape.borderRadius,
+    width: 28,
+    height: 28,
+    '&:hover': {
+      backgroundColor: colors.brand[400],
+    },
+  }),
+)
 
 const actionIconSx = { fontSize: 14 } as const
 
