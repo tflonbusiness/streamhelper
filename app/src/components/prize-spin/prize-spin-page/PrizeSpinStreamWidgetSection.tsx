@@ -6,7 +6,7 @@ import SettingsIcon from '@mui/icons-material/Settings'
 import { styled } from '@mui/material/styles'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { PrizeSpinWidgetSettingsDialog } from '@/components/prize-spin/PrizeSpinWidgetSettingsDialog'
+import { PrizeSpinWidgetSettingsDialog } from '@/components/prize-spin/prize-spin-page/PrizeSpinWidgetSettingsDialog'
 import { SectionHeader } from '@/components/SectionHeader'
 import { useNotification } from '@/context/NotificationContext'
 import {

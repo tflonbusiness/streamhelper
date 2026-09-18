@@ -24,7 +24,7 @@ export function validationErrorMessage(error: unknown): string {
   return 'Validation failed'
 }
 
-function createPrizeSpinSectorDraftSchema(
+export function createPrizeSpinSectorFormSchema(
   context?: PrizeSpinSectorValidationContext,
 ) {
   return yup.object({
@@ -79,7 +79,7 @@ export function validatePrizeSpinSectorDraft(
   context?: PrizeSpinSectorValidationContext,
 ): string | null {
   try {
-    createPrizeSpinSectorDraftSchema(context).validateSync(draft, {
+    createPrizeSpinSectorFormSchema(context).validateSync(draft, {
       abortEarly: true,
     })
     return null

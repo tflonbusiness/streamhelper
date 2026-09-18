@@ -12,7 +12,7 @@ import {
 import { styled } from '@mui/material/styles'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Controller, useForm } from 'react-hook-form'
-import { PRIZE_SPIN_DEFAULT_TITLE } from '@/components/prize-spin/prize-spin-page-utils'
+import { PRIZE_SPIN_DEFAULT_TITLE } from '@/components/prize-spin/prize-spin-page/prize-spin-page-utils'
 import { useNotification } from '@/context/NotificationContext'
 import {
   type CreatePrizeSpinFormValues,

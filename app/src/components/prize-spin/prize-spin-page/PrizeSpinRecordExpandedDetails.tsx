@@ -1,7 +1,7 @@
 import { Grid, Typography } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import type { PrizeSpinRecord } from '@/api/prize-spin'
-import { formatPrizeSpinDateTime } from '@/components/prize-spin/prize-spin-page-utils'
+import { formatPrizeSpinDateTime } from '@/components/prize-spin/prize-spin-utils'
 
 type PrizeSpinRecordExpandedDetailsProps = {
   record: PrizeSpinRecord

@@ -1,16 +1,12 @@
 import { Stack } from '@mui/material'
 import AutorenewIcon from '@mui/icons-material/Autorenew'
-import { PrizeSpinHistorySection } from '@/components/prize-spin/PrizeSpinHistorySection'
-import { PrizeSpinStreamWidgetSection } from '@/components/prize-spin/PrizeSpinStreamWidgetSection'
+import { PrizeSpinHistorySection } from '@/components/prize-spin/prize-spin-page/PrizeSpinHistorySection'
+import { PrizeSpinStreamWidgetSection } from '@/components/prize-spin/prize-spin-page/PrizeSpinStreamWidgetSection'
 import { PageHeader } from '@/components/PageHeader'
 import { useAuth } from '@/context/AuthContext'
 
 export function PrizeSpinPage() {
   const { user } = useAuth()
-
-  if (!user) {
-    return null
-  }
 
   return (
     <Stack spacing={4}>
@@ -20,11 +16,15 @@ export function PrizeSpinPage() {
         icon={AutorenewIcon}
         iconVariant="purple"
       />
-      <PrizeSpinStreamWidgetSection
-        accountId={user?.accountId}
-        ucid={user?.ucid}
-      />
-      <PrizeSpinHistorySection accountId={user.accountId} />
+      {user?.accountId !== undefined && user.ucid ? (
+        <PrizeSpinStreamWidgetSection
+          accountId={user.accountId}
+          ucid={user.ucid}
+        />
+      ) : null}
+      {user?.accountId !== undefined ? (
+        <PrizeSpinHistorySection accountId={user.accountId} />
+      ) : null}
     </Stack>
   )
 }

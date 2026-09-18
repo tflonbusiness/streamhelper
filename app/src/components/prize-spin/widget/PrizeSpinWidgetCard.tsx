@@ -11,8 +11,8 @@ import {
   buildPrizeSpinWidgetTheme,
   scaledPx,
 } from '@/lib/prize-spin-widget-theme'
-import { PrizeSpinWheel } from '@/components/prize-spin/PrizeSpinWheel'
-import { PrizeSpinWinnerBanner } from '@/components/prize-spin/PrizeSpinWinnerBanner'
+import { PrizeSpinWheel } from '@/components/prize-spin/widget/PrizeSpinWheel'
+import { PrizeSpinWinnerBanner } from '@/components/prize-spin/widget/PrizeSpinWinnerBanner'
 
 const SPIN_DURATION_MS = 3800
 const POINTER_BOUNCE_MS = 300

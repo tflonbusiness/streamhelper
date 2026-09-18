@@ -18,15 +18,15 @@ import {
   type PrizeSpinRecord,
 } from '@/api/prize-spin'
 import { AppTable } from '@/components/AppTable'
-import { PrizeSpinArchiveDialog } from '@/components/prize-spin/PrizeSpinArchiveDialog'
-import { PrizeSpinCreateDialog } from '@/components/prize-spin/PrizeSpinCreateDialog'
-import { PrizeSpinRecordExpandedDetails } from '@/components/prize-spin/PrizeSpinRecordExpandedDetails'
+import { PrizeSpinArchiveDialog } from '@/components/prize-spin/prize-spin-page/PrizeSpinArchiveDialog'
+import { PrizeSpinCreateDialog } from '@/components/prize-spin/prize-spin-page/PrizeSpinCreateDialog'
+import { PrizeSpinRecordExpandedDetails } from '@/components/prize-spin/prize-spin-page/PrizeSpinRecordExpandedDetails'
 import {
   historyEmptyMessage,
   liveSessionRowSx,
   PRIZE_SPIN_HISTORY_PAGE_SIZE,
-} from '@/components/prize-spin/prize-spin-page-utils'
-import { buildPrizeSpinRecordColumns } from '@/components/prize-spin/prizeSpinRecordColumns'
+} from '@/components/prize-spin/prize-spin-page/prize-spin-page-utils'
+import { buildPrizeSpinRecordColumns } from '@/components/prize-spin/prize-spin-page/prizeSpinRecordColumns'
 import { SectionHeader } from '@/components/SectionHeader'
 import { useNotification } from '@/context/NotificationContext'
 import {

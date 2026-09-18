@@ -12,13 +12,6 @@ export function historyEmptyMessage(filter: PrizeSpinArchivedFilter): string {
   return 'No prize spin sessions yet'
 }
 
-export function formatPrizeSpinDateTime(iso: string): string {
-  return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(iso))
-}
-
 export function liveSessionRowSx(theme: Theme) {
   return {
     bgcolor: alpha(theme.palette.warning.main, 0.08),
