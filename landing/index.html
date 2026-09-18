@@ -3,16 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Caz Agent — operator dashboard</title>
+    <title>Caz Agent — Kick stream engagement tools</title>
     <meta
       name="description"
-      content="Caz Agent helps streamers manage their service through a web app. Sign in with Kick."
+      content="Run bonus buys, prize wheels, and chat giveaways on Kick. OBS-ready overlays, team access, one dashboard. Sign in with Kick."
     />
-    <meta property="og:title" content="Caz Agent — operator dashboard" />
+    <meta property="og:title" content="Caz Agent — Kick stream engagement tools" />
     <meta
       property="og:description"
-      content="Caz Agent helps operators manage their service through a web application."
+      content="Interactive modules and stream overlays for Kick casino streamers. Sign in to get started."
     />
+    <meta property="og:type" content="website" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -26,10 +27,13 @@
         --foreground: #ffffff;
         --muted-foreground: #9ca3af;
         --card: #121215;
+        --card-secondary: #18181c;
         --border: #1f1f24;
         --primary: #f59e0b;
         --primary-hover: #d97706;
         --radius: 0.75rem;
+        --page-width: 72rem;
+        --hero-width: 48rem;
       }
 
       * {
@@ -40,59 +44,112 @@
         margin: 0;
         min-height: 100vh;
         font-family: Inter, system-ui, sans-serif;
-        background: var(--background);
+        background: #0b0b0f;
         color: var(--foreground);
         line-height: 1.5;
       }
 
+      #dot-field-bg {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .dot-field-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+
+      .dot-field-canvas,
+      .dot-field-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .dot-field-svg {
+        pointer-events: none;
+      }
+
+      .dot-field-glow {
+        opacity: 0;
+        will-change: opacity;
+      }
+
       main {
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 1.5rem;
+        position: relative;
+        z-index: 1;
       }
 
-      .hero {
-        width: min(100%, 42rem);
+      .page {
+        width: min(100%, var(--page-width));
+        margin: 0 auto;
+        padding: 0 1.5rem;
+      }
+
+      section {
+        padding: 4rem 0;
+      }
+
+      .section-header {
         text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 1.25rem;
-      }
-
-      .logo {
-        width: 4rem;
-        height: 4rem;
+        max-width: 40rem;
+        margin: 0 auto 2.5rem;
       }
 
       h1 {
         margin: 0;
-        font-size: clamp(2rem, 5vw, 2.5rem);
+        font-size: clamp(2.25rem, 5.5vw, 3.5rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.12;
+      }
+
+      h2 {
+        margin: 0 0 0.75rem;
+        font-size: clamp(1.75rem, 3.5vw, 2.35rem);
         font-weight: 700;
         letter-spacing: -0.02em;
       }
 
-      p {
+      h3 {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+      }
+
+      .lead {
         margin: 0;
         color: var(--muted-foreground);
-        font-size: 1.05rem;
-        max-width: 36rem;
+        font-size: 1.15rem;
+        line-height: 1.6;
+      }
+
+      .section-header .lead {
+        max-width: 38rem;
+        margin: 0 auto;
       }
 
       .cta {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        margin-top: 0.5rem;
         padding: 0.75rem 1.5rem;
         border-radius: calc(var(--radius) - 2px);
         background: var(--primary);
         color: #0a0a0c;
         font-weight: 600;
+        font-size: 0.95rem;
         text-decoration: none;
         transition: background 0.15s ease;
+        border: none;
+        cursor: pointer;
       }
 
       .cta:hover {
@@ -104,101 +161,628 @@
         outline-offset: 2px;
       }
 
-      .features {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 0.75rem;
-        width: 100%;
-        margin-top: 0.5rem;
-      }
-
-      .feature {
-        display: flex;
-        flex-direction: column;
+      .cta-secondary {
+        display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.85rem 0.5rem;
-        border: 1px solid #1f1f24;
-        border-radius: calc(var(--radius) - 2px);
-        background: #121215;
+        color: var(--muted-foreground);
+        font-size: 0.95rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: color 0.15s ease;
       }
 
-      .feature-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 2rem;
-        height: 2rem;
-        border-radius: 0.5rem;
-        font-size: 1rem;
-        line-height: 1;
-      }
-
-      .feature-icon.games {
-        background: rgba(245, 158, 11, 0.15);
-      }
-
-      .feature-icon.team {
-        background: rgba(56, 189, 248, 0.15);
-      }
-
-      .feature-icon.overlay {
-        background: rgba(168, 85, 247, 0.15);
-      }
-
-      .feature-title {
-        font-size: 0.8rem;
-        font-weight: 600;
+      .cta-secondary:hover {
         color: var(--foreground);
       }
 
-      .feature-desc {
-        font-size: 0.7rem;
-        color: var(--muted-foreground);
-        line-height: 1.35;
+      .cta-secondary:focus-visible {
+        outline: 2px solid #f59e0b;
+        outline-offset: 2px;
+        border-radius: 2px;
       }
 
-      @media (max-width: 520px) {
-        .features {
+      .cta-outline {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.65rem 1.25rem;
+        border-radius: calc(var(--radius) - 2px);
+        border: 1px solid var(--border);
+        background: var(--card-secondary);
+        color: var(--foreground);
+        font-weight: 500;
+        font-size: 0.875rem;
+        text-decoration: none;
+        transition: border-color 0.15s ease, background 0.15s ease;
+      }
+
+      .cta-outline:hover {
+        border-color: rgba(245, 158, 11, 0.4);
+        background: #1a1a1f;
+      }
+
+      .cta-outline:focus-visible {
+        outline: 2px solid #f59e0b;
+        outline-offset: 2px;
+      }
+
+      /* Hero */
+      .hero {
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6rem 0 5rem;
+        text-align: center;
+      }
+
+      .hero .page {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+      }
+
+      .hero-inner {
+        width: min(100%, var(--hero-width));
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.75rem;
+        text-align: center;
+      }
+
+      .hero h1 {
+        font-size: clamp(1.75rem, 4.5vw, 2.5rem);
+        font-weight: 600;
+        line-height: 1.2;
+        color: var(--muted-foreground);
+      }
+
+      .hero .brand-name {
+        font-size: clamp(2.5rem, 7vw, 4.25rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.05;
+        color: var(--foreground);
+        background: linear-gradient(
+          135deg,
+          #ffffff 0%,
+          #ffffff 55%,
+          #f59e0b 100%
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: none;
+        filter: drop-shadow(0 0 40px rgba(245, 158, 11, 0.15));
+      }
+
+      .hero h1,
+      .hero .lead {
+        width: 100%;
+        text-align: center;
+      }
+
+      .hero .lead {
+        max-width: 42rem;
+        margin-left: auto;
+        margin-right: auto;
+        font-size: clamp(1.25rem, 2.8vw, 1.55rem);
+        line-height: 1.65;
+      }
+
+      .hero-actions {
+        display: flex;
+        justify-content: center;
+        margin-top: 1rem;
+      }
+
+      .hero .cta {
+        padding: 1rem 2rem;
+        font-size: 1.125rem;
+      }
+
+      .hero .cta-secondary {
+        font-size: 1.05rem;
+      }
+
+      /* Cards grid */
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+      }
+
+      .card {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1.25rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--card);
+      }
+
+      .card-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.5rem;
+        font-size: 1.15rem;
+        line-height: 1;
+      }
+
+      .card-icon.amber {
+        background: rgba(245, 158, 11, 0.15);
+      }
+
+      .card-icon.purple {
+        background: rgba(168, 85, 247, 0.15);
+      }
+
+      .card-icon.blue {
+        background: rgba(56, 189, 248, 0.15);
+      }
+
+      .card-icon.green {
+        background: rgba(16, 185, 129, 0.15);
+      }
+
+      .card-body {
+        margin: 0;
+        font-size: 1rem;
+        color: var(--muted-foreground);
+        line-height: 1.55;
+        flex: 1;
+      }
+
+      /* Platform tiles */
+      .tile-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+      }
+
+      .tile {
+        text-align: center;
+        padding: 1.5rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--card);
+      }
+
+      .tile .card-icon {
+        margin: 0 auto 0.75rem;
+      }
+
+      .tile h3 {
+        margin-bottom: 0.5rem;
+      }
+
+      .tile .card-body {
+        font-size: 0.95rem;
+      }
+
+      /* Pricing */
+      .plan-card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1.5rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--card);
+      }
+
+      .plan-card.featured {
+        border-color: rgba(245, 158, 11, 0.5);
+        box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.15);
+      }
+
+      .plan-badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--primary);
+      }
+
+      .plan-badge.muted {
+        background: rgba(156, 163, 175, 0.12);
+        color: var(--muted-foreground);
+      }
+
+      .popular-chip {
+        position: absolute;
+        top: -0.65rem;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 0.2rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        background: var(--primary);
+        color: #0a0a0c;
+      }
+
+      .plan-tagline {
+        margin: 0;
+        font-size: 0.875rem;
+        color: var(--muted-foreground);
+      }
+
+      .plan-features {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        flex: 1;
+      }
+
+      .plan-features li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        color: var(--muted-foreground);
+        line-height: 1.4;
+      }
+
+      .plan-features li::before {
+        content: "✓";
+        flex-shrink: 0;
+        color: var(--primary);
+        font-weight: 700;
+      }
+
+      .plan-note {
+        margin: 0;
+        font-size: 0.75rem;
+        color: var(--muted-foreground);
+      }
+
+      .pricing-footnote {
+        margin: 2rem auto 0;
+        max-width: 32rem;
+        text-align: center;
+        font-size: 0.875rem;
+        color: var(--muted-foreground);
+      }
+
+      /* How it works */
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1.5rem;
+      }
+
+      .step {
+        text-align: center;
+        padding: 1.5rem 1rem;
+      }
+
+      .step-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        margin: 0 auto 1rem;
+        border-radius: 50%;
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--primary);
+        font-weight: 700;
+        font-size: 1rem;
+      }
+
+      .step h3 {
+        margin-bottom: 0.5rem;
+      }
+
+      .step .card-body {
+        font-size: 0.85rem;
+      }
+
+      /* CTA band */
+      .cta-band {
+        padding: 3rem 2rem;
+        text-align: center;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--card);
+      }
+
+      .cta-band h2 {
+        margin-bottom: 0.75rem;
+      }
+
+      .cta-band .lead {
+        max-width: 32rem;
+        margin: 0 auto 1.5rem;
+      }
+
+      /* Contact */
+      .contact {
+        text-align: center;
+        padding-bottom: 3rem;
+      }
+
+      .contact h2 {
+        text-align: center;
+      }
+
+      .contact .lead {
+        max-width: 32rem;
+        margin: 0 auto 1.5rem;
+      }
+
+      .contact-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 3rem;
+      }
+
+      .footer {
+        padding-top: 2rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--muted-foreground);
+      }
+
+      @media (max-width: 768px) {
+        section {
+          padding: 3rem 0;
+        }
+
+        .card-grid,
+        .steps {
           grid-template-columns: 1fr;
         }
       }
+
+      @media (max-width: 520px) {
+        .tile-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (min-width: 521px) {
+        .tile-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+
     </style>
   </head>
   <body>
+    <div id="dot-field-bg" aria-hidden="true"></div>
     <main>
-      <section class="hero">
-        <img
-          class="logo"
-          src="logo.svg"
-          width="64"
-          height="64"
-          alt="Caz Agent"
-        />
-        <h1>Caz Agent</h1>
-        <p>
-          Caz Agent helps streamers manage their service through a web
-          application. Sign in with Kick.
-        </p>
-        <a class="cta" href="../app/">Sign in with Kick</a>
-        <div class="features">
-          <div class="feature">
-            <div class="feature-icon games" aria-hidden="true">🎲</div>
-            <span class="feature-title">Chat games</span>
-            <span class="feature-desc">Interactive Kick chat</span>
-          </div>
-          <div class="feature">
-            <div class="feature-icon team" aria-hidden="true">👥</div>
-            <span class="feature-title">Team</span>
-            <span class="feature-desc">Roles and access</span>
-          </div>
-          <div class="feature">
-            <div class="feature-icon overlay" aria-hidden="true">📺</div>
-            <span class="feature-title">OBS</span>
-            <span class="feature-desc">Stream overlays</span>
+      <section class="hero" id="hero">
+        <div class="page">
+          <div class="hero-inner">
+            <span class="brand-name">Caz Agent</span>
+            <h1>Turn your Kick chat into a live game show</h1>
+            <p class="lead">
+              Caz Agent gives casino streamers ready-to-run engagement modules —
+              bonus buys, prize wheels, and weighted giveaways — with OBS
+              overlays your viewers see on stream.
+            </p>
+            <div class="hero-actions">
+              <a class="cta" href="http://localhost:5173/">Sign in with Kick</a>
+            </div>
           </div>
         </div>
       </section>
+
+      <section id="modules">
+        <div class="page">
+          <div class="section-header">
+            <h2>Everything you need to engage chat</h2>
+            <p class="lead">
+              Pick a module, configure it in the dashboard, and drop the
+              browser-source widget into OBS.
+            </p>
+          </div>
+          <div class="card-grid">
+            <article class="card">
+              <div class="card-icon amber" aria-hidden="true">🎰</div>
+              <h3>Bonus Buy</h3>
+              <p class="card-body">
+                Run slot bonus-buy sessions on stream. Track balance, open
+                rounds, and show live stats on your overlay while viewers
+                follow the action.
+              </p>
+            </article>
+            <article class="card">
+              <div class="card-icon purple" aria-hidden="true">🎡</div>
+              <h3>Prize Spin</h3>
+              <p class="card-body">
+                Spin a weighted prize wheel for any viewer nick. Set sectors,
+                odds, and colors — then reveal the winner on stream in seconds.
+              </p>
+            </article>
+            <article class="card">
+              <div class="card-icon blue" aria-hidden="true">🎲</div>
+              <h3>Chat Roll</h3>
+              <p class="card-body">
+                Weighted chat giveaways with a keyword. Boost odds for VIPs,
+                mods, and subscribers — fair rolls, instant winner on overlay.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="platform">
+        <div class="page">
+          <div class="section-header">
+            <h2>Built for stream production</h2>
+          </div>
+          <div class="tile-grid">
+            <div class="tile">
+              <div class="card-icon purple" aria-hidden="true">📺</div>
+              <h3>OBS-ready widgets</h3>
+              <p class="card-body">
+                Browser-source URLs for each module. Styled to match your dark
+                stream layout.
+              </p>
+            </div>
+            <div class="tile">
+              <div class="card-icon blue" aria-hidden="true">👥</div>
+              <h3>Team access</h3>
+              <p class="card-body">
+                Owners and moderators share one account. Control who runs games
+                during your stream.
+              </p>
+            </div>
+            <div class="tile">
+              <div class="card-icon green" aria-hidden="true">⚡</div>
+              <h3>Kick-native</h3>
+              <p class="card-body">
+                Sign in with Kick OAuth. No extra passwords — start from the
+                channel you already stream on.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="pricing">
+        <div class="page">
+          <div class="section-header">
+            <h2>Plans for every stream size</h2>
+            <p class="lead">
+              Start free, then upgrade when you need more modules, overlays, or
+              team seats. All paid plans are activated via Telegram — no
+              checkout on this page.
+            </p>
+          </div>
+          <div class="card-grid">
+            <article class="plan-card">
+              <span class="plan-badge muted">Free</span>
+              <h3>Free</h3>
+              <p class="plan-tagline">Get started at no cost</p>
+              <ul class="plan-features">
+                <li>Team dashboard</li>
+                <li>Module catalog</li>
+                <li>Kick channel stats</li>
+              </ul>
+              <p class="plan-note">Included when you sign in</p>
+              <a class="cta-outline" href="http://localhost:5173/">Sign in with Kick</a>
+            </article>
+            <article class="plan-card featured">
+              <span class="popular-chip">Popular</span>
+              <span class="plan-badge">Pro</span>
+              <h3>Pro</h3>
+              <p class="plan-tagline">Full engagement toolkit for solo streamers</p>
+              <ul class="plan-features">
+                <li>All modules (Bonus Buy, Prize Spin, Chat Roll)</li>
+                <li>OBS browser-source widgets</li>
+                <li>Extended session limits</li>
+              </ul>
+              <p class="plan-note">Contact us to activate</p>
+              <a class="cta" href="#contact">Get Pro access</a>
+            </article>
+            <article class="plan-card">
+              <span class="plan-badge">Studio</span>
+              <h3>Studio</h3>
+              <p class="plan-tagline">For teams running daily streams</p>
+              <ul class="plan-features">
+                <li>Everything in Pro</li>
+                <li>Multiple moderator seats</li>
+                <li>Priority Telegram support</li>
+                <li>Highest session limits</li>
+              </ul>
+              <p class="plan-note">Contact us to activate</p>
+              <a class="cta-outline" href="#contact">Get Studio access</a>
+            </article>
+          </div>
+          <p class="pricing-footnote">
+            Prices are quoted individually. Message us to pick the right plan for
+            your channel.
+          </p>
+        </div>
+      </section>
+
+      <section id="how-it-works">
+        <div class="page">
+          <div class="section-header">
+            <h2>Live in three steps</h2>
+          </div>
+          <div class="steps">
+            <div class="step">
+              <div class="step-number" aria-hidden="true">1</div>
+              <h3>Sign in</h3>
+              <p class="card-body">
+                Connect with Kick and pick your team.
+              </p>
+            </div>
+            <div class="step">
+              <div class="step-number" aria-hidden="true">2</div>
+              <h3>Configure</h3>
+              <p class="card-body">
+                Open a module, set prizes, keywords, or sectors in the dashboard.
+              </p>
+            </div>
+            <div class="step">
+              <div class="step-number" aria-hidden="true">3</div>
+              <h3>Go live</h3>
+              <p class="card-body">
+                Add the widget URL to OBS and run your session while you stream.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="cta">
+        <div class="page">
+          <div class="cta-band">
+            <h2>Ready to engage your chat?</h2>
+            <p class="lead">
+              Sign in with Kick to open your dashboard, or message us to
+              activate your subscription.
+            </p>
+            <a class="cta" href="http://localhost:5173/">Sign in with Kick</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="contact" id="contact">
+        <div class="page">
+          <h2>Activate your plan</h2>
+          <p class="lead">
+            Sign in with Kick to start on Free. For Pro or Studio, message us on
+            Telegram and we'll set up your team.
+          </p>
+          <div class="contact-actions">
+            <a
+              class="cta"
+              href="https://t.me/parsyuk"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Message @parsyuk on Telegram</a
+            >
+            <a class="cta-secondary" href="http://localhost:5173/">Or sign in with Kick</a>
+          </div>
+          <p class="footer">© 2026 Caz Agent</p>
+        </div>
+      </section>
     </main>
+    <script src="dot-field.js"></script>
   </body>
 </html>

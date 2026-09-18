@@ -1,7 +1,4 @@
 import Box from '@mui/material/Box'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import Grid from '@mui/material/Grid'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import GroupIcon from '@mui/icons-material/Group'
@@ -9,8 +6,20 @@ import LayersIcon from '@mui/icons-material/Layers'
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports'
 import { useSearchParams } from 'react-router-dom'
 import { DotFieldBackground } from '@/components/backgrounds/DotFieldBackground'
-import { BrandHeader } from '@/components/BrandHeader'
 import { IconTile } from '@/components/IconTile'
+import {
+  loginCardContentSx,
+  loginCardGlowSx,
+  loginCardInnerSx,
+  loginCardOuterSx,
+  loginCardShineSx,
+  loginDividerSx,
+  loginEyebrowDotSx,
+  loginEyebrowSx,
+  loginFeatureItemSx,
+  loginLogoRingSx,
+  loginTaglineSx,
+} from '@/components/login/loginPageStyles'
 import { KickLoginButton } from '@/components/KickLoginButton'
 import { PageShell } from '@/components/PageShell'
 import { StatusAlert } from '@/components/StatusAlert'
@@ -18,7 +27,7 @@ import { StatusAlert } from '@/components/StatusAlert'
 const features = [
   {
     icon: SportsEsportsIcon,
-    variant: 'primary' as const,
+    variant: 'purple' as const,
     title: 'Chat games',
     description: 'Interactive games for Kick chat',
   },
@@ -30,7 +39,7 @@ const features = [
   },
   {
     icon: LayersIcon,
-    variant: 'purple' as const,
+    variant: 'primary' as const,
     title: 'OBS overlays',
     description: 'Browser sources for your stream',
   },
@@ -45,11 +54,37 @@ export function LoginPage() {
     <>
       <DotFieldBackground />
       <Box sx={{ position: 'relative', zIndex: 1 }}>
-        <PageShell>
-          <Card>
-            <CardContent sx={{ p: 3 }}>
-              <Stack spacing={3}>
-                <BrandHeader description="Streamer dashboard" />
+        <PageShell wide>
+          <Box sx={loginCardOuterSx}>
+            <Box sx={loginCardInnerSx}>
+              <Box sx={loginCardGlowSx} aria-hidden />
+              <Box sx={loginCardShineSx} aria-hidden />
+
+              <Stack spacing={3} sx={loginCardContentSx}>
+                <Stack spacing={2} sx={{ alignItems: 'center', textAlign: 'center' }}>
+                  <Box sx={loginEyebrowSx}>
+                    <Box sx={loginEyebrowDotSx} aria-hidden />
+                    Stream tools
+                  </Box>
+
+                  <Box sx={loginLogoRingSx}>
+                    <Box
+                      component="img"
+                      src="/logo.svg"
+                      alt="Caz Agent"
+                      sx={{ width: 44, height: 44 }}
+                    />
+                  </Box>
+
+                  <Stack spacing={0.75}>
+                    <Typography variant="h4" component="h1" sx={{ fontWeight: 700, letterSpacing: '-0.02em' }}>
+                      Caz Agent
+                    </Typography>
+                    <Typography variant="body2" sx={loginTaglineSx}>
+                      Streamer dashboard for Kick creators
+                    </Typography>
+                  </Stack>
+                </Stack>
 
                 {joinError ? (
                   <StatusAlert tone="error">
@@ -67,47 +102,32 @@ export function LoginPage() {
 
                 <KickLoginButton />
 
-                <Box
-                  sx={{
-                    borderTop: 1,
-                    borderColor: 'divider',
-                    pt: 3,
-                  }}
+                <Box sx={loginDividerSx} aria-hidden />
+
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={1.5}
+                  useFlexGap
                 >
-                  <Grid container spacing={1.5}>
-                    {features.map((feature) => (
-                      <Grid key={feature.title} size={{ xs: 12, sm: 4 }}>
-                        <Stack
-                          spacing={1}
-                          sx={{
-                            alignItems: 'center',
-                            border: 1,
-                            borderColor: 'divider',
-                            borderRadius: 2,
-                            bgcolor: 'background.default',
-                            p: 1.5,
-                            textAlign: 'center',
-                          }}
-                        >
-                          <IconTile
-                            icon={feature.icon}
-                            variant={feature.variant}
-                            size="sm"
-                          />
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            {feature.title}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {feature.description}
-                          </Typography>
-                        </Stack>
-                      </Grid>
-                    ))}
-                  </Grid>
-                </Box>
+                  {features.map((feature) => (
+                    <Stack key={feature.title} sx={loginFeatureItemSx}>
+                      <IconTile
+                        icon={feature.icon}
+                        variant={feature.variant}
+                        size="sm"
+                      />
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {feature.title}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.4 }}>
+                        {feature.description}
+                      </Typography>
+                    </Stack>
+                  ))}
+                </Stack>
               </Stack>
-            </CardContent>
-          </Card>
+            </Box>
+          </Box>
         </PageShell>
       </Box>
     </>
