@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { createHash, randomBytes } from 'node:crypto';
-import type { KickProfile } from './auth.types.js';
+import type { KickOAuthExchangeResult, KickProfile } from './auth.types.js';
 
 const KICK_AUTHORIZE_URL = 'https://id.kick.com/oauth/authorize';
 const KICK_TOKEN_URL = 'https://id.kick.com/oauth/token';
@@ -117,7 +117,7 @@ export class KickOAuthService implements OnModuleInit {
       redirect_uri: this.getRedirectUri(),
       response_type: 'code',
       state: request.state,
-      scope: 'user:read channel:read',
+      scope: 'user:read channel:read events:subscribe',
       code_challenge: request.codeChallenge,
       code_challenge_method: 'S256',
     });
@@ -128,17 +128,19 @@ export class KickOAuthService implements OnModuleInit {
   async exchangeCodeForProfile(
     code: string,
     codeVerifier?: string,
-  ): Promise<KickProfile> {
+  ): Promise<KickOAuthExchangeResult> {
     if (this.isMockMode()) {
       if (code !== 'mock-kick-code') {
         throw new UnauthorizedException('Mock OAuth expects code mock-kick-code');
       }
 
       return {
-        providerUserId: 'kick-mock-user',
-        username: 'kick_user_mock',
-        channelId: 'channel-mock',
-        channelSlug: 'kick_user_mock',
+        profile: {
+          providerUserId: 'kick-mock-user',
+          username: 'kick_user_mock',
+          channelId: 'channel-mock',
+          channelSlug: 'kick_user_mock',
+        },
       };
     }
 
@@ -184,7 +186,8 @@ export class KickOAuthService implements OnModuleInit {
       throw new UnauthorizedException('Kick token response missing access_token');
     }
 
-    return this.fetchProfile(tokenData.access_token);
+    const profile = await this.fetchProfile(tokenData.access_token);
+    return { profile, accessToken: tokenData.access_token };
   }
 
   private async fetchProfile(accessToken: string): Promise<KickProfile> {

@@ -15,6 +15,8 @@ export default defineConfig({
     },
   },
   server: {
+    // Cloudflare Tunnel quick tunnels (*.trycloudflare.com) for local OAuth / app testing
+    allowedHosts: ['.trycloudflare.com'],
     proxy: {
       '/auth': 'http://localhost:3000',
       '/accounts': 'http://localhost:3000',

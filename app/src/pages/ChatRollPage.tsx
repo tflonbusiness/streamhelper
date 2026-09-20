@@ -334,6 +334,18 @@ export function ChatRollPage() {
                       Exclude winner from pool after roll
                     </ExclusionToggleLabel>
                   </ExclusionToggleRow>
+                  <ExclusionToggleRow>
+                    <Switch
+                      size="small"
+                      checked={state.replyInChat}
+                      onChange={(event) =>
+                        updateState({ replyInChat: event.target.checked })
+                      }
+                    />
+                    <ExclusionToggleLabel variant="body2">
+                      Reply in Kick chat when someone joins
+                    </ExclusionToggleLabel>
+                  </ExclusionToggleRow>
                 </FormControl>
               </Grid>
             </Grid>

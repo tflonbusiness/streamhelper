@@ -6,6 +6,7 @@ import { AccountsModule } from './accounts/accounts.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { BonusBuyModule } from './bonus-buy/bonus-buy.module.js';
 import { DatabaseModule } from './database/database.module.js';
+import { KickChatModule } from './kick-chat/kick-chat.module.js';
 import { PrizeSpinModule } from './prize-spin/prize-spin.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
@@ -22,6 +23,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     AccountsModule,
     BonusBuyModule,
     PrizeSpinModule,
+    KickChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

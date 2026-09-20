@@ -27,6 +27,7 @@ export type ChatRollPageState = {
   keyword: string
   combineMode: WeightCombineMode
   excludeWinnerAfterRoll: boolean
+  replyInChat: boolean
   roles: Record<ChatRollRoleId, ChatRollRoleSetting>
   participants: ChatRollParticipant[]
   winners: ChatRollWinner[]
@@ -100,6 +101,7 @@ export function createDefaultChatRollState(): ChatRollPageState {
     keyword: '!roll',
     combineMode: 'highest',
     excludeWinnerAfterRoll: true,
+    replyInChat: false,
     roles: { ...DEFAULT_ROLE_SETTINGS },
     participants: [...CHAT_ROLL_MOCK_PARTICIPANTS],
     winners: [...CHAT_ROLL_MOCK_WINNERS],
@@ -130,6 +132,7 @@ export function loadChatRollState(accountId: number): ChatRollPageState {
       ...createDefaultChatRollState(),
       ...parsed,
       excludeWinnerAfterRoll: parsed.excludeWinnerAfterRoll ?? true,
+      replyInChat: parsed.replyInChat ?? false,
     }
   } catch {
     return createDefaultChatRollState()

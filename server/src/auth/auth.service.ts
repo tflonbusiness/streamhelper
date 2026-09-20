@@ -19,6 +19,7 @@ import {
   type DbPrizeSpinWidget,
   type PrizeSpinStatus,
 } from '../database/database.service.js';
+import { KickEventsService } from '../kick-chat/kick-events.service.js';
 import { KickChannelService } from './kick-channel.service.js';
 import type { KickChannelDto } from './kick-channel.types.js';
 import { KickOAuthService } from './kick-oauth.service.js';
@@ -30,6 +31,7 @@ export class AuthService {
     private readonly database: DatabaseService,
     private readonly kickOAuth: KickOAuthService,
     private readonly kickChannel: KickChannelService,
+    private readonly kickEvents: KickEventsService,
   ) {}
 
   getAppBaseUrl(): string {
@@ -108,12 +110,17 @@ export class AuthService {
     code: string,
     codeVerifier?: string,
   ): Promise<SessionUser> {
-    const profile = await this.kickOAuth.exchangeCodeForProfile(
+    const { profile, accessToken } = await this.kickOAuth.exchangeCodeForProfile(
       code,
       codeVerifier,
     );
     const { userId, membership } =
       await this.database.provisionOwnerFromKick(profile);
+
+    await this.kickEvents.subscribeToChatMessages({
+      broadcasterUserId: profile.channelId,
+      userAccessToken: accessToken,
+    });
 
     const credential = await this.database.findCredentialByProvider(
       'kick',

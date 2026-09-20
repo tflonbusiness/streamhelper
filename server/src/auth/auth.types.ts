@@ -24,6 +24,11 @@ export type KickProfile = {
   channelSlug: string;
 };
 
+export type KickOAuthExchangeResult = {
+  profile: KickProfile;
+  accessToken?: string;
+};
+
 export type CreateModeratorResult = {
   userId: number;
   name: string;

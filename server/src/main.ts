@@ -7,6 +7,7 @@ import { AppModule, ObserveInstrument } from './app.module.js';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     instrument: ObserveInstrument,
+    rawBody: true,
   });
 
   app.use(cookieParser());

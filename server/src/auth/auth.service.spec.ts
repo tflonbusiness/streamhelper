@@ -4,6 +4,7 @@ import { vi } from 'vitest';
 import { AuthService } from './auth.service.js';
 import { DatabaseService } from '../database/database.service.js';
 import { KickChannelService } from './kick-channel.service.js';
+import { KickEventsService } from '../kick-chat/kick-events.service.js';
 import { KickOAuthService } from './kick-oauth.service.js';
 
 describe('AuthService', () => {
@@ -45,6 +46,12 @@ describe('AuthService', () => {
           provide: KickChannelService,
           useValue: {
             getChannelForAccount: vi.fn(),
+          },
+        },
+        {
+          provide: KickEventsService,
+          useValue: {
+            subscribeToChatMessages: vi.fn(),
           },
         },
       ],

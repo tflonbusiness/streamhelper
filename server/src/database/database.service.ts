@@ -225,6 +225,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   private async initSchema(): Promise<void> {
     await this.pool.query(`
+      DROP TABLE IF EXISTS kick_chat_events CASCADE;
       DROP TABLE IF EXISTS chat_roll_win CASCADE;
       DROP TABLE IF EXISTS chat_roll_participant CASCADE;
       DROP TABLE IF EXISTS chat_roll_widget CASCADE;
@@ -426,6 +427,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           CHECK (combine_mode IN ('highest', 'sum')),
         exclude_winner_after_roll   BOOLEAN NOT NULL DEFAULT true,
         is_accepting_participants   BOOLEAN NOT NULL DEFAULT true,
+        reply_in_chat               BOOLEAN NOT NULL DEFAULT false,
         role_settings               JSONB NOT NULL DEFAULT '{
           "moderator":         { "enabled": false, "weight": 1 },
           "vip":               { "enabled": true,  "weight": 2 },
@@ -490,6 +492,17 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
       );
+
+      CREATE TABLE kick_chat_events (
+        message_id      TEXT PRIMARY KEY,
+        broadcaster_id  TEXT NOT NULL,
+        sender_id       TEXT NOT NULL,
+        content         TEXT NOT NULL,
+        received_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+
+      CREATE INDEX idx_kick_chat_events_broadcaster
+        ON kick_chat_events (broadcaster_id, received_at DESC);
     `);
   }
 
@@ -2971,4 +2984,150 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       settings,
     };
   }
+
+  async getAccountIdByKickChannelId(
+    channelId: string,
+  ): Promise<number | null> {
+    const result = await this.pool.query<{ account_id: number }>(
+      `
+        SELECT account_id
+        FROM account_channels
+        WHERE provider = 'kick' AND channel_id = $1
+        LIMIT 1
+      `,
+      [channelId],
+    );
+    const row = result.rows[0];
+    return row ? toInt(row.account_id) : null;
+  }
+
+  async getLiveChatRollForIntake(
+    accountId: number,
+  ): Promise<DbChatRollIntakeSession | null> {
+    const result = await this.pool.query<{
+      id: number;
+      account_id: number;
+      keyword: string;
+      is_accepting_participants: boolean;
+      reply_in_chat: boolean;
+    }>(
+      `
+        SELECT id, account_id, keyword, is_accepting_participants, reply_in_chat
+        FROM chat_roll
+        WHERE account_id = $1 AND status = 'live'
+        LIMIT 1
+      `,
+      [accountId],
+    );
+    const row = result.rows[0];
+    if (!row) {
+      return null;
+    }
+    return {
+      id: toInt(row.id),
+      accountId: toInt(row.account_id),
+      keyword: row.keyword,
+      isAcceptingParticipants: row.is_accepting_participants,
+      replyInChat: row.reply_in_chat,
+    };
+  }
+
+  async recordKickChatEvent(input: {
+    messageId: string;
+    broadcasterId: string;
+    senderId: string;
+    content: string;
+  }): Promise<boolean> {
+    const result = await this.pool.query(
+      `
+        INSERT INTO kick_chat_events (message_id, broadcaster_id, sender_id, content)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (message_id) DO NOTHING
+        RETURNING message_id
+      `,
+      [input.messageId, input.broadcasterId, input.senderId, input.content],
+    );
+    return Boolean(result.rows[0]);
+  }
+
+  async insertChatRollParticipantFromChat(input: {
+    chatRollId: number;
+    provider: 'kick';
+    providerUserId: string;
+    displayName: string;
+    roleIds: string[];
+  }): Promise<
+    | { status: 'created'; participantId: number }
+    | { status: 'duplicate' }
+    | { status: 'entries_paused' }
+  > {
+    const sessionResult = await this.pool.query<{
+      is_accepting_participants: boolean;
+    }>(
+      `
+        SELECT is_accepting_participants
+        FROM chat_roll
+        WHERE id = $1
+        LIMIT 1
+      `,
+      [input.chatRollId],
+    );
+    const session = sessionResult.rows[0];
+    if (!session) {
+      return { status: 'entries_paused' };
+    }
+    if (!session.is_accepting_participants) {
+      return { status: 'entries_paused' };
+    }
+
+    const existing = await this.pool.query<{ id: number }>(
+      `
+        SELECT id
+        FROM chat_roll_participant
+        WHERE chat_roll_id = $1
+          AND provider = $2
+          AND provider_user_id = $3
+          AND is_archived = false
+        LIMIT 1
+      `,
+      [input.chatRollId, input.provider, input.providerUserId],
+    );
+    if (existing.rows[0]) {
+      return { status: 'duplicate' };
+    }
+
+    const insertResult = await this.pool.query<{ id: number }>(
+      `
+        INSERT INTO chat_roll_participant (
+          chat_roll_id,
+          provider,
+          provider_user_id,
+          display_name,
+          role_ids
+        )
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id
+      `,
+      [
+        input.chatRollId,
+        input.provider,
+        input.providerUserId,
+        input.displayName,
+        input.roleIds,
+      ],
+    );
+
+    return {
+      status: 'created',
+      participantId: toInt(insertResult.rows[0].id),
+    };
+  }
 }
+
+export type DbChatRollIntakeSession = {
+  id: number;
+  accountId: number;
+  keyword: string;
+  isAcceptingParticipants: boolean;
+  replyInChat: boolean;
+};

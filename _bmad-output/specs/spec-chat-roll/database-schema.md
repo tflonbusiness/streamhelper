@@ -24,6 +24,7 @@ erDiagram
     text combine_mode
     boolean exclude_winner_after_roll
     boolean is_accepting_participants
+    boolean reply_in_chat
     jsonb role_settings
     timestamptz created_at
   }
@@ -76,6 +77,7 @@ Session record — mirrors `prize_spin`.
 | `combine_mode` | `TEXT NOT NULL` | `'highest'` | `highest` \| `sum` |
 | `exclude_winner_after_roll` | `BOOLEAN NOT NULL` | `true` | When true, picked participant is soft-removed from pool |
 | `is_accepting_participants` | `BOOLEAN NOT NULL` | `true` | When false, reject all new participant inserts; Roll and existing pool unchanged |
+| `reply_in_chat` | `BOOLEAN NOT NULL` | `false` | When true, Kick bot posts a join confirmation in chat after a successful keyword match |
 | `role_settings` | `JSONB NOT NULL` | see below | Session snapshot of five role toggles + weights |
 | `created_at` | `TIMESTAMPTZ NOT NULL` | `now()` | |
 
@@ -105,7 +107,7 @@ CREATE UNIQUE INDEX idx_chat_roll_account_live
 
 Validation: all five keys required; `weight` ∈ [0.1, 100] one decimal; at least one `enabled: true`.
 
-**Settings copy on create:** new session copies `keyword`, `combine_mode`, `exclude_winner_after_roll`, `role_settings`, and `is_accepting_participants` from the account's most recent non-archived session; falls back to app defaults when none exists (`is_accepting_participants` defaults to `true`).
+**Settings copy on create:** new session copies `keyword`, `combine_mode`, `exclude_winner_after_roll`, `role_settings`, `is_accepting_participants`, and `reply_in_chat` from the account's most recent non-archived session; falls back to app defaults when none exists (`is_accepting_participants` defaults to `true`, `reply_in_chat` defaults to `false`).
 
 **Participant intake gate:** before inserting into `chat_roll_participant`, server checks `is_accepting_participants`. When `false`, return `409` with `{ message: 'ENTRIES_PAUSED' }` — applies to chat webhook intake and operator manual add alike. Existing participants, coefficient recompute, and Roll remain available.
 
@@ -217,9 +219,21 @@ Account-level overlay canvas size — mirrors `prize_spin_widget`.
 | Archive | `is_archived` on participant and win | Same pattern as `prize_spin_win` and `bonus_buy_slot`; rows retained for audit |
 | Win coefficient | `coefficient_at_pick` only | Records the weight used in the draw; distinct from live participant coefficient |
 
+## `kick_chat_events`
+
+Webhook idempotency log for Kick `chat.message.sent`.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `message_id` | `TEXT PRIMARY KEY` | Kick `Kick-Event-Message-Id` / payload `message_id` |
+| `broadcaster_id` | `TEXT NOT NULL` | Channel broadcaster user id |
+| `sender_id` | `TEXT NOT NULL` | Viewer user id |
+| `content` | `TEXT NOT NULL` | Raw chat message |
+| `received_at` | `TIMESTAMPTZ NOT NULL` | `now()` |
+
 ## Out of scope (this schema slice)
 
-- Chat webhook intake inserting participants (uses `provider` + `provider_user_id` when ready)
+- Chat webhook intake REST surface (implemented in `spec-kick-chat-bot`)
 - Collection timer (auto-pause after N minutes)
 - OBS overlay public read endpoint (follows widget table)
 - Full REST API surface (companion documents tables only; API spec is follow-on)
