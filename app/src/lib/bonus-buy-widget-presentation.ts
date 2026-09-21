@@ -1,8 +1,6 @@
 import { isBonusBuySlotPlaying, type BonusBuySlot, type BonusBuyWidgetSettings } from '@/api/bonus-buy'
 import { computeSessionStats } from '@/lib/bonus-buy-stats'
 
-const AUTO_SCROLL_SECONDS_PER_ITEM = 3.5
-
 export type BonusBuyWidgetTheme = Pick<
   BonusBuyWidgetSettings,
   | 'backgroundColor'
@@ -33,9 +31,6 @@ export type BonusBuyWidgetCardProps = {
   playingSlot: BonusBuySlot | null
   playingIndex: number
   listSlots: BonusBuySlot[]
-  slotsToRender: BonusBuySlot[]
-  autoScrollEnabled: boolean
-  autoScrollDuration: number
   averageXColor: string
   averageXSentiment: AverageXSentiment
 }
@@ -85,15 +80,6 @@ export function deriveBonusBuyWidgetCardProps(
     : -1
   const listSlots = activeSlots.filter((slot) => !isBonusBuySlotPlaying(slot))
 
-  const autoScrollEnabled = listSlots.length > 0
-  const slotsToRender = autoScrollEnabled
-    ? [...listSlots, ...listSlots]
-    : listSlots
-  const autoScrollDuration = Math.max(
-    listSlots.length * AUTO_SCROLL_SECONDS_PER_ITEM,
-    12,
-  )
-
   const stats = computeSessionStats(record.startBalance, activeSlots)
   const averageXValue = parseAverageX(stats.averageX)
   const { color: averageXColor, sentiment: averageXSentiment } = getAverageXPresentation(
@@ -109,9 +95,6 @@ export function deriveBonusBuyWidgetCardProps(
     playingSlot: playing,
     playingIndex: playingIdx,
     listSlots,
-    slotsToRender,
-    autoScrollEnabled,
-    autoScrollDuration,
     averageXColor,
     averageXSentiment,
   }

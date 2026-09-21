@@ -13,9 +13,6 @@ export function BonusBuyWidgetCard({
   playingSlot,
   playingIndex,
   listSlots,
-  slotsToRender,
-  autoScrollEnabled,
-  autoScrollDuration,
   averageXColor,
   averageXSentiment,
 }: BonusBuyWidgetCardProps) {
@@ -35,13 +32,7 @@ export function BonusBuyWidgetCard({
           theme={theme}
         />
       ) : null}
-      <BonusBuyWidgetSlotList
-        listSlots={listSlots}
-        slotsToRender={slotsToRender}
-        theme={theme}
-        autoScrollEnabled={autoScrollEnabled}
-        autoScrollDuration={autoScrollDuration}
-      />
+      <BonusBuyWidgetSlotList listSlots={listSlots} theme={theme} />
     </StyledWidgetCard>
   )
 }
