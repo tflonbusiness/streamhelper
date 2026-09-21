@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { PageHeader } from '@/components/PageHeader'
 import { BonusBuyEditSessionDialog } from '@/components/bonus-buy/session/BonusBuyEditSessionDialog'
-import { BonusBuyEndSessionDialog } from '@/components/bonus-buy/session/BonusBuyEndSessionDialog'
+import { BonusBuyArchiveSessionDialog } from '@/components/bonus-buy/session/BonusBuyArchiveSessionDialog'
 import { BonusBuySessionAddSlotSection } from '@/components/bonus-buy/session/BonusBuySessionAddSlotSection'
 import { BonusBuySessionErrorState } from '@/components/bonus-buy/session/BonusBuySessionErrorState'
 import { BonusBuySessionHeaderSection } from '@/components/bonus-buy/session/BonusBuySessionHeaderSection'
@@ -29,7 +29,7 @@ export const BonusBuySessionPage = () => {
   const { user } = useAuth()
 
   const [editSessionDialogOpen, setEditSessionDialogOpen] = useState(false)
-  const [endSessionDialogOpen, setEndSessionDialogOpen] = useState(false)
+  const [archiveSessionDialogOpen, setArchiveSessionDialogOpen] = useState(false)
   const [widgetDialogOpen, setWidgetDialogOpen] = useState(false)
 
   const {
@@ -96,7 +96,7 @@ export const BonusBuySessionPage = () => {
       <BonusBuySessionHeaderSection
         bonusBuyId={bonusBuyId}
         record={record}
-        onOpenEndDialog={() => setEndSessionDialogOpen(true)}
+        onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
         onOpenEditDialog={() => setEditSessionDialogOpen(true)}
         onOpenWidgetDialog={() => setWidgetDialogOpen(true)}
       />
@@ -122,11 +122,12 @@ export const BonusBuySessionPage = () => {
         open={editSessionDialogOpen}
         onClose={() => setEditSessionDialogOpen(false)}
       />
-      <BonusBuyEndSessionDialog
+      <BonusBuyArchiveSessionDialog
         accountId={accountId}
         bonusBuyId={bonusBuyId}
-        open={endSessionDialogOpen}
-        onClose={() => setEndSessionDialogOpen(false)}
+        record={record}
+        open={archiveSessionDialogOpen}
+        onClose={() => setArchiveSessionDialogOpen(false)}
       />
       <BonusBuyWidgetStyleDialog
         accountId={accountId}

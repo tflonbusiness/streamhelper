@@ -10,7 +10,7 @@ import {
   createBonusBuy,
   createBonusBuySlot,
   upsertBonusBuyWidgetCustomPreset,
-  endBonusBuy,
+  archiveBonusBuy,
   fetchBonusBuy,
   fetchBonusBuySlots,
   fetchBonusBuys,
@@ -209,7 +209,7 @@ export function useArchiveBonusBuySlot(
   })
 }
 
-export function useEndBonusBuy(
+export function useArchiveBonusBuySession(
   accountId: number | undefined,
   bonusBuyId: number | null,
 ) {
@@ -217,7 +217,7 @@ export function useEndBonusBuy(
   const invalidateSession = useInvalidateBonusBuySession(accountId)
 
   return useMutation({
-    mutationFn: () => endBonusBuy(accountId!, bonusBuyId!),
+    mutationFn: () => archiveBonusBuy(accountId!, bonusBuyId!),
     onSuccess: () => {
       if (bonusBuyId !== null) {
         invalidateSession(bonusBuyId)

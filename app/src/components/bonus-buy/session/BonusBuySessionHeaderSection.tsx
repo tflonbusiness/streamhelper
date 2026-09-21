@@ -1,10 +1,10 @@
 import { Button, Chip, Stack, Typography } from '@mui/material'
+import ArchiveIcon from '@mui/icons-material/Archive'
 import EditIcon from '@mui/icons-material/Edit'
 import LinkIcon from '@mui/icons-material/Link'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import PaletteIcon from '@mui/icons-material/Palette'
-import StopCircleIcon from '@mui/icons-material/StopCircle'
-import { alpha, styled } from '@mui/material/styles'
+import { alpha, styled, useTheme } from '@mui/material/styles'
 import { Link } from 'react-router-dom'
 import type { BonusBuyRecord } from '@/api/bonus-buy'
 import { isBonusBuyActive } from '@/api/bonus-buy'
@@ -14,11 +14,12 @@ import {
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { StatusAlert } from '@/components/StatusAlert'
 import { useNotification } from '@/context/NotificationContext'
+import { mutedChipSx } from '@/theme/colors'
 
 type BonusBuySessionHeaderSectionProps = {
   bonusBuyId: number
   record: BonusBuyRecord
-  onOpenEndDialog: () => void
+  onOpenArchiveDialog: () => void
   onOpenEditDialog: () => void
   onOpenWidgetDialog: () => void
 }
@@ -54,28 +55,23 @@ const ActionsStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(1),
 }))
 
-const EndSessionButton = styled(Button)(({ theme }) => ({
-  borderColor: alpha(theme.palette.error.main, 0.4),
-  color: theme.palette.error.main,
+const ArchiveButton = styled(Button)(({ theme }) => ({
+  borderColor: alpha(theme.palette.warning.main, 0.4),
+  color: theme.palette.warning.main,
   '&:hover': {
-    borderColor: theme.palette.error.main,
-    backgroundColor: alpha(theme.palette.error.main, 0.1),
+    borderColor: theme.palette.warning.main,
+    backgroundColor: alpha(theme.palette.warning.main, 0.1),
   },
 }))
 
-const EndedChip = styled(Chip)({
-  flexShrink: 0,
-  color: 'text.secondary',
-  borderColor: 'divider',
-})
-
-const EndedAlert = styled(StatusAlert)(({ theme }) => ({
+const ReadOnlyAlert = styled(StatusAlert)(({ theme }) => ({
   marginTop: theme.spacing(2),
 }))
 
 export const BonusBuySessionHeaderSection = (
   props: BonusBuySessionHeaderSectionProps,
 ) => {
+  const theme = useTheme()
   const { showSuccess } = useNotification()
   const active = isBonusBuyActive(props.record)
 
@@ -90,20 +86,24 @@ export const BonusBuySessionHeaderSection = (
                 <SessionId>#{props.record.id}</SessionId>
               </SessionTitle>
               {!active ? (
-                <EndedChip label="Ended" size="small" variant="outlined" />
+                <Chip
+                  label="Archived"
+                  size="small"
+                  sx={mutedChipSx(theme)}
+                />
               ) : null}
             </TitleStack>
             <ActionsStack direction="row">
               {active ? (
-                <EndSessionButton
+                <ArchiveButton
                   type="button"
                   variant="outlined"
                   size="small"
-                  startIcon={<StopCircleIcon fontSize="small" aria-hidden />}
-                  onClick={props.onOpenEndDialog}
+                  startIcon={<ArchiveIcon fontSize="small" aria-hidden />}
+                  onClick={props.onOpenArchiveDialog}
                 >
-                  End Bonus Buy
-                </EndSessionButton>
+                  Archive
+                </ArchiveButton>
               ) : null}
               {active ? (
                 <Button
@@ -148,9 +148,9 @@ export const BonusBuySessionHeaderSection = (
             </ActionsStack>
           </HeaderStack>
           {!active ? (
-            <EndedAlert tone="warning">
-              This bonus buy session has ended.
-            </EndedAlert>
+            <ReadOnlyAlert tone="info">
+              This session is archived. View only.
+            </ReadOnlyAlert>
           ) : null}
         </StyledCompactSessionCardContent>
       </StyledSessionCard>

@@ -8,14 +8,14 @@ import {
 } from '@mui/material'
 import ArchiveIcon from '@mui/icons-material/Archive'
 import { styled } from '@mui/material/styles'
-import type { PrizeSpinRecord } from '@/api/prize-spin'
+import type { BonusBuyRecord } from '@/api/bonus-buy'
 import { useNotification } from '@/context/NotificationContext'
-import { useArchivePrizeSpinSession } from '@/queries/use-prize-spin-session'
+import { useArchiveBonusBuySession } from '@/queries/use-bonus-buy'
 
-type PrizeSpinSessionArchiveDialogProps = {
+type BonusBuyArchiveSessionDialogProps = {
   accountId: number
-  prizeSpinId: number
-  record: PrizeSpinRecord | null
+  bonusBuyId: number
+  record: BonusBuyRecord | null
   open: boolean
   onClose: () => void
 }
@@ -30,13 +30,13 @@ const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
   paddingBottom: theme.spacing(2),
 }))
 
-export const PrizeSpinSessionArchiveDialog = (
-  props: PrizeSpinSessionArchiveDialogProps,
+export const BonusBuyArchiveSessionDialog = (
+  props: BonusBuyArchiveSessionDialogProps,
 ) => {
   const { showSuccess, showError } = useNotification()
-  const archiveMutation = useArchivePrizeSpinSession(
+  const archiveMutation = useArchiveBonusBuySession(
     props.accountId,
-    props.prizeSpinId,
+    props.bonusBuyId,
   )
 
   const handleClose = () => {
@@ -75,7 +75,7 @@ export const PrizeSpinSessionArchiveDialog = (
       <DialogTitle>Archive session?</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
-          <b>{props.record?.title}</b> will be removed from the active list. Archived
+          <b>"{props.record?.name}"</b> will be removed from the active list. Archived
           sessions can be opened for review but not edited.
         </StyledDescription>
       </DialogContent>

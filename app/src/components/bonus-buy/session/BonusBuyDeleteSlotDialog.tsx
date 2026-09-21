@@ -1,5 +1,4 @@
 import {
-  Box,
   Button,
   Dialog,
   DialogActions,
@@ -7,9 +6,9 @@ import {
   DialogTitle,
   Typography,
 } from '@mui/material'
-import { useState } from 'react'
+import DeleteIcon from '@mui/icons-material/Delete'
+import { styled } from '@mui/material/styles'
 import type { BonusBuySlot } from '@/api/bonus-buy'
-import { StatusAlert } from '@/components/StatusAlert'
 import { useNotification } from '@/context/NotificationContext'
 import { useArchiveBonusBuySlot } from '@/queries/use-bonus-buy'
 
@@ -20,71 +19,91 @@ type BonusBuyDeleteSlotDialogProps = {
   onClose: () => void
 }
 
+const StyledDescription = styled(Typography)(({ theme }) => ({
+  color: theme.palette.text.secondary,
+}))
+
+const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
+  paddingLeft: theme.spacing(3),
+  paddingRight: theme.spacing(3),
+  paddingBottom: theme.spacing(2),
+}))
+
 export const BonusBuyDeleteSlotDialog = (
   props: BonusBuyDeleteSlotDialogProps,
 ) => {
-  const { showSuccess } = useNotification()
+  const { showSuccess, showError } = useNotification()
   const archiveSlotMutation = useArchiveBonusBuySlot(
     props.accountId,
     props.bonusBuyId,
   )
-  const [deleteError, setDeleteError] = useState<string | null>(null)
 
-  async function handleConfirmDelete() {
+  const handleClose = () => {
+    if (archiveSlotMutation.isPending) {
+      return
+    }
+
+    props.onClose()
+
+    if (!archiveSlotMutation.isPending) {
+      archiveSlotMutation.reset()
+    }
+  }
+
+  const handleConfirmDelete = () => {
     if (!props.slot) {
       return
     }
 
-    setDeleteError(null)
-    try {
-      await archiveSlotMutation.mutateAsync(props.slot.id)
-      props.onClose()
-      showSuccess('Slot deleted.')
-    } catch (deleteSlotError) {
-      setDeleteError(
-        deleteSlotError instanceof Error
-          ? deleteSlotError.message
-          : 'Could not delete slot',
-      )
-    }
+    archiveSlotMutation.mutate(props.slot.id, {
+      onSuccess: () => {
+        showSuccess('Slot deleted.')
+        handleClose()
+        archiveSlotMutation.reset()
+      },
+      onError: (error) => {
+        showError(
+          error instanceof Error ? error.message : 'Could not delete slot',
+        )
+      },
+    })
   }
 
   return (
     <Dialog
       open={props.slot !== null}
-      onClose={props.onClose}
-      maxWidth="sm"
+      onClose={handleClose}
+      maxWidth="xs"
       fullWidth
     >
       <DialogTitle>Delete slot?</DialogTitle>
       <DialogContent>
-        <Typography variant="body2" color="text.secondary">
-          {props.slot
-            ? `Remove "${props.slot.name}" from this session? The record will be archived.`
-            : null}
-        </Typography>
-        {deleteError ? (
-          <Box sx={{ mt: 2 }}>
-            <StatusAlert tone="error">{deleteError}</StatusAlert>
-          </Box>
-        ) : null}
+        <StyledDescription variant="body2">
+          Delete the <b>"{props.slot?.name}"</b> slot from this session?
+        </StyledDescription>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
+      <StyledDialogActions>
         <Button
-          onClick={props.onClose}
+          type="button"
+          variant="outlined"
+          onClick={handleClose}
           disabled={archiveSlotMutation.isPending}
         >
           Cancel
         </Button>
         <Button
+          type="button"
           variant="contained"
-          color="error"
+          color="warning"
+          startIcon={<DeleteIcon fontSize="small" aria-hidden />}
           onClick={() => void handleConfirmDelete()}
-          disabled={archiveSlotMutation.isPending}
+          loading={archiveSlotMutation.isPending}
+          loadingPosition="start"
+          disabled={!props.slot}
         >
-          {archiveSlotMutation.isPending ? 'Deleting…' : 'Delete'}
+          Delete
         </Button>
-      </DialogActions>
+      </StyledDialogActions>
     </Dialog>
   )
 }

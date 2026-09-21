@@ -11,6 +11,7 @@ import { BonusBuySlotExpandedDetails } from '@/components/bonus-buy/session/Bonu
 import { buildBonusBuySlotColumns } from '@/components/bonus-buy/session/bonusBuySlotColumns'
 import { playingSlotRowSx } from '@/components/bonus-buy/session/bonusBuySessionStyles'
 import {
+  StyledSectionDivider,
   StyledSessionCard,
   StyledSessionCardContent,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
@@ -90,13 +91,15 @@ export const BonusBuySessionSlotsSection = (
   return (
     <>
       <StyledSessionCard elevation={0}>
-        <StyledSessionCardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+        <StyledSessionCardContent>
           <SectionHeader
             title={`Bonus list (${props.slots.length})`}
             description="Track purchases, wins, and which slot is live on the overlay"
             icon={ListAltIcon}
             iconVariant="secondary"
+            sx={{ mb: 0 }}
           />
+          <StyledSectionDivider />
           <AppTable
             columns={slotColumns}
             rows={props.slots}

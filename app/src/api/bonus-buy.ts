@@ -248,7 +248,7 @@ export async function patchBonusBuy(
   return response.json() as Promise<BonusBuyRecord>
 }
 
-export async function endBonusBuy(
+export async function archiveBonusBuy(
   accountId: number,
   bonusBuyId: number,
 ): Promise<BonusBuyRecord> {
@@ -262,7 +262,7 @@ export async function endBonusBuy(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not end bonus buy session'),
+      await readErrorMessage(response, 'Could not archive bonus buy session'),
     )
   }
 
