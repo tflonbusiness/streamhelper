@@ -131,7 +131,7 @@ export const BonusBuyWidgetStyleDialog = (
         maxWidth="lg"
         fullWidth
       >
-        <DialogTitle>Widget style</DialogTitle>
+        <DialogTitle>Widget Style</DialogTitle>
         <DialogContent>
           {isLoadingWidget ? (
             <StatusAlert tone="info" sx={{ mt: 1 }}>

@@ -20,6 +20,10 @@ import {
   type CreateBonusBuyFormValues,
   createBonusBuyFormSchema,
 } from '@/lib/bonus-buy-validation'
+import {
+  decimalMoneyInputSlotProps,
+  sanitizeDecimalInput,
+} from '@/lib/bonus-buy-format'
 import { useCreateBonusBuy } from '@/queries/use-bonus-buy'
 
 type BonusBuyCreateDialogProps = {
@@ -133,10 +137,11 @@ export const BonusBuyCreateDialog = (props: BonusBuyCreateDialogProps) => {
                   {...field}
                   id="bonus-buy-balance"
                   label="Start balance (USD)"
-                  type="number"
-                  slotProps={{
-                    htmlInput: { step: '0.01', min: 0, inputMode: 'decimal' },
-                  }}
+                  type="text"
+                  onChange={(event) =>
+                    field.onChange(sanitizeDecimalInput(event.target.value))
+                  }
+                  slotProps={decimalMoneyInputSlotProps}
                   error={Boolean(fieldState.error)}
                   helperText={fieldState.error?.message}
                   fullWidth

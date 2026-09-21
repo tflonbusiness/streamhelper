@@ -1,8 +1,8 @@
 import { Box, Button, Grid, TextField } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
-import { alpha } from '@mui/material/styles'
-import { styled } from '@mui/material/styles'
-import { type FormEvent, useState } from 'react'
+import { alpha, styled } from '@mui/material/styles'
+import { yupResolver } from '@hookform/resolvers/yup'
+import { Controller, useForm } from 'react-hook-form'
 import type { BonusBuyRecord } from '@/api/bonus-buy'
 import { isBonusBuyActive } from '@/api/bonus-buy'
 import { SectionHeader } from '@/components/SectionHeader'
@@ -11,15 +11,28 @@ import {
   StyledSessionCard,
   StyledSessionCardContent,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
-import { StatusAlert } from '@/components/StatusAlert'
 import { useNotification } from '@/context/NotificationContext'
+import {
+  type CreateBonusBuySlotFormValues,
+  createBonusBuySlotFormSchema,
+} from '@/lib/bonus-buy-validation'
+import {
+  decimalMoneyInputSlotProps,
+  sanitizeDecimalInput,
+} from '@/lib/bonus-buy-format'
 import { useCreateBonusBuySlot } from '@/queries/use-bonus-buy'
-import { colors, inputFieldSx } from '@/theme/colors'
+import { colors } from '@/theme/colors'
 
 type BonusBuySessionAddSlotSectionProps = {
   accountId: number
   bonusBuyId: number
   record: BonusBuyRecord
+}
+
+const defaultValues: CreateBonusBuySlotFormValues = {
+  name: '',
+  providerName: '',
+  purchaseAmount: '',
 }
 
 const FormPanel = styled(Box)(({ theme }) => ({
@@ -31,63 +44,63 @@ const FormPanel = styled(Box)(({ theme }) => ({
   transition: 'opacity 0.15s ease',
 }))
 
+const StyledTextField = styled(TextField)(({ theme }) => ({
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: theme.palette.background.default,
+  },
+}))
+
 export const BonusBuySessionAddSlotSection = (
   props: BonusBuySessionAddSlotSectionProps,
 ) => {
-  const { showSuccess } = useNotification()
+  const { showSuccess, showError } = useNotification()
   const createSlotMutation = useCreateBonusBuySlot(
     props.accountId,
     props.bonusBuyId,
   )
   const active = isBonusBuyActive(props.record)
 
-  const [slotName, setSlotName] = useState('')
-  const [nickProvider, setNickProvider] = useState('')
-  const [purchaseAmount, setPurchaseAmount] = useState('')
-  const [formError, setFormError] = useState<string | null>(null)
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { isValid },
+  } = useForm({
+    defaultValues,
+    resolver: yupResolver(createBonusBuySlotFormSchema),
+    mode: 'onChange',
+  })
 
-  async function handleAddSlot(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setFormError(null)
-
+  const onSubmit = handleSubmit((values) => {
     if (!active) {
       return
     }
 
-    const trimmedSlot = slotName.trim()
-    const parsedPurchase = Number.parseFloat(purchaseAmount)
-
-    if (!trimmedSlot) {
-      setFormError('Slot name is required')
-      return
-    }
-
-    if (!Number.isFinite(parsedPurchase) || parsedPurchase <= 0) {
-      setFormError('Purchase amount must be greater than zero')
-      return
-    }
-
-    try {
-      await createSlotMutation.mutateAsync({
-        name: trimmedSlot,
-        purchaseAmount: parsedPurchase.toFixed(2),
-        providerName: nickProvider.trim() || undefined,
-      })
-      setSlotName('')
-      setNickProvider('')
-      setPurchaseAmount('')
-      showSuccess('Slot added.')
-    } catch (addError) {
-      setFormError(
-        addError instanceof Error ? addError.message : 'Could not add slot',
-      )
-    }
-  }
+    createSlotMutation.mutate(
+      {
+        name: values.name,
+        purchaseAmount: Number.parseFloat(values.purchaseAmount).toFixed(2),
+        providerName: values.providerName.trim() || undefined,
+      },
+      {
+        onSuccess: () => {
+          reset(defaultValues)
+          showSuccess('Slot added.')
+          createSlotMutation.reset()
+        },
+        onError: (error) => {
+          showError(
+            error instanceof Error ? error.message : 'Could not add slot',
+          )
+        },
+      },
+    )
+  })
 
   return (
     <StyledSessionCard elevation={0}>
       <StyledSessionCardContent>
-        <Box component="form" onSubmit={handleAddSlot}>
+        <Box component="form" onSubmit={onSubmit} noValidate>
           <SectionHeader
             title="Quick add slot"
             description="Enter slot details and purchase amount in USD"
@@ -98,11 +111,13 @@ export const BonusBuySessionAddSlotSection = (
               <Button
                 type="submit"
                 variant="contained"
-                disabled={!active || createSlotMutation.isPending}
+                disabled={!active || !isValid}
+                loading={createSlotMutation.isPending}
+                loadingPosition="start"
                 startIcon={<AddIcon fontSize="small" aria-hidden />}
                 sx={{ flexShrink: 0 }}
               >
-                {createSlotMutation.isPending ? 'Adding…' : 'Add slot'}
+                Add slot
               </Button>
             }
           />
@@ -110,53 +125,67 @@ export const BonusBuySessionAddSlotSection = (
           <FormPanel sx={!active ? { opacity: 0.55 } : undefined}>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  id="session-slot-name"
-                  label="Slot Name"
-                  required
-                  value={slotName}
-                  onChange={(event) => setSlotName(event.target.value)}
-                  disabled={!active || createSlotMutation.isPending}
-                  fullWidth
-                  size="small"
-                  sx={inputFieldSx}
+                <Controller
+                  name="name"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <StyledTextField
+                      {...field}
+                      id="session-slot-name"
+                      label="Slot Name"
+                      required
+                      error={Boolean(fieldState.error)}
+                      helperText={fieldState.error?.message}
+                      disabled={!active || createSlotMutation.isPending}
+                      fullWidth
+                      size="small"
+                    />
+                  )}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  id="session-nick-provider"
-                  label="Provider Name"
-                  value={nickProvider}
-                  onChange={(event) => setNickProvider(event.target.value)}
-                  disabled={!active || createSlotMutation.isPending}
-                  fullWidth
-                  size="small"
-                  sx={inputFieldSx}
+                <Controller
+                  name="providerName"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <StyledTextField
+                      {...field}
+                      id="session-nick-provider"
+                      label="Provider Name"
+                      error={Boolean(fieldState.error)}
+                      helperText={fieldState.error?.message}
+                      disabled={!active || createSlotMutation.isPending}
+                      fullWidth
+                      size="small"
+                    />
+                  )}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  id="session-purchase"
-                  label="Purchase ($)"
-                  required
-                  type="number"
-                  slotProps={{
-                    htmlInput: { step: '0.01', min: 0, inputMode: 'decimal' },
-                  }}
-                  value={purchaseAmount}
-                  onChange={(event) => setPurchaseAmount(event.target.value)}
-                  disabled={!active || createSlotMutation.isPending}
-                  fullWidth
-                  size="small"
-                  sx={inputFieldSx}
+                <Controller
+                  name="purchaseAmount"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <StyledTextField
+                      {...field}
+                      id="session-purchase"
+                      label="Purchase ($)"
+                      required
+                      type="text"
+                      onChange={(event) =>
+                        field.onChange(sanitizeDecimalInput(event.target.value))
+                      }
+                      slotProps={decimalMoneyInputSlotProps}
+                      error={Boolean(fieldState.error)}
+                      helperText={fieldState.error?.message}
+                      disabled={!active || createSlotMutation.isPending}
+                      fullWidth
+                      size="small"
+                    />
+                  )}
                 />
               </Grid>
             </Grid>
-            {formError ? (
-              <Box sx={{ mt: 2 }}>
-                <StatusAlert tone="error">{formError}</StatusAlert>
-              </Box>
-            ) : null}
           </FormPanel>
         </Box>
       </StyledSessionCardContent>

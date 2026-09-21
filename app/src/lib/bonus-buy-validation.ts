@@ -105,3 +105,13 @@ export const editBonusBuySlotFormSchema = yup.object({
 export type EditBonusBuySlotFormValues = yup.InferType<
   typeof editBonusBuySlotFormSchema
 >
+
+export const createBonusBuySlotFormSchema = editBonusBuySlotFormSchema.pick([
+  'name',
+  'providerName',
+  'purchaseAmount',
+])
+
+export type CreateBonusBuySlotFormValues = yup.InferType<
+  typeof createBonusBuySlotFormSchema
+>
