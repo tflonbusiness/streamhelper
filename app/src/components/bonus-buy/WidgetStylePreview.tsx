@@ -2,7 +2,7 @@ import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { BonusBuyRecord, BonusBuySlot, BonusBuyWidgetSettings } from '@/api/bonus-buy'
-import { BonusBuyWidgetCard } from '@/components/bonus-buy/BonusBuyWidgetCard'
+import { BonusBuyWidgetCard } from '@/components/bonus-buy/widget/BonusBuyWidgetCard'
 import { deriveBonusBuyWidgetCardProps } from '@/lib/bonus-buy-widget-presentation'
 
 type WidgetStylePreviewProps = {

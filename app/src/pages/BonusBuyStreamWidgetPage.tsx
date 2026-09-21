@@ -2,7 +2,7 @@ import { Box, Typography } from '@mui/material'
 import { useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { BonusBuySessionArchivedError } from '@/api/bonus-buy'
-import { BonusBuyWidgetCard } from '@/components/bonus-buy/BonusBuyWidgetCard'
+import { BonusBuyWidgetCard } from '@/components/bonus-buy/widget/BonusBuyWidgetCard'
 import { deriveBonusBuyWidgetCardProps } from '@/lib/bonus-buy-widget-presentation'
 import { usePublicBonusBuyWidget } from '@/queries/use-bonus-buy'
 

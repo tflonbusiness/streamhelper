@@ -6,35 +6,31 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
-  Stack,
-  TextField,
-  Typography,
 } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type {
   BonusBuyRecord,
   BonusBuySlot,
   BonusBuyWidgetSettings,
+  BonusBuyWidgetStylePreset,
 } from '@/api/bonus-buy'
-import { HexColorField } from '@/components/bonus-buy/HexColorField'
+import { BonusBuyWidgetStyleForm } from '@/components/bonus-buy/BonusBuyWidgetStyleForm'
 import { WidgetStylePreview } from '@/components/bonus-buy/WidgetStylePreview'
 import { WidgetThemePresetPicker } from '@/components/bonus-buy/WidgetThemePresetPicker'
 import { StatusAlert } from '@/components/StatusAlert'
 import { useNotification } from '@/context/NotificationContext'
+import { useBonusBuyWidgetDraft } from '@/hooks/useBonusBuyWidgetDraft'
 import {
-  applyBonusBuyWidgetPresetFromList,
   extractBonusBuyWidgetStyleSettings,
   matchBonusBuyWidgetPresetFromList,
 } from '@/lib/bonus-buy-widget-presets'
-import { validateBonusBuyWidgetDraft } from '@/lib/bonus-buy-widget-validation'
 import {
   useBonusBuyWidget,
   useBonusBuyWidgetPresets,
   usePatchBonusBuyWidget,
   useUpsertBonusBuyWidgetCustomPreset,
 } from '@/queries/use-bonus-buy'
-import { inputFieldSx } from '@/theme/colors'
 
 type BonusBuyWidgetStyleDialogProps = {
   accountId: number
@@ -58,12 +54,12 @@ export const BonusBuyWidgetStyleDialog = (
   )
 
   const [widgetPreviewDialogOpen, setWidgetPreviewDialogOpen] = useState(false)
-  const [widgetDraft, setWidgetDraft] = useState<BonusBuyWidgetSettings | null>(
-    null,
-  )
-  const [lastValidWidgetDraft, setLastValidWidgetDraft] =
-    useState<BonusBuyWidgetSettings | null>(null)
-  const [widgetEditError, setWidgetEditError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!props.open) {
+      setWidgetPreviewDialogOpen(false)
+    }
+  }, [props.open])
 
   const {
     data: widgetSettings,
@@ -75,117 +71,57 @@ export const BonusBuyWidgetStyleDialog = (
     props.open ? props.accountId : undefined,
   )
 
-  useEffect(() => {
-    if (widgetSettings) {
-      setWidgetDraft(widgetSettings)
-      setLastValidWidgetDraft(widgetSettings)
-    }
-  }, [widgetSettings])
-
-  useEffect(() => {
-    if (!widgetDraft) {
-      return
-    }
-
-    if (validateBonusBuyWidgetDraft(widgetDraft) === null) {
-      setLastValidWidgetDraft(widgetDraft)
-    }
-  }, [widgetDraft])
-
-  useEffect(() => {
-    if (!props.open) {
-      setWidgetEditError(null)
-      setWidgetPreviewDialogOpen(false)
-    }
-  }, [props.open])
-
-  const widgetDraftValidationError = useMemo(() => {
-    if (!widgetDraft) {
-      return null
-    }
-    return validateBonusBuyWidgetDraft(widgetDraft)
-  }, [widgetDraft])
-
-  const widgetPreviewTheme = lastValidWidgetDraft ?? widgetDraft
-
-  const widgetPreviewDimensionLabel = widgetDraft
-    ? `${widgetDraft.width} × ${widgetDraft.height}`
-    : undefined
-
-  const activeWidgetPresetId = useMemo(() => {
-    if (!widgetDraft) {
-      return null
-    }
-    return matchBonusBuyWidgetPresetFromList(widgetDraft, widgetPresets)
-  }, [widgetDraft, widgetPresets])
-
-  function updateWidgetDraft<K extends keyof BonusBuyWidgetSettings>(
-    key: K,
-    value: BonusBuyWidgetSettings[K],
+  async function handleSave(
+    widgetDraft: BonusBuyWidgetSettings,
+    presets: BonusBuyWidgetStylePreset[],
   ) {
-    setWidgetDraft((previous) =>
-      previous ? { ...previous, [key]: value } : previous,
+    const systemPresets = presets.filter((preset) => preset.source === 'system')
+    const matchedSystemPresetId = matchBonusBuyWidgetPresetFromList(
+      widgetDraft,
+      systemPresets,
     )
-  }
 
-  function applyWidgetPreset(presetId: number) {
-    const preset = widgetPresets.find((entry) => entry.id === presetId)
-    if (!preset) {
-      return
-    }
-
-    setWidgetDraft((previous) =>
-      previous ? applyBonusBuyWidgetPresetFromList(previous, preset) : previous,
-    )
-  }
-
-  async function handleSaveWidgetStyle() {
-    if (!widgetDraft) {
-      return
-    }
-
-    const validationError = validateBonusBuyWidgetDraft(widgetDraft)
-    if (validationError) {
-      setWidgetEditError(validationError)
-      return
-    }
-
-    setWidgetEditError(null)
-
-    try {
-      const systemPresets = widgetPresets.filter(
-        (preset) => preset.source === 'system',
-      )
-      const matchedSystemPresetId = matchBonusBuyWidgetPresetFromList(
-        widgetDraft,
-        systemPresets,
-      )
-
-      let presetId: number
-      if (matchedSystemPresetId !== null) {
-        presetId = matchedSystemPresetId
-      } else {
-        const customPreset = await upsertCustomPresetMutation.mutateAsync({
-          style_settings: extractBonusBuyWidgetStyleSettings(widgetDraft),
-        })
-        presetId = customPreset.id
-      }
-
-      await patchWidgetMutation.mutateAsync({
-        width: widgetDraft.width,
-        height: widgetDraft.height,
-        preset_id: presetId,
+    let presetId: number
+    if (matchedSystemPresetId !== null) {
+      presetId = matchedSystemPresetId
+    } else {
+      const customPreset = await upsertCustomPresetMutation.mutateAsync({
+        style_settings: extractBonusBuyWidgetStyleSettings(widgetDraft),
       })
-      props.onClose()
-      showSuccess('Widget style saved')
-    } catch (saveError) {
-      setWidgetEditError(
-        saveError instanceof Error
-          ? saveError.message
-          : 'Could not save widget settings',
-      )
+      presetId = customPreset.id
     }
+
+    await patchWidgetMutation.mutateAsync({
+      width: widgetDraft.width,
+      height: widgetDraft.height,
+      preset_id: presetId,
+    })
+    props.onClose()
+    showSuccess('Widget style saved')
   }
+
+  const {
+    widgetDraft,
+    widgetEditError,
+    widgetDraftValidationError,
+    widgetPreviewTheme,
+    widgetPreviewDimensionLabel,
+    activeWidgetPresetId,
+    isSaving,
+    updateWidgetDraft,
+    applyWidgetPreset,
+    saveWidgetStyle,
+  } = useBonusBuyWidgetDraft({
+    widgetSettings,
+    widgetPresets,
+    dialogOpen: props.open,
+    onSave: handleSave,
+  })
+
+  const isPending =
+    isSaving ||
+    patchWidgetMutation.isPending ||
+    upsertCustomPresetMutation.isPending
 
   return (
     <>
@@ -198,9 +134,9 @@ export const BonusBuyWidgetStyleDialog = (
         <DialogTitle>Widget style</DialogTitle>
         <DialogContent>
           {isLoadingWidget ? (
-            <Typography sx={{ py: 2, color: 'text.secondary' }}>
+            <StatusAlert tone="info" sx={{ mt: 1 }}>
               Loading settings…
-            </Typography>
+            </StatusAlert>
           ) : widgetLoadError ? (
             <StatusAlert tone="error" sx={{ mt: 1 }}>
               {widgetLoadError instanceof Error
@@ -217,115 +153,10 @@ export const BonusBuyWidgetStyleDialog = (
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <Stack spacing={2}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                    Size
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <TextField
-                        label="Width (px)"
-                        type="number"
-                        value={widgetDraft.width}
-                        onChange={(event) =>
-                          updateWidgetDraft(
-                            'width',
-                            Number.parseInt(event.target.value, 10) || 0,
-                          )
-                        }
-                        fullWidth
-                        sx={inputFieldSx}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <TextField
-                        label="Height (px)"
-                        type="number"
-                        value={widgetDraft.height}
-                        onChange={(event) =>
-                          updateWidgetDraft(
-                            'height',
-                            Number.parseInt(event.target.value, 10) || 0,
-                          )
-                        }
-                        fullWidth
-                        sx={inputFieldSx}
-                      />
-                    </Grid>
-                  </Grid>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                    Colors
-                  </Typography>
-                  <Grid container spacing={2}>
-                    {(
-                      [
-                        ['backgroundColor', 'Background'],
-                        ['surfaceColor', 'Surface'],
-                        ['borderColor', 'Border'],
-                        ['accentColor', 'Accent'],
-                        ['positiveColor', 'Positive'],
-                        ['negativeColor', 'Negative'],
-                        ['liveColor', 'Live'],
-                        ['textMutedColor', 'Text muted'],
-                      ] as const
-                    ).map(([key, label]) => (
-                      <Grid key={key} size={{ xs: 12, sm: 6 }}>
-                        <HexColorField
-                          label={label}
-                          value={widgetDraft[key]}
-                          onChange={(nextValue) => updateWidgetDraft(key, nextValue)}
-                        />
-                      </Grid>
-                    ))}
-                  </Grid>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                    Shape
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <TextField
-                        label="Border radius (px)"
-                        type="number"
-                        value={widgetDraft.borderRadius}
-                        onChange={(event) =>
-                          updateWidgetDraft(
-                            'borderRadius',
-                            Number.parseInt(event.target.value, 10) || 0,
-                          )
-                        }
-                        fullWidth
-                        sx={inputFieldSx}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <TextField
-                        label="Padding (px)"
-                        type="number"
-                        value={widgetDraft.padding}
-                        onChange={(event) =>
-                          updateWidgetDraft(
-                            'padding',
-                            Number.parseInt(event.target.value, 10) || 0,
-                          )
-                        }
-                        fullWidth
-                        sx={inputFieldSx}
-                      />
-                    </Grid>
-                  </Grid>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                    Typography
-                  </Typography>
-                  <TextField
-                    label="Font family"
-                    value={widgetDraft.fontFamily}
-                    onChange={(event) =>
-                      updateWidgetDraft('fontFamily', event.target.value)
-                    }
-                    fullWidth
-                    sx={inputFieldSx}
-                  />
-                </Stack>
+                <BonusBuyWidgetStyleForm
+                  draft={widgetDraft}
+                  onUpdate={updateWidgetDraft}
+                />
               </Grid>
               <Grid
                 size={{ xs: 12, md: 6 }}
@@ -363,29 +194,15 @@ export const BonusBuyWidgetStyleDialog = (
           >
             Preview overlay
           </Button>
-          <Button
-            onClick={props.onClose}
-            disabled={
-              patchWidgetMutation.isPending ||
-              upsertCustomPresetMutation.isPending
-            }
-          >
+          <Button onClick={props.onClose} disabled={isPending}>
             Cancel
           </Button>
           <Button
             variant="contained"
-            onClick={() => void handleSaveWidgetStyle()}
-            disabled={
-              patchWidgetMutation.isPending ||
-              upsertCustomPresetMutation.isPending ||
-              isLoadingWidget ||
-              !widgetDraft
-            }
+            onClick={() => void saveWidgetStyle()}
+            disabled={isPending || isLoadingWidget || !widgetDraft}
           >
-            {patchWidgetMutation.isPending ||
-            upsertCustomPresetMutation.isPending
-              ? 'Saving…'
-              : 'Save'}
+            {isPending ? 'Saving…' : 'Save'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -5,13 +5,7 @@ export const bonusBuyModule = MODULE_CATALOG.find(
   (module) => module.id === 'bonus-buy',
 )!
 
-export function formatUsd(amount: string | number): string {
-  const value = typeof amount === 'string' ? Number.parseFloat(amount) : amount
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(value)
-}
+export { formatUsd } from '@/lib/bonus-buy-format'
 
 export function formatDateTime(value: string): string {
   return new Intl.DateTimeFormat('en-US', {
