@@ -2,6 +2,11 @@ import type { SvgIconComponent } from '@mui/icons-material'
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
 import AutorenewIcon from '@mui/icons-material/Autorenew'
 import CasinoIcon from '@mui/icons-material/Casino'
+import {
+  BONUS_BUY_ROUTE,
+  CHAT_ROLL_ROUTE,
+  PRIZE_SPIN_ROUTE,
+} from '@/lib/routes'
 
 export type ModuleCatalogStatus = 'available' | 'coming_soon'
 
@@ -34,7 +39,7 @@ export const MODULE_CATALOG: ModuleDefinition[] = [
     status: 'available',
     icon: CardGiftcardIcon,
     iconVariant: 'warning',
-    widgetRoute: '/bonus-buy',
+    widgetRoute: BONUS_BUY_ROUTE,
     hasToggle: false,
   },
   {
@@ -45,7 +50,7 @@ export const MODULE_CATALOG: ModuleDefinition[] = [
     status: 'available',
     icon: AutorenewIcon,
     iconVariant: 'purple',
-    widgetRoute: '/prize-spin',
+    widgetRoute: PRIZE_SPIN_ROUTE,
     hasToggle: false,
   },
   {
@@ -56,7 +61,7 @@ export const MODULE_CATALOG: ModuleDefinition[] = [
     status: 'available',
     icon: CasinoIcon,
     iconVariant: 'info',
-    widgetRoute: '/chat-roll',
+    widgetRoute: CHAT_ROLL_ROUTE,
     hasToggle: false,
   },
 ]

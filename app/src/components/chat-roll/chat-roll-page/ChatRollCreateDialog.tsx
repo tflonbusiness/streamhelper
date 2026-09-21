@@ -19,6 +19,7 @@ import {
   type CreateChatRollFormValues,
   createChatRollFormSchema,
 } from '@/lib/chat-roll-validation'
+import { chatRollSessionRoute } from '@/lib/routes'
 import { useCreateChatRoll } from '@/queries/use-chat-rolls'
 
 type ChatRollCreateDialogProps = {
@@ -85,7 +86,7 @@ export const ChatRollCreateDialog = (props: ChatRollCreateDialogProps) => {
         props.onCreated?.()
         handleClose()
         createMutation.reset()
-        navigate(`/chat-roll/${record.id}`)
+        navigate(chatRollSessionRoute(record.id))
       },
       onError: () => showError('Could not create chat roll session.'),
     })

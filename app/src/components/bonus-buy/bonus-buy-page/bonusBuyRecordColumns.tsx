@@ -7,6 +7,7 @@ import type { AppTableColumn } from '@/components/AppTable'
 import {
   formatBonusBuyUsd,
 } from '@/components/bonus-buy/bonus-buy-page/bonus-buy-page-utils'
+import { bonusBuySessionRoute } from '@/lib/routes'
 import { colors, toneChipSx } from '@/theme/colors'
 
 const nameColumnSx = {
@@ -119,7 +120,7 @@ export function buildBonusBuyRecordColumns(): AppTableColumn<BonusBuyRecord>[] {
         <ActionsStack direction="row" spacing={0.5}>
           <StyledOpenIconButton
             component={Link}
-            to={`/bonus-buy/${record.id}`}
+            to={bonusBuySessionRoute(record.id)}
             aria-label={`Open ${record.name}`}
             size="small"
           >

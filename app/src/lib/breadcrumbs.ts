@@ -1,3 +1,10 @@
+import {
+  BONUS_BUY_ROUTE,
+  CHAT_ROLL_ROUTE,
+  MODULES_ROUTE,
+  PRIZE_SPIN_ROUTE,
+} from '@/lib/routes'
+
 export type BreadcrumbItem = {
   label: string
   to?: string
@@ -14,43 +21,43 @@ export function buildBreadcrumbs(
       return [{ label: 'Home' }]
     case '/team':
       return [home, { label: 'Team' }]
-    case '/modules':
+    case MODULES_ROUTE:
       return [home, { label: 'Modules' }]
     case '/subscription':
       return [home, { label: 'Subscription' }]
-    case '/bonus-buy':
-      return [home, { label: 'Modules', to: '/modules' }, { label: 'Bonus Buy' }]
-    case '/prize-spin':
-      return [home, { label: 'Modules', to: '/modules' }, { label: 'Prize Spin' }]
-    case '/chat-roll':
-      return [home, { label: 'Modules', to: '/modules' }, { label: 'Chat Roll' }]
+    case BONUS_BUY_ROUTE:
+      return [home, { label: 'Modules', to: MODULES_ROUTE }, { label: 'Bonus Buy' }]
+    case PRIZE_SPIN_ROUTE:
+      return [home, { label: 'Modules', to: MODULES_ROUTE }, { label: 'Prize Spin' }]
+    case CHAT_ROLL_ROUTE:
+      return [home, { label: 'Modules', to: MODULES_ROUTE }, { label: 'Chat Roll' }]
     default:
       break
   }
 
-  if (pathname.startsWith('/bonus-buy/')) {
+  if (pathname.startsWith(`${BONUS_BUY_ROUTE}/`)) {
     return [
       home,
-      { label: 'Modules', to: '/modules' },
-      { label: 'Bonus Buy', to: '/bonus-buy' },
+      { label: 'Modules', to: MODULES_ROUTE },
+      { label: 'Bonus Buy', to: BONUS_BUY_ROUTE },
       { label: dynamicLabel ?? 'Session' },
     ]
   }
 
-  if (pathname.startsWith('/prize-spin/')) {
+  if (pathname.startsWith(`${PRIZE_SPIN_ROUTE}/`)) {
     return [
       home,
-      { label: 'Modules', to: '/modules' },
-      { label: 'Prize Spin', to: '/prize-spin' },
+      { label: 'Modules', to: MODULES_ROUTE },
+      { label: 'Prize Spin', to: PRIZE_SPIN_ROUTE },
       { label: dynamicLabel ?? 'Session' },
     ]
   }
 
-  if (pathname.startsWith('/chat-roll/')) {
+  if (pathname.startsWith(`${CHAT_ROLL_ROUTE}/`)) {
     return [
       home,
-      { label: 'Modules', to: '/modules' },
-      { label: 'Chat Roll', to: '/chat-roll' },
+      { label: 'Modules', to: MODULES_ROUTE },
+      { label: 'Chat Roll', to: CHAT_ROLL_ROUTE },
       { label: dynamicLabel ?? 'Session' },
     ]
   }

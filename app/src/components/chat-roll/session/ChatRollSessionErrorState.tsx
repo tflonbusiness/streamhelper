@@ -3,6 +3,7 @@ import CasinoIcon from '@mui/icons-material/Casino'
 import { styled } from '@mui/material/styles'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '@/components/PageHeader'
+import { CHAT_ROLL_ROUTE } from '@/lib/routes'
 
 const PageStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(4),
@@ -28,7 +29,7 @@ export const ChatRollSessionErrorState = ({
       <Typography variant="body1" color="text.secondary">
         {message}
       </Typography>
-      <Button component={Link} to="/chat-roll" variant="outlined">
+      <Button component={Link} to={CHAT_ROLL_ROUTE} variant="outlined">
         Back to Chat Roll
       </Button>
     </PageStack>

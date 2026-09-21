@@ -36,12 +36,12 @@ function App() {
           </Route>
 
           <Route
-            path="/bonus-buy/:id/widget"
+            path="/modules/bonus-buy/:id/widget"
             element={<BonusBuyStreamWidgetPage />}
           />
 
           <Route
-            path="/prize-spin/widget/:ucid"
+            path="/modules/prize-spin/widget/:ucid"
             element={<PrizeSpinStreamWidgetPage />}
           />
 
@@ -50,12 +50,12 @@ function App() {
               <Route path="/dashboard" element={<DashboardHomePage />} />
               <Route element={<AccountActiveRoute />}>
                 <Route path="/modules" element={<ModulesPage />} />
-                <Route path="/bonus-buy" element={<BonusBuyPage />} />
-                <Route path="/bonus-buy/:id" element={<BonusBuySessionPage />} />
-                <Route path="/prize-spin" element={<PrizeSpinPage />} />
-                <Route path="/prize-spin/:id" element={<PrizeSpinSessionPage />} />
-                <Route path="/chat-roll" element={<ChatRollPage />} />
-                <Route path="/chat-roll/:id" element={<ChatRollSessionPage />} />
+                <Route path="/modules/bonus-buy" element={<BonusBuyPage />} />
+                <Route path="/modules/bonus-buy/:id" element={<BonusBuySessionPage />} />
+                <Route path="/modules/prize-spin" element={<PrizeSpinPage />} />
+                <Route path="/modules/prize-spin/:id" element={<PrizeSpinSessionPage />} />
+                <Route path="/modules/chat-roll" element={<ChatRollPage />} />
+                <Route path="/modules/chat-roll/:id" element={<ChatRollSessionPage />} />
                 <Route element={<OwnerRoute />}>
                   <Route path="/team" element={<TeamPage />} />
                   <Route path="/subscription" element={<SubscriptionPage />} />

@@ -12,6 +12,7 @@ import {
 } from '@/api/chat-roll'
 import type { AppTableColumn } from '@/components/AppTable'
 import { LiveStatusChip } from '@/components/LiveStatusChip'
+import { chatRollSessionRoute } from '@/lib/routes'
 import { colors } from '@/theme/colors'
 
 const titleColumnSx = {
@@ -200,7 +201,7 @@ export function buildChatRollRecordColumns({
             </Tooltip>
             <StyledOpenIconButton
               component={Link}
-              to={`/chat-roll/${record.id}`}
+              to={chatRollSessionRoute(record.id)}
               aria-label={`Open ${record.title}`}
               size="small"
             >

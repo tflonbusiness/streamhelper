@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { PageHeader } from '@/components/PageHeader'
 import { bonusBuyModule } from '@/components/bonus-buy/session/bonus-buy-session-utils'
 import { StatusAlert } from '@/components/StatusAlert'
+import { BONUS_BUY_ROUTE } from '@/lib/routes'
 
 type BonusBuySessionErrorStateProps = {
   message: string
@@ -25,7 +26,7 @@ export const BonusBuySessionErrorState = (
         iconVariant={bonusBuyModule.iconVariant}
       />
       <StatusAlert tone="error">{props.message}</StatusAlert>
-      <Button component={Link} to="/bonus-buy" variant="outlined">
+      <Button component={Link} to={BONUS_BUY_ROUTE} variant="outlined">
         Back to history
       </Button>
     </PageStack>

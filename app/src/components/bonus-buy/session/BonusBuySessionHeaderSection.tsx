@@ -14,6 +14,7 @@ import {
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { StatusAlert } from '@/components/StatusAlert'
 import { useNotification } from '@/context/NotificationContext'
+import { bonusBuyWidgetRoute } from '@/lib/routes'
 import { mutedChipSx } from '@/theme/colors'
 
 type BonusBuySessionHeaderSectionProps = {
@@ -136,7 +137,7 @@ export const BonusBuySessionHeaderSection = (
               </Button>
               <Button
                 component={Link}
-                to={`/bonus-buy/${props.bonusBuyId}/widget`}
+                to={bonusBuyWidgetRoute(props.bonusBuyId)}
                 target="_blank"
                 rel="noopener noreferrer"
                 variant="outlined"

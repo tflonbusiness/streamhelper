@@ -11,6 +11,7 @@ import { styled } from '@mui/material/styles'
 import { useNavigate } from 'react-router-dom'
 import type { ChatRollRecord } from '@/api/chat-roll'
 import { useNotification } from '@/context/NotificationContext'
+import { CHAT_ROLL_ROUTE } from '@/lib/routes'
 import { useArchiveChatRollSession } from '@/queries/use-chat-roll-session'
 
 type ChatRollSessionArchiveDialogProps = {
@@ -63,7 +64,7 @@ export const ChatRollSessionArchiveDialog = (
         showSuccess('Session archived.')
         handleClose()
         archiveMutation.reset()
-        navigate('/chat-roll')
+        navigate(CHAT_ROLL_ROUTE)
       },
       onError: (error) => {
         showError(

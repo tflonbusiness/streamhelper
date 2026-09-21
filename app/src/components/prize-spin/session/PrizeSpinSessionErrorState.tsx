@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { PageHeader } from '@/components/PageHeader'
 import { prizeSpinModule } from '@/components/prize-spin/session/prize-spin-session-utils'
 import { StatusAlert } from '@/components/StatusAlert'
+import { PRIZE_SPIN_ROUTE } from '@/lib/routes'
 
 type PrizeSpinSessionErrorStateProps = {
   message: string
@@ -25,7 +26,7 @@ export const PrizeSpinSessionErrorState = (
         iconVariant={prizeSpinModule.iconVariant}
       />
       <StatusAlert tone="error">{props.message}</StatusAlert>
-      <Button component={Link} to="/prize-spin" variant="outlined">
+      <Button component={Link} to={PRIZE_SPIN_ROUTE} variant="outlined">
         Back to history
       </Button>
     </PageStack>

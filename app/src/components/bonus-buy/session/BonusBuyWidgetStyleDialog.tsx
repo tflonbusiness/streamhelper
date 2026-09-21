@@ -21,6 +21,7 @@ import { WidgetThemePresetPicker } from '@/components/bonus-buy/WidgetThemePrese
 import { StatusAlert } from '@/components/StatusAlert'
 import { useNotification } from '@/context/NotificationContext'
 import { useBonusBuyWidgetDraft } from '@/hooks/useBonusBuyWidgetDraft'
+import { bonusBuyWidgetRoute } from '@/lib/routes'
 import {
   extractBonusBuyWidgetStyleSettings,
   matchBonusBuyWidgetPresetFromList,
@@ -222,7 +223,7 @@ export const BonusBuyWidgetStyleDialog = (
           </StyledMobilePreviewButton>
           <Button
             component={Link}
-            to={`/bonus-buy/${props.bonusBuyId}/widget`}
+            to={bonusBuyWidgetRoute(props.bonusBuyId)}
             target="_blank"
             rel="noopener noreferrer"
           >

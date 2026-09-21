@@ -12,6 +12,7 @@ import {
 } from '@/api/prize-spin'
 import type { AppTableColumn } from '@/components/AppTable'
 import { LiveStatusChip } from '@/components/LiveStatusChip'
+import { prizeSpinSessionRoute } from '@/lib/routes'
 import { colors } from '@/theme/colors'
 const titleColumnSx = {
   minWidth: 0,
@@ -199,7 +200,7 @@ export function buildPrizeSpinRecordColumns({
             </Tooltip>
             <StyledOpenIconButton
               component={Link}
-              to={`/prize-spin/${record.id}`}
+              to={prizeSpinSessionRoute(record.id)}
               aria-label={`Open ${record.title}`}
               size="small"
             >

@@ -1,5 +1,7 @@
+import { prizeSpinWidgetRoute } from '@/lib/routes'
+
 export function buildPrizeSpinOverlayPath(ucid: string): string {
-  return `/prize-spin/widget/${encodeURIComponent(ucid)}`
+  return prizeSpinWidgetRoute(ucid)
 }
 
 export function buildPrizeSpinObsOverlayUrl(ucid: string): string {
