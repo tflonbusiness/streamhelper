@@ -1,6 +1,6 @@
 import { Grid, Typography } from '@mui/material'
 import type { BonusBuySlot } from '@/api/bonus-buy'
-import { isBonusBuySlotPlaying } from '@/api/bonus-buy'
+import { formatBonusBuySlotStatus } from '@/api/bonus-buy'
 import { formatDateTime } from '@/components/bonus-buy/session/bonus-buy-session-utils'
 
 type BonusBuySlotExpandedDetailsProps = {
@@ -25,7 +25,7 @@ export const BonusBuySlotExpandedDetails = (
     <Grid container spacing={2}>
       <Grid size={{ xs: 12, sm: 6, md: 3 }}>
         <Typography variant="caption" sx={captionSx}>
-          Nickname
+          Provider Name
         </Typography>
         <Typography variant="body2">{slot.providerName || '—'}</Typography>
       </Grid>
@@ -34,7 +34,7 @@ export const BonusBuySlotExpandedDetails = (
           Status
         </Typography>
         <Typography variant="body2">
-          {isBonusBuySlotPlaying(slot) ? 'Now playing' : '—'}
+          {formatBonusBuySlotStatus(slot.status)}
         </Typography>
       </Grid>
       <Grid size={{ xs: 12, sm: 6, md: 3 }}>

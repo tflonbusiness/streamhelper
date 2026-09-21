@@ -493,3 +493,14 @@ export function isBonusBuyActive(record: Pick<BonusBuyRecord, 'status'>): boolea
 export function isBonusBuySlotPlaying(slot: Pick<BonusBuySlot, 'status'>): boolean {
   return slot.status === 'playing'
 }
+
+export function formatBonusBuySlotStatus(status: BonusBuySlotStatus): string {
+  switch (status) {
+    case 'playing':
+      return 'Now Playing'
+    case 'archived':
+      return 'Archived'
+    case 'pending':
+      return 'Pending'
+  }
+}

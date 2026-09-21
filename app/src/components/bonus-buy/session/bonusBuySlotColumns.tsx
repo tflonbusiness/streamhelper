@@ -37,7 +37,7 @@ export function buildBonusBuySlotColumns({
   return [
     {
       id: 'slotName',
-      header: 'Slot',
+      header: 'Slot Name',
       width: '100%',
       sx: {
         fontWeight: 500,
@@ -82,7 +82,7 @@ export function buildBonusBuySlotColumns({
           </IconButton>
           {isBonusBuySlotPlaying(slot) ? (
             <Chip
-              label="Now playing"
+              label="Now Playing"
               size="small"
               sx={{
                 flexShrink: 0,

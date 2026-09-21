@@ -1,19 +1,20 @@
 import {
-  Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  Stack,
-  TextField,
 } from '@mui/material'
-import { useEffect, useState } from 'react'
+import SaveIcon from '@mui/icons-material/Save'
+import { styled } from '@mui/material/styles'
+import { useState } from 'react'
 import type { BonusBuyRecord } from '@/api/bonus-buy'
-import { StatusAlert } from '@/components/StatusAlert'
+import { BonusBuyEditSessionForm } from '@/components/bonus-buy/session/BonusBuyEditSessionForm'
 import { useNotification } from '@/context/NotificationContext'
+import type { EditBonusBuySessionFormValues } from '@/lib/bonus-buy-validation'
 import { usePatchBonusBuy } from '@/queries/use-bonus-buy'
-import { inputFieldSx } from '@/theme/colors'
+
+const FORM_ID = 'bonus-buy-edit-session-form'
 
 type BonusBuyEditSessionDialogProps = {
   accountId: number
@@ -23,102 +24,89 @@ type BonusBuyEditSessionDialogProps = {
   onClose: () => void
 }
 
+const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
+  paddingLeft: theme.spacing(3),
+  paddingRight: theme.spacing(3),
+  paddingBottom: theme.spacing(2),
+}))
+
 export const BonusBuyEditSessionDialog = (
   props: BonusBuyEditSessionDialogProps,
 ) => {
-  const { showSuccess } = useNotification()
+  const { showSuccess, showError } = useNotification()
   const patchSessionMutation = usePatchBonusBuy(props.accountId, props.bonusBuyId)
+  const [isFormValid, setIsFormValid] = useState(false)
 
-  const [sessionNameDraft, setSessionNameDraft] = useState('')
-  const [sessionBalanceDraft, setSessionBalanceDraft] = useState('')
-  const [sessionEditError, setSessionEditError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (props.open && props.record) {
-      setSessionNameDraft(props.record.name)
-      setSessionBalanceDraft(props.record.startBalance)
-      setSessionEditError(null)
+  const handleClose = () => {
+    if (patchSessionMutation.isPending) {
+      return
     }
-  }, [props.open, props.record])
 
-  async function handleSaveSession() {
+    props.onClose()
+
+    if (!patchSessionMutation.isPending) {
+      patchSessionMutation.reset()
+    }
+  }
+
+  const handleSaveSession = (values: EditBonusBuySessionFormValues) => {
     if (!props.record) {
       return
     }
 
-    const trimmedName = sessionNameDraft.trim()
-    if (!trimmedName) {
-      setSessionEditError('Name is required')
-      return
-    }
-
-    const parsedBalance = Number.parseFloat(sessionBalanceDraft)
-    if (!Number.isFinite(parsedBalance) || parsedBalance <= 0) {
-      setSessionEditError('Start balance must be greater than zero')
-      return
-    }
-
-    setSessionEditError(null)
-    try {
-      await patchSessionMutation.mutateAsync({
-        name: trimmedName,
-        start_balance: parsedBalance.toFixed(2),
-      })
-      props.onClose()
-      showSuccess('Session updated.')
-    } catch (saveError) {
-      setSessionEditError(
-        saveError instanceof Error ? saveError.message : 'Could not update session',
-      )
-    }
+    patchSessionMutation.mutate(
+      {
+        name: values.name,
+        start_balance: Number.parseFloat(values.startBalance).toFixed(2),
+      },
+      {
+        onSuccess: () => {
+          showSuccess('Session updated.')
+          handleClose()
+          patchSessionMutation.reset()
+        },
+        onError: (error) => {
+          showError(
+            error instanceof Error ? error.message : 'Could not update session',
+          )
+        },
+      },
+    )
   }
 
   return (
-    <Dialog open={props.open} onClose={props.onClose} maxWidth="sm" fullWidth>
+    <Dialog open={props.open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>Edit</DialogTitle>
       <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
-          <TextField
-            label="Name"
-            value={sessionNameDraft}
-            onChange={(event) => setSessionNameDraft(event.target.value)}
-            fullWidth
-            autoFocus
-            sx={inputFieldSx}
-          />
-          <TextField
-            label="Start balance ($)"
-            type="number"
-            value={sessionBalanceDraft}
-            onChange={(event) => setSessionBalanceDraft(event.target.value)}
-            slotProps={{
-              htmlInput: { step: '0.01', min: 0, inputMode: 'decimal' },
-            }}
-            fullWidth
-            sx={inputFieldSx}
-          />
-        </Stack>
-        {sessionEditError ? (
-          <Box sx={{ mt: 2 }}>
-            <StatusAlert tone="error">{sessionEditError}</StatusAlert>
-          </Box>
-        ) : null}
+        <BonusBuyEditSessionForm
+          formId={FORM_ID}
+          record={props.record}
+          open={props.open}
+          onSubmit={handleSaveSession}
+          onValidChange={setIsFormValid}
+        />
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
+      <StyledDialogActions>
         <Button
-          onClick={props.onClose}
+          type="button"
+          variant="outlined"
+          onClick={handleClose}
           disabled={patchSessionMutation.isPending}
         >
           Cancel
         </Button>
         <Button
+          type="submit"
+          form={FORM_ID}
           variant="contained"
-          onClick={() => void handleSaveSession()}
-          disabled={patchSessionMutation.isPending}
+          startIcon={<SaveIcon fontSize="small" aria-hidden />}
+          loading={patchSessionMutation.isPending}
+          loadingPosition="start"
+          disabled={!isFormValid || !props.record}
         >
-          {patchSessionMutation.isPending ? 'Saving…' : 'Save'}
+          Save
         </Button>
-      </DialogActions>
+      </StyledDialogActions>
     </Dialog>
   )
 }

@@ -75,7 +75,7 @@ export const BonusBuyArchiveSessionDialog = (
       <DialogTitle>Archive session?</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
-          <b>"{props.record?.name}"</b> will be removed from the active list. Archived
+          The <b>"{props.record?.name}"</b> session will be removed from the active list. Archived
           sessions can be opened for review but not edited.
         </StyledDescription>
       </DialogContent>
