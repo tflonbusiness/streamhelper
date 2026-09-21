@@ -2,14 +2,20 @@ import { SvgIcon } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import type { BonusBuySlot } from '@/api/bonus-buy'
 import { formatUsd } from '@/lib/bonus-buy-format'
+import { formatMultiplierDisplay } from '@/lib/bonus-buy-stats'
 import type { BonusBuyWidgetTheme } from '@/lib/bonus-buy-widget-presentation'
 import {
+  StyledAverageXValue,
   StyledBestWinAmount,
   StyledBestWinInfo,
   StyledBestWinName,
   StyledBestWinProvider,
+  StyledBestXValueItem,
+  StyledBestXValueTrack,
+  StyledBestXValueViewport,
   StyledWidgetCell,
 } from '@/components/bonus-buy/widget/bonus-buy-widget-styles'
+import { isWinPositive } from '@/components/bonus-buy/widget/bonus-buy-widget-slot-utils'
 
 const StyledCrownIcon = styled(
   (props: { textColor: string }) => (
@@ -31,6 +37,43 @@ type BonusBuyWidgetBestXRowProps = {
   theme: BonusBuyWidgetTheme
 }
 
+type BestXValueProps = {
+  slot: BonusBuySlot
+  theme: BonusBuyWidgetTheme
+}
+
+function BestXValue({ slot, theme }: BestXValueProps) {
+  const hasAmount = slot.winAmount !== null
+  const hasMultiplier = slot.multiplier !== null
+  const positive = isWinPositive(slot)
+  const multiplierColor = positive ? theme.positiveColor : theme.negativeColor
+
+  if (hasAmount && hasMultiplier) {
+    return (
+      <StyledBestXValueViewport>
+        <StyledBestXValueTrack>
+          <StyledBestXValueItem textColor="#FFFFFF">
+            {formatUsd(slot.winAmount)}
+          </StyledBestXValueItem>
+          <StyledBestXValueItem textColor={multiplierColor}>
+            {formatMultiplierDisplay(slot.multiplier)}
+          </StyledBestXValueItem>
+        </StyledBestXValueTrack>
+      </StyledBestXValueViewport>
+    )
+  }
+
+  if (hasAmount) {
+    return <StyledBestWinAmount>{formatUsd(slot.winAmount)}</StyledBestWinAmount>
+  }
+
+  return (
+    <StyledAverageXValue textColor={multiplierColor}>
+      {formatMultiplierDisplay(slot.multiplier)}
+    </StyledAverageXValue>
+  )
+}
+
 export function BonusBuyWidgetBestXRow({
   slot,
   slotIndex,
@@ -45,9 +88,7 @@ export function BonusBuyWidgetBestXRow({
           {slot.providerName ?? '—'}
         </StyledBestWinProvider>
       </StyledBestWinInfo>
-      <StyledBestWinAmount>
-        {slot.winAmount !== null ? formatUsd(slot.winAmount) : '—'}
-      </StyledBestWinAmount>
+      <BestXValue slot={slot} theme={theme} />
     </StyledWidgetCell>
   )
 }

@@ -216,6 +216,39 @@ export const StyledBestWinAmount = styled(Typography)({
   marginLeft: 8,
 })
 
+const BEST_X_VALUE_FLIP_DURATION_S = 8
+
+export const StyledBestXValueViewport = styled(Box)({
+  flexShrink: 0,
+  marginLeft: 8,
+  height: 32,
+  overflow: 'hidden',
+  minWidth: 72,
+  textAlign: 'right',
+})
+
+export const StyledBestXValueTrack = styled(Box)({
+  display: 'flex',
+  flexDirection: 'column',
+  animation: `bonusBuyBestXValueFlip ${BEST_X_VALUE_FLIP_DURATION_S}s ease-in-out infinite`,
+  '@keyframes bonusBuyBestXValueFlip': {
+    '0%, 45%': { transform: 'translateY(0)' },
+    '50%, 95%': { transform: 'translateY(-50%)' },
+    '100%': { transform: 'translateY(0)' },
+  },
+})
+
+export const StyledBestXValueItem = styled(Typography, textColorProps)<TextColorProp>(
+  ({ textColor }) => ({
+    height: 32,
+    lineHeight: '32px',
+    fontWeight: 600,
+    fontSize: '26px',
+    color: textColor,
+    flexShrink: 0,
+  }),
+)
+
 export const StyledLiveCell = styled(StyledWidgetCell)({
   position: 'relative',
   overflow: 'hidden',
