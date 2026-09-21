@@ -91,7 +91,7 @@ function WidgetSlotRow({
             whiteSpace: 'nowrap',
           }}
         >
-          {index + 1}. {slot.slotName}
+          {index + 1}. {slot.name}
         </Typography>
         <Typography
           sx={{
@@ -102,7 +102,7 @@ function WidgetSlotRow({
             whiteSpace: 'nowrap',
           }}
         >
-          {slot.nickProvider ?? '—'}
+          {slot.providerName ?? '—'}
         </Typography>
       </Box>
       <Typography sx={{ fontSize: '18px', color: theme.textMutedColor, flexShrink: 0 }}>
@@ -273,10 +273,10 @@ export function BonusBuyWidgetCard({
                 whiteSpace: 'nowrap',
               }}
             >
-              {playingSlot.slotName}
+              {playingSlot.name}
             </Typography>
             <Typography sx={{ fontSize: '18px', color: theme.textMutedColor, lineHeight: 1.2 }}>
-              {playingSlot.nickProvider ?? '—'}
+              {playingSlot.providerName ?? '—'}
             </Typography>
           </Box>
           <Typography
@@ -328,10 +328,10 @@ export function BonusBuyWidgetCard({
                   whiteSpace: 'nowrap',
                 }}
               >
-                {playingIndex + 1}. {playingSlot.slotName}
+                {playingIndex + 1}. {playingSlot.name}
               </Typography>
               <Typography sx={{ fontSize: '18px', color: theme.textMutedColor }}>
-                {playingSlot.nickProvider ?? '—'}
+                {playingSlot.providerName ?? '—'}
               </Typography>
             </Box>
             <Typography sx={{ fontSize: '18px', color: theme.textMutedColor, flexShrink: 0 }}>

@@ -11,15 +11,23 @@ import {
   type DbBonusBuy,
   type DbBonusBuySlot,
   type DbBonusBuyWidget,
+  type DbBonusBuyWidgetStylePreset,
   type DbMembership,
   type PatchBonusBuySlotInput,
+  type PatchBonusBuyWidgetInput,
   type PatchPrizeSpinSectorInput,
   type DbPrizeSpinSector,
   type DbPrizeSpinWin,
   type DbPrizeSpinWidget,
+  type DbChatRoll,
+  type DbChatRollParticipant,
+  type DbChatRollWin,
+  type DbChatRollWidget,
+  type PatchChatRollInput,
   type PrizeSpinStatus,
 } from '../database/database.service.js';
 import { KickEventsService } from '../kick-chat/kick-events.service.js';
+import { parseBonusBuyWidgetStyleSettings } from '../bonus-buy/bonus-buy-widget-style.js';
 import { KickChannelService } from './kick-channel.service.js';
 import type { KickChannelDto } from './kick-channel.types.js';
 import { KickOAuthService } from './kick-oauth.service.js';
@@ -223,16 +231,22 @@ export class AuthService {
     return {
       id: row.id,
       accountId: row.accountId,
-      title: row.title,
+      name: row.name,
       startBalance: row.startBalance,
-      isActive: row.isActive,
+      status: row.status,
       createdAt: row.createdAt.toISOString(),
       createdByUserId: row.createdByUserId,
       createdByName: row.createdByName,
     };
   }
 
-  async listBonusBuys(accountId: number, callerUserId: number) {
+  async listBonusBuys(
+    accountId: number,
+    callerUserId: number,
+    archived?: string,
+    page?: string,
+    limit?: string,
+  ) {
     const isMember = await this.database.hasActiveMembership(
       accountId,
       callerUserId,
@@ -241,23 +255,41 @@ export class AuthService {
       throw new ForbiddenException('Not a member of this account');
     }
 
-    const rows = await this.database.listBonusBuys(accountId);
-    return rows.map((row) => ({
-      id: row.id,
-      accountId: row.accountId,
-      title: row.title,
-      startBalance: row.startBalance,
-      isActive: row.isActive,
-      createdAt: row.createdAt.toISOString(),
-      createdByUserId: row.createdByUserId,
-      createdByName: row.createdByName,
-    }));
+    const filter = archived ?? 'false';
+    if (filter !== 'false' && filter !== 'true' && filter !== 'all') {
+      throw new BadRequestException('Invalid archived filter');
+    }
+
+    const pageNumber = page === undefined ? 1 : Number.parseInt(page, 10);
+    const limitNumber = limit === undefined ? 10 : Number.parseInt(limit, 10);
+
+    if (!Number.isFinite(pageNumber) || pageNumber < 1) {
+      throw new BadRequestException('Invalid page');
+    }
+
+    if (!Number.isFinite(limitNumber) || limitNumber < 1 || limitNumber > 50) {
+      throw new BadRequestException('Invalid limit');
+    }
+
+    const result = await this.database.listBonusBuys(
+      accountId,
+      filter as 'false' | 'true' | 'all',
+      pageNumber,
+      limitNumber,
+    );
+
+    return {
+      records: result.records.map((row) => this.formatBonusBuy(row)),
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    };
   }
 
   async createBonusBuy(
     accountId: number,
     callerUserId: number,
-    title: string,
+    name: string,
     startBalance: string,
   ) {
     const isMember = await this.database.hasActiveMembership(
@@ -272,23 +304,23 @@ export class AuthService {
       const row = await this.database.createBonusBuy(
         accountId,
         callerUserId,
-        title,
+        name,
         startBalance,
       );
       return {
         id: row.id,
         accountId: row.accountId,
-        title: row.title,
+        name: row.name,
         startBalance: row.startBalance,
-        isActive: row.isActive,
+        status: row.status,
         createdAt: row.createdAt.toISOString(),
         createdByUserId: row.createdByUserId,
         createdByName: row.createdByName,
       };
     } catch (error) {
       if (error instanceof Error) {
-        if (error.message === 'INVALID_TITLE') {
-          throw new BadRequestException('Title must be 1-200 characters');
+        if (error.message === 'INVALID_NAME') {
+          throw new BadRequestException('Name must be 1-200 characters');
         }
         if (error.message === 'INVALID_START_BALANCE') {
           throw new BadRequestException(
@@ -318,9 +350,9 @@ export class AuthService {
       return {
         id: row.id,
         accountId: row.accountId,
-        title: row.title,
+        name: row.name,
         startBalance: row.startBalance,
-        isActive: row.isActive,
+        status: row.status,
         createdAt: row.createdAt.toISOString(),
         createdByUserId: row.createdByUserId,
         createdByName: row.createdByName,
@@ -342,9 +374,9 @@ export class AuthService {
     return {
       id: row.id,
       accountId: row.accountId,
-      title: row.title,
+      name: row.name,
       startBalance: row.startBalance,
-      isActive: row.isActive,
+      status: row.status,
       createdAt: row.createdAt.toISOString(),
       createdByUserId: row.createdByUserId,
       createdByName: row.createdByName,
@@ -357,12 +389,12 @@ export class AuthService {
       bonusBuyId: row.bonusBuyId,
       createdByUserId: row.createdByUserId,
       createdByName: row.createdByName,
-      slotName: row.slotName,
-      nickProvider: row.nickProvider,
+      name: row.name,
+      providerName: row.providerName,
       purchaseAmount: row.purchaseAmount,
       winAmount: row.winAmount,
       multiplier: row.multiplier,
-      isNowPlaying: row.isNowPlaying,
+      status: row.status,
       createdAt: row.createdAt.toISOString(),
     };
   }
@@ -370,20 +402,35 @@ export class AuthService {
   private formatBonusBuyWidget(row: DbBonusBuyWidget) {
     return {
       id: row.id,
-      accountId: row.accountId,
+      bonusBuyId: row.bonusBuyId,
+      presetId: row.presetId,
       width: row.width,
       height: row.height,
-      backgroundColor: row.backgroundColor,
-      surfaceColor: row.surfaceColor,
-      borderColor: row.borderColor,
-      accentColor: row.accentColor,
-      positiveColor: row.positiveColor,
-      negativeColor: row.negativeColor,
-      liveColor: row.liveColor,
-      textMutedColor: row.textMutedColor,
-      borderRadius: row.borderRadius,
-      padding: row.padding,
-      fontFamily: row.fontFamily,
+      styleSettings: row.styleSettings,
+      backgroundColor: row.styleSettings.backgroundColor,
+      surfaceColor: row.styleSettings.surfaceColor,
+      borderColor: row.styleSettings.borderColor,
+      accentColor: row.styleSettings.accentColor,
+      positiveColor: row.styleSettings.positiveColor,
+      negativeColor: row.styleSettings.negativeColor,
+      liveColor: row.styleSettings.liveColor,
+      textMutedColor: row.styleSettings.textMutedColor,
+      borderRadius: row.styleSettings.borderRadius,
+      padding: row.styleSettings.padding,
+      fontFamily: row.styleSettings.fontFamily,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    };
+  }
+
+  private formatBonusBuyWidgetPreset(row: DbBonusBuyWidgetStylePreset) {
+    return {
+      id: row.id,
+      accountId: row.accountId,
+      createdByUserId: row.createdByUserId,
+      source: row.source,
+      name: row.name,
+      styleSettings: row.styleSettings,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };
@@ -393,6 +440,30 @@ export class AuthService {
     if (error instanceof Error) {
       if (error.message === 'NOT_FOUND') {
         throw new NotFoundException('Bonus buy widget settings not found');
+      }
+      if (error.message.startsWith('INVALID_WIDGET_COLOR:')) {
+        throw new BadRequestException('Color must be a valid hex value (#RGB or #RRGGBB)');
+      }
+      if (error.message === 'INVALID_WIDGET_FONT_FAMILY') {
+        throw new BadRequestException('Font family must be 1-200 characters');
+      }
+      if (error.message === 'INVALID_WIDGET_STYLE') {
+        throw new BadRequestException('Widget style settings are invalid');
+      }
+    }
+    throw error;
+  }
+
+  private mapWidgetPresetMutationError(error: unknown): never {
+    if (error instanceof Error) {
+      if (error.message === 'NOT_FOUND') {
+        throw new NotFoundException('Widget preset not found');
+      }
+      if (error.message === 'INVALID_PRESET_NAME') {
+        throw new BadRequestException('Preset name must be 1-100 characters');
+      }
+      if (error.message === 'INVALID_WIDGET_STYLE') {
+        throw new BadRequestException('Widget style settings are invalid');
       }
       if (error.message.startsWith('INVALID_WIDGET_COLOR:')) {
         throw new BadRequestException('Color must be a valid hex value (#RGB or #RRGGBB)');
@@ -510,17 +581,17 @@ export class AuthService {
     accountId: number,
     callerUserId: number,
     bonusBuyId: number,
-    updates: { title?: string; start_balance?: string },
+    updates: { name?: string; start_balance?: string },
   ) {
     await this.requireAccountMember(accountId, callerUserId);
 
-    if (updates.title === undefined && updates.start_balance === undefined) {
+    if (updates.name === undefined && updates.start_balance === undefined) {
       throw new BadRequestException('At least one field is required');
     }
 
     try {
       const row = await this.database.updateBonusBuy(accountId, bonusBuyId, {
-        title: updates.title,
+        name: updates.name,
         startBalance: updates.start_balance,
       });
       return this.formatBonusBuy(row);
@@ -529,8 +600,8 @@ export class AuthService {
         if (error.message === 'NOT_FOUND') {
           throw new NotFoundException('Bonus buy not found');
         }
-        if (error.message === 'INVALID_TITLE') {
-          throw new BadRequestException('Title must be 1-200 characters');
+        if (error.message === 'INVALID_NAME') {
+          throw new BadRequestException('Name must be 1-200 characters');
         }
         if (error.message === 'INVALID_AMOUNT') {
           throw new BadRequestException(
@@ -564,8 +635,8 @@ export class AuthService {
     accountId: number,
     callerUserId: number,
     bonusBuyId: number,
-    slotName: string,
-    nickProvider: string | undefined,
+    name: string,
+    providerName: string | undefined,
     purchaseAmount: string,
   ) {
     await this.requireAccountMember(accountId, callerUserId);
@@ -575,8 +646,8 @@ export class AuthService {
         accountId,
         bonusBuyId,
         callerUserId,
-        slotName,
-        nickProvider ?? null,
+        name,
+        providerName ?? null,
         purchaseAmount,
       );
       return this.formatBonusBuySlot(row);
@@ -594,21 +665,21 @@ export class AuthService {
     bonusBuyId: number,
     slotId: number,
     body: {
-      slot_name?: string;
-      nick_provider?: string | null;
+      name?: string;
+      provider_name?: string | null;
       purchase_amount?: string;
       win_amount?: string | null;
-      is_now_playing?: boolean;
+      status?: 'pending' | 'playing' | 'archived';
     },
   ) {
     await this.requireAccountMember(accountId, callerUserId);
 
     const input: PatchBonusBuySlotInput = {};
-    if (body.slot_name !== undefined) {
-      input.slotName = body.slot_name;
+    if (body.name !== undefined) {
+      input.name = body.name;
     }
-    if (body.nick_provider !== undefined) {
-      input.nickProvider = body.nick_provider;
+    if (body.provider_name !== undefined) {
+      input.providerName = body.provider_name;
     }
     if (body.purchase_amount !== undefined) {
       input.purchaseAmount = body.purchase_amount;
@@ -616,8 +687,8 @@ export class AuthService {
     if (body.win_amount !== undefined) {
       input.winAmount = body.win_amount;
     }
-    if (body.is_now_playing !== undefined) {
-      input.isNowPlaying = body.is_now_playing;
+    if (body.status !== undefined) {
+      input.status = body.status;
     }
 
     if (Object.keys(input).length === 0) {
@@ -652,11 +723,15 @@ export class AuthService {
     }
   }
 
-  async getBonusBuyWidget(accountId: number, callerUserId: number) {
+  async getBonusBuyWidget(
+    accountId: number,
+    callerUserId: number,
+    bonusBuyId: number,
+  ) {
     await this.requireAccountMember(accountId, callerUserId);
 
     try {
-      const row = await this.database.getBonusBuyWidget(accountId);
+      const row = await this.database.getBonusBuyWidget(accountId, bonusBuyId);
       return this.formatBonusBuyWidget(row);
     } catch (error) {
       this.mapWidgetMutationError(error);
@@ -666,6 +741,7 @@ export class AuthService {
   async patchBonusBuyWidget(
     accountId: number,
     callerUserId: number,
+    bonusBuyId: number,
     body: {
       width?: number;
       height?: number;
@@ -680,36 +756,147 @@ export class AuthService {
       border_radius?: number;
       padding?: number;
       font_family?: string;
+      preset_id?: number | null;
     },
   ) {
     await this.requireAccountMember(accountId, callerUserId);
 
-    const input = {
+    const stylePatch: PatchBonusBuyWidgetInput['styleSettings'] = {};
+    if (body.background_color !== undefined) {
+      stylePatch.backgroundColor = body.background_color;
+    }
+    if (body.surface_color !== undefined) {
+      stylePatch.surfaceColor = body.surface_color;
+    }
+    if (body.border_color !== undefined) {
+      stylePatch.borderColor = body.border_color;
+    }
+    if (body.accent_color !== undefined) {
+      stylePatch.accentColor = body.accent_color;
+    }
+    if (body.positive_color !== undefined) {
+      stylePatch.positiveColor = body.positive_color;
+    }
+    if (body.negative_color !== undefined) {
+      stylePatch.negativeColor = body.negative_color;
+    }
+    if (body.live_color !== undefined) {
+      stylePatch.liveColor = body.live_color;
+    }
+    if (body.text_muted_color !== undefined) {
+      stylePatch.textMutedColor = body.text_muted_color;
+    }
+    if (body.border_radius !== undefined) {
+      stylePatch.borderRadius = body.border_radius;
+    }
+    if (body.padding !== undefined) {
+      stylePatch.padding = body.padding;
+    }
+    if (body.font_family !== undefined) {
+      stylePatch.fontFamily = body.font_family;
+    }
+
+    const input: PatchBonusBuyWidgetInput = {
       width: body.width,
       height: body.height,
-      backgroundColor: body.background_color,
-      surfaceColor: body.surface_color,
-      borderColor: body.border_color,
-      accentColor: body.accent_color,
-      positiveColor: body.positive_color,
-      negativeColor: body.negative_color,
-      liveColor: body.live_color,
-      textMutedColor: body.text_muted_color,
-      borderRadius: body.border_radius,
-      padding: body.padding,
-      fontFamily: body.font_family,
+      presetId: body.preset_id,
     };
+    if (Object.keys(stylePatch).length > 0) {
+      input.styleSettings = stylePatch;
+    }
 
-    const defined = Object.entries(input).filter(([, value]) => value !== undefined);
+    const defined = Object.entries(input).filter(
+      ([, value]) => value !== undefined,
+    );
     if (defined.length === 0) {
       throw new BadRequestException('At least one field is required');
     }
 
     try {
-      const row = await this.database.patchBonusBuyWidget(accountId, input);
+      const row = await this.database.patchBonusBuyWidget(
+        accountId,
+        bonusBuyId,
+        input,
+      );
       return this.formatBonusBuyWidget(row);
     } catch (error) {
       this.mapWidgetMutationError(error);
+    }
+  }
+
+  async listBonusBuyWidgetPresets(accountId: number, callerUserId: number) {
+    await this.requireAccountMember(accountId, callerUserId);
+    const rows = await this.database.listBonusBuyWidgetPresets(accountId);
+    return rows.map((row) => this.formatBonusBuyWidgetPreset(row));
+  }
+
+  async createBonusBuyWidgetPreset(
+    accountId: number,
+    callerUserId: number,
+    body: { name?: string; style_settings?: unknown },
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    if (!body.name || body.style_settings === undefined) {
+      throw new BadRequestException('Name and style settings are required');
+    }
+
+    try {
+      const row = await this.database.createBonusBuyWidgetPreset(
+        accountId,
+        callerUserId,
+        {
+          name: body.name,
+          styleSettings: parseBonusBuyWidgetStyleSettings(body.style_settings),
+        },
+      );
+      return this.formatBonusBuyWidgetPreset(row);
+    } catch (error) {
+      this.mapWidgetPresetMutationError(error);
+    }
+  }
+
+  async patchBonusBuyWidgetPreset(
+    accountId: number,
+    callerUserId: number,
+    presetId: number,
+    body: { name?: string; style_settings?: unknown },
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    if (body.name === undefined && body.style_settings === undefined) {
+      throw new BadRequestException('At least one field is required');
+    }
+
+    try {
+      const row = await this.database.patchBonusBuyWidgetPreset(
+        accountId,
+        presetId,
+        {
+          name: body.name,
+          styleSettings:
+            body.style_settings === undefined
+              ? undefined
+              : parseBonusBuyWidgetStyleSettings(body.style_settings),
+        },
+      );
+      return this.formatBonusBuyWidgetPreset(row);
+    } catch (error) {
+      this.mapWidgetPresetMutationError(error);
+    }
+  }
+
+  async deleteBonusBuyWidgetPreset(
+    accountId: number,
+    callerUserId: number,
+    presetId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      await this.database.deleteBonusBuyWidgetPreset(accountId, presetId);
+    } catch (error) {
+      this.mapWidgetPresetMutationError(error);
     }
   }
 
@@ -719,12 +906,16 @@ export class AuthService {
       throw new NotFoundException('Bonus buy not found');
     }
 
+    if ('inactive' in view) {
+      throw new ConflictException('SESSION_ARCHIVED');
+    }
+
     return {
       record: {
         id: view.record.id,
-        title: view.record.title,
+        name: view.record.name,
         startBalance: view.record.startBalance,
-        isActive: view.record.isActive,
+        status: view.record.status,
       },
       slots: view.slots.map((row) => this.formatBonusBuySlot(row)),
       settings: this.formatBonusBuyWidget(view.settings),
@@ -1303,6 +1494,413 @@ export class AuthService {
         throw new NotFoundException('Prize spin not found');
       }
       this.mapPrizeSpinMutationError(error);
+    }
+  }
+
+  private formatChatRollRecord(row: DbChatRoll) {
+    return {
+      id: row.id,
+      accountId: row.accountId,
+      title: row.title,
+      status: row.status,
+      keyword: row.keyword,
+      combineMode: row.combineMode,
+      excludeWinnerAfterRoll: row.excludeWinnerAfterRoll,
+      isAcceptingParticipants: row.isAcceptingParticipants,
+      replyInChat: row.replyInChat,
+      roleSettings: row.roleSettings,
+      createdAt: row.createdAt.toISOString(),
+      createdByUserId: row.createdByUserId,
+      createdByName: row.createdByName,
+    };
+  }
+
+  private formatChatRollParticipant(row: DbChatRollParticipant) {
+    return {
+      id: row.id,
+      chatRollId: row.chatRollId,
+      provider: row.provider,
+      providerUserId: row.providerUserId,
+      displayName: row.displayName,
+      roleIds: row.roleIds,
+      joinedAt: row.joinedAt.toISOString(),
+    };
+  }
+
+  private formatChatRollWin(row: DbChatRollWin) {
+    return {
+      id: row.id,
+      chatRollId: row.chatRollId,
+      participantId: row.participantId,
+      displayName: row.displayName,
+      coefficientAtPick: row.coefficientAtPick,
+      rolledByName: row.rolledByName,
+      rollIndex: row.rollIndex,
+      createdAt: row.createdAt.toISOString(),
+    };
+  }
+
+  private formatChatRollWidget(row: DbChatRollWidget) {
+    return {
+      id: row.id,
+      accountId: row.accountId,
+      width: row.width,
+      height: row.height,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    };
+  }
+
+  private mapChatRollMutationError(error: unknown): never {
+    if (error instanceof Error) {
+      switch (error.message) {
+        case 'NOT_FOUND':
+          throw new NotFoundException('Chat roll not found');
+        case 'INVALID_TITLE':
+          throw new BadRequestException('Title must be 1-200 characters');
+        case 'INVALID_KEYWORD':
+          throw new BadRequestException('Keyword must be 1-32 characters');
+        case 'INVALID_COMBINE_MODE':
+          throw new BadRequestException('Invalid combine mode');
+        case 'INVALID_ROLE_SETTINGS':
+          throw new BadRequestException('Invalid role settings');
+        case 'NO_ELIGIBLE_PARTICIPANTS':
+          throw new BadRequestException('No eligible participants to roll');
+        default:
+          break;
+      }
+    }
+    throw error;
+  }
+
+  private mapChatRollWidgetMutationError(error: unknown): never {
+    if (error instanceof Error && error.message === 'NOT_FOUND') {
+      throw new NotFoundException('Chat roll widget settings not found');
+    }
+    throw error;
+  }
+
+  async getChatRoll(
+    accountId: number,
+    callerUserId: number,
+    chatRollId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    const row = await this.database.getChatRollById(accountId, chatRollId);
+    if (!row) {
+      throw new NotFoundException('Chat roll not found');
+    }
+
+    return this.formatChatRollRecord(row);
+  }
+
+  async listChatRolls(
+    accountId: number,
+    callerUserId: number,
+    archived?: string,
+    page?: string,
+    limit?: string,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    const filter = archived ?? 'false';
+    if (filter !== 'false' && filter !== 'true' && filter !== 'all') {
+      throw new BadRequestException('Invalid archived filter');
+    }
+
+    const pageNumber = page === undefined ? 1 : Number.parseInt(page, 10);
+    const limitNumber = limit === undefined ? 10 : Number.parseInt(limit, 10);
+
+    if (!Number.isFinite(pageNumber) || pageNumber < 1) {
+      throw new BadRequestException('Invalid page');
+    }
+
+    if (!Number.isFinite(limitNumber) || limitNumber < 1 || limitNumber > 50) {
+      throw new BadRequestException('Invalid limit');
+    }
+
+    const result = await this.database.listChatRolls(
+      accountId,
+      filter as 'false' | 'true' | 'all',
+      pageNumber,
+      limitNumber,
+    );
+
+    return {
+      records: result.records.map((row) => this.formatChatRollRecord(row)),
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    };
+  }
+
+  async createChatRoll(
+    accountId: number,
+    callerUserId: number,
+    title: string,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      const row = await this.database.createChatRoll(
+        accountId,
+        callerUserId,
+        title,
+      );
+      return this.formatChatRollRecord(row);
+    } catch (error) {
+      this.mapChatRollMutationError(error);
+    }
+  }
+
+  async goLiveChatRoll(
+    accountId: number,
+    callerUserId: number,
+    chatRollId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      const row = await this.database.goLiveChatRoll(accountId, chatRollId);
+      return this.formatChatRollRecord(row);
+    } catch (error) {
+      this.mapChatRollMutationError(error);
+    }
+  }
+
+  async deactivateChatRoll(
+    accountId: number,
+    callerUserId: number,
+    chatRollId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      const row = await this.database.deactivateChatRoll(accountId, chatRollId);
+      return this.formatChatRollRecord(row);
+    } catch (error) {
+      this.mapChatRollMutationError(error);
+    }
+  }
+
+  async archiveChatRoll(
+    accountId: number,
+    callerUserId: number,
+    chatRollId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      await this.database.archiveChatRoll(accountId, chatRollId);
+    } catch (error) {
+      this.mapChatRollMutationError(error);
+    }
+  }
+
+  async patchChatRoll(
+    accountId: number,
+    callerUserId: number,
+    chatRollId: number,
+    body: {
+      title?: string;
+      keyword?: string;
+      combine_mode?: string;
+      exclude_winner_after_roll?: boolean;
+      is_accepting_participants?: boolean;
+      reply_in_chat?: boolean;
+      role_settings?: unknown;
+    },
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    const input: PatchChatRollInput = {};
+    if (body.title !== undefined) {
+      input.title = body.title;
+    }
+    if (body.keyword !== undefined) {
+      input.keyword = body.keyword;
+    }
+    if (body.combine_mode !== undefined) {
+      if (body.combine_mode !== 'highest' && body.combine_mode !== 'sum') {
+        throw new BadRequestException('Invalid combine mode');
+      }
+      input.combineMode = body.combine_mode;
+    }
+    if (body.exclude_winner_after_roll !== undefined) {
+      input.excludeWinnerAfterRoll = body.exclude_winner_after_roll;
+    }
+    if (body.is_accepting_participants !== undefined) {
+      input.isAcceptingParticipants = body.is_accepting_participants;
+    }
+    if (body.reply_in_chat !== undefined) {
+      input.replyInChat = body.reply_in_chat;
+    }
+    if (body.role_settings !== undefined) {
+      input.roleSettings = body.role_settings as PatchChatRollInput['roleSettings'];
+    }
+
+    if (Object.keys(input).length === 0) {
+      throw new BadRequestException('No fields to update');
+    }
+
+    try {
+      const row = await this.database.patchChatRoll(
+        accountId,
+        chatRollId,
+        input,
+      );
+      return this.formatChatRollRecord(row);
+    } catch (error) {
+      this.mapChatRollMutationError(error);
+    }
+  }
+
+  async listChatRollParticipants(
+    accountId: number,
+    callerUserId: number,
+    chatRollId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      const rows = await this.database.listChatRollParticipants(
+        accountId,
+        chatRollId,
+      );
+      return {
+        participants: rows.map((row) => this.formatChatRollParticipant(row)),
+      };
+    } catch (error) {
+      this.mapChatRollMutationError(error);
+    }
+  }
+
+  async archiveChatRollParticipant(
+    accountId: number,
+    callerUserId: number,
+    chatRollId: number,
+    participantId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      await this.database.archiveChatRollParticipant(
+        accountId,
+        chatRollId,
+        participantId,
+      );
+    } catch (error) {
+      this.mapChatRollMutationError(error);
+    }
+  }
+
+  async archiveAllChatRollParticipants(
+    accountId: number,
+    callerUserId: number,
+    chatRollId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      await this.database.archiveAllChatRollParticipants(accountId, chatRollId);
+    } catch (error) {
+      this.mapChatRollMutationError(error);
+    }
+  }
+
+  async listChatRollWins(
+    accountId: number,
+    callerUserId: number,
+    chatRollId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      const rows = await this.database.listChatRollWins(accountId, chatRollId);
+      return {
+        wins: rows.map((row) => this.formatChatRollWin(row)),
+      };
+    } catch (error) {
+      this.mapChatRollMutationError(error);
+    }
+  }
+
+  async archiveChatRollWin(
+    accountId: number,
+    callerUserId: number,
+    chatRollId: number,
+    winId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      await this.database.archiveChatRollWin(accountId, chatRollId, winId);
+    } catch (error) {
+      this.mapChatRollMutationError(error);
+    }
+  }
+
+  async archiveAllChatRollWins(
+    accountId: number,
+    callerUserId: number,
+    chatRollId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      await this.database.archiveAllChatRollWins(accountId, chatRollId);
+    } catch (error) {
+      this.mapChatRollMutationError(error);
+    }
+  }
+
+  async rollChatRoll(
+    accountId: number,
+    callerUserId: number,
+    chatRollId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      const row = await this.database.rollChatRoll(
+        accountId,
+        chatRollId,
+        callerUserId,
+      );
+      return this.formatChatRollWin(row);
+    } catch (error) {
+      this.mapChatRollMutationError(error);
+    }
+  }
+
+  async getChatRollWidget(accountId: number, callerUserId: number) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      const row = await this.database.getChatRollWidget(accountId);
+      return this.formatChatRollWidget(row);
+    } catch (error) {
+      this.mapChatRollWidgetMutationError(error);
+    }
+  }
+
+  async patchChatRollWidget(
+    accountId: number,
+    callerUserId: number,
+    body: { width?: number; height?: number },
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    if (body.width === undefined && body.height === undefined) {
+      throw new BadRequestException('No fields to update');
+    }
+
+    try {
+      const row = await this.database.patchChatRollWidget(accountId, body);
+      return this.formatChatRollWidget(row);
+    } catch (error) {
+      this.mapChatRollWidgetMutationError(error);
     }
   }
 }

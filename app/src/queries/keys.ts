@@ -1,3 +1,5 @@
+import type { BonusBuyArchivedFilter } from '@/api/bonus-buy'
+import type { ChatRollArchivedFilter } from '@/api/chat-roll'
 import type { PrizeSpinArchivedFilter } from '@/api/prize-spin'
 
 export const authKeys = {
@@ -26,16 +28,42 @@ export const prizeSpinKeys = {
     [...prizeSpinKeys.all, 'publicWidget', ucid] as const,
 }
 
+export type BonusBuyListParams = {
+  archived: BonusBuyArchivedFilter
+  page: number
+  limit: number
+}
+
 export const bonusBuyKeys = {
   all: ['bonusBuys'] as const,
   lists: () => [...bonusBuyKeys.all, 'list'] as const,
-  list: (accountId: number) => [...bonusBuyKeys.lists(), accountId] as const,
+  list: (accountId: number, params: BonusBuyListParams) =>
+    [...bonusBuyKeys.lists(), accountId, params] as const,
   session: (accountId: number, bonusBuyId: number) =>
     [...bonusBuyKeys.all, 'session', accountId, bonusBuyId] as const,
-  widget: (accountId: number) =>
-    [...bonusBuyKeys.all, 'widget', accountId] as const,
+  widget: (accountId: number, bonusBuyId: number) =>
+    [...bonusBuyKeys.all, 'widget', accountId, bonusBuyId] as const,
+  presets: (accountId: number) =>
+    [...bonusBuyKeys.all, 'presets', accountId] as const,
   publicWidget: (bonusBuyId: number) =>
     [...bonusBuyKeys.all, 'publicWidget', bonusBuyId] as const,
+}
+
+export const chatRollKeys = {
+  all: ['chatRolls'] as const,
+  lists: () => [...chatRollKeys.all, 'list'] as const,
+  list: (accountId: number, params: ChatRollListParams) =>
+    [...chatRollKeys.lists(), accountId, params] as const,
+  widget: (accountId: number) =>
+    [...chatRollKeys.all, 'widget', accountId] as const,
+  session: (accountId: number, chatRollId: number) =>
+    [...chatRollKeys.all, 'session', accountId, chatRollId] as const,
+}
+
+export type ChatRollListParams = {
+  archived: ChatRollArchivedFilter
+  page: number
+  limit: number
 }
 
 export const kickChannelKeys = {

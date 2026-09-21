@@ -7,11 +7,7 @@ import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module.js';
 import { DatabaseService } from './../src/database/database.service.js';
 
-const DEFAULT_WIDGET = {
-  id: 1,
-  accountId: 10,
-  width: 500,
-  height: 600,
+const DEFAULT_STYLE = {
   backgroundColor: '#0A0A0C',
   surfaceColor: '#121215',
   borderColor: '#2F2F31',
@@ -23,6 +19,16 @@ const DEFAULT_WIDGET = {
   borderRadius: 20,
   padding: 18,
   fontFamily: 'Inter, system-ui, sans-serif',
+};
+
+const DEFAULT_WIDGET = {
+  id: 1,
+  bonusBuyId: 1,
+  presetId: 1,
+  width: 500,
+  height: 600,
+  styleSettings: DEFAULT_STYLE,
+  ...DEFAULT_STYLE,
   createdAt: new Date('2026-09-14T12:00:00.000Z'),
   updatedAt: new Date('2026-09-14T12:00:00.000Z'),
 };
@@ -50,9 +56,9 @@ describe('BonusBuyController (e2e)', () => {
           return {
             record: {
               id: 1,
-              title: 'Friday stream',
+              name: 'Friday stream',
               startBalance: '50.00',
-              isActive: true,
+              status: 'active' as const,
             },
             slots: [],
             settings: DEFAULT_WIDGET,
@@ -79,7 +85,7 @@ describe('BonusBuyController (e2e)', () => {
       .expect(200)
       .expect(({ body }) => {
         expect(body.record.id).toBe(1);
-        expect(body.record.title).toBe('Friday stream');
+        expect(body.record.name).toBe('Friday stream');
         expect(body.settings.width).toBe(500);
         expect(body.slots).toEqual([]);
       });
@@ -87,6 +93,39 @@ describe('BonusBuyController (e2e)', () => {
 
   it('returns 404 for unknown bonus buy', async () => {
     await request(app.getHttpServer()).get('/bonus-buys/999/widget').expect(404);
+  });
+
+  it('returns 409 for archived bonus buy widget', async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    })
+      .overrideProvider(DatabaseService)
+      .useValue({
+        onModuleInit: async () => undefined,
+        onModuleDestroy: async () => undefined,
+        getPublicBonusBuyWidgetView: async () => ({ inactive: true }),
+      })
+      .compile();
+
+    const archivedApp = moduleFixture.createNestApplication();
+    archivedApp.use(cookieParser());
+    archivedApp.use(
+      session({
+        secret: 'test-secret',
+        resave: false,
+        saveUninitialized: false,
+      }),
+    );
+    await archivedApp.init();
+
+    await request(archivedApp.getHttpServer())
+      .get('/bonus-buys/1/widget')
+      .expect(409)
+      .expect(({ body }) => {
+        expect(body.message).toBe('SESSION_ARCHIVED');
+      });
+
+    await archivedApp.close();
   });
 
   afterEach(async () => {

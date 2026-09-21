@@ -1,4 +1,4 @@
-import type { BonusBuySlot, BonusBuyWidgetSettings } from '@/api/bonus-buy'
+import { isBonusBuySlotPlaying, type BonusBuySlot, type BonusBuyWidgetSettings } from '@/api/bonus-buy'
 import { computeSessionStats } from '@/lib/bonus-buy-stats'
 
 const AUTO_SCROLL_SECONDS_PER_ITEM = 3.5
@@ -69,11 +69,11 @@ export function deriveBonusBuyWidgetCardProps(
   const activeSlots = [...slots].sort(
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
   )
-  const playing = activeSlots.find((slot) => slot.isNowPlaying) ?? null
+  const playing = activeSlots.find((slot) => isBonusBuySlotPlaying(slot)) ?? null
   const playingIdx = playing
     ? activeSlots.findIndex((slot) => slot.id === playing.id)
     : -1
-  const listSlots = activeSlots.filter((slot) => !slot.isNowPlaying)
+  const listSlots = activeSlots.filter((slot) => !isBonusBuySlotPlaying(slot))
 
   const autoScrollEnabled = listSlots.length > 0
   const slotsToRender = autoScrollEnabled

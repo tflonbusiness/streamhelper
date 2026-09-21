@@ -1,6 +1,7 @@
-import { Box, CircularProgress, Typography } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { useMemo } from 'react'
 import { useParams } from 'react-router-dom'
+import { BonusBuySessionArchivedError } from '@/api/bonus-buy'
 import { BonusBuyWidgetCard } from '@/components/bonus-buy/BonusBuyWidgetCard'
 import { deriveBonusBuyWidgetCardProps } from '@/lib/bonus-buy-widget-presentation'
 import { usePublicBonusBuyWidget } from '@/queries/use-bonus-buy'
@@ -24,7 +25,7 @@ function WidgetNotFound({ textMutedColor }: { textMutedColor?: string }) {
   )
 }
 
-function WidgetLoading() {
+function WidgetInactive() {
   return (
     <Box
       sx={{
@@ -33,9 +34,14 @@ function WidgetLoading() {
         alignItems: 'center',
         justifyContent: 'center',
         bgcolor: 'transparent',
+        fontFamily: 'Inter, system-ui, sans-serif',
+        px: 2,
+        textAlign: 'center',
       }}
     >
-      <CircularProgress size={32} sx={{ color: '#F59E0B' }} />
+      <Typography sx={{ color: '#9CA3AF', fontSize: '1rem', maxWidth: 420 }}>
+        Widget is not active because this bonus buy session has been disabled.
+      </Typography>
     </Box>
   )
 }
@@ -52,9 +58,9 @@ export function BonusBuyStreamWidgetPage() {
 
   const {
     data: view,
-    isLoading,
     isPending,
     isError,
+    error,
   } = usePublicBonusBuyWidget(bonusBuyId)
 
   const cardProps = useMemo(() => {
@@ -73,8 +79,12 @@ export function BonusBuyStreamWidgetPage() {
     return <WidgetNotFound />
   }
 
-  if (isPending && isLoading) {
-    return <WidgetLoading />
+  if (isPending) {
+    return null
+  }
+
+  if (error instanceof BonusBuySessionArchivedError) {
+    return <WidgetInactive />
   }
 
   if (isError || !view || !cardProps) {

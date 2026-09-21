@@ -20,27 +20,27 @@ type CreateModeratorBody = {
 };
 
 type CreateBonusBuyBody = {
-  title?: string;
+  name?: string;
   start_balance?: string;
 };
 
 type PatchBonusBuyBody = {
-  title?: string;
+  name?: string;
   start_balance?: string;
 };
 
 type CreateBonusBuySlotBody = {
-  slot_name?: string;
-  nick_provider?: string;
+  name?: string;
+  provider_name?: string;
   purchase_amount?: string;
 };
 
 type PatchBonusBuySlotBody = {
-  slot_name?: string;
-  nick_provider?: string | null;
+  name?: string;
+  provider_name?: string | null;
   purchase_amount?: string;
   win_amount?: string | null;
-  is_now_playing?: boolean;
+  status?: 'pending' | 'playing' | 'archived';
 };
 
 type PatchBonusBuyWidgetBody = {
@@ -57,6 +57,17 @@ type PatchBonusBuyWidgetBody = {
   border_radius?: number;
   padding?: number;
   font_family?: string;
+  preset_id?: number | null;
+};
+
+type CreateBonusBuyWidgetPresetBody = {
+  name?: string;
+  style_settings?: Record<string, unknown>;
+};
+
+type PatchBonusBuyWidgetPresetBody = {
+  name?: string;
+  style_settings?: Record<string, unknown>;
 };
 
 type CreatePrizeSpinBody = {
@@ -80,6 +91,25 @@ type SpinPrizeSpinBody = {
 };
 
 type PatchPrizeSpinWidgetBody = {
+  width?: number;
+  height?: number;
+};
+
+type CreateChatRollBody = {
+  title?: string;
+};
+
+type PatchChatRollBody = {
+  title?: string;
+  keyword?: string;
+  combine_mode?: string;
+  exclude_winner_after_roll?: boolean;
+  is_accepting_participants?: boolean;
+  reply_in_chat?: boolean;
+  role_settings?: unknown;
+};
+
+type PatchChatRollWidgetBody = {
   width?: number;
   height?: number;
 };
@@ -151,12 +181,20 @@ export class AccountsController {
   @Get(':accountId/bonus-buys')
   async listBonusBuys(
     @Param('accountId', ParseIntPipe) accountId: number,
+    @Query('archived') archived: string | undefined,
+    @Query('page') page: string | undefined,
+    @Query('limit') limit: string | undefined,
     @Req() req: Request,
   ) {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
-    const records = await this.authService.listBonusBuys(accountId, user.id);
-    return { records };
+    return this.authService.listBonusBuys(
+      accountId,
+      user.id,
+      archived,
+      page,
+      limit,
+    );
   }
 
   @Get(':accountId/bonus-buys/:bonusBuyId')
@@ -182,7 +220,7 @@ export class AccountsController {
     const record = await this.authService.createBonusBuy(
       accountId,
       user.id,
-      body.title ?? '',
+      body.name ?? '',
       body.start_balance ?? '',
     );
 
@@ -207,25 +245,86 @@ export class AccountsController {
     );
   }
 
-  @Get(':accountId/bonus-buy-widget')
+  @Get(':accountId/bonus-buys/:bonusBuyId/widget')
   async getBonusBuyWidget(
     @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('bonusBuyId', ParseIntPipe) bonusBuyId: number,
     @Req() req: Request,
   ) {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
-    return this.authService.getBonusBuyWidget(accountId, user.id);
+    return this.authService.getBonusBuyWidget(accountId, user.id, bonusBuyId);
   }
 
-  @Patch(':accountId/bonus-buy-widget')
+  @Patch(':accountId/bonus-buys/:bonusBuyId/widget')
   async patchBonusBuyWidget(
     @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('bonusBuyId', ParseIntPipe) bonusBuyId: number,
     @Body() body: PatchBonusBuyWidgetBody,
     @Req() req: Request,
   ) {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
-    return this.authService.patchBonusBuyWidget(accountId, user.id, body);
+    return this.authService.patchBonusBuyWidget(
+      accountId,
+      user.id,
+      bonusBuyId,
+      body,
+    );
+  }
+
+  @Get(':accountId/bonus-buy-widget-presets')
+  async listBonusBuyWidgetPresets(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.authService.listBonusBuyWidgetPresets(accountId, user.id);
+  }
+
+  @Post(':accountId/bonus-buy-widget-presets')
+  async createBonusBuyWidgetPreset(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Body() body: CreateBonusBuyWidgetPresetBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.authService.createBonusBuyWidgetPreset(accountId, user.id, body);
+  }
+
+  @Patch(':accountId/bonus-buy-widget-presets/:presetId')
+  async patchBonusBuyWidgetPreset(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('presetId', ParseIntPipe) presetId: number,
+    @Body() body: PatchBonusBuyWidgetPresetBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.authService.patchBonusBuyWidgetPreset(
+      accountId,
+      user.id,
+      presetId,
+      body,
+    );
+  }
+
+  @Delete(':accountId/bonus-buy-widget-presets/:presetId')
+  @HttpCode(204)
+  async deleteBonusBuyWidgetPreset(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('presetId', ParseIntPipe) presetId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    await this.authService.deleteBonusBuyWidgetPreset(
+      accountId,
+      user.id,
+      presetId,
+    );
   }
 
   @Get(':accountId/bonus-buys/:bonusBuyId/slots')
@@ -254,8 +353,8 @@ export class AccountsController {
       accountId,
       user.id,
       bonusBuyId,
-      body.slot_name ?? '',
-      body.nick_provider,
+      body.name ?? '',
+      body.provider_name,
       body.purchase_amount ?? '',
     );
   }
@@ -570,6 +669,240 @@ export class AccountsController {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
     return this.authService.patchPrizeSpinWidget(accountId, user.id, body);
+  }
+
+  @Get(':accountId/chat-rolls')
+  async listChatRolls(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Query('archived') archived: string | undefined,
+    @Query('page') page: string | undefined,
+    @Query('limit') limit: string | undefined,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.authService.listChatRolls(
+      accountId,
+      user.id,
+      archived,
+      page,
+      limit,
+    );
+  }
+
+  @Get(':accountId/chat-rolls/:chatRollId')
+  async getChatRoll(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('chatRollId', ParseIntPipe) chatRollId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.authService.getChatRoll(accountId, user.id, chatRollId);
+  }
+
+  @Post(':accountId/chat-rolls')
+  async createChatRoll(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Body() body: CreateChatRollBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.createChatRoll(
+      accountId,
+      user.id,
+      body.title ?? '',
+    );
+  }
+
+  @Patch(':accountId/chat-rolls/:chatRollId')
+  async patchChatRoll(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('chatRollId', ParseIntPipe) chatRollId: number,
+    @Body() body: PatchChatRollBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.patchChatRoll(
+      accountId,
+      user.id,
+      chatRollId,
+      body,
+    );
+  }
+
+  @Post(':accountId/chat-rolls/:chatRollId/go-live')
+  async goLiveChatRoll(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('chatRollId', ParseIntPipe) chatRollId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.goLiveChatRoll(accountId, user.id, chatRollId);
+  }
+
+  @Post(':accountId/chat-rolls/:chatRollId/deactivate')
+  async deactivateChatRoll(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('chatRollId', ParseIntPipe) chatRollId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.deactivateChatRoll(accountId, user.id, chatRollId);
+  }
+
+  @Delete(':accountId/chat-rolls/:chatRollId')
+  @HttpCode(204)
+  async archiveChatRoll(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('chatRollId', ParseIntPipe) chatRollId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    await this.authService.archiveChatRoll(accountId, user.id, chatRollId);
+  }
+
+  @Get(':accountId/chat-rolls/:chatRollId/participants')
+  async listChatRollParticipants(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('chatRollId', ParseIntPipe) chatRollId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.listChatRollParticipants(
+      accountId,
+      user.id,
+      chatRollId,
+    );
+  }
+
+  @Delete(':accountId/chat-rolls/:chatRollId/participants')
+  @HttpCode(204)
+  async archiveAllChatRollParticipants(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('chatRollId', ParseIntPipe) chatRollId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    await this.authService.archiveAllChatRollParticipants(
+      accountId,
+      user.id,
+      chatRollId,
+    );
+  }
+
+  @Delete(':accountId/chat-rolls/:chatRollId/participants/:participantId')
+  @HttpCode(204)
+  async archiveChatRollParticipant(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('chatRollId', ParseIntPipe) chatRollId: number,
+    @Param('participantId', ParseIntPipe) participantId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    await this.authService.archiveChatRollParticipant(
+      accountId,
+      user.id,
+      chatRollId,
+      participantId,
+    );
+  }
+
+  @Get(':accountId/chat-rolls/:chatRollId/wins')
+  async listChatRollWins(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('chatRollId', ParseIntPipe) chatRollId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.listChatRollWins(accountId, user.id, chatRollId);
+  }
+
+  @Delete(':accountId/chat-rolls/:chatRollId/wins')
+  @HttpCode(204)
+  async archiveAllChatRollWins(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('chatRollId', ParseIntPipe) chatRollId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    await this.authService.archiveAllChatRollWins(
+      accountId,
+      user.id,
+      chatRollId,
+    );
+  }
+
+  @Delete(':accountId/chat-rolls/:chatRollId/wins/:winId')
+  @HttpCode(204)
+  async archiveChatRollWin(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('chatRollId', ParseIntPipe) chatRollId: number,
+    @Param('winId', ParseIntPipe) winId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    await this.authService.archiveChatRollWin(
+      accountId,
+      user.id,
+      chatRollId,
+      winId,
+    );
+  }
+
+  @Post(':accountId/chat-rolls/:chatRollId/roll')
+  async rollChatRoll(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('chatRollId', ParseIntPipe) chatRollId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.rollChatRoll(accountId, user.id, chatRollId);
+  }
+
+  @Get(':accountId/chat-roll-widget')
+  async getChatRollWidget(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.authService.getChatRollWidget(accountId, user.id);
+  }
+
+  @Patch(':accountId/chat-roll-widget')
+  async patchChatRollWidget(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Body() body: PatchChatRollWidgetBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.authService.patchChatRollWidget(accountId, user.id, body);
   }
 
   @Delete(':accountId/members/:memberUserId')

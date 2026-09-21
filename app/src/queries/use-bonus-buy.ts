@@ -1,22 +1,34 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import {
   archiveBonusBuySlot,
+  BonusBuySessionArchivedError,
   createBonusBuy,
   createBonusBuySlot,
+  createBonusBuyWidgetPreset,
+  deleteBonusBuyWidgetPreset,
   endBonusBuy,
   fetchBonusBuy,
   fetchBonusBuySlots,
   fetchBonusBuys,
   fetchBonusBuyWidget,
+  fetchBonusBuyWidgetPresets,
   fetchPublicBonusBuyWidget,
   patchBonusBuy,
   patchBonusBuySlot,
   patchBonusBuyWidget,
+  patchBonusBuyWidgetPreset,
   type PatchBonusBuyInput,
   type PatchBonusBuySlotInput,
   type PatchBonusBuyWidgetInput,
+  type CreateBonusBuyWidgetPresetInput,
+  type PatchBonusBuyWidgetPresetInput,
 } from '@/api/bonus-buy'
-import { bonusBuyKeys } from '@/queries/keys'
+import { bonusBuyKeys, type BonusBuyListParams } from '@/queries/keys'
 
 const WIDGET_POLL_MS = 5000
 
@@ -40,11 +52,15 @@ function sessionQueryKey(accountId: number, bonusBuyId: number) {
   return bonusBuyKeys.session(accountId, bonusBuyId)
 }
 
-export function useBonusBuys(accountId: number | undefined) {
+export function useBonusBuys(
+  accountId: number | undefined,
+  params: BonusBuyListParams,
+) {
   return useQuery({
-    queryKey: bonusBuyKeys.list(accountId ?? 0),
-    queryFn: () => fetchBonusBuys(accountId!),
+    queryKey: bonusBuyKeys.list(accountId ?? 0, params),
+    queryFn: () => fetchBonusBuys(accountId!, params),
     enabled: accountId !== undefined,
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -52,8 +68,8 @@ export function useCreateBonusBuy(accountId: number | undefined) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input: { title: string; startBalance: string }) =>
-      createBonusBuy(accountId!, input.title, input.startBalance),
+    mutationFn: (input: { name: string; startBalance: string }) =>
+      createBonusBuy(accountId!, input.name, input.startBalance),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: bonusBuyKeys.lists() })
     },
@@ -73,12 +89,21 @@ export function useBonusBuySession(
 
 export function useBonusBuyWidget(
   accountId: number | undefined,
+  bonusBuyId: number | null,
   enabled: boolean,
 ) {
   return useQuery({
-    queryKey: bonusBuyKeys.widget(accountId ?? 0),
-    queryFn: () => fetchBonusBuyWidget(accountId!),
-    enabled: accountId !== undefined && enabled,
+    queryKey: bonusBuyKeys.widget(accountId ?? 0, bonusBuyId ?? 0),
+    queryFn: () => fetchBonusBuyWidget(accountId!, bonusBuyId!),
+    enabled: accountId !== undefined && bonusBuyId !== null && enabled,
+  })
+}
+
+export function useBonusBuyWidgetPresets(accountId: number | undefined) {
+  return useQuery({
+    queryKey: bonusBuyKeys.presets(accountId ?? 0),
+    queryFn: () => fetchBonusBuyWidgetPresets(accountId!),
+    enabled: accountId !== undefined,
   })
 }
 
@@ -87,7 +112,12 @@ export function usePublicBonusBuyWidget(bonusBuyId: number | null) {
     queryKey: bonusBuyKeys.publicWidget(bonusBuyId ?? 0),
     queryFn: () => fetchPublicBonusBuyWidget(bonusBuyId!),
     enabled: bonusBuyId !== null,
-    refetchInterval: WIDGET_POLL_MS,
+    refetchInterval: (query) =>
+      query.state.error instanceof BonusBuySessionArchivedError
+        ? false
+        : WIDGET_POLL_MS,
+    retry: (failureCount, error) =>
+      error instanceof BonusBuySessionArchivedError ? false : failureCount < 3,
   })
 }
 
@@ -112,16 +142,16 @@ export function useCreateBonusBuySlot(
 
   return useMutation({
     mutationFn: (input: {
-      slotName: string
+      name: string
       purchaseAmount: string
-      nickProvider?: string
+      providerName?: string
     }) =>
       createBonusBuySlot(
         accountId!,
         bonusBuyId!,
-        input.slotName,
+        input.name,
         input.purchaseAmount,
-        input.nickProvider,
+        input.providerName,
       ),
     onSuccess: () => {
       if (bonusBuyId !== null) {
@@ -200,16 +230,69 @@ export function useEndBonusBuy(
   })
 }
 
-export function usePatchBonusBuyWidget(accountId: number | undefined) {
+export function usePatchBonusBuyWidget(
+  accountId: number | undefined,
+  bonusBuyId: number | null,
+) {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: (body: PatchBonusBuyWidgetInput) =>
-      patchBonusBuyWidget(accountId!, body),
+      patchBonusBuyWidget(accountId!, bonusBuyId!, body),
+    onSuccess: () => {
+      if (accountId !== undefined && bonusBuyId !== null) {
+        void queryClient.invalidateQueries({
+          queryKey: bonusBuyKeys.widget(accountId, bonusBuyId),
+        })
+      }
+    },
+  })
+}
+
+export function useCreateBonusBuyWidgetPreset(accountId: number | undefined) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (body: CreateBonusBuyWidgetPresetInput) =>
+      createBonusBuyWidgetPreset(accountId!, body),
     onSuccess: () => {
       if (accountId !== undefined) {
         void queryClient.invalidateQueries({
-          queryKey: bonusBuyKeys.widget(accountId),
+          queryKey: bonusBuyKeys.presets(accountId),
+        })
+      }
+    },
+  })
+}
+
+export function usePatchBonusBuyWidgetPreset(accountId: number | undefined) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: {
+      presetId: number
+      body: PatchBonusBuyWidgetPresetInput
+    }) => patchBonusBuyWidgetPreset(accountId!, input.presetId, input.body),
+    onSuccess: () => {
+      if (accountId !== undefined) {
+        void queryClient.invalidateQueries({
+          queryKey: bonusBuyKeys.presets(accountId),
+        })
+      }
+    },
+  })
+}
+
+export function useDeleteBonusBuyWidgetPreset(accountId: number | undefined) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (presetId: number) =>
+      deleteBonusBuyWidgetPreset(accountId!, presetId),
+    onSuccess: () => {
+      if (accountId !== undefined) {
+        void queryClient.invalidateQueries({
+          queryKey: bonusBuyKeys.presets(accountId),
         })
       }
     },

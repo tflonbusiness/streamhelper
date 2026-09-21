@@ -46,6 +46,15 @@ export function buildBreadcrumbs(
     ]
   }
 
+  if (pathname.startsWith('/chat-roll/')) {
+    return [
+      home,
+      { label: 'Modules', to: '/modules' },
+      { label: 'Chat Roll', to: '/chat-roll' },
+      { label: dynamicLabel ?? 'Session' },
+    ]
+  }
+
   return [{ label: 'Home', to: '/dashboard' }]
 }
 

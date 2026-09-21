@@ -7,9 +7,23 @@ import {
   normalizePositiveMoney,
 } from '../bonus-buy/bonus-buy-math.js';
 import {
-  BONUS_BUY_WIDGET_INSERT_SQL,
-  bonusBuyWidgetInsertParams,
+  BONUS_BUY_SYSTEM_PRESET_SEEDS,
+  BONUS_BUY_WIDGET_DIMENSION_DEFAULTS,
+  BONUS_BUY_WIDGET_STYLE_DEFAULTS,
+  type BonusBuyWidgetStyleSettings,
 } from '../bonus-buy/bonus-buy-widget-defaults.js';
+import {
+  mergeBonusBuyWidgetStyleSettings,
+  parseBonusBuyWidgetStyleSettings,
+} from '../bonus-buy/bonus-buy-widget-style.js';
+import {
+  computeParticipantCoefficient,
+  DEFAULT_CHAT_ROLL_ROLE_SETTINGS,
+  normalizeKeyword,
+  normalizeRoleSettings,
+  pickWeightedParticipant,
+  type ChatRollRoleSettings,
+} from '../chat-roll/chat-roll-utils.js';
 import {
   CHAT_ROLL_WIDGET_INSERT_SQL,
   chatRollWidgetInsertParams,
@@ -54,12 +68,20 @@ export type DbAccountMember = {
   hasInviteLink: boolean;
 };
 
+export type BonusBuyArchivedFilter = 'false' | 'true' | 'all';
+
+export type BonusBuyStatus = 'active' | 'archived';
+
+export type BonusBuySlotStatus = 'pending' | 'playing' | 'archived';
+
+export type BonusBuyWidgetPresetSource = 'system' | 'user';
+
 export type DbBonusBuy = {
   id: number;
   accountId: number;
-  title: string;
+  name: string;
   startBalance: string;
-  isActive: boolean;
+  status: BonusBuyStatus;
   createdAt: Date;
   createdByUserId: number;
   createdByName: string;
@@ -123,44 +145,114 @@ export type PatchPrizeSpinSectorInput = {
   color?: string | null;
 };
 
+export type ChatRollStatus = 'live' | 'off_air' | 'archived';
+
+export type ChatRollArchivedFilter = 'false' | 'true' | 'all';
+
+export type DbChatRoll = {
+  id: number;
+  accountId: number;
+  title: string;
+  status: ChatRollStatus;
+  keyword: string;
+  combineMode: 'highest' | 'sum';
+  excludeWinnerAfterRoll: boolean;
+  isAcceptingParticipants: boolean;
+  replyInChat: boolean;
+  roleSettings: ChatRollRoleSettings;
+  createdAt: Date;
+  createdByUserId: number;
+  createdByName: string;
+};
+
+export type DbChatRollParticipant = {
+  id: number;
+  chatRollId: number;
+  provider: 'kick' | 'twitch' | 'youtube' | null;
+  providerUserId: string | null;
+  displayName: string;
+  roleIds: string[];
+  isArchived: boolean;
+  joinedAt: Date;
+};
+
+export type DbChatRollWin = {
+  id: number;
+  chatRollId: number;
+  participantId: number;
+  displayName: string;
+  coefficientAtPick: string;
+  rolledByUserId: number;
+  rolledByName: string;
+  rollIndex: number;
+  isArchived: boolean;
+  createdAt: Date;
+};
+
+export type DbChatRollWidget = {
+  id: number;
+  accountId: number;
+  width: number;
+  height: number;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type PatchChatRollInput = {
+  title?: string;
+  keyword?: string;
+  combineMode?: 'highest' | 'sum';
+  excludeWinnerAfterRoll?: boolean;
+  isAcceptingParticipants?: boolean;
+  replyInChat?: boolean;
+  roleSettings?: ChatRollRoleSettings;
+};
+
+export type PatchChatRollWidgetInput = {
+  width?: number;
+  height?: number;
+};
+
 export type DbBonusBuySlot = {
   id: number;
   bonusBuyId: number;
   createdByUserId: number;
   createdByName: string;
-  slotName: string;
-  nickProvider: string | null;
+  name: string;
+  providerName: string | null;
   purchaseAmount: string;
   winAmount: string | null;
   multiplier: string | null;
-  isNowPlaying: boolean;
+  status: BonusBuySlotStatus;
   createdAt: Date;
 };
 
 export type PatchBonusBuySlotInput = {
-  slotName?: string;
-  nickProvider?: string | null;
+  name?: string;
+  providerName?: string | null;
   purchaseAmount?: string;
   winAmount?: string | null;
-  isNowPlaying?: boolean;
+  status?: BonusBuySlotStatus;
 };
 
 export type DbBonusBuyWidget = {
   id: number;
-  accountId: number;
+  bonusBuyId: number;
   width: number;
   height: number;
-  backgroundColor: string;
-  surfaceColor: string;
-  borderColor: string;
-  accentColor: string;
-  positiveColor: string;
-  negativeColor: string;
-  liveColor: string;
-  textMutedColor: string;
-  borderRadius: number;
-  padding: number;
-  fontFamily: string;
+  styleSettings: BonusBuyWidgetStyleSettings;
+  presetId: number | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type DbBonusBuyWidgetStylePreset = {
+  id: number;
+  accountId: number | null;
+  createdByUserId: number | null;
+  source: BonusBuyWidgetPresetSource;
+  name: string;
+  styleSettings: BonusBuyWidgetStyleSettings;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -168,24 +260,25 @@ export type DbBonusBuyWidget = {
 export type PatchBonusBuyWidgetInput = {
   width?: number;
   height?: number;
-  backgroundColor?: string;
-  surfaceColor?: string;
-  borderColor?: string;
-  accentColor?: string;
-  positiveColor?: string;
-  negativeColor?: string;
-  liveColor?: string;
-  textMutedColor?: string;
-  borderRadius?: number;
-  padding?: number;
-  fontFamily?: string;
+  styleSettings?: Partial<BonusBuyWidgetStyleSettings>;
+  presetId?: number | null;
+};
+
+export type CreateBonusBuyWidgetPresetInput = {
+  name: string;
+  styleSettings: BonusBuyWidgetStyleSettings;
+};
+
+export type PatchBonusBuyWidgetPresetInput = {
+  name?: string;
+  styleSettings?: Partial<BonusBuyWidgetStyleSettings>;
 };
 
 export type DbPublicBonusBuyRecord = {
   id: number;
-  title: string;
+  name: string;
   startBalance: string;
-  isActive: boolean;
+  status: BonusBuyStatus;
 };
 
 const WIDGET_MIN_DIMENSION = 200;
@@ -213,6 +306,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
     this.pool = new Pool({ connectionString });
     await this.initSchema();
+    await this.seedBonusBuySystemPresets();
   }
 
   async onModuleDestroy(): Promise<void> {
@@ -235,6 +329,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       DROP TABLE IF EXISTS prize_spin_widget CASCADE;
       DROP TABLE IF EXISTS prize_spin CASCADE;
       DROP TABLE IF EXISTS bonus_buy_widget CASCADE;
+      DROP TABLE IF EXISTS bonus_buy_widget_style_preset CASCADE;
       DROP TABLE IF EXISTS bonus_buy_slot CASCADE;
       DROP TABLE IF EXISTS bonus_buy CASCADE;
       DROP TABLE IF EXISTS account_channels CASCADE;
@@ -307,53 +402,69 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         id                  BIGSERIAL PRIMARY KEY,
         account_id          BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
         created_by_user_id  BIGINT NOT NULL REFERENCES users(id),
-        title               TEXT NOT NULL,
+        name                TEXT NOT NULL,
         start_balance       NUMERIC(12, 2) NOT NULL,
-        is_active           BOOLEAN NOT NULL DEFAULT true,
+        status              TEXT NOT NULL DEFAULT 'active'
+          CHECK (status IN ('active', 'archived')),
         created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
       );
 
       CREATE INDEX idx_bonus_buy_account_created
-        ON bonus_buy (account_id, created_at DESC);
+        ON bonus_buy (account_id, created_at DESC)
+        WHERE status != 'archived';
 
       CREATE TABLE bonus_buy_slot (
         id                  BIGSERIAL PRIMARY KEY,
         bonus_buy_id        BIGINT NOT NULL REFERENCES bonus_buy(id) ON DELETE CASCADE,
         created_by_user_id  BIGINT NOT NULL REFERENCES users(id),
-        slot_name           TEXT NOT NULL,
-        nick_provider       TEXT,
+        name                TEXT NOT NULL,
+        provider_name       TEXT,
         purchase_amount     NUMERIC(12, 2) NOT NULL,
         win_amount          NUMERIC(12, 2),
         multiplier          NUMERIC(10, 2),
-        is_now_playing      BOOLEAN NOT NULL DEFAULT false,
-        is_archived         BOOLEAN NOT NULL DEFAULT false,
+        status              TEXT NOT NULL DEFAULT 'pending'
+          CHECK (status IN ('pending', 'playing', 'archived')),
         created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
       );
 
       CREATE UNIQUE INDEX idx_bonus_buy_slot_one_playing
         ON bonus_buy_slot (bonus_buy_id)
-        WHERE is_now_playing = true AND is_archived = false;
+        WHERE status = 'playing';
 
       CREATE INDEX idx_bonus_buy_slot_list
         ON bonus_buy_slot (bonus_buy_id, created_at ASC)
-        WHERE is_archived = false;
+        WHERE status != 'archived';
+
+      CREATE TABLE bonus_buy_widget_style_preset (
+        id                  BIGSERIAL PRIMARY KEY,
+        account_id          BIGINT REFERENCES accounts(id) ON DELETE CASCADE,
+        created_by_user_id  BIGINT REFERENCES users(id),
+        source              TEXT NOT NULL CHECK (source IN ('system', 'user')),
+        name                TEXT NOT NULL,
+        style_settings      JSONB NOT NULL,
+        created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+        CHECK (
+          (source = 'system' AND account_id IS NULL AND created_by_user_id IS NULL)
+          OR (source = 'user' AND account_id IS NOT NULL AND created_by_user_id IS NOT NULL)
+        )
+      );
+
+      CREATE UNIQUE INDEX idx_bonus_buy_widget_style_preset_system_name
+        ON bonus_buy_widget_style_preset (name)
+        WHERE source = 'system';
+
+      CREATE UNIQUE INDEX idx_bonus_buy_widget_style_preset_user_name
+        ON bonus_buy_widget_style_preset (account_id, name)
+        WHERE source = 'user';
 
       CREATE TABLE bonus_buy_widget (
         id                  BIGSERIAL PRIMARY KEY,
-        account_id          BIGINT NOT NULL UNIQUE REFERENCES accounts(id) ON DELETE CASCADE,
+        bonus_buy_id        BIGINT NOT NULL UNIQUE REFERENCES bonus_buy(id) ON DELETE CASCADE,
         width               INTEGER NOT NULL DEFAULT 500,
         height              INTEGER NOT NULL DEFAULT 600,
-        background_color    TEXT NOT NULL DEFAULT '#0A0A0C',
-        surface_color       TEXT NOT NULL DEFAULT '#121215',
-        border_color        TEXT NOT NULL DEFAULT '#2F2F31',
-        accent_color        TEXT NOT NULL DEFAULT '#F59E0B',
-        positive_color      TEXT NOT NULL DEFAULT '#10B981',
-        negative_color      TEXT NOT NULL DEFAULT '#EF4444',
-        live_color          TEXT NOT NULL DEFAULT '#FF2222',
-        text_muted_color    TEXT NOT NULL DEFAULT '#9CA3AF',
-        border_radius       INTEGER NOT NULL DEFAULT 20,
-        padding             INTEGER NOT NULL DEFAULT 18,
-        font_family         TEXT NOT NULL DEFAULT 'Inter, system-ui, sans-serif',
+        style_settings      JSONB NOT NULL,
+        preset_id           BIGINT REFERENCES bonus_buy_widget_style_preset(id) ON DELETE SET NULL,
         created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
       );
@@ -504,6 +615,18 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       CREATE INDEX idx_kick_chat_events_broadcaster
         ON kick_chat_events (broadcaster_id, received_at DESC);
     `);
+  }
+
+  private async seedBonusBuySystemPresets(): Promise<void> {
+    for (const preset of BONUS_BUY_SYSTEM_PRESET_SEEDS) {
+      await this.pool.query(
+        `
+          INSERT INTO bonus_buy_widget_style_preset (source, name, style_settings)
+          VALUES ('system', $1, $2::jsonb)
+        `,
+        [preset.name, JSON.stringify(preset.styleSettings)],
+      );
+    }
   }
 
   async findUserById(userId: number): Promise<DbUser | null> {
@@ -658,11 +781,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           VALUES ($1, 'kick', $2, $3, true)
         `,
         [accountId, profile.channelId, profile.channelSlug],
-      );
-
-      await client.query(
-        BONUS_BUY_WIDGET_INSERT_SQL,
-        bonusBuyWidgetInsertParams(accountId),
       );
 
       await client.query(
@@ -915,6 +1033,37 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  private mapBonusBuyRow(row: {
+    id: string | number;
+    account_id: string | number;
+    name: string;
+    start_balance: string;
+    status: string;
+    created_at: Date;
+    created_by_user_id: string | number;
+    created_by_name: string;
+  }): DbBonusBuy {
+    return {
+      id: toInt(row.id),
+      accountId: toInt(row.account_id),
+      name: row.name,
+      startBalance: row.start_balance,
+      status: row.status as BonusBuyStatus,
+      createdAt: row.created_at,
+      createdByUserId: toInt(row.created_by_user_id),
+      createdByName: row.created_by_name,
+    };
+  }
+
+  private bonusBuyArchivedClause(archived: BonusBuyArchivedFilter): string {
+    if (archived === 'all') {
+      return '';
+    }
+    return archived === 'true'
+      ? "AND bb.status = 'archived'"
+      : "AND bb.status = 'active'";
+  }
+
   async getBonusBuyById(
     accountId: number,
     bonusBuyId: number,
@@ -922,9 +1071,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     const result = await this.pool.query<{
       id: string | number;
       account_id: string | number;
-      title: string;
+      name: string;
       start_balance: string;
-      is_active: boolean;
+      status: string;
       created_at: Date;
       created_by_user_id: string | number;
       created_by_name: string;
@@ -933,9 +1082,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         SELECT
           bb.id,
           bb.account_id,
-          bb.title,
+          bb.name,
           bb.start_balance::text AS start_balance,
-          bb.is_active,
+          bb.status,
           bb.created_at,
           bb.created_by_user_id,
           u.name AS created_by_name
@@ -947,29 +1096,41 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     );
 
     const row = result.rows[0];
-    if (!row) {
-      return null;
-    }
-
-    return {
-      id: toInt(row.id),
-      accountId: toInt(row.account_id),
-      title: row.title,
-      startBalance: row.start_balance,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      createdByUserId: toInt(row.created_by_user_id),
-      createdByName: row.created_by_name,
-    };
+    return row ? this.mapBonusBuyRow(row) : null;
   }
 
-  async listBonusBuys(accountId: number): Promise<DbBonusBuy[]> {
+  async listBonusBuys(
+    accountId: number,
+    archived: BonusBuyArchivedFilter = 'false',
+    page = 1,
+    limit = 10,
+  ): Promise<{
+    records: DbBonusBuy[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const statusClause = this.bonusBuyArchivedClause(archived);
+    const offset = (page - 1) * limit;
+
+    const countResult = await this.pool.query<{ count: string | number }>(
+      `
+        SELECT COUNT(*)::text AS count
+        FROM bonus_buy bb
+        WHERE bb.account_id = $1
+          ${statusClause}
+      `,
+      [accountId],
+    );
+
+    const total = toInt(countResult.rows[0]?.count ?? 0);
+
     const result = await this.pool.query<{
       id: string | number;
       account_id: string | number;
-      title: string;
+      name: string;
       start_balance: string;
-      is_active: boolean;
+      status: string;
       created_at: Date;
       created_by_user_id: string | number;
       created_by_name: string;
@@ -978,41 +1139,93 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         SELECT
           bb.id,
           bb.account_id,
-          bb.title,
+          bb.name,
           bb.start_balance::text AS start_balance,
-          bb.is_active,
+          bb.status,
           bb.created_at,
           bb.created_by_user_id,
           u.name AS created_by_name
         FROM bonus_buy bb
         JOIN users u ON u.id = bb.created_by_user_id
         WHERE bb.account_id = $1
+          ${statusClause}
         ORDER BY bb.created_at DESC
+        LIMIT $2 OFFSET $3
+      `,
+      [accountId, limit, offset],
+    );
+
+    return {
+      records: result.rows.map((row) => this.mapBonusBuyRow(row)),
+      total,
+      page,
+      limit,
+    };
+  }
+
+  private async resolveBootstrapWidgetPreset(
+    client: { query: Pool['query'] },
+    accountId: number,
+  ): Promise<{ presetId: number | null; styleSettings: BonusBuyWidgetStyleSettings }> {
+    const userPreset = await client.query<{
+      id: string | number;
+      style_settings: BonusBuyWidgetStyleSettings;
+    }>(
+      `
+        SELECT id, style_settings
+        FROM bonus_buy_widget_style_preset
+        WHERE account_id = $1
+          AND source = 'user'
+        ORDER BY created_at DESC, id DESC
+        LIMIT 1
       `,
       [accountId],
     );
 
-    return result.rows.map((row) => ({
-      id: toInt(row.id),
-      accountId: toInt(row.account_id),
-      title: row.title,
-      startBalance: row.start_balance,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      createdByUserId: toInt(row.created_by_user_id),
-      createdByName: row.created_by_name,
-    }));
+    const userRow = userPreset.rows[0];
+    if (userRow) {
+      return {
+        presetId: toInt(userRow.id),
+        styleSettings: parseBonusBuyWidgetStyleSettings(userRow.style_settings),
+      };
+    }
+
+    const systemPreset = await client.query<{
+      id: string | number;
+      style_settings: BonusBuyWidgetStyleSettings;
+    }>(
+      `
+        SELECT id, style_settings
+        FROM bonus_buy_widget_style_preset
+        WHERE source = 'system'
+        ORDER BY id ASC
+        LIMIT 1
+      `,
+    );
+
+    const systemRow = systemPreset.rows[0];
+    if (!systemRow) {
+      return {
+        presetId: null,
+        styleSettings: BONUS_BUY_WIDGET_STYLE_DEFAULTS,
+      };
+    }
+
+    return {
+      presetId: toInt(systemRow.id),
+      styleSettings: parseBonusBuyWidgetStyleSettings(systemRow.style_settings),
+    };
   }
 
   async createBonusBuy(
     accountId: number,
     createdByUserId: number,
-    title: string,
+    name: string,
     startBalance: string,
   ): Promise<DbBonusBuy> {
-    const trimmedTitle = title.trim();
-    if (trimmedTitle.length === 0 || trimmedTitle.length > 200) {
-      throw new Error('INVALID_TITLE');
+    const trimmedName = name.trim();
+    if (trimmedName.length === 0 || trimmedName.length > 200) {
+      throw new Error('INVALID_NAME');
     }
 
     if (!/^\d+(\.\d{1,2})?$/.test(startBalance)) {
@@ -1033,51 +1246,61 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       const result = await client.query<{
         id: string | number;
         account_id: string | number;
-        title: string;
+        name: string;
         start_balance: string;
-        is_active: boolean;
+        status: string;
         created_at: Date;
         created_by_user_id: string | number;
         created_by_name: string;
       }>(
         `
           INSERT INTO bonus_buy (
-            account_id, created_by_user_id, title, start_balance
+            account_id, created_by_user_id, name, start_balance
           )
           VALUES ($1, $2, $3, $4)
           RETURNING
             id,
             account_id,
-            title,
+            name,
             start_balance::text AS start_balance,
-            is_active,
+            status,
             created_at,
             created_by_user_id,
             (SELECT name FROM users WHERE id = $2) AS created_by_name
         `,
-        [accountId, createdByUserId, trimmedTitle, normalizedBalance],
+        [accountId, createdByUserId, trimmedName, normalizedBalance],
       );
 
       const row = result.rows[0];
       const bonusBuyId = toInt(row.id);
+      const bootstrapPreset = await this.resolveBootstrapWidgetPreset(
+        client,
+        accountId,
+      );
 
       await client.query(
-        BONUS_BUY_WIDGET_INSERT_SQL,
-        bonusBuyWidgetInsertParams(accountId),
+        `
+          INSERT INTO bonus_buy_widget (
+            bonus_buy_id,
+            width,
+            height,
+            style_settings,
+            preset_id
+          )
+          VALUES ($1, $2, $3, $4::jsonb, $5)
+        `,
+        [
+          bonusBuyId,
+          BONUS_BUY_WIDGET_DIMENSION_DEFAULTS.width,
+          BONUS_BUY_WIDGET_DIMENSION_DEFAULTS.height,
+          JSON.stringify(bootstrapPreset.styleSettings),
+          bootstrapPreset.presetId ?? null,
+        ],
       );
 
       await client.query('COMMIT');
 
-      return {
-        id: bonusBuyId,
-        accountId: toInt(row.account_id),
-        title: row.title,
-        startBalance: row.start_balance,
-        isActive: row.is_active,
-        createdAt: row.created_at,
-        createdByUserId: toInt(row.created_by_user_id),
-        createdByName: row.created_by_name,
-      };
+      return this.mapBonusBuyRow(row);
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
@@ -1093,27 +1316,27 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     const result = await this.pool.query<{
       id: string | number;
       account_id: string | number;
-      title: string;
+      name: string;
       start_balance: string;
-      is_active: boolean;
+      status: string;
       created_at: Date;
       created_by_user_id: string | number;
       created_by_name: string;
     }>(
       `
         UPDATE bonus_buy bb
-        SET is_active = false
+        SET status = 'archived'
         FROM users u
         WHERE bb.created_by_user_id = u.id
           AND bb.account_id = $1
           AND bb.id = $2
-          AND bb.is_active = true
+          AND bb.status = 'active'
         RETURNING
           bb.id,
           bb.account_id,
-          bb.title,
+          bb.name,
           bb.start_balance::text AS start_balance,
-          bb.is_active,
+          bb.status,
           bb.created_at,
           bb.created_by_user_id,
           u.name AS created_by_name
@@ -1123,23 +1346,14 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
     const row = result.rows[0];
     if (row) {
-      return {
-        id: toInt(row.id),
-        accountId: toInt(row.account_id),
-        title: row.title,
-        startBalance: row.start_balance,
-        isActive: row.is_active,
-        createdAt: row.created_at,
-        createdByUserId: toInt(row.created_by_user_id),
-        createdByName: row.created_by_name,
-      };
+      return this.mapBonusBuyRow(row);
     }
 
     const existing = await this.getBonusBuyById(accountId, bonusBuyId);
     if (!existing) {
       throw new Error('NOT_FOUND');
     }
-    if (!existing.isActive) {
+    if (existing.status === 'archived') {
       throw new Error('ALREADY_ENDED');
     }
 
@@ -1149,17 +1363,17 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   async updateBonusBuy(
     accountId: number,
     bonusBuyId: number,
-    updates: { title?: string; startBalance?: string },
+    updates: { name?: string; startBalance?: string },
   ): Promise<DbBonusBuy> {
     const existing = await this.getBonusBuyById(accountId, bonusBuyId);
     if (!existing) {
       throw new Error('NOT_FOUND');
     }
 
-    const nextTitle =
-      updates.title !== undefined ? updates.title.trim() : existing.title;
-    if (nextTitle.length === 0 || nextTitle.length > 200) {
-      throw new Error('INVALID_TITLE');
+    const nextName =
+      updates.name !== undefined ? updates.name.trim() : existing.name;
+    if (nextName.length === 0 || nextName.length > 200) {
+      throw new Error('INVALID_NAME');
     }
 
     const nextBalance =
@@ -1170,16 +1384,16 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     const result = await this.pool.query<{
       id: string | number;
       account_id: string | number;
-      title: string;
+      name: string;
       start_balance: string;
-      is_active: boolean;
+      status: string;
       created_at: Date;
       created_by_user_id: string | number;
       created_by_name: string;
     }>(
       `
         UPDATE bonus_buy bb
-        SET title = $3, start_balance = $4
+        SET name = $3, start_balance = $4
         FROM users u
         WHERE bb.created_by_user_id = u.id
           AND bb.account_id = $1
@@ -1187,27 +1401,17 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         RETURNING
           bb.id,
           bb.account_id,
-          bb.title,
+          bb.name,
           bb.start_balance::text AS start_balance,
-          bb.is_active,
+          bb.status,
           bb.created_at,
           bb.created_by_user_id,
           u.name AS created_by_name
       `,
-      [accountId, bonusBuyId, nextTitle, nextBalance],
+      [accountId, bonusBuyId, nextName, nextBalance],
     );
 
-    const row = result.rows[0];
-    return {
-      id: toInt(row.id),
-      accountId: toInt(row.account_id),
-      title: row.title,
-      startBalance: row.start_balance,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      createdByUserId: toInt(row.created_by_user_id),
-      createdByName: row.created_by_name,
-    };
+    return this.mapBonusBuyRow(result.rows[0]);
   }
 
   private mapBonusBuySlotRow(row: {
@@ -1215,12 +1419,12 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     bonus_buy_id: string | number;
     created_by_user_id: string | number;
     created_by_name: string;
-    slot_name: string;
-    nick_provider: string | null;
+    name: string;
+    provider_name: string | null;
     purchase_amount: string;
     win_amount: string | null;
     multiplier: string | null;
-    is_now_playing: boolean;
+    status: string;
     created_at: Date;
   }): DbBonusBuySlot {
     return {
@@ -1228,12 +1432,12 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       bonusBuyId: toInt(row.bonus_buy_id),
       createdByUserId: toInt(row.created_by_user_id),
       createdByName: row.created_by_name,
-      slotName: row.slot_name,
-      nickProvider: row.nick_provider,
+      name: row.name,
+      providerName: row.provider_name,
       purchaseAmount: row.purchase_amount,
       winAmount: row.win_amount,
       multiplier: row.multiplier,
-      isNowPlaying: row.is_now_playing,
+      status: row.status as BonusBuySlotStatus,
       createdAt: row.created_at,
     };
   }
@@ -1252,12 +1456,12 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       bonus_buy_id: string | number;
       created_by_user_id: string | number;
       created_by_name: string;
-      slot_name: string;
-      nick_provider: string | null;
+      name: string;
+      provider_name: string | null;
       purchase_amount: string;
       win_amount: string | null;
       multiplier: string | null;
-      is_now_playing: boolean;
+      status: string;
       created_at: Date;
     }>(
       `
@@ -1266,17 +1470,17 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           s.bonus_buy_id,
           s.created_by_user_id,
           u.name AS created_by_name,
-          s.slot_name,
-          s.nick_provider,
+          s.name,
+          s.provider_name,
           s.purchase_amount::text AS purchase_amount,
           s.win_amount::text AS win_amount,
           s.multiplier::text AS multiplier,
-          s.is_now_playing,
+          s.status,
           s.created_at
         FROM bonus_buy_slot s
         JOIN users u ON u.id = s.created_by_user_id
         WHERE s.bonus_buy_id = $1
-          AND s.is_archived = false
+          AND s.status != 'archived'
         ORDER BY s.created_at ASC
       `,
       [bonusBuyId],
@@ -1289,8 +1493,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     accountId: number,
     bonusBuyId: number,
     createdByUserId: number,
-    slotName: string,
-    nickProvider: string | null,
+    name: string,
+    providerName: string | null,
     purchaseAmount: string,
   ): Promise<DbBonusBuySlot> {
     const session = await this.getBonusBuyById(accountId, bonusBuyId);
@@ -1298,34 +1502,34 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       throw new Error('NOT_FOUND');
     }
 
-    const trimmedSlot = slotName.trim();
-    if (trimmedSlot.length === 0 || trimmedSlot.length > 200) {
+    const trimmedName = name.trim();
+    if (trimmedName.length === 0 || trimmedName.length > 200) {
       throw new Error('INVALID_SLOT_NAME');
     }
 
     const normalizedPurchase = normalizePositiveMoney(purchaseAmount);
-    const trimmedNick = nickProvider?.trim() ?? '';
-    const nickValue = trimmedNick.length > 0 ? trimmedNick : null;
+    const trimmedProvider = providerName?.trim() ?? '';
+    const providerValue = trimmedProvider.length > 0 ? trimmedProvider : null;
 
     const result = await this.pool.query<{
       id: string | number;
       bonus_buy_id: string | number;
       created_by_user_id: string | number;
       created_by_name: string;
-      slot_name: string;
-      nick_provider: string | null;
+      name: string;
+      provider_name: string | null;
       purchase_amount: string;
       win_amount: string | null;
       multiplier: string | null;
-      is_now_playing: boolean;
+      status: string;
       created_at: Date;
     }>(
       `
         INSERT INTO bonus_buy_slot (
           bonus_buy_id,
           created_by_user_id,
-          slot_name,
-          nick_provider,
+          name,
+          provider_name,
           purchase_amount
         )
         VALUES ($1, $2, $3, $4, $5)
@@ -1334,15 +1538,15 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           bonus_buy_id,
           created_by_user_id,
           (SELECT name FROM users WHERE id = $2) AS created_by_name,
-          slot_name,
-          nick_provider,
+          name,
+          provider_name,
           purchase_amount::text AS purchase_amount,
           win_amount::text AS win_amount,
           multiplier::text AS multiplier,
-          is_now_playing,
+          status,
           created_at
       `,
-      [bonusBuyId, createdByUserId, trimmedSlot, nickValue, normalizedPurchase],
+      [bonusBuyId, createdByUserId, trimmedName, providerValue, normalizedPurchase],
     );
 
     return this.mapBonusBuySlotRow(result.rows[0]);
@@ -1361,25 +1565,23 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       const existing = await client.query<{
         id: string | number;
         bonus_buy_id: string | number;
-        slot_name: string;
-        nick_provider: string | null;
+        name: string;
+        provider_name: string | null;
         purchase_amount: string;
         win_amount: string | null;
         multiplier: string | null;
-        is_now_playing: boolean;
-        is_archived: boolean;
+        status: string;
       }>(
         `
           SELECT
             s.id,
             s.bonus_buy_id,
-            s.slot_name,
-            s.nick_provider,
+            s.name,
+            s.provider_name,
             s.purchase_amount::text AS purchase_amount,
             s.win_amount::text AS win_amount,
             s.multiplier::text AS multiplier,
-            s.is_now_playing,
-            s.is_archived
+            s.status
           FROM bonus_buy_slot s
           JOIN bonus_buy bb ON bb.id = s.bonus_buy_id
           WHERE bb.account_id = $1
@@ -1390,26 +1592,26 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       );
 
       const row = existing.rows[0];
-      if (!row || row.is_archived) {
+      if (!row || row.status === 'archived') {
         throw new Error('NOT_FOUND');
       }
 
-      let nextSlotName = row.slot_name;
-      if (input.slotName !== undefined) {
-        const trimmed = input.slotName.trim();
+      let nextName = row.name;
+      if (input.name !== undefined) {
+        const trimmed = input.name.trim();
         if (trimmed.length === 0 || trimmed.length > 200) {
           throw new Error('INVALID_SLOT_NAME');
         }
-        nextSlotName = trimmed;
+        nextName = trimmed;
       }
 
-      let nextNick = row.nick_provider;
-      if (input.nickProvider !== undefined) {
-        if (input.nickProvider === null) {
-          nextNick = null;
+      let nextProvider = row.provider_name;
+      if (input.providerName !== undefined) {
+        if (input.providerName === null) {
+          nextProvider = null;
         } else {
-          const trimmed = input.nickProvider.trim();
-          nextNick = trimmed.length > 0 ? trimmed : null;
+          const trimmed = input.providerName.trim();
+          nextProvider = trimmed.length > 0 ? trimmed : null;
         }
       }
 
@@ -1433,19 +1635,26 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         nextMultiplier = computeMultiplier(nextWin, nextPurchase);
       }
 
-      let nextPlaying = row.is_now_playing;
-      if (input.isNowPlaying !== undefined) {
-        nextPlaying = input.isNowPlaying;
+      let nextStatus = row.status as BonusBuySlotStatus;
+      if (input.status !== undefined) {
+        if (
+          input.status !== 'pending' &&
+          input.status !== 'playing' &&
+          input.status !== 'archived'
+        ) {
+          throw new Error('INVALID_SLOT_STATUS');
+        }
+        nextStatus = input.status;
       }
 
-      if (nextPlaying) {
+      if (nextStatus === 'playing') {
         await client.query(
           `
             UPDATE bonus_buy_slot
-            SET is_now_playing = false
+            SET status = 'pending'
             WHERE bonus_buy_id = $1
               AND id != $2
-              AND is_archived = false
+              AND status = 'playing'
           `,
           [bonusBuyId, slotId],
         );
@@ -1456,23 +1665,23 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         bonus_buy_id: string | number;
         created_by_user_id: string | number;
         created_by_name: string;
-        slot_name: string;
-        nick_provider: string | null;
+        name: string;
+        provider_name: string | null;
         purchase_amount: string;
         win_amount: string | null;
         multiplier: string | null;
-        is_now_playing: boolean;
+        status: string;
         created_at: Date;
       }>(
         `
           UPDATE bonus_buy_slot s
           SET
-            slot_name = $3,
-            nick_provider = $4,
+            name = $3,
+            provider_name = $4,
             purchase_amount = $5,
             win_amount = $6,
             multiplier = $7,
-            is_now_playing = $8
+            status = $8
           FROM users u
           WHERE s.created_by_user_id = u.id
             AND s.id = $1
@@ -1482,23 +1691,23 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             s.bonus_buy_id,
             s.created_by_user_id,
             u.name AS created_by_name,
-            s.slot_name,
-            s.nick_provider,
+            s.name,
+            s.provider_name,
             s.purchase_amount::text AS purchase_amount,
             s.win_amount::text AS win_amount,
             s.multiplier::text AS multiplier,
-            s.is_now_playing,
+            s.status,
             s.created_at
         `,
         [
           slotId,
           bonusBuyId,
-          nextSlotName,
-          nextNick,
+          nextName,
+          nextProvider,
           nextPurchase,
           nextWin,
           nextMultiplier,
-          nextPlaying,
+          nextStatus,
         ],
       );
 
@@ -1519,32 +1728,131 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     );
   }
 
-  private assertWidgetHexColor(value: string, field: string): string {
-    const trimmed = value.trim();
-    if (!/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(trimmed)) {
-      throw new Error(`INVALID_WIDGET_COLOR:${field}`);
-    }
-    return trimmed;
+  private mapBonusBuyWidgetRow(row: {
+    id: string | number;
+    bonus_buy_id: string | number;
+    width: string | number;
+    height: string | number;
+    style_settings: BonusBuyWidgetStyleSettings;
+    preset_id: string | number | null;
+    created_at: Date;
+    updated_at: Date;
+  }): DbBonusBuyWidget {
+    return {
+      id: toInt(row.id),
+      bonusBuyId: toInt(row.bonus_buy_id),
+      width: toInt(row.width),
+      height: toInt(row.height),
+      styleSettings: parseBonusBuyWidgetStyleSettings(row.style_settings),
+      presetId: row.preset_id === null ? null : toInt(row.preset_id),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
   }
 
-  private async ensureAccountBonusBuyWidget(
-    accountId: number,
-  ): Promise<DbBonusBuyWidget> {
-    await this.pool.query(
-      BONUS_BUY_WIDGET_INSERT_SQL,
-      bonusBuyWidgetInsertParams(accountId),
-    );
+  private mapBonusBuyWidgetPresetRow(row: {
+    id: string | number;
+    account_id: string | number | null;
+    created_by_user_id: string | number | null;
+    source: string;
+    name: string;
+    style_settings: BonusBuyWidgetStyleSettings;
+    created_at: Date;
+    updated_at: Date;
+  }): DbBonusBuyWidgetStylePreset {
+    return {
+      id: toInt(row.id),
+      accountId: row.account_id === null ? null : toInt(row.account_id),
+      createdByUserId:
+        row.created_by_user_id === null ? null : toInt(row.created_by_user_id),
+      source: row.source as BonusBuyWidgetPresetSource,
+      name: row.name,
+      styleSettings: parseBonusBuyWidgetStyleSettings(row.style_settings),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
 
-    const result = await this.pool.query(
+  private widgetSelectColumns(alias = 'w'): string {
+    return `
+      ${alias}.id,
+      ${alias}.bonus_buy_id,
+      ${alias}.width,
+      ${alias}.height,
+      ${alias}.style_settings,
+      ${alias}.preset_id,
+      ${alias}.created_at,
+      ${alias}.updated_at
+    `;
+  }
+
+  private async ensureBonusBuyWidget(
+    accountId: number,
+    bonusBuyId: number,
+  ): Promise<DbBonusBuyWidget> {
+    const session = await this.getBonusBuyById(accountId, bonusBuyId);
+    if (!session) {
+      throw new Error('NOT_FOUND');
+    }
+
+    const existing = await this.pool.query(
       `
         SELECT ${this.widgetSelectColumns()}
         FROM bonus_buy_widget w
-        WHERE w.account_id = $1
+        WHERE w.bonus_buy_id = $1
       `,
-      [accountId],
+      [bonusBuyId],
     );
 
-    const row = result.rows[0];
+    if (existing.rows[0]) {
+      return this.mapBonusBuyWidgetRow(existing.rows[0]);
+    }
+
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const bootstrapPreset = await this.resolveBootstrapWidgetPreset(
+        client,
+        accountId,
+      );
+      await client.query(
+        `
+          INSERT INTO bonus_buy_widget (
+            bonus_buy_id,
+            width,
+            height,
+            style_settings,
+            preset_id
+          )
+          VALUES ($1, $2, $3, $4::jsonb, $5)
+          ON CONFLICT (bonus_buy_id) DO NOTHING
+        `,
+        [
+          bonusBuyId,
+          BONUS_BUY_WIDGET_DIMENSION_DEFAULTS.width,
+          BONUS_BUY_WIDGET_DIMENSION_DEFAULTS.height,
+          JSON.stringify(bootstrapPreset.styleSettings),
+          bootstrapPreset.presetId ?? null,
+        ],
+      );
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+
+    const created = await this.pool.query(
+      `
+        SELECT ${this.widgetSelectColumns()}
+        FROM bonus_buy_widget w
+        WHERE w.bonus_buy_id = $1
+      `,
+      [bonusBuyId],
+    );
+
+    const row = created.rows[0];
     if (!row) {
       throw new Error('NOT_FOUND');
     }
@@ -1552,77 +1860,23 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     return this.mapBonusBuyWidgetRow(row);
   }
 
-  private mapBonusBuyWidgetRow(row: {
-    id: string | number;
-    account_id: string | number;
-    width: string | number;
-    height: string | number;
-    background_color: string;
-    surface_color: string;
-    border_color: string;
-    accent_color: string;
-    positive_color: string;
-    negative_color: string;
-    live_color: string;
-    text_muted_color: string;
-    border_radius: string | number;
-    padding: string | number;
-    font_family: string;
-    created_at: Date;
-    updated_at: Date;
-  }): DbBonusBuyWidget {
-    return {
-      id: toInt(row.id),
-      accountId: toInt(row.account_id),
-      width: toInt(row.width),
-      height: toInt(row.height),
-      backgroundColor: row.background_color,
-      surfaceColor: row.surface_color,
-      borderColor: row.border_color,
-      accentColor: row.accent_color,
-      positiveColor: row.positive_color,
-      negativeColor: row.negative_color,
-      liveColor: row.live_color,
-      textMutedColor: row.text_muted_color,
-      borderRadius: toInt(row.border_radius),
-      padding: toInt(row.padding),
-      fontFamily: row.font_family,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    };
-  }
-
-  private widgetSelectColumns(): string {
-    return `
-      w.id,
-      w.account_id,
-      w.width,
-      w.height,
-      w.background_color,
-      w.surface_color,
-      w.border_color,
-      w.accent_color,
-      w.positive_color,
-      w.negative_color,
-      w.live_color,
-      w.text_muted_color,
-      w.border_radius,
-      w.padding,
-      w.font_family,
-      w.created_at,
-      w.updated_at
-    `;
-  }
-
-  async getBonusBuyWidget(accountId: number): Promise<DbBonusBuyWidget> {
-    return this.ensureAccountBonusBuyWidget(accountId);
+  async getBonusBuyWidget(
+    accountId: number,
+    bonusBuyId: number,
+  ): Promise<DbBonusBuyWidget> {
+    return this.ensureBonusBuyWidget(accountId, bonusBuyId);
   }
 
   async patchBonusBuyWidget(
     accountId: number,
+    bonusBuyId: number,
     input: PatchBonusBuyWidgetInput,
   ): Promise<DbBonusBuyWidget> {
-    const existing = await this.ensureAccountBonusBuyWidget(accountId);
+    const existing = await this.ensureBonusBuyWidget(accountId, bonusBuyId);
+
+    const nextStyle = input.styleSettings
+      ? mergeBonusBuyWidgetStyleSettings(existing.styleSettings, input.styleSettings)
+      : existing.styleSettings;
 
     const next = {
       width:
@@ -1633,54 +1887,13 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         input.height !== undefined
           ? this.clampWidgetDimension(input.height)
           : existing.height,
-      backgroundColor:
-        input.backgroundColor !== undefined
-          ? this.assertWidgetHexColor(input.backgroundColor, 'background_color')
-          : existing.backgroundColor,
-      surfaceColor:
-        input.surfaceColor !== undefined
-          ? this.assertWidgetHexColor(input.surfaceColor, 'surface_color')
-          : existing.surfaceColor,
-      borderColor:
-        input.borderColor !== undefined
-          ? this.assertWidgetHexColor(input.borderColor, 'border_color')
-          : existing.borderColor,
-      accentColor:
-        input.accentColor !== undefined
-          ? this.assertWidgetHexColor(input.accentColor, 'accent_color')
-          : existing.accentColor,
-      positiveColor:
-        input.positiveColor !== undefined
-          ? this.assertWidgetHexColor(input.positiveColor, 'positive_color')
-          : existing.positiveColor,
-      negativeColor:
-        input.negativeColor !== undefined
-          ? this.assertWidgetHexColor(input.negativeColor, 'negative_color')
-          : existing.negativeColor,
-      liveColor:
-        input.liveColor !== undefined
-          ? this.assertWidgetHexColor(input.liveColor, 'live_color')
-          : existing.liveColor,
-      textMutedColor:
-        input.textMutedColor !== undefined
-          ? this.assertWidgetHexColor(input.textMutedColor, 'text_muted_color')
-          : existing.textMutedColor,
-      borderRadius:
-        input.borderRadius !== undefined
-          ? Math.min(100, Math.max(0, Math.trunc(input.borderRadius)))
-          : existing.borderRadius,
-      padding:
-        input.padding !== undefined
-          ? Math.min(100, Math.max(0, Math.trunc(input.padding)))
-          : existing.padding,
-      fontFamily:
-        input.fontFamily !== undefined
-          ? input.fontFamily.trim()
-          : existing.fontFamily,
+      styleSettings: nextStyle,
+      presetId:
+        input.presetId !== undefined ? input.presetId : existing.presetId,
     };
 
-    if (next.fontFamily.length === 0 || next.fontFamily.length > 200) {
-      throw new Error('INVALID_WIDGET_FONT_FAMILY');
+    if (input.styleSettings && input.presetId === undefined) {
+      next.presetId = null;
     }
 
     const result = await this.pool.query(
@@ -1689,36 +1902,22 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         SET
           width = $2,
           height = $3,
-          background_color = $4,
-          surface_color = $5,
-          border_color = $6,
-          accent_color = $7,
-          positive_color = $8,
-          negative_color = $9,
-          live_color = $10,
-          text_muted_color = $11,
-          border_radius = $12,
-          padding = $13,
-          font_family = $14,
+          style_settings = $4::jsonb,
+          preset_id = $5,
           updated_at = now()
-        WHERE w.account_id = $1
-        RETURNING ${this.widgetSelectColumns()}
+        FROM bonus_buy bb
+        WHERE w.bonus_buy_id = bb.id
+          AND bb.account_id = $1
+          AND w.bonus_buy_id = $6
+        RETURNING ${this.widgetSelectColumns('w')}
       `,
       [
         accountId,
         next.width,
         next.height,
-        next.backgroundColor,
-        next.surfaceColor,
-        next.borderColor,
-        next.accentColor,
-        next.positiveColor,
-        next.negativeColor,
-        next.liveColor,
-        next.textMutedColor,
-        next.borderRadius,
-        next.padding,
-        next.fontFamily,
+        JSON.stringify(next.styleSettings),
+        next.presetId,
+        bonusBuyId,
       ],
     );
 
@@ -1730,20 +1929,211 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     return this.mapBonusBuyWidgetRow(row);
   }
 
-  async getPublicBonusBuyWidgetView(bonusBuyId: number): Promise<{
-    record: DbPublicBonusBuyRecord;
-    slots: DbBonusBuySlot[];
-    settings: DbBonusBuyWidget;
-  } | null> {
+  async listBonusBuyWidgetPresets(
+    accountId: number,
+  ): Promise<DbBonusBuyWidgetStylePreset[]> {
+    const result = await this.pool.query<{
+      id: string | number;
+      account_id: string | number | null;
+      created_by_user_id: string | number | null;
+      source: string;
+      name: string;
+      style_settings: BonusBuyWidgetStyleSettings;
+      created_at: Date;
+      updated_at: Date;
+    }>(
+      `
+        SELECT
+          id,
+          account_id,
+          created_by_user_id,
+          source,
+          name,
+          style_settings,
+          created_at,
+          updated_at
+        FROM bonus_buy_widget_style_preset
+        WHERE source = 'system'
+           OR account_id = $1
+        ORDER BY
+          CASE WHEN source = 'system' THEN 0 ELSE 1 END,
+          created_at ASC,
+          id ASC
+      `,
+      [accountId],
+    );
+
+    return result.rows.map((row) => this.mapBonusBuyWidgetPresetRow(row));
+  }
+
+  async createBonusBuyWidgetPreset(
+    accountId: number,
+    createdByUserId: number,
+    input: CreateBonusBuyWidgetPresetInput,
+  ): Promise<DbBonusBuyWidgetStylePreset> {
+    const trimmedName = input.name.trim();
+    if (trimmedName.length === 0 || trimmedName.length > 100) {
+      throw new Error('INVALID_PRESET_NAME');
+    }
+
+    const styleSettings = parseBonusBuyWidgetStyleSettings(input.styleSettings);
+
+    const result = await this.pool.query<{
+      id: string | number;
+      account_id: string | number | null;
+      created_by_user_id: string | number | null;
+      source: string;
+      name: string;
+      style_settings: BonusBuyWidgetStyleSettings;
+      created_at: Date;
+      updated_at: Date;
+    }>(
+      `
+        INSERT INTO bonus_buy_widget_style_preset (
+          account_id,
+          created_by_user_id,
+          source,
+          name,
+          style_settings
+        )
+        VALUES ($1, $2, 'user', $3, $4::jsonb)
+        RETURNING
+          id,
+          account_id,
+          created_by_user_id,
+          source,
+          name,
+          style_settings,
+          created_at,
+          updated_at
+      `,
+      [accountId, createdByUserId, trimmedName, JSON.stringify(styleSettings)],
+    );
+
+    return this.mapBonusBuyWidgetPresetRow(result.rows[0]);
+  }
+
+  async patchBonusBuyWidgetPreset(
+    accountId: number,
+    presetId: number,
+    input: PatchBonusBuyWidgetPresetInput,
+  ): Promise<DbBonusBuyWidgetStylePreset> {
+    const existing = await this.pool.query<{
+      id: string | number;
+      account_id: string | number | null;
+      created_by_user_id: string | number | null;
+      source: string;
+      name: string;
+      style_settings: BonusBuyWidgetStyleSettings;
+      created_at: Date;
+      updated_at: Date;
+    }>(
+      `
+        SELECT
+          id,
+          account_id,
+          created_by_user_id,
+          source,
+          name,
+          style_settings,
+          created_at,
+          updated_at
+        FROM bonus_buy_widget_style_preset
+        WHERE id = $1
+          AND account_id = $2
+          AND source = 'user'
+      `,
+      [presetId, accountId],
+    );
+
+    const row = existing.rows[0];
+    if (!row) {
+      throw new Error('NOT_FOUND');
+    }
+
+    const current = this.mapBonusBuyWidgetPresetRow(row);
+    const nextName =
+      input.name !== undefined ? input.name.trim() : current.name;
+    if (nextName.length === 0 || nextName.length > 100) {
+      throw new Error('INVALID_PRESET_NAME');
+    }
+
+    const nextStyle = input.styleSettings
+      ? mergeBonusBuyWidgetStyleSettings(
+          current.styleSettings,
+          input.styleSettings,
+        )
+      : current.styleSettings;
+
+    const updated = await this.pool.query<{
+      id: string | number;
+      account_id: string | number | null;
+      created_by_user_id: string | number | null;
+      source: string;
+      name: string;
+      style_settings: BonusBuyWidgetStyleSettings;
+      created_at: Date;
+      updated_at: Date;
+    }>(
+      `
+        UPDATE bonus_buy_widget_style_preset
+        SET name = $3, style_settings = $4::jsonb, updated_at = now()
+        WHERE id = $1
+          AND account_id = $2
+          AND source = 'user'
+        RETURNING
+          id,
+          account_id,
+          created_by_user_id,
+          source,
+          name,
+          style_settings,
+          created_at,
+          updated_at
+      `,
+      [presetId, accountId, nextName, JSON.stringify(nextStyle)],
+    );
+
+    return this.mapBonusBuyWidgetPresetRow(updated.rows[0]);
+  }
+
+  async deleteBonusBuyWidgetPreset(
+    accountId: number,
+    presetId: number,
+  ): Promise<void> {
+    const result = await this.pool.query(
+      `
+        DELETE FROM bonus_buy_widget_style_preset
+        WHERE id = $1
+          AND account_id = $2
+          AND source = 'user'
+      `,
+      [presetId, accountId],
+    );
+
+    if (result.rowCount === 0) {
+      throw new Error('NOT_FOUND');
+    }
+  }
+
+  async getPublicBonusBuyWidgetView(bonusBuyId: number): Promise<
+    | {
+        record: DbPublicBonusBuyRecord;
+        slots: DbBonusBuySlot[];
+        settings: DbBonusBuyWidget;
+      }
+    | { inactive: true }
+    | null
+  > {
     const recordResult = await this.pool.query<{
       id: string | number;
       account_id: string | number;
-      title: string;
+      name: string;
       start_balance: string;
-      is_active: boolean;
+      status: string;
     }>(
       `
-        SELECT id, account_id, title, start_balance::text AS start_balance, is_active
+        SELECT id, account_id, name, start_balance::text AS start_balance, status
         FROM bonus_buy
         WHERE id = $1
       `,
@@ -1755,20 +2145,35 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       return null;
     }
 
-    const accountId = toInt(recordRow.account_id);
-    const settings = await this.ensureAccountBonusBuyWidget(accountId);
+    if (recordRow.status === 'archived') {
+      return { inactive: true };
+    }
+
+    const settingsResult = await this.pool.query(
+      `
+        SELECT ${this.widgetSelectColumns()}
+        FROM bonus_buy_widget w
+        WHERE w.bonus_buy_id = $1
+      `,
+      [bonusBuyId],
+    );
+
+    const settingsRow = settingsResult.rows[0];
+    if (!settingsRow) {
+      throw new Error('NOT_FOUND');
+    }
 
     const slotsResult = await this.pool.query<{
       id: string | number;
       bonus_buy_id: string | number;
       created_by_user_id: string | number;
       created_by_name: string;
-      slot_name: string;
-      nick_provider: string | null;
+      name: string;
+      provider_name: string | null;
       purchase_amount: string;
       win_amount: string | null;
       multiplier: string | null;
-      is_now_playing: boolean;
+      status: string;
       created_at: Date;
     }>(
       `
@@ -1777,17 +2182,17 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           s.bonus_buy_id,
           s.created_by_user_id,
           u.name AS created_by_name,
-          s.slot_name,
-          s.nick_provider,
+          s.name,
+          s.provider_name,
           s.purchase_amount::text AS purchase_amount,
           s.win_amount::text AS win_amount,
           s.multiplier::text AS multiplier,
-          s.is_now_playing,
+          s.status,
           s.created_at
         FROM bonus_buy_slot s
         JOIN users u ON u.id = s.created_by_user_id
         WHERE s.bonus_buy_id = $1
-          AND s.is_archived = false
+          AND s.status != 'archived'
         ORDER BY s.created_at ASC
       `,
       [bonusBuyId],
@@ -1796,12 +2201,12 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     return {
       record: {
         id: toInt(recordRow.id),
-        title: recordRow.title,
+        name: recordRow.name,
         startBalance: recordRow.start_balance,
-        isActive: recordRow.is_active,
+        status: recordRow.status as BonusBuyStatus,
       },
       slots: slotsResult.rows.map((row) => this.mapBonusBuySlotRow(row)),
-      settings,
+      settings: this.mapBonusBuyWidgetRow(settingsRow),
     };
   }
 
@@ -1813,13 +2218,13 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     const result = await this.pool.query(
       `
         UPDATE bonus_buy_slot s
-        SET is_archived = true, is_now_playing = false
+        SET status = 'archived'
         FROM bonus_buy bb
         WHERE s.bonus_buy_id = bb.id
           AND bb.account_id = $1
           AND s.bonus_buy_id = $2
           AND s.id = $3
-          AND s.is_archived = false
+          AND s.status != 'archived'
       `,
       [accountId, bonusBuyId, slotId],
     );
@@ -1828,7 +2233,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       throw new Error('NOT_FOUND');
     }
   }
-
   private mapPrizeSpinRow(row: {
     id: string | number;
     account_id: string | number;
@@ -2999,6 +3403,878 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     );
     const row = result.rows[0];
     return row ? toInt(row.account_id) : null;
+  }
+
+  private mapChatRollRow(row: {
+    id: string | number;
+    account_id: string | number;
+    title: string;
+    status: string;
+    keyword: string;
+    combine_mode: string;
+    exclude_winner_after_roll: boolean;
+    is_accepting_participants: boolean;
+    reply_in_chat: boolean;
+    role_settings: unknown;
+    created_at: Date;
+    created_by_user_id: string | number;
+    created_by_name: string;
+  }): DbChatRoll {
+    const roleSettings =
+      normalizeRoleSettings(row.role_settings) ?? DEFAULT_CHAT_ROLL_ROLE_SETTINGS;
+
+    return {
+      id: toInt(row.id),
+      accountId: toInt(row.account_id),
+      title: row.title,
+      status: row.status as ChatRollStatus,
+      keyword: row.keyword,
+      combineMode: row.combine_mode as 'highest' | 'sum',
+      excludeWinnerAfterRoll: row.exclude_winner_after_roll,
+      isAcceptingParticipants: row.is_accepting_participants,
+      replyInChat: row.reply_in_chat,
+      roleSettings,
+      createdAt: row.created_at,
+      createdByUserId: toInt(row.created_by_user_id),
+      createdByName: row.created_by_name,
+    };
+  }
+
+  private mapChatRollParticipantRow(row: {
+    id: string | number;
+    chat_roll_id: string | number;
+    provider: string | null;
+    provider_user_id: string | null;
+    display_name: string;
+    role_ids: string[];
+    is_archived: boolean;
+    joined_at: Date;
+  }): DbChatRollParticipant {
+    return {
+      id: toInt(row.id),
+      chatRollId: toInt(row.chat_roll_id),
+      provider: row.provider as DbChatRollParticipant['provider'],
+      providerUserId: row.provider_user_id,
+      displayName: row.display_name,
+      roleIds: row.role_ids ?? [],
+      isArchived: row.is_archived,
+      joinedAt: row.joined_at,
+    };
+  }
+
+  private mapChatRollWinRow(row: {
+    id: string | number;
+    chat_roll_id: string | number;
+    participant_id: string | number;
+    display_name: string;
+    coefficient_at_pick: string | number;
+    rolled_by_user_id: string | number;
+    rolled_by_name: string;
+    roll_index: string | number;
+    is_archived: boolean;
+    created_at: Date;
+  }): DbChatRollWin {
+    return {
+      id: toInt(row.id),
+      chatRollId: toInt(row.chat_roll_id),
+      participantId: toInt(row.participant_id),
+      displayName: row.display_name,
+      coefficientAtPick: String(row.coefficient_at_pick),
+      rolledByUserId: toInt(row.rolled_by_user_id),
+      rolledByName: row.rolled_by_name,
+      rollIndex: toInt(row.roll_index),
+      isArchived: row.is_archived,
+      createdAt: row.created_at,
+    };
+  }
+
+  private mapChatRollWidgetRow(row: {
+    id: string | number;
+    account_id: string | number;
+    width: string | number;
+    height: string | number;
+    created_at: Date;
+    updated_at: Date;
+  }): DbChatRollWidget {
+    return {
+      id: toInt(row.id),
+      accountId: toInt(row.account_id),
+      width: toInt(row.width),
+      height: toInt(row.height),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  private async requireMutableChatRoll(
+    accountId: number,
+    chatRollId: number,
+  ): Promise<DbChatRoll> {
+    const session = await this.getChatRollById(accountId, chatRollId);
+    if (!session) {
+      throw new Error('NOT_FOUND');
+    }
+    if (session.status === 'archived') {
+      throw new Error('NOT_FOUND');
+    }
+    return session;
+  }
+
+  async getChatRollById(
+    accountId: number,
+    chatRollId: number,
+  ): Promise<DbChatRoll | null> {
+    const result = await this.pool.query(
+      `
+        SELECT
+          cr.id,
+          cr.account_id,
+          cr.title,
+          cr.status,
+          cr.keyword,
+          cr.combine_mode,
+          cr.exclude_winner_after_roll,
+          cr.is_accepting_participants,
+          cr.reply_in_chat,
+          cr.role_settings,
+          cr.created_at,
+          cr.created_by_user_id,
+          u.name AS created_by_name
+        FROM chat_roll cr
+        JOIN users u ON u.id = cr.created_by_user_id
+        WHERE cr.account_id = $1
+          AND cr.id = $2
+      `,
+      [accountId, chatRollId],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      return null;
+    }
+
+    return this.mapChatRollRow(row);
+  }
+
+  async listChatRolls(
+    accountId: number,
+    archived: ChatRollArchivedFilter = 'false',
+    page = 1,
+    limit = 10,
+  ): Promise<{
+    records: DbChatRoll[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const archivedClause =
+      archived === 'all'
+        ? ''
+        : archived === 'true'
+          ? "AND cr.status = 'archived'"
+          : "AND cr.status IN ('live', 'off_air')";
+    const offset = (page - 1) * limit;
+
+    const countResult = await this.pool.query<{ count: string | number }>(
+      `
+        SELECT COUNT(*)::text AS count
+        FROM chat_roll cr
+        WHERE cr.account_id = $1
+          ${archivedClause}
+      `,
+      [accountId],
+    );
+
+    const total = toInt(countResult.rows[0]?.count ?? 0);
+
+    const result = await this.pool.query(
+      `
+        SELECT
+          cr.id,
+          cr.account_id,
+          cr.title,
+          cr.status,
+          cr.keyword,
+          cr.combine_mode,
+          cr.exclude_winner_after_roll,
+          cr.is_accepting_participants,
+          cr.reply_in_chat,
+          cr.role_settings,
+          cr.created_at,
+          cr.created_by_user_id,
+          u.name AS created_by_name
+        FROM chat_roll cr
+        JOIN users u ON u.id = cr.created_by_user_id
+        WHERE cr.account_id = $1
+          ${archivedClause}
+        ORDER BY cr.created_at DESC
+        LIMIT $2 OFFSET $3
+      `,
+      [accountId, limit, offset],
+    );
+
+    return {
+      records: result.rows.map((row) => this.mapChatRollRow(row)),
+      total,
+      page,
+      limit,
+    };
+  }
+
+  async createChatRoll(
+    accountId: number,
+    createdByUserId: number,
+    title: string,
+  ): Promise<DbChatRoll> {
+    const trimmedTitle = title.trim();
+    if (trimmedTitle.length === 0 || trimmedTitle.length > 200) {
+      throw new Error('INVALID_TITLE');
+    }
+
+    const previousResult = await this.pool.query<{
+      keyword: string;
+      combine_mode: string;
+      exclude_winner_after_roll: boolean;
+      reply_in_chat: boolean;
+      role_settings: unknown;
+    }>(
+      `
+        SELECT keyword, combine_mode, exclude_winner_after_roll, reply_in_chat, role_settings
+        FROM chat_roll
+        WHERE account_id = $1
+          AND status != 'archived'
+        ORDER BY created_at DESC
+        LIMIT 1
+      `,
+      [accountId],
+    );
+
+    const previous = previousResult.rows[0];
+    const keyword = previous?.keyword ?? '!roll';
+    const combineMode = previous?.combine_mode ?? 'highest';
+    const excludeWinnerAfterRoll = previous?.exclude_winner_after_roll ?? true;
+    const replyInChat = previous?.reply_in_chat ?? false;
+    const roleSettings =
+      normalizeRoleSettings(previous?.role_settings) ??
+      DEFAULT_CHAT_ROLL_ROLE_SETTINGS;
+
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const result = await client.query(
+        `
+          INSERT INTO chat_roll (
+            account_id,
+            created_by_user_id,
+            title,
+            keyword,
+            combine_mode,
+            exclude_winner_after_roll,
+            reply_in_chat,
+            role_settings
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          RETURNING
+            id,
+            account_id,
+            title,
+            status,
+            keyword,
+            combine_mode,
+            exclude_winner_after_roll,
+            is_accepting_participants,
+            reply_in_chat,
+            role_settings,
+            created_at,
+            created_by_user_id,
+            (SELECT name FROM users WHERE id = $2) AS created_by_name
+        `,
+        [
+          accountId,
+          createdByUserId,
+          trimmedTitle,
+          keyword,
+          combineMode,
+          excludeWinnerAfterRoll,
+          replyInChat,
+          JSON.stringify(roleSettings),
+        ],
+      );
+
+      await client.query(
+        CHAT_ROLL_WIDGET_INSERT_SQL,
+        chatRollWidgetInsertParams(accountId),
+      );
+
+      await client.query('COMMIT');
+
+      return this.mapChatRollRow(result.rows[0]);
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async goLiveChatRoll(
+    accountId: number,
+    chatRollId: number,
+  ): Promise<DbChatRoll> {
+    await this.requireMutableChatRoll(accountId, chatRollId);
+
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      await client.query(
+        `
+          UPDATE chat_roll
+          SET status = 'off_air'
+          WHERE account_id = $1
+            AND status = 'live'
+        `,
+        [accountId],
+      );
+
+      const result = await client.query(
+        `
+          UPDATE chat_roll cr
+          SET status = 'live'
+          FROM users u
+          WHERE cr.created_by_user_id = u.id
+            AND cr.account_id = $1
+            AND cr.id = $2
+            AND cr.status != 'archived'
+          RETURNING
+            cr.id,
+            cr.account_id,
+            cr.title,
+            cr.status,
+            cr.keyword,
+            cr.combine_mode,
+            cr.exclude_winner_after_roll,
+            cr.is_accepting_participants,
+            cr.reply_in_chat,
+            cr.role_settings,
+            cr.created_at,
+            cr.created_by_user_id,
+            u.name AS created_by_name
+        `,
+        [accountId, chatRollId],
+      );
+
+      await client.query('COMMIT');
+
+      const row = result.rows[0];
+      if (!row) {
+        throw new Error('NOT_FOUND');
+      }
+
+      return this.mapChatRollRow(row);
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async deactivateChatRoll(
+    accountId: number,
+    chatRollId: number,
+  ): Promise<DbChatRoll> {
+    await this.requireMutableChatRoll(accountId, chatRollId);
+
+    const result = await this.pool.query(
+      `
+        UPDATE chat_roll cr
+        SET status = 'off_air'
+        FROM users u
+        WHERE cr.created_by_user_id = u.id
+          AND cr.account_id = $1
+          AND cr.id = $2
+          AND cr.status != 'archived'
+        RETURNING
+          cr.id,
+          cr.account_id,
+          cr.title,
+          cr.status,
+          cr.keyword,
+          cr.combine_mode,
+          cr.exclude_winner_after_roll,
+          cr.is_accepting_participants,
+          cr.reply_in_chat,
+          cr.role_settings,
+          cr.created_at,
+          cr.created_by_user_id,
+          u.name AS created_by_name
+      `,
+      [accountId, chatRollId],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new Error('NOT_FOUND');
+    }
+
+    return this.mapChatRollRow(row);
+  }
+
+  async archiveChatRoll(accountId: number, chatRollId: number): Promise<void> {
+    const result = await this.pool.query(
+      `
+        UPDATE chat_roll
+        SET status = 'archived'
+        WHERE account_id = $1
+          AND id = $2
+      `,
+      [accountId, chatRollId],
+    );
+
+    if (result.rowCount === 0) {
+      throw new Error('NOT_FOUND');
+    }
+  }
+
+  async patchChatRoll(
+    accountId: number,
+    chatRollId: number,
+    input: PatchChatRollInput,
+  ): Promise<DbChatRoll> {
+    const existing = await this.requireMutableChatRoll(accountId, chatRollId);
+
+    const nextTitle =
+      input.title !== undefined ? input.title.trim() : existing.title;
+    if (nextTitle.length === 0 || nextTitle.length > 200) {
+      throw new Error('INVALID_TITLE');
+    }
+
+    const nextKeyword =
+      input.keyword !== undefined
+        ? normalizeKeyword(input.keyword)
+        : existing.keyword;
+    if (nextKeyword === null) {
+      throw new Error('INVALID_KEYWORD');
+    }
+
+    const nextCombineMode = input.combineMode ?? existing.combineMode;
+    if (nextCombineMode !== 'highest' && nextCombineMode !== 'sum') {
+      throw new Error('INVALID_COMBINE_MODE');
+    }
+
+    const nextRoleSettings =
+      input.roleSettings !== undefined
+        ? normalizeRoleSettings(input.roleSettings)
+        : existing.roleSettings;
+    if (nextRoleSettings === null) {
+      throw new Error('INVALID_ROLE_SETTINGS');
+    }
+
+    const result = await this.pool.query(
+      `
+        UPDATE chat_roll cr
+        SET
+          title = $3,
+          keyword = $4,
+          combine_mode = $5,
+          exclude_winner_after_roll = $6,
+          is_accepting_participants = $7,
+          reply_in_chat = $8,
+          role_settings = $9
+        FROM users u
+        WHERE cr.created_by_user_id = u.id
+          AND cr.account_id = $1
+          AND cr.id = $2
+          AND cr.status != 'archived'
+        RETURNING
+          cr.id,
+          cr.account_id,
+          cr.title,
+          cr.status,
+          cr.keyword,
+          cr.combine_mode,
+          cr.exclude_winner_after_roll,
+          cr.is_accepting_participants,
+          cr.reply_in_chat,
+          cr.role_settings,
+          cr.created_at,
+          cr.created_by_user_id,
+          u.name AS created_by_name
+      `,
+      [
+        accountId,
+        chatRollId,
+        nextTitle,
+        nextKeyword,
+        nextCombineMode,
+        input.excludeWinnerAfterRoll ?? existing.excludeWinnerAfterRoll,
+        input.isAcceptingParticipants ?? existing.isAcceptingParticipants,
+        input.replyInChat ?? existing.replyInChat,
+        JSON.stringify(nextRoleSettings),
+      ],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new Error('NOT_FOUND');
+    }
+
+    return this.mapChatRollRow(row);
+  }
+
+  async listChatRollParticipants(
+    accountId: number,
+    chatRollId: number,
+  ): Promise<DbChatRollParticipant[]> {
+    const session = await this.getChatRollById(accountId, chatRollId);
+    if (!session) {
+      throw new Error('NOT_FOUND');
+    }
+
+    const result = await this.pool.query(
+      `
+        SELECT
+          p.id,
+          p.chat_roll_id,
+          p.provider,
+          p.provider_user_id,
+          p.display_name,
+          p.role_ids,
+          p.is_archived,
+          p.joined_at
+        FROM chat_roll_participant p
+        JOIN chat_roll cr ON cr.id = p.chat_roll_id
+        WHERE cr.account_id = $1
+          AND p.chat_roll_id = $2
+          AND p.is_archived = false
+        ORDER BY p.joined_at ASC, p.id ASC
+      `,
+      [accountId, chatRollId],
+    );
+
+    return result.rows.map((row) => this.mapChatRollParticipantRow(row));
+  }
+
+  async archiveChatRollParticipant(
+    accountId: number,
+    chatRollId: number,
+    participantId: number,
+  ): Promise<void> {
+    await this.requireMutableChatRoll(accountId, chatRollId);
+
+    const result = await this.pool.query(
+      `
+        UPDATE chat_roll_participant p
+        SET is_archived = true
+        FROM chat_roll cr
+        WHERE cr.id = p.chat_roll_id
+          AND cr.account_id = $1
+          AND p.chat_roll_id = $2
+          AND p.id = $3
+          AND p.is_archived = false
+      `,
+      [accountId, chatRollId, participantId],
+    );
+
+    if (result.rowCount === 0) {
+      throw new Error('NOT_FOUND');
+    }
+  }
+
+  async archiveAllChatRollParticipants(
+    accountId: number,
+    chatRollId: number,
+  ): Promise<void> {
+    await this.requireMutableChatRoll(accountId, chatRollId);
+
+    await this.pool.query(
+      `
+        UPDATE chat_roll_participant p
+        SET is_archived = true
+        FROM chat_roll cr
+        WHERE cr.id = p.chat_roll_id
+          AND cr.account_id = $1
+          AND p.chat_roll_id = $2
+          AND p.is_archived = false
+      `,
+      [accountId, chatRollId],
+    );
+  }
+
+  async listChatRollWins(
+    accountId: number,
+    chatRollId: number,
+  ): Promise<DbChatRollWin[]> {
+    const session = await this.getChatRollById(accountId, chatRollId);
+    if (!session) {
+      throw new Error('NOT_FOUND');
+    }
+
+    const result = await this.pool.query(
+      `
+        SELECT
+          w.id,
+          w.chat_roll_id,
+          w.participant_id,
+          w.display_name,
+          w.coefficient_at_pick,
+          w.rolled_by_user_id,
+          u.name AS rolled_by_name,
+          w.roll_index,
+          w.is_archived,
+          w.created_at
+        FROM chat_roll_win w
+        JOIN users u ON u.id = w.rolled_by_user_id
+        WHERE w.chat_roll_id = $1
+          AND w.is_archived = false
+        ORDER BY w.created_at DESC, w.id DESC
+      `,
+      [chatRollId],
+    );
+
+    return result.rows.map((row) => this.mapChatRollWinRow(row));
+  }
+
+  async archiveChatRollWin(
+    accountId: number,
+    chatRollId: number,
+    winId: number,
+  ): Promise<void> {
+    await this.requireMutableChatRoll(accountId, chatRollId);
+
+    const result = await this.pool.query(
+      `
+        UPDATE chat_roll_win w
+        SET is_archived = true
+        FROM chat_roll cr
+        WHERE cr.id = w.chat_roll_id
+          AND cr.account_id = $1
+          AND w.chat_roll_id = $2
+          AND w.id = $3
+          AND w.is_archived = false
+      `,
+      [accountId, chatRollId, winId],
+    );
+
+    if (result.rowCount === 0) {
+      throw new Error('NOT_FOUND');
+    }
+  }
+
+  async archiveAllChatRollWins(
+    accountId: number,
+    chatRollId: number,
+  ): Promise<void> {
+    await this.requireMutableChatRoll(accountId, chatRollId);
+
+    await this.pool.query(
+      `
+        UPDATE chat_roll_win w
+        SET is_archived = true
+        FROM chat_roll cr
+        WHERE cr.id = w.chat_roll_id
+          AND cr.account_id = $1
+          AND w.chat_roll_id = $2
+          AND w.is_archived = false
+      `,
+      [accountId, chatRollId],
+    );
+  }
+
+  async rollChatRoll(
+    accountId: number,
+    chatRollId: number,
+    rolledByUserId: number,
+  ): Promise<DbChatRollWin> {
+    const session = await this.requireMutableChatRoll(accountId, chatRollId);
+    const participants = await this.listChatRollParticipants(
+      accountId,
+      chatRollId,
+    );
+
+    const winner = pickWeightedParticipant(
+      participants.map((participant) => ({
+        id: participant.id,
+        roleIds: participant.roleIds,
+      })),
+      session.roleSettings,
+      session.combineMode,
+    );
+
+    if (!winner) {
+      throw new Error('NO_ELIGIBLE_PARTICIPANTS');
+    }
+
+    const pickedParticipant = participants.find(
+      (participant) => participant.id === winner.id,
+    );
+    if (!pickedParticipant) {
+      throw new Error('NO_ELIGIBLE_PARTICIPANTS');
+    }
+
+    const coefficient = computeParticipantCoefficient(
+      pickedParticipant.roleIds,
+      session.roleSettings,
+      session.combineMode,
+    );
+
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const rollIndexResult = await client.query<{ next_index: string | number }>(
+        `
+          SELECT COALESCE(MAX(roll_index), 0) + 1 AS next_index
+          FROM chat_roll_win
+          WHERE chat_roll_id = $1
+        `,
+        [chatRollId],
+      );
+      const rollIndex = toInt(rollIndexResult.rows[0]?.next_index ?? 1);
+
+      const insertResult = await client.query(
+        `
+          INSERT INTO chat_roll_win (
+            chat_roll_id,
+            participant_id,
+            display_name,
+            coefficient_at_pick,
+            rolled_by_user_id,
+            roll_index
+          )
+          VALUES ($1, $2, $3, $4, $5, $6)
+          RETURNING
+            id,
+            chat_roll_id,
+            participant_id,
+            display_name,
+            coefficient_at_pick,
+            rolled_by_user_id,
+            roll_index,
+            is_archived,
+            created_at
+        `,
+        [
+          chatRollId,
+          pickedParticipant.id,
+          pickedParticipant.displayName,
+          coefficient.toFixed(1),
+          rolledByUserId,
+          rollIndex,
+        ],
+      );
+
+      if (session.excludeWinnerAfterRoll) {
+        await client.query(
+          `
+            UPDATE chat_roll_participant
+            SET is_archived = true
+            WHERE id = $1
+              AND chat_roll_id = $2
+          `,
+          [pickedParticipant.id, chatRollId],
+        );
+      }
+
+      await client.query('COMMIT');
+
+      const winRow = insertResult.rows[0];
+      const rolledByResult = await this.pool.query<{ name: string }>(
+        `SELECT name FROM users WHERE id = $1`,
+        [rolledByUserId],
+      );
+
+      return this.mapChatRollWinRow({
+        ...winRow,
+        rolled_by_name: rolledByResult.rows[0]?.name ?? '',
+      });
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  private async ensureAccountChatRollWidget(
+    accountId: number,
+  ): Promise<DbChatRollWidget> {
+    await this.pool.query(
+      CHAT_ROLL_WIDGET_INSERT_SQL,
+      chatRollWidgetInsertParams(accountId),
+    );
+
+    const result = await this.pool.query(
+      `
+        SELECT
+          w.id,
+          w.account_id,
+          w.width,
+          w.height,
+          w.created_at,
+          w.updated_at
+        FROM chat_roll_widget w
+        WHERE w.account_id = $1
+      `,
+      [accountId],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new Error('NOT_FOUND');
+    }
+
+    return this.mapChatRollWidgetRow(row);
+  }
+
+  async getChatRollWidget(accountId: number): Promise<DbChatRollWidget> {
+    return this.ensureAccountChatRollWidget(accountId);
+  }
+
+  async patchChatRollWidget(
+    accountId: number,
+    input: PatchChatRollWidgetInput,
+  ): Promise<DbChatRollWidget> {
+    const existing = await this.ensureAccountChatRollWidget(accountId);
+
+    const next = {
+      width:
+        input.width !== undefined
+          ? this.clampWidgetDimension(input.width)
+          : existing.width,
+      height:
+        input.height !== undefined
+          ? this.clampWidgetDimension(input.height)
+          : existing.height,
+    };
+
+    const result = await this.pool.query(
+      `
+        UPDATE chat_roll_widget w
+        SET
+          width = $2,
+          height = $3,
+          updated_at = now()
+        WHERE w.account_id = $1
+        RETURNING
+          w.id,
+          w.account_id,
+          w.width,
+          w.height,
+          w.created_at,
+          w.updated_at
+      `,
+      [accountId, next.width, next.height],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new Error('NOT_FOUND');
+    }
+
+    return this.mapChatRollWidgetRow(row);
   }
 
   async getLiveChatRollForIntake(

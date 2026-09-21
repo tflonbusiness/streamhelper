@@ -30,12 +30,11 @@ type MockSlot = {
   createdByUserId: number;
   createdByName: string;
   slotName: string;
-  nickProvider: string | null;
+  providerName: string | null;
   purchaseAmount: string;
   winAmount: string | null;
   multiplier: string | null;
-  isNowPlaying: boolean;
-  isArchived: boolean;
+  status: 'pending' | 'playing' | 'archived';
   createdAt: Date;
 };
 
@@ -45,7 +44,7 @@ describe('AccountsController (e2e)', () => {
   let members = [...MEMBERS];
   let slots: MockSlot[] = [];
   let nextSlotId = 1;
-  let bonusBuyTitle = 'Friday stream';
+  let bonusBuyName = 'Friday stream';
   let bonusBuyStartBalance = '50.00';
   let widgetSettings = {
     id: 1,
@@ -73,7 +72,7 @@ describe('AccountsController (e2e)', () => {
     members = [...MEMBERS];
     slots = [];
     nextSlotId = 1;
-    bonusBuyTitle = 'Friday stream';
+    bonusBuyName = 'Friday stream';
     bonusBuyStartBalance = '50.00';
     widgetSettings = {
       id: 1,
@@ -174,7 +173,7 @@ describe('AccountsController (e2e)', () => {
         ) => ({
           id: bonusBuyId,
           accountId,
-          title: bonusBuyTitle,
+          title: bonusBuyName,
           startBalance: bonusBuyStartBalance,
           isActive: true,
           createdAt: new Date('2026-09-14T12:00:00.000Z'),
@@ -187,7 +186,7 @@ describe('AccountsController (e2e)', () => {
           updates: { title?: string; startBalance?: string },
         ) => {
           if (updates.title !== undefined) {
-            bonusBuyTitle = updates.title;
+            bonusBuyName = updates.title;
           }
           if (updates.startBalance !== undefined) {
             bonusBuyStartBalance = updates.startBalance;
@@ -195,7 +194,7 @@ describe('AccountsController (e2e)', () => {
           return {
             id: bonusBuyId,
             accountId,
-            title: bonusBuyTitle,
+            title: bonusBuyName,
             startBalance: bonusBuyStartBalance,
             isActive: true,
             createdAt: new Date('2026-09-14T12:00:00.000Z'),

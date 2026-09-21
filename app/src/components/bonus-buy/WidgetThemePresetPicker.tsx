@@ -1,12 +1,11 @@
 import { Box, Chip, Stack, Typography } from '@mui/material'
-import {
-  BONUS_BUY_WIDGET_PRESETS,
-  type BonusBuyWidgetPresetId,
-} from '@/lib/bonus-buy-widget-presets'
+import type { BonusBuyWidgetStylePreset } from '@/api/bonus-buy'
+import { getPresetPreviewDots } from '@/lib/bonus-buy-widget-presets'
 
 type WidgetThemePresetPickerProps = {
-  activePresetId: BonusBuyWidgetPresetId | null
-  onSelectPreset: (presetId: BonusBuyWidgetPresetId) => void
+  presets: BonusBuyWidgetStylePreset[]
+  activePresetId: number | null
+  onSelectPreset: (presetId: number) => void
 }
 
 function PreviewDots({ colors }: { colors: [string, string, string] }) {
@@ -31,6 +30,7 @@ function PreviewDots({ colors }: { colors: [string, string, string] }) {
 }
 
 export function WidgetThemePresetPicker({
+  presets,
   activePresetId,
   onSelectPreset,
 }: WidgetThemePresetPickerProps) {
@@ -58,7 +58,7 @@ export function WidgetThemePresetPicker({
           gap: 1,
         }}
       >
-        {BONUS_BUY_WIDGET_PRESETS.map((preset) => {
+        {presets.map((preset) => {
           const selected = activePresetId === preset.id
           return (
             <Chip
@@ -66,7 +66,7 @@ export function WidgetThemePresetPicker({
               label={
                 <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                   <span>{preset.name}</span>
-                  <PreviewDots colors={preset.previewDots} />
+                  <PreviewDots colors={getPresetPreviewDots(preset.styleSettings)} />
                 </Stack>
               }
               onClick={() => onSelectPreset(preset.id)}
