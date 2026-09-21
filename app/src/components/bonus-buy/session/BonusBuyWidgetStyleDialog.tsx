@@ -192,6 +192,7 @@ export const BonusBuyWidgetStyleDialog = (
                   presets={widgetPresets}
                   activePresetId={activeWidgetPresetId}
                   onSelectPreset={applyWidgetPreset}
+                  compact
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
