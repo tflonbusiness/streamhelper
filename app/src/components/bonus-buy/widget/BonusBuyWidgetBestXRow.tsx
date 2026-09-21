@@ -33,7 +33,6 @@ const StyledCrownIcon = styled(
 
 type BonusBuyWidgetBestXRowProps = {
   slot: BonusBuySlot
-  slotIndex: number
   theme: BonusBuyWidgetTheme
 }
 
@@ -43,12 +42,10 @@ type BestXValueProps = {
 }
 
 function BestXValue({ slot, theme }: BestXValueProps) {
-  const hasAmount = slot.winAmount !== null
-  const hasMultiplier = slot.multiplier !== null
   const positive = isWinPositive(slot)
   const multiplierColor = positive ? theme.positiveColor : theme.negativeColor
 
-  if (hasAmount && hasMultiplier) {
+  if (slot.winAmount !== null && slot.multiplier !== null) {
     return (
       <StyledBestXValueViewport>
         <StyledBestXValueTrack>
@@ -63,7 +60,7 @@ function BestXValue({ slot, theme }: BestXValueProps) {
     )
   }
 
-  if (hasAmount) {
+  if (slot.winAmount !== null) {
     return <StyledBestWinAmount>{formatUsd(slot.winAmount)}</StyledBestWinAmount>
   }
 
@@ -76,14 +73,13 @@ function BestXValue({ slot, theme }: BestXValueProps) {
 
 export function BonusBuyWidgetBestXRow({
   slot,
-  slotIndex,
   theme,
 }: BonusBuyWidgetBestXRowProps) {
   return (
     <StyledWidgetCell widgetTheme={theme} cellHeight={68}>
       <StyledCrownIcon textColor={theme.accentColor} aria-hidden />
       <StyledBestWinInfo>
-        <StyledBestWinName>{slotIndex + 1}. {slot.name}</StyledBestWinName>
+        <StyledBestWinName>{slot.name}</StyledBestWinName>
         <StyledBestWinProvider textColor={theme.textMutedColor}>
           {slot.providerName ?? '—'}
         </StyledBestWinProvider>

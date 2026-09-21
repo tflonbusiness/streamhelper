@@ -96,18 +96,20 @@ export function BonusBuyStreamWidgetPage() {
   return (
     <Box
       sx={{
-        minHeight: '100svh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        width: theme.width,
+        height: theme.height,
+        minWidth: theme.width,
+        minHeight: theme.height,
+        maxWidth: theme.width,
+        maxHeight: theme.height,
         bgcolor: 'transparent',
-        p: 2,
+        overflow: 'hidden',
         fontFamily: theme.fontFamily,
+        flexShrink: 0,
+        boxSizing: 'border-box',
       }}
     >
-      <Box sx={{ maxWidth: '100%' }}>
-        <BonusBuyWidgetCard {...cardProps} />
-      </Box>
+      <BonusBuyWidgetCard {...cardProps} />
     </Box>
   )
 }

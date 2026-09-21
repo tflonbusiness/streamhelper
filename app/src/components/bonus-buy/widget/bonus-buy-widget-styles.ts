@@ -36,6 +36,10 @@ export const StyledWidgetCard = styled(Box, widgetThemeProps)<WidgetThemeProp>(
   ({ widgetTheme }) => ({
     width: widgetTheme.width,
     height: widgetTheme.height,
+    minWidth: widgetTheme.width,
+    minHeight: widgetTheme.height,
+    maxWidth: widgetTheme.width,
+    maxHeight: widgetTheme.height,
     backgroundColor: widgetTheme.backgroundColor,
     border: `1px solid ${widgetTheme.borderColor}`,
     borderRadius: `${widgetTheme.borderRadius}px`,
@@ -46,6 +50,7 @@ export const StyledWidgetCard = styled(Box, widgetThemeProps)<WidgetThemeProp>(
     overflow: 'hidden',
     fontFamily: widgetTheme.fontFamily,
     flexShrink: 0,
+    boxSizing: 'border-box',
   }),
 )
 

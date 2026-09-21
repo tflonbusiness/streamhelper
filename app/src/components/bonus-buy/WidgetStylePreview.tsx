@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import type { BonusBuyRecord, BonusBuySlot, BonusBuyWidgetSettings } from '@/api/bonus-buy'
 import { BonusBuyWidgetCard } from '@/components/bonus-buy/widget/BonusBuyWidgetCard'
 import { deriveBonusBuyWidgetCardProps } from '@/lib/bonus-buy-widget-presentation'
@@ -20,9 +20,6 @@ export function WidgetStylePreview({
   dimensionLabel,
   validationError,
 }: WidgetStylePreviewProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [scale, setScale] = useState(1)
-
   const cardProps = useMemo(() => {
     if (!record || !previewTheme) {
       return null
@@ -34,32 +31,6 @@ export function WidgetStylePreview({
       previewTheme,
     )
   }, [record, slots, previewTheme])
-
-  useLayoutEffect(() => {
-    if (!previewTheme || !containerRef.current) {
-      return
-    }
-
-    const container = containerRef.current
-
-    function updateScale() {
-      const availableWidth = container.clientWidth - 16
-      const availableHeight = container.clientHeight - 16
-      const nextScale = Math.min(
-        availableWidth / previewTheme!.width,
-        availableHeight / previewTheme!.height,
-        1,
-      )
-      setScale(Number.isFinite(nextScale) && nextScale > 0 ? nextScale : 1)
-    }
-
-    updateScale()
-
-    const observer = new ResizeObserver(updateScale)
-    observer.observe(container)
-
-    return () => observer.disconnect()
-  }, [previewTheme])
 
   if (!record || !previewTheme || !cardProps) {
     return (
@@ -89,7 +60,6 @@ export function WidgetStylePreview({
         Live preview · {label}
       </Typography>
       <Box
-        ref={containerRef}
         sx={{
           position: 'relative',
           flex: 1,
@@ -99,19 +69,16 @@ export function WidgetStylePreview({
           borderRadius: 2,
           border: '1px solid',
           borderColor: 'divider',
-          overflow: 'hidden',
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'center',
+          overflow: 'auto',
           p: 1,
         }}
       >
         <Box
           sx={{
-            transform: `scale(${scale})`,
-            transformOrigin: 'top center',
             width: previewTheme.width,
             height: previewTheme.height,
+            flexShrink: 0,
+            mx: 'auto',
           }}
         >
           <BonusBuyWidgetCard {...cardProps} />

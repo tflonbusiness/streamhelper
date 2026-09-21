@@ -31,7 +31,6 @@ export function BonusBuyWidgetCard({
       {bestMultiplierSlot && bestMultiplierIndex >= 0 ? (
         <BonusBuyWidgetBestXRow
           slot={bestMultiplierSlot}
-          slotIndex={bestMultiplierIndex}
           theme={theme}
         />
       ) : null}
