@@ -62,3 +62,29 @@ export function formatMultiplierDisplay(multiplier: string | null): string {
   const value = new Decimal(multiplier)
   return `${value.toFixed(2)}x`
 }
+
+export type BonusBuyMultiplierSlotInput = {
+  id: number
+  multiplier: string | null
+}
+
+export function findHighestMultiplierSlot<T extends BonusBuyMultiplierSlotInput>(
+  slots: T[],
+): T | null {
+  let best: T | null = null
+  let bestValue: Decimal | null = null
+
+  for (const slot of slots) {
+    if (slot.multiplier === null) {
+      continue
+    }
+
+    const value = new Decimal(slot.multiplier)
+    if (bestValue === null || value.gt(bestValue)) {
+      bestValue = value
+      best = slot
+    }
+  }
+
+  return best
+}

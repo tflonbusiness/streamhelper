@@ -1,5 +1,5 @@
 import { isBonusBuySlotPlaying, type BonusBuySlot, type BonusBuyWidgetSettings } from '@/api/bonus-buy'
-import { computeSessionStats } from '@/lib/bonus-buy-stats'
+import { computeSessionStats, findHighestMultiplierSlot } from '@/lib/bonus-buy-stats'
 
 export type BonusBuyWidgetTheme = Pick<
   BonusBuyWidgetSettings,
@@ -31,6 +31,8 @@ export type BonusBuyWidgetCardProps = {
   playingSlot: BonusBuySlot | null
   playingIndex: number
   listSlots: BonusBuySlot[]
+  bestMultiplierSlot: BonusBuySlot | null
+  bestMultiplierIndex: number
   averageXColor: string
   averageXSentiment: AverageXSentiment
 }
@@ -79,6 +81,10 @@ export function deriveBonusBuyWidgetCardProps(
     ? activeSlots.findIndex((slot) => slot.id === playing.id)
     : -1
   const listSlots = activeSlots.filter((slot) => !isBonusBuySlotPlaying(slot))
+  const bestMultiplierSlot = findHighestMultiplierSlot(activeSlots)
+  const bestMultiplierIndex = bestMultiplierSlot
+    ? activeSlots.findIndex((slot) => slot.id === bestMultiplierSlot.id)
+    : -1
 
   const stats = computeSessionStats(record.startBalance, activeSlots)
   const averageXValue = parseAverageX(stats.averageX)
@@ -95,6 +101,8 @@ export function deriveBonusBuyWidgetCardProps(
     playingSlot: playing,
     playingIndex: playingIdx,
     listSlots,
+    bestMultiplierSlot,
+    bestMultiplierIndex,
     averageXColor,
     averageXSentiment,
   }

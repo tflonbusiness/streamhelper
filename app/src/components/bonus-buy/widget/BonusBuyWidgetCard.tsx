@@ -1,5 +1,6 @@
 import type { BonusBuyWidgetCardProps } from '@/lib/bonus-buy-widget-presentation'
 import { StyledWidgetCard } from '@/components/bonus-buy/widget/bonus-buy-widget-styles'
+import { BonusBuyWidgetBestXRow } from '@/components/bonus-buy/widget/BonusBuyWidgetBestXRow'
 import { BonusBuyWidgetHeader } from '@/components/bonus-buy/widget/BonusBuyWidgetHeader'
 import { BonusBuyWidgetPlayingSections } from '@/components/bonus-buy/widget/BonusBuyWidgetPlayingSections'
 import { BonusBuyWidgetSlotList } from '@/components/bonus-buy/widget/BonusBuyWidgetSlotList'
@@ -13,6 +14,8 @@ export function BonusBuyWidgetCard({
   playingSlot,
   playingIndex,
   listSlots,
+  bestMultiplierSlot,
+  bestMultiplierIndex,
   averageXColor,
   averageXSentiment,
 }: BonusBuyWidgetCardProps) {
@@ -25,6 +28,13 @@ export function BonusBuyWidgetCard({
         averageXColor={averageXColor}
         averageXSentiment={averageXSentiment}
       />
+      {bestMultiplierSlot && bestMultiplierIndex >= 0 ? (
+        <BonusBuyWidgetBestXRow
+          slot={bestMultiplierSlot}
+          slotIndex={bestMultiplierIndex}
+          theme={theme}
+        />
+      ) : null}
       {playingSlot ? (
         <BonusBuyWidgetPlayingSections
           playingSlot={playingSlot}
