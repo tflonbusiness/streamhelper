@@ -9,7 +9,6 @@ import {
   Stack,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
-import HistoryIcon from '@mui/icons-material/History'
 import { styled, useTheme } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
 import {
@@ -27,7 +26,7 @@ import {
   PRIZE_SPIN_HISTORY_PAGE_SIZE,
 } from '@/components/prize-spin/prize-spin-page/prize-spin-page-utils'
 import { buildPrizeSpinRecordColumns } from '@/components/prize-spin/prize-spin-page/prizeSpinRecordColumns'
-import { SectionHeader } from '@/components/SectionHeader'
+import { SectionHeader, sectionTableIcon } from '@/components/SectionHeader'
 import { useNotification } from '@/context/NotificationContext'
 import {
   useDeactivatePrizeSpin,
@@ -184,7 +183,7 @@ export const PrizeSpinHistorySection = ({
           <SectionHeader
             title="History"
             description="Prize spin sessions for this account"
-            icon={HistoryIcon}
+            icon={sectionTableIcon}
             iconVariant="secondary"
             action={
               <Button

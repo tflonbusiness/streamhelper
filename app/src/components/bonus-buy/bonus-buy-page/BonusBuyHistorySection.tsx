@@ -9,7 +9,6 @@ import {
   Stack,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
-import HistoryIcon from '@mui/icons-material/History'
 import { styled } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
 import { type BonusBuyArchivedFilter } from '@/api/bonus-buy'
@@ -21,7 +20,7 @@ import {
   historyEmptyMessage,
 } from '@/components/bonus-buy/bonus-buy-page/bonus-buy-page-utils'
 import { buildBonusBuyRecordColumns } from '@/components/bonus-buy/bonus-buy-page/bonusBuyRecordColumns'
-import { SectionHeader } from '@/components/SectionHeader'
+import { SectionHeader, sectionTableIcon } from '@/components/SectionHeader'
 import { useNotification } from '@/context/NotificationContext'
 import { useBonusBuys } from '@/queries/use-bonus-buy'
 
@@ -127,7 +126,7 @@ export const BonusBuyHistorySection = ({
           <SectionHeader
             title="History"
             description="Bonus buy sessions for this account"
-            icon={HistoryIcon}
+            icon={sectionTableIcon}
             iconVariant="secondary"
             action={
               <Button

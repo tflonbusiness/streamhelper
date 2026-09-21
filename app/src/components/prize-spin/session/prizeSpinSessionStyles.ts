@@ -1,5 +1,6 @@
-import { Card, CardContent, Divider } from '@mui/material'
+import { Card, CardContent } from '@mui/material'
 import { styled } from '@mui/material/styles'
+import { SectionDivider } from '@/components/SectionHeader'
 
 export const StyledSessionCard = styled(Card)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
@@ -23,12 +24,7 @@ export const StyledCompactSessionCardContent = styled(CardContent)(({ theme }) =
   },
 }))
 
-export const StyledSectionDivider = styled(Divider)(({ theme }) => ({
-  marginLeft: theme.spacing(-3),
-  marginRight: theme.spacing(-3),
-  marginTop: theme.spacing(2),
-  marginBottom: theme.spacing(2),
-}))
+export const StyledSectionDivider = SectionDivider
 
 export const StyledFormField = styled('div')(({ theme }) => ({
   '& .MuiOutlinedInput-root': {

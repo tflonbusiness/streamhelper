@@ -66,7 +66,7 @@ export const StyledWidgetCell = styled(Box, cellProps)<
 
 export const StyledWidgetHeader = styled(Box)({
   display: 'flex',
-  alignItems: 'flex-start',
+  alignItems: 'center',
   justifyContent: 'space-between',
   paddingBottom: 8,
   borderBottom: '2px solid #1F1F24',
@@ -110,25 +110,27 @@ export const StyledSlotCountPill = styled(Box, widgetThemeProps)<WidgetThemeProp
     gap: '6px',
     backgroundColor: widgetTheme.surfaceColor,
     border: `1px solid ${widgetTheme.borderColor}`,
-    borderRadius: '12px',
-    paddingLeft: '12px',
-    paddingRight: '12px',
-    paddingTop: '6px',
-    paddingBottom: '6px',
+    borderRadius: '8px',
+    paddingLeft: '8px',
+    paddingRight: '8px',
+    paddingTop: '4px',
+    paddingBottom: '4px',
   }),
 )
 
 export const StyledSlotCountIcon = styled(CardGiftcardIcon, textColorProps)<
   TextColorProp
 >(({ textColor }) => ({
-  fontSize: 30,
+  fontSize: 22,
   color: textColor,
 }))
 
 export const StyledSlotCountValue = styled(Typography)({
   fontWeight: 600,
-  fontSize: '26px',
+  fontSize: '22px',
+  lineHeight: '30px',
   color: '#FFFFFF',
+  letterSpacing: '1px',
 })
 
 export const StyledStatsRow = styled(Box)({

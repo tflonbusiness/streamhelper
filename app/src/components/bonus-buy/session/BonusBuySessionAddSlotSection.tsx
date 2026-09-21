@@ -7,7 +7,6 @@ import type { BonusBuyRecord } from '@/api/bonus-buy'
 import { isBonusBuyActive } from '@/api/bonus-buy'
 import { SectionHeader } from '@/components/SectionHeader'
 import {
-  StyledSectionDivider,
   StyledSessionCard,
   StyledSessionCardContent,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
@@ -106,7 +105,6 @@ export const BonusBuySessionAddSlotSection = (
             description="Enter slot details and purchase amount in USD"
             icon={AddIcon}
             iconVariant="success"
-            sx={{ mb: 0 }}
             action={
               <Button
                 type="submit"
@@ -121,7 +119,6 @@ export const BonusBuySessionAddSlotSection = (
               </Button>
             }
           />
-          <StyledSectionDivider />
           <FormPanel sx={!active ? { opacity: 0.55 } : undefined}>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 4 }}>

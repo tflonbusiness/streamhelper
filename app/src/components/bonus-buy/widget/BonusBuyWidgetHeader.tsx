@@ -32,7 +32,7 @@ export function BonusBuyWidgetHeader({
       </StyledHeaderLeft>
       <StyledSlotCountPill widgetTheme={theme}>
         <StyledSlotCountIcon textColor={theme.accentColor} aria-hidden />
-        <StyledSlotCountValue>{slotCount}</StyledSlotCountValue>
+        <StyledSlotCountValue component="span">{slotCount}</StyledSlotCountValue>
       </StyledSlotCountPill>
     </StyledWidgetHeader>
   )

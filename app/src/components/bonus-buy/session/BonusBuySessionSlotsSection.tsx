@@ -1,17 +1,15 @@
-import ListAltIcon from '@mui/icons-material/ListAlt'
 import { useTheme } from '@mui/material/styles'
 import { useMemo, useState } from 'react'
 import type { BonusBuySlot } from '@/api/bonus-buy'
 import { isBonusBuySlotPlaying } from '@/api/bonus-buy'
 import { AppTable } from '@/components/AppTable'
-import { SectionHeader } from '@/components/SectionHeader'
+import { SectionHeader, sectionTableIcon } from '@/components/SectionHeader'
 import { BonusBuyDeleteSlotDialog } from '@/components/bonus-buy/session/BonusBuyDeleteSlotDialog'
 import { BonusBuyEditSlotDialog } from '@/components/bonus-buy/session/BonusBuyEditSlotDialog'
 import { BonusBuySlotExpandedDetails } from '@/components/bonus-buy/session/BonusBuySlotExpandedDetails'
 import { buildBonusBuySlotColumns } from '@/components/bonus-buy/session/bonusBuySlotColumns'
 import { playingSlotRowSx } from '@/components/bonus-buy/session/bonusBuySessionStyles'
 import {
-  StyledSectionDivider,
   StyledSessionCard,
   StyledSessionCardContent,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
@@ -95,11 +93,9 @@ export const BonusBuySessionSlotsSection = (
           <SectionHeader
             title={`Bonus list (${props.slots.length})`}
             description="Track purchases, wins, and which slot is live on the overlay"
-            icon={ListAltIcon}
+            icon={sectionTableIcon}
             iconVariant="secondary"
-            sx={{ mb: 0 }}
           />
-          <StyledSectionDivider />
           <AppTable
             columns={slotColumns}
             rows={props.slots}

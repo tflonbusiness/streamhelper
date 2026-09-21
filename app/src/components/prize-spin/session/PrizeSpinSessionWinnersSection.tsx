@@ -1,16 +1,14 @@
-import { Button, Stack, Typography } from '@mui/material'
+import { Button } from '@mui/material'
 import ArchiveIcon from '@mui/icons-material/Archive'
-import HistoryIcon from '@mui/icons-material/History'
 import { alpha, styled } from '@mui/material/styles'
 import { useState } from 'react'
 import type { PrizeSpinWin } from '@/api/prize-spin'
 import { AppTable } from '@/components/AppTable'
-import { IconTile } from '@/components/IconTile'
+import { SectionHeader, sectionTableIcon } from '@/components/SectionHeader'
 import { PrizeSpinArchiveAllWinnersDialog } from '@/components/prize-spin/session/PrizeSpinArchiveAllWinnersDialog'
 import { PrizeSpinWinnerExpandedDetails } from '@/components/prize-spin/session/PrizeSpinWinnerExpandedDetails'
 import { buildPrizeSpinWinnerColumns } from '@/components/prize-spin/session/prizeSpinWinnerColumns'
 import {
-  StyledSectionDivider,
   StyledSessionCard,
   StyledSessionCardContent,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
@@ -24,19 +22,6 @@ type PrizeSpinSessionWinnersSectionProps = {
   wins: PrizeSpinWin[]
   readOnly: boolean
 }
-
-const SectionHeader = styled(Stack)({
-  alignItems: 'center',
-  justifyContent: 'space-between',
-})
-
-const SectionTitleRow = styled(Stack)({
-  alignItems: 'center',
-})
-
-const SectionTitle = styled(Typography)({
-  fontWeight: 600,
-})
 
 const ArchiveAllButton = styled(Button)(({ theme }) => ({
   borderColor: alpha(theme.palette.warning.main, 0.4),
@@ -93,27 +78,25 @@ export const PrizeSpinSessionWinnersSection = (
     <>
       <StyledSessionCard elevation={0}>
         <StyledSessionCardContent>
-          <SectionHeader direction="row" spacing={2}>
-            <SectionTitleRow direction="row" spacing={1.5}>
-              <IconTile icon={HistoryIcon} variant="warning" size="sm" />
-              <SectionTitle variant="h6">
-                History ({props.wins.length})
-              </SectionTitle>
-            </SectionTitleRow>
-            {props.wins.length > 0 ? (
-              <ArchiveAllButton
-                type="button"
-                variant="outlined"
-                size="small"
-                startIcon={<ArchiveIcon fontSize="small" aria-hidden />}
-                disabled={props.readOnly}
-                onClick={() => setArchiveAllDialogOpen(true)}
-              >
-                Archive all
-              </ArchiveAllButton>
-            ) : null}
-          </SectionHeader>
-          <StyledSectionDivider />
+          <SectionHeader
+            title={`History (${props.wins.length})`}
+            icon={sectionTableIcon}
+            iconVariant="secondary"
+            action={
+              props.wins.length > 0 ? (
+                <ArchiveAllButton
+                  type="button"
+                  variant="outlined"
+                  size="small"
+                  startIcon={<ArchiveIcon fontSize="small" aria-hidden />}
+                  disabled={props.readOnly}
+                  onClick={() => setArchiveAllDialogOpen(true)}
+                >
+                  Archive all
+                </ArchiveAllButton>
+              ) : undefined
+            }
+          />
           {props.wins.length > 0 ? (
             <AppTable
               columns={winnerColumns}

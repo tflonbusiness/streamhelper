@@ -9,7 +9,6 @@ import {
   Stack,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
-import HistoryIcon from '@mui/icons-material/History'
 import { styled, useTheme } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
 import {
@@ -27,7 +26,7 @@ import {
   liveSessionRowSx,
 } from '@/components/chat-roll/chat-roll-page/chat-roll-page-utils'
 import { buildChatRollRecordColumns } from '@/components/chat-roll/chat-roll-page/chatRollRecordColumns'
-import { SectionHeader } from '@/components/SectionHeader'
+import { SectionHeader, sectionTableIcon } from '@/components/SectionHeader'
 import { useNotification } from '@/context/NotificationContext'
 import {
   useDeactivateChatRoll,
@@ -167,7 +166,7 @@ export const ChatRollHistorySection = ({
           <SectionHeader
             title="History"
             description="Chat roll sessions for this account"
-            icon={HistoryIcon}
+            icon={sectionTableIcon}
             iconVariant="secondary"
             action={
               <Button
