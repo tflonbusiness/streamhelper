@@ -170,36 +170,17 @@ Per-session overlay configuration — **one row per `bonus_buy`**, not per accou
 | `bonus_buy_id` | `BIGSERIAL NOT NULL UNIQUE REFERENCES bonus_buy(id) ON DELETE CASCADE` | | One widget row per session |
 | `width` | `INTEGER NOT NULL` | `500` | px; 200–2400 |
 | `height` | `INTEGER NOT NULL` | `600` | px; 200–2400 |
-| `style_settings` | `JSONB NOT NULL` | see below | Colors, radius, padding, font |
-| `preset_id` | `BIGINT REFERENCES bonus_buy_widget_style_preset(id) ON DELETE SET NULL` | | Last applied preset; `NULL` when custom |
+| `preset_id` | `BIGINT NOT NULL REFERENCES bonus_buy_widget_style_preset(id)` | | Applied theme; styles resolved via JOIN |
 | `created_at` | `TIMESTAMPTZ NOT NULL` | `now()` | |
 | `updated_at` | `TIMESTAMPTZ NOT NULL` | `now()` | |
 
-**`style_settings` JSON shape** (validated server-side):
-
-```json
-{
-  "backgroundColor": "#0A0A0C",
-  "surfaceColor": "#121215",
-  "borderColor": "#2F2F31",
-  "accentColor": "#F59E0B",
-  "positiveColor": "#10B981",
-  "negativeColor": "#EF4444",
-  "liveColor": "#FF2222",
-  "textMutedColor": "#9CA3AF",
-  "borderRadius": 20,
-  "padding": 18,
-  "fontFamily": "Inter, system-ui, sans-serif"
-}
-```
-
-Validation: all keys required on write; colors `#RGB` or `#RRGGBB`; `borderRadius` and `padding` ≥ 0; `fontFamily` non-empty string.
+**Style resolution:** widget row stores no style columns. API and overlay JOIN `bonus_buy_widget_style_preset` on `preset_id` and return `style_settings` from the preset row.
 
 **Bootstrap** (`ON CONFLICT (bonus_buy_id) DO NOTHING`):
 
 1. Same transaction as `INSERT INTO bonus_buy` on session create.
-2. Resolve preset: latest **user** preset for the account (`ORDER BY created_at DESC`); if none, first **system** preset (`ORDER BY id ASC`).
-3. Copy preset `style_settings` into widget row and set `preset_id`.
+2. Resolve preset: account **user** custom preset if present; else first **system** preset (`ORDER BY id ASC`).
+3. Insert widget row with `preset_id` only (no style snapshot).
 4. Lazy fallback on `GET .../bonus-buys/:id/widget` for legacy rows.
 
 **Archived session overlay:** public `GET /bonus-buys/:id/widget` returns `409 SESSION_ARCHIVED` — client shows inactive message and does not load slot/widget data.
@@ -208,7 +189,7 @@ Validation: all keys required on write; colors `#RGB` or `#RRGGBB`; `borderRadiu
 
 ## `bonus_buy_widget_style_preset`
 
-Named style templates — system catalog + per-account user presets.
+Named style templates — system catalog + **at most one** custom preset per account.
 
 | Column | Type | Default | Notes |
 |--------|------|---------|-------|
@@ -216,7 +197,7 @@ Named style templates — system catalog + per-account user presets.
 | `account_id` | `BIGINT REFERENCES accounts(id) ON DELETE CASCADE` | | `NULL` for system presets |
 | `created_by_user_id` | `BIGINT REFERENCES users(id)` | | `NULL` for system presets |
 | `source` | `TEXT NOT NULL` | | `system` \| `user` |
-| `name` | `TEXT NOT NULL` | | Display label |
+| `name` | `TEXT NOT NULL` | | System: catalog id (`main`, `classic`, …). User: always `'Custom'` (server-set, not editable) |
 | `style_settings` | `JSONB NOT NULL` | | Same shape as widget `style_settings` (colors + shape + font; no width/height) |
 | `created_at` | `TIMESTAMPTZ NOT NULL` | `now()` | |
 | `updated_at` | `TIMESTAMPTZ NOT NULL` | `now()` | |
@@ -226,7 +207,7 @@ Named style templates — system catalog + per-account user presets.
 | `source` | `account_id` | `created_by_user_id` | CRUD |
 |----------|--------------|----------------------|------|
 | `system` | `NULL` | `NULL` | Seed only; not editable via API |
-| `user` | required | required | Account members create/update/delete own presets |
+| `user` | required | required | **One row per account** — upsert on save; members update/delete the account custom preset |
 
 **Constraints:**
 
@@ -246,8 +227,8 @@ CREATE UNIQUE INDEX idx_bonus_buy_widget_style_preset_system_name
   ON bonus_buy_widget_style_preset (name)
   WHERE source = 'system';
 
-CREATE UNIQUE INDEX idx_bonus_buy_widget_style_preset_user_name
-  ON bonus_buy_widget_style_preset (account_id, name)
+CREATE UNIQUE INDEX idx_bonus_buy_widget_style_preset_account_user
+  ON bonus_buy_widget_style_preset (account_id)
   WHERE source = 'user';
 ```
 
@@ -255,10 +236,21 @@ CREATE UNIQUE INDEX idx_bonus_buy_widget_style_preset_user_name
 
 **Preset vs widget storage:**
 
-- Preset row = reusable template (colors/shape/font only).
-- Widget row = session snapshot (`width`, `height`, full `style_settings`).
-- Applying a preset copies `style_settings` into widget draft/row; sets `preset_id`.
-- Manual edits after apply clear `preset_id` (widget becomes Custom) or keep it for traceability — **recommend clear on divergence** so UI "active preset" stays honest.
+- Preset row = canonical style template (colors/shape/font only).
+- Widget row = session overlay config (`width`, `height`, `preset_id` only).
+- Applying a preset sets `preset_id`; styles are read from the preset via JOIN.
+- **User-authored styles** live only in the account's single `source='user'` preset.
+
+**Custom preset (one per account):**
+
+| Concern | Rule |
+|---------|------|
+| Cardinality | At most one `source='user'` row per `account_id` (unique partial index) |
+| Display name | UI always shows **Custom** — ignore `name` from API for `source='user'` |
+| Create | First save of a non-system theme → `INSERT`; subsequent saves → `UPDATE` same row (upsert) |
+| Delete | Optional `DELETE` removes custom row; widgets with that `preset_id` get `SET NULL` |
+| Picker order | System presets first, **Custom** chip last (only when row exists) |
+| Bootstrap | On new session, if account custom preset exists → copy it; else first system preset |
 
 ## API surface changes
 

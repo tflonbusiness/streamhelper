@@ -346,3 +346,27 @@ export function applyBonusBuyWidgetPresetFromList(
     presetId: preset.id,
   }
 }
+
+export function extractBonusBuyWidgetStyleSettings(
+  draft: BonusBuyWidgetSettings,
+): BonusBuyWidgetStyleSettings {
+  return {
+    backgroundColor: draft.backgroundColor.trim(),
+    surfaceColor: draft.surfaceColor.trim(),
+    borderColor: draft.borderColor.trim(),
+    accentColor: draft.accentColor.trim(),
+    positiveColor: draft.positiveColor.trim(),
+    negativeColor: draft.negativeColor.trim(),
+    liveColor: draft.liveColor.trim(),
+    textMutedColor: draft.textMutedColor.trim(),
+    borderRadius: draft.borderRadius,
+    padding: draft.padding,
+    fontFamily: draft.fontFamily.trim(),
+  }
+}
+
+export function getBonusBuyWidgetPresetDisplayName(
+  preset: BonusBuyWidgetStylePreset,
+): string {
+  return preset.source === 'user' ? 'Custom' : preset.name
+}

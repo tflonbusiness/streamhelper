@@ -13,7 +13,6 @@ import {
   type BonusBuyWidgetStyleSettings,
 } from '../bonus-buy/bonus-buy-widget-defaults.js';
 import {
-  mergeBonusBuyWidgetStyleSettings,
   parseBonusBuyWidgetStyleSettings,
 } from '../bonus-buy/bonus-buy-widget-style.js';
 import {
@@ -241,7 +240,7 @@ export type DbBonusBuyWidget = {
   width: number;
   height: number;
   styleSettings: BonusBuyWidgetStyleSettings;
-  presetId: number | null;
+  presetId: number;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -260,18 +259,11 @@ export type DbBonusBuyWidgetStylePreset = {
 export type PatchBonusBuyWidgetInput = {
   width?: number;
   height?: number;
-  styleSettings?: Partial<BonusBuyWidgetStyleSettings>;
   presetId?: number | null;
 };
 
-export type CreateBonusBuyWidgetPresetInput = {
-  name: string;
+export type UpsertBonusBuyWidgetCustomPresetInput = {
   styleSettings: BonusBuyWidgetStyleSettings;
-};
-
-export type PatchBonusBuyWidgetPresetInput = {
-  name?: string;
-  styleSettings?: Partial<BonusBuyWidgetStyleSettings>;
 };
 
 export type DbPublicBonusBuyRecord = {
@@ -454,8 +446,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         ON bonus_buy_widget_style_preset (name)
         WHERE source = 'system';
 
-      CREATE UNIQUE INDEX idx_bonus_buy_widget_style_preset_user_name
-        ON bonus_buy_widget_style_preset (account_id, name)
+      CREATE UNIQUE INDEX idx_bonus_buy_widget_style_preset_account_user
+        ON bonus_buy_widget_style_preset (account_id)
         WHERE source = 'user';
 
       CREATE TABLE bonus_buy_widget (
@@ -463,8 +455,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         bonus_buy_id        BIGINT NOT NULL UNIQUE REFERENCES bonus_buy(id) ON DELETE CASCADE,
         width               INTEGER NOT NULL DEFAULT 500,
         height              INTEGER NOT NULL DEFAULT 600,
-        style_settings      JSONB NOT NULL,
-        preset_id           BIGINT REFERENCES bonus_buy_widget_style_preset(id) ON DELETE SET NULL,
+        preset_id           BIGINT NOT NULL REFERENCES bonus_buy_widget_style_preset(id),
         created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
       );
@@ -1163,16 +1154,36 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
+  private async resolveDefaultSystemWidgetPresetId(
+    client: { query: Pool['query'] },
+  ): Promise<number> {
+    const systemPreset = await client.query<{ id: string | number }>(
+      `
+        SELECT id
+        FROM bonus_buy_widget_style_preset
+        WHERE source = 'system'
+        ORDER BY id ASC
+        LIMIT 1
+      `,
+    );
+
+    const systemRow = systemPreset.rows[0];
+    if (!systemRow) {
+      throw new Error('SYSTEM_PRESET_NOT_FOUND');
+    }
+
+    return toInt(systemRow.id);
+  }
+
   private async resolveBootstrapWidgetPreset(
     client: { query: Pool['query'] },
     accountId: number,
-  ): Promise<{ presetId: number | null; styleSettings: BonusBuyWidgetStyleSettings }> {
+  ): Promise<{ presetId: number }> {
     const userPreset = await client.query<{
       id: string | number;
-      style_settings: BonusBuyWidgetStyleSettings;
     }>(
       `
-        SELECT id, style_settings
+        SELECT id
         FROM bonus_buy_widget_style_preset
         WHERE account_id = $1
           AND source = 'user'
@@ -1186,34 +1197,11 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     if (userRow) {
       return {
         presetId: toInt(userRow.id),
-        styleSettings: parseBonusBuyWidgetStyleSettings(userRow.style_settings),
-      };
-    }
-
-    const systemPreset = await client.query<{
-      id: string | number;
-      style_settings: BonusBuyWidgetStyleSettings;
-    }>(
-      `
-        SELECT id, style_settings
-        FROM bonus_buy_widget_style_preset
-        WHERE source = 'system'
-        ORDER BY id ASC
-        LIMIT 1
-      `,
-    );
-
-    const systemRow = systemPreset.rows[0];
-    if (!systemRow) {
-      return {
-        presetId: null,
-        styleSettings: BONUS_BUY_WIDGET_STYLE_DEFAULTS,
       };
     }
 
     return {
-      presetId: toInt(systemRow.id),
-      styleSettings: parseBonusBuyWidgetStyleSettings(systemRow.style_settings),
+      presetId: await this.resolveDefaultSystemWidgetPresetId(client),
     };
   }
 
@@ -1284,17 +1272,15 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             bonus_buy_id,
             width,
             height,
-            style_settings,
             preset_id
           )
-          VALUES ($1, $2, $3, $4::jsonb, $5)
+          VALUES ($1, $2, $3, $4)
         `,
         [
           bonusBuyId,
           BONUS_BUY_WIDGET_DIMENSION_DEFAULTS.width,
           BONUS_BUY_WIDGET_DIMENSION_DEFAULTS.height,
-          JSON.stringify(bootstrapPreset.styleSettings),
-          bootstrapPreset.presetId ?? null,
+          bootstrapPreset.presetId,
         ],
       );
 
@@ -1733,18 +1719,22 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     bonus_buy_id: string | number;
     width: string | number;
     height: string | number;
-    style_settings: BonusBuyWidgetStyleSettings;
-    preset_id: string | number | null;
+    preset_id: string | number;
+    preset_style_settings: BonusBuyWidgetStyleSettings | null;
     created_at: Date;
     updated_at: Date;
   }): DbBonusBuyWidget {
+    const styleSettings = row.preset_style_settings
+      ? parseBonusBuyWidgetStyleSettings(row.preset_style_settings)
+      : BONUS_BUY_WIDGET_STYLE_DEFAULTS;
+
     return {
       id: toInt(row.id),
       bonusBuyId: toInt(row.bonus_buy_id),
       width: toInt(row.width),
       height: toInt(row.height),
-      styleSettings: parseBonusBuyWidgetStyleSettings(row.style_settings),
-      presetId: row.preset_id === null ? null : toInt(row.preset_id),
+      styleSettings,
+      presetId: toInt(row.preset_id),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
@@ -1773,16 +1763,24 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  private widgetSelectColumns(alias = 'w'): string {
+  private widgetSelectColumns(alias = 'w', presetAlias = 'p'): string {
     return `
       ${alias}.id,
       ${alias}.bonus_buy_id,
       ${alias}.width,
       ${alias}.height,
-      ${alias}.style_settings,
       ${alias}.preset_id,
       ${alias}.created_at,
-      ${alias}.updated_at
+      ${alias}.updated_at,
+      ${presetAlias}.style_settings AS preset_style_settings
+    `;
+  }
+
+  private widgetFromJoin(widgetAlias = 'w', presetAlias = 'p'): string {
+    return `
+      FROM bonus_buy_widget ${widgetAlias}
+      LEFT JOIN bonus_buy_widget_style_preset ${presetAlias}
+        ON ${presetAlias}.id = ${widgetAlias}.preset_id
     `;
   }
 
@@ -1798,7 +1796,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     const existing = await this.pool.query(
       `
         SELECT ${this.widgetSelectColumns()}
-        FROM bonus_buy_widget w
+        ${this.widgetFromJoin()}
         WHERE w.bonus_buy_id = $1
       `,
       [bonusBuyId],
@@ -1821,18 +1819,16 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             bonus_buy_id,
             width,
             height,
-            style_settings,
             preset_id
           )
-          VALUES ($1, $2, $3, $4::jsonb, $5)
+          VALUES ($1, $2, $3, $4)
           ON CONFLICT (bonus_buy_id) DO NOTHING
         `,
         [
           bonusBuyId,
           BONUS_BUY_WIDGET_DIMENSION_DEFAULTS.width,
           BONUS_BUY_WIDGET_DIMENSION_DEFAULTS.height,
-          JSON.stringify(bootstrapPreset.styleSettings),
-          bootstrapPreset.presetId ?? null,
+          bootstrapPreset.presetId,
         ],
       );
       await client.query('COMMIT');
@@ -1846,7 +1842,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     const created = await this.pool.query(
       `
         SELECT ${this.widgetSelectColumns()}
-        FROM bonus_buy_widget w
+        ${this.widgetFromJoin()}
         WHERE w.bonus_buy_id = $1
       `,
       [bonusBuyId],
@@ -1867,6 +1863,41 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     return this.ensureBonusBuyWidget(accountId, bonusBuyId);
   }
 
+  private async getAccessibleBonusBuyWidgetPreset(
+    accountId: number,
+    presetId: number,
+  ): Promise<DbBonusBuyWidgetStylePreset | null> {
+    const result = await this.pool.query<{
+      id: string | number;
+      account_id: string | number | null;
+      created_by_user_id: string | number | null;
+      source: string;
+      name: string;
+      style_settings: BonusBuyWidgetStyleSettings;
+      created_at: Date;
+      updated_at: Date;
+    }>(
+      `
+        SELECT
+          id,
+          account_id,
+          created_by_user_id,
+          source,
+          name,
+          style_settings,
+          created_at,
+          updated_at
+        FROM bonus_buy_widget_style_preset
+        WHERE id = $1
+          AND (source = 'system' OR account_id = $2)
+      `,
+      [presetId, accountId],
+    );
+
+    const row = result.rows[0];
+    return row ? this.mapBonusBuyWidgetPresetRow(row) : null;
+  }
+
   async patchBonusBuyWidget(
     accountId: number,
     bonusBuyId: number,
@@ -1874,9 +1905,24 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   ): Promise<DbBonusBuyWidget> {
     const existing = await this.ensureBonusBuyWidget(accountId, bonusBuyId);
 
-    const nextStyle = input.styleSettings
-      ? mergeBonusBuyWidgetStyleSettings(existing.styleSettings, input.styleSettings)
-      : existing.styleSettings;
+    let nextPresetId =
+      input.presetId !== undefined ? input.presetId : existing.presetId;
+
+    if (input.presetId !== undefined) {
+      if (input.presetId === null) {
+        throw new Error('PRESET_ID_REQUIRED');
+      }
+
+      const preset = await this.getAccessibleBonusBuyWidgetPreset(
+        accountId,
+        input.presetId,
+      );
+      if (!preset) {
+        throw new Error('PRESET_NOT_FOUND');
+      }
+
+      nextPresetId = input.presetId;
+    }
 
     const next = {
       width:
@@ -1887,38 +1933,34 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         input.height !== undefined
           ? this.clampWidgetDimension(input.height)
           : existing.height,
-      styleSettings: nextStyle,
-      presetId:
-        input.presetId !== undefined ? input.presetId : existing.presetId,
+      presetId: nextPresetId,
     };
 
-    if (input.styleSettings && input.presetId === undefined) {
-      next.presetId = null;
-    }
-
-    const result = await this.pool.query(
+    await this.pool.query(
       `
         UPDATE bonus_buy_widget w
         SET
           width = $2,
           height = $3,
-          style_settings = $4::jsonb,
-          preset_id = $5,
+          preset_id = $4,
           updated_at = now()
         FROM bonus_buy bb
         WHERE w.bonus_buy_id = bb.id
           AND bb.account_id = $1
-          AND w.bonus_buy_id = $6
-        RETURNING ${this.widgetSelectColumns('w')}
+          AND w.bonus_buy_id = $5
       `,
-      [
-        accountId,
-        next.width,
-        next.height,
-        JSON.stringify(next.styleSettings),
-        next.presetId,
-        bonusBuyId,
-      ],
+      [accountId, next.width, next.height, next.presetId, bonusBuyId],
+    );
+
+    const result = await this.pool.query(
+      `
+        SELECT ${this.widgetSelectColumns()}
+        ${this.widgetFromJoin()}
+        JOIN bonus_buy bb ON bb.id = w.bonus_buy_id
+        WHERE bb.account_id = $1
+          AND w.bonus_buy_id = $2
+      `,
+      [accountId, bonusBuyId],
     );
 
     const row = result.rows[0];
@@ -1956,8 +1998,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         WHERE source = 'system'
            OR account_id = $1
         ORDER BY
-          CASE WHEN source = 'system' THEN 0 ELSE 1 END,
-          created_at ASC,
+          CASE WHEN source = 'user' THEN 0 ELSE 1 END,
           id ASC
       `,
       [accountId],
@@ -1966,19 +2007,49 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     return result.rows.map((row) => this.mapBonusBuyWidgetPresetRow(row));
   }
 
-  async createBonusBuyWidgetPreset(
+  async upsertBonusBuyWidgetCustomPreset(
     accountId: number,
     createdByUserId: number,
-    input: CreateBonusBuyWidgetPresetInput,
+    input: UpsertBonusBuyWidgetCustomPresetInput,
   ): Promise<DbBonusBuyWidgetStylePreset> {
-    const trimmedName = input.name.trim();
-    if (trimmedName.length === 0 || trimmedName.length > 100) {
-      throw new Error('INVALID_PRESET_NAME');
-    }
-
     const styleSettings = parseBonusBuyWidgetStyleSettings(input.styleSettings);
 
-    const result = await this.pool.query<{
+    const updated = await this.pool.query<{
+      id: string | number;
+      account_id: string | number | null;
+      created_by_user_id: string | number | null;
+      source: string;
+      name: string;
+      style_settings: BonusBuyWidgetStyleSettings;
+      created_at: Date;
+      updated_at: Date;
+    }>(
+      `
+        UPDATE bonus_buy_widget_style_preset
+        SET
+          style_settings = $3::jsonb,
+          created_by_user_id = $2,
+          updated_at = now()
+        WHERE account_id = $1
+          AND source = 'user'
+        RETURNING
+          id,
+          account_id,
+          created_by_user_id,
+          source,
+          name,
+          style_settings,
+          created_at,
+          updated_at
+      `,
+      [accountId, createdByUserId, JSON.stringify(styleSettings)],
+    );
+
+    if (updated.rows[0]) {
+      return this.mapBonusBuyWidgetPresetRow(updated.rows[0]);
+    }
+
+    const inserted = await this.pool.query<{
       id: string | number;
       account_id: string | number | null;
       created_by_user_id: string | number | null;
@@ -1996,7 +2067,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           name,
           style_settings
         )
-        VALUES ($1, $2, 'user', $3, $4::jsonb)
+        VALUES ($1, $2, 'user', 'Custom', $3::jsonb)
         RETURNING
           id,
           account_id,
@@ -2007,112 +2078,69 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           created_at,
           updated_at
       `,
-      [accountId, createdByUserId, trimmedName, JSON.stringify(styleSettings)],
+      [accountId, createdByUserId, JSON.stringify(styleSettings)],
     );
 
-    return this.mapBonusBuyWidgetPresetRow(result.rows[0]);
+    return this.mapBonusBuyWidgetPresetRow(inserted.rows[0]);
   }
 
-  async patchBonusBuyWidgetPreset(
-    accountId: number,
-    presetId: number,
-    input: PatchBonusBuyWidgetPresetInput,
-  ): Promise<DbBonusBuyWidgetStylePreset> {
-    const existing = await this.pool.query<{
-      id: string | number;
-      account_id: string | number | null;
-      created_by_user_id: string | number | null;
-      source: string;
-      name: string;
-      style_settings: BonusBuyWidgetStyleSettings;
-      created_at: Date;
-      updated_at: Date;
-    }>(
-      `
-        SELECT
-          id,
-          account_id,
-          created_by_user_id,
-          source,
-          name,
-          style_settings,
-          created_at,
-          updated_at
-        FROM bonus_buy_widget_style_preset
-        WHERE id = $1
-          AND account_id = $2
-          AND source = 'user'
-      `,
-      [presetId, accountId],
-    );
+  async deleteBonusBuyWidgetCustomPreset(accountId: number): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    const row = existing.rows[0];
-    if (!row) {
-      throw new Error('NOT_FOUND');
-    }
+      const customPreset = await client.query<{ id: string | number }>(
+        `
+          SELECT id
+          FROM bonus_buy_widget_style_preset
+          WHERE account_id = $1
+            AND source = 'user'
+        `,
+        [accountId],
+      );
 
-    const current = this.mapBonusBuyWidgetPresetRow(row);
-    const nextName =
-      input.name !== undefined ? input.name.trim() : current.name;
-    if (nextName.length === 0 || nextName.length > 100) {
-      throw new Error('INVALID_PRESET_NAME');
-    }
+      const customRow = customPreset.rows[0];
+      if (!customRow) {
+        throw new Error('NOT_FOUND');
+      }
 
-    const nextStyle = input.styleSettings
-      ? mergeBonusBuyWidgetStyleSettings(
-          current.styleSettings,
-          input.styleSettings,
-        )
-      : current.styleSettings;
+      const customPresetId = toInt(customRow.id);
+      const fallbackPresetId = await this.resolveDefaultSystemWidgetPresetId(
+        client,
+      );
 
-    const updated = await this.pool.query<{
-      id: string | number;
-      account_id: string | number | null;
-      created_by_user_id: string | number | null;
-      source: string;
-      name: string;
-      style_settings: BonusBuyWidgetStyleSettings;
-      created_at: Date;
-      updated_at: Date;
-    }>(
-      `
-        UPDATE bonus_buy_widget_style_preset
-        SET name = $3, style_settings = $4::jsonb, updated_at = now()
-        WHERE id = $1
-          AND account_id = $2
-          AND source = 'user'
-        RETURNING
-          id,
-          account_id,
-          created_by_user_id,
-          source,
-          name,
-          style_settings,
-          created_at,
-          updated_at
-      `,
-      [presetId, accountId, nextName, JSON.stringify(nextStyle)],
-    );
+      await client.query(
+        `
+          UPDATE bonus_buy_widget w
+          SET preset_id = $2, updated_at = now()
+          FROM bonus_buy bb
+          WHERE w.bonus_buy_id = bb.id
+            AND bb.account_id = $1
+            AND w.preset_id = $3
+        `,
+        [accountId, fallbackPresetId, customPresetId],
+      );
 
-    return this.mapBonusBuyWidgetPresetRow(updated.rows[0]);
-  }
+      const deleted = await client.query(
+        `
+          DELETE FROM bonus_buy_widget_style_preset
+          WHERE id = $1
+            AND account_id = $2
+            AND source = 'user'
+        `,
+        [customPresetId, accountId],
+      );
 
-  async deleteBonusBuyWidgetPreset(
-    accountId: number,
-    presetId: number,
-  ): Promise<void> {
-    const result = await this.pool.query(
-      `
-        DELETE FROM bonus_buy_widget_style_preset
-        WHERE id = $1
-          AND account_id = $2
-          AND source = 'user'
-      `,
-      [presetId, accountId],
-    );
+      if (deleted.rowCount === 0) {
+        throw new Error('NOT_FOUND');
+      }
 
-    if (result.rowCount === 0) {
-      throw new Error('NOT_FOUND');
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
     }
   }
 
@@ -2152,7 +2180,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     const settingsResult = await this.pool.query(
       `
         SELECT ${this.widgetSelectColumns()}
-        FROM bonus_buy_widget w
+        ${this.widgetFromJoin()}
         WHERE w.bonus_buy_id = $1
       `,
       [bonusBuyId],

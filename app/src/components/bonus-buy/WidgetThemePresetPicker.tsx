@@ -1,6 +1,9 @@
 import { Box, Chip, Stack, Typography } from '@mui/material'
 import type { BonusBuyWidgetStylePreset } from '@/api/bonus-buy'
-import { getPresetPreviewDots } from '@/lib/bonus-buy-widget-presets'
+import {
+  getBonusBuyWidgetPresetDisplayName,
+  getPresetPreviewDots,
+} from '@/lib/bonus-buy-widget-presets'
 
 type WidgetThemePresetPickerProps = {
   presets: BonusBuyWidgetStylePreset[]
@@ -34,20 +37,11 @@ export function WidgetThemePresetPicker({
   activePresetId,
   onSelectPreset,
 }: WidgetThemePresetPickerProps) {
-  const isCustom = activePresetId === null
-
   return (
     <Stack spacing={1}>
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-          Theme preset
-        </Typography>
-        {isCustom ? (
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            Custom
-          </Typography>
-        ) : null}
-      </Stack>
+      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+        Theme preset
+      </Typography>
       <Box
         sx={{
           display: 'grid',
@@ -65,17 +59,18 @@ export function WidgetThemePresetPicker({
               key={preset.id}
               label={
                 <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-                  <span>{preset.name}</span>
+                  <span>{getBonusBuyWidgetPresetDisplayName(preset)}</span>
                   <PreviewDots colors={getPresetPreviewDots(preset.styleSettings)} />
                 </Stack>
               }
               onClick={() => onSelectPreset(preset.id)}
-              variant={selected ? 'filled' : 'outlined'}
+              variant="outlined"
               color={selected ? 'primary' : 'default'}
               sx={{
                 width: '100%',
                 height: 36,
                 justifyContent: 'flex-start',
+                bgcolor: 'transparent',
                 '& .MuiChip-label': {
                   px: 1,
                   overflow: 'hidden',

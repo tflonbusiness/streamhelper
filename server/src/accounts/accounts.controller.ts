@@ -8,6 +8,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Put,
   Query,
   Req,
 } from '@nestjs/common';
@@ -46,27 +47,10 @@ type PatchBonusBuySlotBody = {
 type PatchBonusBuyWidgetBody = {
   width?: number;
   height?: number;
-  background_color?: string;
-  surface_color?: string;
-  border_color?: string;
-  accent_color?: string;
-  positive_color?: string;
-  negative_color?: string;
-  live_color?: string;
-  text_muted_color?: string;
-  border_radius?: number;
-  padding?: number;
-  font_family?: string;
   preset_id?: number | null;
 };
 
-type CreateBonusBuyWidgetPresetBody = {
-  name?: string;
-  style_settings?: Record<string, unknown>;
-};
-
-type PatchBonusBuyWidgetPresetBody = {
-  name?: string;
+type UpsertBonusBuyWidgetCustomPresetBody = {
   style_settings?: Record<string, unknown>;
 };
 
@@ -283,48 +267,30 @@ export class AccountsController {
     return this.authService.listBonusBuyWidgetPresets(accountId, user.id);
   }
 
-  @Post(':accountId/bonus-buy-widget-presets')
-  async createBonusBuyWidgetPreset(
+  @Put(':accountId/bonus-buy-widget-presets/custom')
+  async upsertBonusBuyWidgetCustomPreset(
     @Param('accountId', ParseIntPipe) accountId: number,
-    @Body() body: CreateBonusBuyWidgetPresetBody,
+    @Body() body: UpsertBonusBuyWidgetCustomPresetBody,
     @Req() req: Request,
   ) {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
-    return this.authService.createBonusBuyWidgetPreset(accountId, user.id, body);
-  }
-
-  @Patch(':accountId/bonus-buy-widget-presets/:presetId')
-  async patchBonusBuyWidgetPreset(
-    @Param('accountId', ParseIntPipe) accountId: number,
-    @Param('presetId', ParseIntPipe) presetId: number,
-    @Body() body: PatchBonusBuyWidgetPresetBody,
-    @Req() req: Request,
-  ) {
-    const session = req.session as SessionData;
-    const user = await this.authService.requireValidSessionUser(session.user);
-    return this.authService.patchBonusBuyWidgetPreset(
+    return this.authService.upsertBonusBuyWidgetCustomPreset(
       accountId,
       user.id,
-      presetId,
       body,
     );
   }
 
-  @Delete(':accountId/bonus-buy-widget-presets/:presetId')
+  @Delete(':accountId/bonus-buy-widget-presets/custom')
   @HttpCode(204)
-  async deleteBonusBuyWidgetPreset(
+  async deleteBonusBuyWidgetCustomPreset(
     @Param('accountId', ParseIntPipe) accountId: number,
-    @Param('presetId', ParseIntPipe) presetId: number,
     @Req() req: Request,
   ) {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
-    await this.authService.deleteBonusBuyWidgetPreset(
-      accountId,
-      user.id,
-      presetId,
-    );
+    await this.authService.deleteBonusBuyWidgetCustomPreset(accountId, user.id);
   }
 
   @Get(':accountId/bonus-buys/:bonusBuyId/slots')

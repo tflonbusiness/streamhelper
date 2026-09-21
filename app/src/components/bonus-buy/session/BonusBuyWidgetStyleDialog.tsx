@@ -24,6 +24,7 @@ import { StatusAlert } from '@/components/StatusAlert'
 import { useNotification } from '@/context/NotificationContext'
 import {
   applyBonusBuyWidgetPresetFromList,
+  extractBonusBuyWidgetStyleSettings,
   matchBonusBuyWidgetPresetFromList,
 } from '@/lib/bonus-buy-widget-presets'
 import { validateBonusBuyWidgetDraft } from '@/lib/bonus-buy-widget-validation'
@@ -31,6 +32,7 @@ import {
   useBonusBuyWidget,
   useBonusBuyWidgetPresets,
   usePatchBonusBuyWidget,
+  useUpsertBonusBuyWidgetCustomPreset,
 } from '@/queries/use-bonus-buy'
 import { inputFieldSx } from '@/theme/colors'
 
@@ -50,6 +52,9 @@ export const BonusBuyWidgetStyleDialog = (
   const patchWidgetMutation = usePatchBonusBuyWidget(
     props.accountId,
     props.bonusBuyId,
+  )
+  const upsertCustomPresetMutation = useUpsertBonusBuyWidgetCustomPreset(
+    props.accountId,
   )
 
   const [widgetPreviewDialogOpen, setWidgetPreviewDialogOpen] = useState(false)
@@ -148,21 +153,28 @@ export const BonusBuyWidgetStyleDialog = (
     setWidgetEditError(null)
 
     try {
+      const systemPresets = widgetPresets.filter(
+        (preset) => preset.source === 'system',
+      )
+      const matchedSystemPresetId = matchBonusBuyWidgetPresetFromList(
+        widgetDraft,
+        systemPresets,
+      )
+
+      let presetId: number
+      if (matchedSystemPresetId !== null) {
+        presetId = matchedSystemPresetId
+      } else {
+        const customPreset = await upsertCustomPresetMutation.mutateAsync({
+          style_settings: extractBonusBuyWidgetStyleSettings(widgetDraft),
+        })
+        presetId = customPreset.id
+      }
+
       await patchWidgetMutation.mutateAsync({
         width: widgetDraft.width,
         height: widgetDraft.height,
-        background_color: widgetDraft.backgroundColor.trim(),
-        surface_color: widgetDraft.surfaceColor.trim(),
-        border_color: widgetDraft.borderColor.trim(),
-        accent_color: widgetDraft.accentColor.trim(),
-        positive_color: widgetDraft.positiveColor.trim(),
-        negative_color: widgetDraft.negativeColor.trim(),
-        live_color: widgetDraft.liveColor.trim(),
-        text_muted_color: widgetDraft.textMutedColor.trim(),
-        border_radius: widgetDraft.borderRadius,
-        padding: widgetDraft.padding,
-        font_family: widgetDraft.fontFamily.trim(),
-        preset_id: widgetDraft.presetId,
+        preset_id: presetId,
       })
       props.onClose()
       showSuccess('Widget style saved')
@@ -353,7 +365,10 @@ export const BonusBuyWidgetStyleDialog = (
           </Button>
           <Button
             onClick={props.onClose}
-            disabled={patchWidgetMutation.isPending}
+            disabled={
+              patchWidgetMutation.isPending ||
+              upsertCustomPresetMutation.isPending
+            }
           >
             Cancel
           </Button>
@@ -361,10 +376,16 @@ export const BonusBuyWidgetStyleDialog = (
             variant="contained"
             onClick={() => void handleSaveWidgetStyle()}
             disabled={
-              patchWidgetMutation.isPending || isLoadingWidget || !widgetDraft
+              patchWidgetMutation.isPending ||
+              upsertCustomPresetMutation.isPending ||
+              isLoadingWidget ||
+              !widgetDraft
             }
           >
-            {patchWidgetMutation.isPending ? 'Saving…' : 'Save'}
+            {patchWidgetMutation.isPending ||
+            upsertCustomPresetMutation.isPending
+              ? 'Saving…'
+              : 'Save'}
           </Button>
         </DialogActions>
       </Dialog>

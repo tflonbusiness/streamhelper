@@ -9,8 +9,7 @@ import {
   BonusBuySessionArchivedError,
   createBonusBuy,
   createBonusBuySlot,
-  createBonusBuyWidgetPreset,
-  deleteBonusBuyWidgetPreset,
+  upsertBonusBuyWidgetCustomPreset,
   endBonusBuy,
   fetchBonusBuy,
   fetchBonusBuySlots,
@@ -21,12 +20,10 @@ import {
   patchBonusBuy,
   patchBonusBuySlot,
   patchBonusBuyWidget,
-  patchBonusBuyWidgetPreset,
   type PatchBonusBuyInput,
   type PatchBonusBuySlotInput,
   type PatchBonusBuyWidgetInput,
-  type CreateBonusBuyWidgetPresetInput,
-  type PatchBonusBuyWidgetPresetInput,
+  type UpsertBonusBuyWidgetCustomPresetInput,
 } from '@/api/bonus-buy'
 import { bonusBuyKeys, type BonusBuyListParams } from '@/queries/keys'
 
@@ -249,46 +246,14 @@ export function usePatchBonusBuyWidget(
   })
 }
 
-export function useCreateBonusBuyWidgetPreset(accountId: number | undefined) {
+export function useUpsertBonusBuyWidgetCustomPreset(
+  accountId: number | undefined,
+) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (body: CreateBonusBuyWidgetPresetInput) =>
-      createBonusBuyWidgetPreset(accountId!, body),
-    onSuccess: () => {
-      if (accountId !== undefined) {
-        void queryClient.invalidateQueries({
-          queryKey: bonusBuyKeys.presets(accountId),
-        })
-      }
-    },
-  })
-}
-
-export function usePatchBonusBuyWidgetPreset(accountId: number | undefined) {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (input: {
-      presetId: number
-      body: PatchBonusBuyWidgetPresetInput
-    }) => patchBonusBuyWidgetPreset(accountId!, input.presetId, input.body),
-    onSuccess: () => {
-      if (accountId !== undefined) {
-        void queryClient.invalidateQueries({
-          queryKey: bonusBuyKeys.presets(accountId),
-        })
-      }
-    },
-  })
-}
-
-export function useDeleteBonusBuyWidgetPreset(accountId: number | undefined) {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (presetId: number) =>
-      deleteBonusBuyWidgetPreset(accountId!, presetId),
+    mutationFn: (body: UpsertBonusBuyWidgetCustomPresetInput) =>
+      upsertBonusBuyWidgetCustomPreset(accountId!, body),
     onSuccess: () => {
       if (accountId !== undefined) {
         void queryClient.invalidateQueries({

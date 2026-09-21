@@ -429,7 +429,7 @@ export class AuthService {
       accountId: row.accountId,
       createdByUserId: row.createdByUserId,
       source: row.source,
-      name: row.name,
+      name: row.source === 'user' ? 'Custom' : row.name,
       styleSettings: row.styleSettings,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
@@ -449,6 +449,12 @@ export class AuthService {
       }
       if (error.message === 'INVALID_WIDGET_STYLE') {
         throw new BadRequestException('Widget style settings are invalid');
+      }
+      if (error.message === 'PRESET_NOT_FOUND') {
+        throw new BadRequestException('Widget preset not found');
+      }
+      if (error.message === 'PRESET_ID_REQUIRED') {
+        throw new BadRequestException('preset_id is required when applying a theme');
       }
     }
     throw error;
@@ -761,39 +767,27 @@ export class AuthService {
   ) {
     await this.requireAccountMember(accountId, callerUserId);
 
-    const stylePatch: PatchBonusBuyWidgetInput['styleSettings'] = {};
-    if (body.background_color !== undefined) {
-      stylePatch.backgroundColor = body.background_color;
+    const hasStyleField =
+      body.background_color !== undefined ||
+      body.surface_color !== undefined ||
+      body.border_color !== undefined ||
+      body.accent_color !== undefined ||
+      body.positive_color !== undefined ||
+      body.negative_color !== undefined ||
+      body.live_color !== undefined ||
+      body.text_muted_color !== undefined ||
+      body.border_radius !== undefined ||
+      body.padding !== undefined ||
+      body.font_family !== undefined;
+
+    if (hasStyleField) {
+      throw new BadRequestException(
+        'Widget style fields must be saved via presets',
+      );
     }
-    if (body.surface_color !== undefined) {
-      stylePatch.surfaceColor = body.surface_color;
-    }
-    if (body.border_color !== undefined) {
-      stylePatch.borderColor = body.border_color;
-    }
-    if (body.accent_color !== undefined) {
-      stylePatch.accentColor = body.accent_color;
-    }
-    if (body.positive_color !== undefined) {
-      stylePatch.positiveColor = body.positive_color;
-    }
-    if (body.negative_color !== undefined) {
-      stylePatch.negativeColor = body.negative_color;
-    }
-    if (body.live_color !== undefined) {
-      stylePatch.liveColor = body.live_color;
-    }
-    if (body.text_muted_color !== undefined) {
-      stylePatch.textMutedColor = body.text_muted_color;
-    }
-    if (body.border_radius !== undefined) {
-      stylePatch.borderRadius = body.border_radius;
-    }
-    if (body.padding !== undefined) {
-      stylePatch.padding = body.padding;
-    }
-    if (body.font_family !== undefined) {
-      stylePatch.fontFamily = body.font_family;
+
+    if (body.preset_id === null) {
+      throw new BadRequestException('preset_id is required when applying a theme');
     }
 
     const input: PatchBonusBuyWidgetInput = {
@@ -801,9 +795,6 @@ export class AuthService {
       height: body.height,
       presetId: body.preset_id,
     };
-    if (Object.keys(stylePatch).length > 0) {
-      input.styleSettings = stylePatch;
-    }
 
     const defined = Object.entries(input).filter(
       ([, value]) => value !== undefined,
@@ -830,23 +821,22 @@ export class AuthService {
     return rows.map((row) => this.formatBonusBuyWidgetPreset(row));
   }
 
-  async createBonusBuyWidgetPreset(
+  async upsertBonusBuyWidgetCustomPreset(
     accountId: number,
     callerUserId: number,
-    body: { name?: string; style_settings?: unknown },
+    body: { style_settings?: unknown },
   ) {
     await this.requireAccountMember(accountId, callerUserId);
 
-    if (!body.name || body.style_settings === undefined) {
-      throw new BadRequestException('Name and style settings are required');
+    if (body.style_settings === undefined) {
+      throw new BadRequestException('Style settings are required');
     }
 
     try {
-      const row = await this.database.createBonusBuyWidgetPreset(
+      const row = await this.database.upsertBonusBuyWidgetCustomPreset(
         accountId,
         callerUserId,
         {
-          name: body.name,
           styleSettings: parseBonusBuyWidgetStyleSettings(body.style_settings),
         },
       );
@@ -856,45 +846,14 @@ export class AuthService {
     }
   }
 
-  async patchBonusBuyWidgetPreset(
+  async deleteBonusBuyWidgetCustomPreset(
     accountId: number,
     callerUserId: number,
-    presetId: number,
-    body: { name?: string; style_settings?: unknown },
-  ) {
-    await this.requireAccountMember(accountId, callerUserId);
-
-    if (body.name === undefined && body.style_settings === undefined) {
-      throw new BadRequestException('At least one field is required');
-    }
-
-    try {
-      const row = await this.database.patchBonusBuyWidgetPreset(
-        accountId,
-        presetId,
-        {
-          name: body.name,
-          styleSettings:
-            body.style_settings === undefined
-              ? undefined
-              : parseBonusBuyWidgetStyleSettings(body.style_settings),
-        },
-      );
-      return this.formatBonusBuyWidgetPreset(row);
-    } catch (error) {
-      this.mapWidgetPresetMutationError(error);
-    }
-  }
-
-  async deleteBonusBuyWidgetPreset(
-    accountId: number,
-    callerUserId: number,
-    presetId: number,
   ) {
     await this.requireAccountMember(accountId, callerUserId);
 
     try {
-      await this.database.deleteBonusBuyWidgetPreset(accountId, presetId);
+      await this.database.deleteBonusBuyWidgetCustomPreset(accountId);
     } catch (error) {
       this.mapWidgetPresetMutationError(error);
     }

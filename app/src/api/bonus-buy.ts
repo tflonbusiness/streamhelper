@@ -72,7 +72,7 @@ export type PatchBonusBuySlotInput = {
 export type BonusBuyWidgetSettings = {
   id: number
   bonusBuyId: number
-  presetId: number | null
+  presetId: number
   width: number
   height: number
   styleSettings: BonusBuyWidgetStyleSettings
@@ -105,28 +105,11 @@ export type BonusBuyWidgetStylePreset = {
 export type PatchBonusBuyWidgetInput = {
   width?: number
   height?: number
-  background_color?: string
-  surface_color?: string
-  border_color?: string
-  accent_color?: string
-  positive_color?: string
-  negative_color?: string
-  live_color?: string
-  text_muted_color?: string
-  border_radius?: number
-  padding?: number
-  font_family?: string
-  preset_id?: number | null
+  preset_id?: number
 }
 
-export type CreateBonusBuyWidgetPresetInput = {
-  name: string
+export type UpsertBonusBuyWidgetCustomPresetInput = {
   style_settings: BonusBuyWidgetStyleSettings
-}
-
-export type PatchBonusBuyWidgetPresetInput = {
-  name?: string
-  style_settings?: Partial<BonusBuyWidgetStyleSettings>
 }
 
 export type PublicBonusBuyRecord = {
@@ -440,14 +423,14 @@ export async function fetchBonusBuyWidgetPresets(
   return response.json() as Promise<BonusBuyWidgetStylePreset[]>
 }
 
-export async function createBonusBuyWidgetPreset(
+export async function upsertBonusBuyWidgetCustomPreset(
   accountId: number,
-  body: CreateBonusBuyWidgetPresetInput,
+  body: UpsertBonusBuyWidgetCustomPresetInput,
 ): Promise<BonusBuyWidgetStylePreset> {
   const response = await fetch(
-    `/accounts/${accountId}/bonus-buy-widget-presets`,
+    `/accounts/${accountId}/bonus-buy-widget-presets/custom`,
     {
-      method: 'POST',
+      method: 'PUT',
       credentials: 'include',
       headers: jsonHeaders,
       body: JSON.stringify(body),
@@ -456,43 +439,18 @@ export async function createBonusBuyWidgetPreset(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not create widget preset'),
+      await readErrorMessage(response, 'Could not save custom widget preset'),
     )
   }
 
   return response.json() as Promise<BonusBuyWidgetStylePreset>
 }
 
-export async function patchBonusBuyWidgetPreset(
+export async function deleteBonusBuyWidgetCustomPreset(
   accountId: number,
-  presetId: number,
-  body: PatchBonusBuyWidgetPresetInput,
-): Promise<BonusBuyWidgetStylePreset> {
-  const response = await fetch(
-    `/accounts/${accountId}/bonus-buy-widget-presets/${presetId}`,
-    {
-      method: 'PATCH',
-      credentials: 'include',
-      headers: jsonHeaders,
-      body: JSON.stringify(body),
-    },
-  )
-
-  if (!response.ok) {
-    throw new Error(
-      await readErrorMessage(response, 'Could not update widget preset'),
-    )
-  }
-
-  return response.json() as Promise<BonusBuyWidgetStylePreset>
-}
-
-export async function deleteBonusBuyWidgetPreset(
-  accountId: number,
-  presetId: number,
 ): Promise<void> {
   const response = await fetch(
-    `/accounts/${accountId}/bonus-buy-widget-presets/${presetId}`,
+    `/accounts/${accountId}/bonus-buy-widget-presets/custom`,
     {
       method: 'DELETE',
       credentials: 'include',
@@ -501,7 +459,7 @@ export async function deleteBonusBuyWidgetPreset(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not delete widget preset'),
+      await readErrorMessage(response, 'Could not delete custom widget preset'),
     )
   }
 }
