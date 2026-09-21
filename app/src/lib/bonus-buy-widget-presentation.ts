@@ -42,6 +42,16 @@ export type BonusBuyWidgetCardProps = {
 
 export type AverageXSentiment = 'dissatisfied' | 'neutral' | 'satisfied'
 
+export type AverageXColorTheme = Pick<
+  BonusBuyWidgetSettings,
+  'positiveColor' | 'negativeColor'
+>
+
+export const DEFAULT_AVERAGE_X_COLOR_THEME: AverageXColorTheme = {
+  positiveColor: '#10B981',
+  negativeColor: '#EF4444',
+}
+
 const AVERAGE_X_NEUTRAL_COLOR = '#FACC15'
 
 function parseAverageX(value: string): number {
@@ -50,15 +60,15 @@ function parseAverageX(value: string): number {
 
 export function getAverageXPresentation(
   averageXValue: number,
-  theme: BonusBuyWidgetTheme,
+  theme: AverageXColorTheme,
 ): { color: string; sentiment: AverageXSentiment } {
-  if (averageXValue < 0) {
+  if (averageXValue < 0.9) {
     return { color: theme.negativeColor, sentiment: 'dissatisfied' }
   }
-  if (averageXValue >= 1) {
-    return { color: theme.positiveColor, sentiment: 'satisfied' }
+  if (averageXValue < 1.1) {
+    return { color: AVERAGE_X_NEUTRAL_COLOR, sentiment: 'neutral' }
   }
-  return { color: AVERAGE_X_NEUTRAL_COLOR, sentiment: 'neutral' }
+  return { color: theme.positiveColor, sentiment: 'satisfied' }
 }
 
 export function deriveBonusBuyWidgetCardProps(

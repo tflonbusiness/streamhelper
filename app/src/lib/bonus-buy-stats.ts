@@ -19,18 +19,22 @@ export function computeSessionStats(
 ): BonusBuySessionStats {
   const start = new Decimal(startBalance)
   let spent = new Decimal(0)
+  let spentOnCompleted = new Decimal(0)
   let totalWin = new Decimal(0)
 
   for (const slot of slots) {
     spent = spent.plus(slot.purchaseAmount)
     if (slot.winAmount !== null) {
       totalWin = totalWin.plus(slot.winAmount)
+      spentOnCompleted = spentOnCompleted.plus(slot.purchaseAmount)
     }
   }
 
-  const profit = totalWin.minus(spent)
+  const profit = totalWin.minus(spentOnCompleted)
   const currentBalance = start.minus(spent).plus(totalWin)
-  const averageX = spent.gt(0) ? totalWin.div(spent) : new Decimal(0)
+  const averageX = spentOnCompleted.gt(0)
+    ? totalWin.div(spentOnCompleted)
+    : new Decimal(0)
 
   return {
     spent: spent.toFixed(2),

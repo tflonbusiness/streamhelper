@@ -4,6 +4,10 @@ import { styled } from '@mui/material/styles'
 import type { BonusBuyRecord } from '@/api/bonus-buy'
 import type { BonusBuySessionStats } from '@/lib/bonus-buy-stats'
 import {
+  DEFAULT_AVERAGE_X_COLOR_THEME,
+  getAverageXPresentation,
+} from '@/lib/bonus-buy-widget-presentation'
+import {
   formatUsd,
   parseAverageX,
   signedValueColor,
@@ -14,6 +18,7 @@ import { cardSx } from '@/theme/colors'
 type BonusBuySessionStatsSectionProps = {
   record: BonusBuyRecord
   stats: BonusBuySessionStats
+  averageXPositiveColor?: string
 }
 
 type StatCardProps = {
@@ -63,6 +68,11 @@ export const BonusBuySessionStatsSection = (
   const profitValue = Number.parseFloat(props.stats.profit)
   const currentBalanceValue = Number.parseFloat(props.stats.currentBalance)
   const averageXValue = parseAverageX(props.stats.averageX)
+  const { color: averageXColor } = getAverageXPresentation(averageXValue, {
+    positiveColor:
+      props.averageXPositiveColor ?? DEFAULT_AVERAGE_X_COLOR_THEME.positiveColor,
+    negativeColor: theme.palette.error.main,
+  })
 
   return (
     <Grid container spacing={1.5}>
@@ -90,7 +100,7 @@ export const BonusBuySessionStatsSection = (
         <StatCard
           label="Average X"
           value={props.stats.averageX}
-          valueColor={signedValueColor(averageXValue, theme)}
+          valueColor={averageXColor}
         />
       </Grid>
     </Grid>

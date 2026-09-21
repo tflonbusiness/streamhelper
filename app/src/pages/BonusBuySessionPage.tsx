@@ -16,7 +16,7 @@ import { bonusBuyModule } from '@/components/bonus-buy/session/bonus-buy-session
 import { useAuth } from '@/context/AuthContext'
 import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
 import { computeSessionStats } from '@/lib/bonus-buy-stats'
-import { useBonusBuySession } from '@/queries/use-bonus-buy'
+import { useBonusBuySession, useBonusBuyWidget } from '@/queries/use-bonus-buy'
 
 const PageStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(4),
@@ -39,6 +39,11 @@ export const BonusBuySessionPage = () => {
   } = useBonusBuySession(
     user?.accountId,
     isValidId ? bonusBuyId : null,
+  )
+  const { data: widgetSettings } = useBonusBuyWidget(
+    user?.accountId,
+    isValidId ? bonusBuyId : null,
+    isValidId,
   )
 
   const record = session?.record ?? null
@@ -95,7 +100,11 @@ export const BonusBuySessionPage = () => {
         onOpenEditDialog={() => setEditSessionDialogOpen(true)}
         onOpenWidgetDialog={() => setWidgetDialogOpen(true)}
       />
-      <BonusBuySessionStatsSection record={record} stats={stats} />
+      <BonusBuySessionStatsSection
+        record={record}
+        stats={stats}
+        averageXPositiveColor={widgetSettings?.positiveColor}
+      />
       <BonusBuySessionAddSlotSection
         accountId={accountId}
         bonusBuyId={bonusBuyId}

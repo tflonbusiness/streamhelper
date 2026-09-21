@@ -1,5 +1,5 @@
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
-import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket'
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium'
 import { Box, Typography } from '@mui/material'
 import { alpha, styled } from '@mui/material/styles'
@@ -140,7 +140,7 @@ export const StyledStatCellFlex = styled(StyledWidgetCell)({
   flex: 1,
 })
 
-export const StyledAccentIcon = styled(ShoppingBasketIcon, textColorProps)<
+export const StyledAccentIcon = styled(ShoppingCartIcon, textColorProps)<
   TextColorProp
 >(({ textColor }) => ({
   fontSize: 36,
