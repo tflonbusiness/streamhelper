@@ -1,11 +1,11 @@
-import { Box, Button, Grid, Stack, TextField, Typography } from '@mui/material'
+import { Box, Button, Grid, TextField } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import { alpha } from '@mui/material/styles'
 import { styled } from '@mui/material/styles'
 import { type FormEvent, useState } from 'react'
 import type { BonusBuyRecord } from '@/api/bonus-buy'
 import { isBonusBuyActive } from '@/api/bonus-buy'
-import { IconTile } from '@/components/IconTile'
+import { SectionHeader } from '@/components/SectionHeader'
 import {
   StyledSessionCard,
   StyledSessionCardContent,
@@ -20,26 +20,6 @@ type BonusBuySessionAddSlotSectionProps = {
   bonusBuyId: number
   record: BonusBuyRecord
 }
-
-const SectionHeader = styled(Stack)(({ theme }) => ({
-  marginBottom: theme.spacing(2.5),
-  alignItems: 'stretch',
-  justifyContent: 'space-between',
-  flexDirection: 'column',
-  gap: theme.spacing(2),
-  [theme.breakpoints.up('sm')]: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-}))
-
-const SectionTitleRow = styled(Box)({
-  display: 'flex',
-  alignItems: 'center',
-  gap: 12,
-  minWidth: 0,
-  flex: 1,
-})
 
 const FormPanel = styled(Box)(({ theme }) => ({
   border: '1px solid',
@@ -107,28 +87,23 @@ export const BonusBuySessionAddSlotSection = (
     <StyledSessionCard elevation={0}>
       <StyledSessionCardContent>
         <Box component="form" onSubmit={handleAddSlot}>
-          <SectionHeader direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <SectionTitleRow>
-              <IconTile icon={AddIcon} variant="success" />
-              <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
-                  Quick add slot
-                </Typography>
-                <Typography color="text.secondary" sx={{ fontSize: '0.6875rem' }}>
-                  Enter slot details and purchase amount in USD
-                </Typography>
-              </Box>
-            </SectionTitleRow>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={!active || createSlotMutation.isPending}
-              startIcon={<AddIcon fontSize="small" aria-hidden />}
-              sx={{ alignSelf: { xs: 'flex-end', sm: 'auto' }, flexShrink: 0 }}
-            >
-              {createSlotMutation.isPending ? 'Adding…' : 'Add slot'}
-            </Button>
-          </SectionHeader>
+          <SectionHeader
+            title="Quick add slot"
+            description="Enter slot details and purchase amount in USD"
+            icon={AddIcon}
+            iconVariant="success"
+            action={
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={!active || createSlotMutation.isPending}
+                startIcon={<AddIcon fontSize="small" aria-hidden />}
+                sx={{ flexShrink: 0 }}
+              >
+                {createSlotMutation.isPending ? 'Adding…' : 'Add slot'}
+              </Button>
+            }
+          />
           <FormPanel sx={!active ? { opacity: 0.55 } : undefined}>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 4 }}>

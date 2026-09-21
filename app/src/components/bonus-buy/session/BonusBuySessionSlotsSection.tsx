@@ -1,10 +1,10 @@
-import { Typography } from '@mui/material'
+import ListAltIcon from '@mui/icons-material/ListAlt'
 import { useTheme } from '@mui/material/styles'
-import { styled } from '@mui/material/styles'
 import { useMemo, useState } from 'react'
 import type { BonusBuySlot } from '@/api/bonus-buy'
 import { isBonusBuySlotPlaying } from '@/api/bonus-buy'
 import { AppTable } from '@/components/AppTable'
+import { SectionHeader } from '@/components/SectionHeader'
 import { BonusBuyDeleteSlotDialog } from '@/components/bonus-buy/session/BonusBuyDeleteSlotDialog'
 import { BonusBuyEditSlotDialog } from '@/components/bonus-buy/session/BonusBuyEditSlotDialog'
 import { BonusBuySlotExpandedDetails } from '@/components/bonus-buy/session/BonusBuySlotExpandedDetails'
@@ -22,11 +22,6 @@ type BonusBuySessionSlotsSectionProps = {
   bonusBuyId: number
   slots: BonusBuySlot[]
 }
-
-const SectionTitle = styled(Typography)(({ theme }) => ({
-  marginBottom: theme.spacing(2),
-  fontWeight: 600,
-}))
 
 export const BonusBuySessionSlotsSection = (
   props: BonusBuySessionSlotsSectionProps,
@@ -96,9 +91,12 @@ export const BonusBuySessionSlotsSection = (
     <>
       <StyledSessionCard elevation={0}>
         <StyledSessionCardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-          <SectionTitle variant="subtitle1">
-            Bonus list ({props.slots.length})
-          </SectionTitle>
+          <SectionHeader
+            title={`Bonus list (${props.slots.length})`}
+            description="Track purchases, wins, and which slot is live on the overlay"
+            icon={ListAltIcon}
+            iconVariant="secondary"
+          />
           <AppTable
             columns={slotColumns}
             rows={props.slots}
