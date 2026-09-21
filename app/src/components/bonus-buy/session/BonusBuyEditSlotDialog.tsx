@@ -68,6 +68,10 @@ export const BonusBuyEditSlotDialog = (props: BonusBuyEditSlotDialogProps) => {
         setEditSlotError('Win amount must be a valid number')
         return
       }
+      if (parsedWin < 0) {
+        setEditSlotError('Win amount cannot be negative')
+        return
+      }
     }
 
     setEditSlotError(null)
@@ -133,7 +137,7 @@ export const BonusBuyEditSlotDialog = (props: BonusBuyEditSlotDialogProps) => {
             onChange={(event) => setEditWinAmount(event.target.value)}
             placeholder="Leave empty if pending"
             slotProps={{
-              htmlInput: { step: '0.01', inputMode: 'decimal' },
+              htmlInput: { step: '0.01', min: 0, inputMode: 'decimal' },
             }}
             fullWidth
             sx={inputFieldSx}

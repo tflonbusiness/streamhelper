@@ -558,6 +558,11 @@ describe('AccountsController (e2e)', () => {
         expect(body.winAmount).toBe('60.00');
         expect(body.multiplier).toBe('3.00');
       });
+
+    await agent
+      .patch(`/accounts/10/bonus-buys/1/slots/${created.body.id}`)
+      .send({ win_amount: '-1.00' })
+      .expect(400);
   });
 
   it('owner sets and clears now playing slot', async () => {

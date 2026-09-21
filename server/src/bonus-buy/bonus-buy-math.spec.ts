@@ -15,6 +15,7 @@ describe('bonus-buy-math', () => {
   it('normalizes money values', () => {
     expect(normalizeMoney('10')).toBe('10.00');
     expect(normalizeMoney('10.5')).toBe('10.50');
+    expect(normalizeMoney('0')).toBe('0.00');
     expect(() => normalizeMoney('-1')).toThrow('INVALID_AMOUNT');
     expect(() => normalizeMoney('10.999')).toThrow('INVALID_AMOUNT');
   });
