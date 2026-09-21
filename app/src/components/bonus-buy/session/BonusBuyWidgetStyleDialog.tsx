@@ -1,5 +1,4 @@
 import {
-  Box,
   Button,
   Dialog,
   DialogActions,
@@ -7,6 +6,7 @@ import {
   DialogTitle,
   Grid,
 } from '@mui/material'
+import { styled } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type {
@@ -41,10 +41,47 @@ type BonusBuyWidgetStyleDialogProps = {
   onClose: () => void
 }
 
+const StyledStatusAlert = styled(StatusAlert)(({ theme }) => ({
+  marginTop: theme.spacing(1),
+}))
+
+const StyledContentGrid = styled(Grid)(({ theme }) => ({
+  marginTop: theme.spacing(1),
+}))
+
+const StyledPreviewGrid = styled(Grid)(({ theme }) => ({
+  display: 'none',
+  flexDirection: 'column',
+  [theme.breakpoints.up('md')]: {
+    display: 'flex',
+  },
+}))
+
+const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
+  paddingLeft: theme.spacing(3),
+  paddingRight: theme.spacing(3),
+  paddingBottom: theme.spacing(2),
+  flexWrap: 'wrap',
+  gap: theme.spacing(1),
+}))
+
+const StyledPreviewDialogActions = styled(DialogActions)(({ theme }) => ({
+  paddingLeft: theme.spacing(3),
+  paddingRight: theme.spacing(3),
+  paddingBottom: theme.spacing(2),
+}))
+
+const StyledMobilePreviewButton = styled(Button)(({ theme }) => ({
+  display: 'inline-flex',
+  [theme.breakpoints.up('md')]: {
+    display: 'none',
+  },
+}))
+
 export const BonusBuyWidgetStyleDialog = (
   props: BonusBuyWidgetStyleDialogProps,
 ) => {
-  const { showSuccess } = useNotification()
+  const { showSuccess, showError } = useNotification()
   const patchWidgetMutation = usePatchBonusBuyWidget(
     props.accountId,
     props.bonusBuyId,
@@ -70,6 +107,18 @@ export const BonusBuyWidgetStyleDialog = (
   const { data: widgetPresets = [] } = useBonusBuyWidgetPresets(
     props.open ? props.accountId : undefined,
   )
+
+  useEffect(() => {
+    if (!props.open || !widgetLoadError) {
+      return
+    }
+
+    showError(
+      widgetLoadError instanceof Error
+        ? widgetLoadError.message
+        : 'Could not load widget settings',
+    )
+  }, [props.open, showError, widgetLoadError])
 
   async function handleSave(
     widgetDraft: BonusBuyWidgetSettings,
@@ -102,7 +151,6 @@ export const BonusBuyWidgetStyleDialog = (
 
   const {
     widgetDraft,
-    widgetEditError,
     widgetDraftValidationError,
     widgetPreviewTheme,
     widgetPreviewDimensionLabel,
@@ -114,8 +162,8 @@ export const BonusBuyWidgetStyleDialog = (
   } = useBonusBuyWidgetDraft({
     widgetSettings,
     widgetPresets,
-    dialogOpen: props.open,
     onSave: handleSave,
+    onError: showError,
   })
 
   const isPending =
@@ -134,17 +182,11 @@ export const BonusBuyWidgetStyleDialog = (
         <DialogTitle>Widget Style</DialogTitle>
         <DialogContent>
           {isLoadingWidget ? (
-            <StatusAlert tone="info" sx={{ mt: 1 }}>
+            <StyledStatusAlert tone="info">
               Loading settings…
-            </StatusAlert>
-          ) : widgetLoadError ? (
-            <StatusAlert tone="error" sx={{ mt: 1 }}>
-              {widgetLoadError instanceof Error
-                ? widgetLoadError.message
-                : 'Could not load widget settings'}
-            </StatusAlert>
-          ) : widgetDraft ? (
-            <Grid container spacing={3} sx={{ mt: 1 }}>
+            </StyledStatusAlert>
+          ) : widgetLoadError ? null : widgetDraft ? (
+            <StyledContentGrid container spacing={3}>
               <Grid size={{ xs: 12 }}>
                 <WidgetThemePresetPicker
                   presets={widgetPresets}
@@ -158,10 +200,7 @@ export const BonusBuyWidgetStyleDialog = (
                   onUpdate={updateWidgetDraft}
                 />
               </Grid>
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                sx={{ display: { xs: 'none', md: 'flex' }, flexDirection: 'column' }}
-              >
+              <StyledPreviewGrid size={{ xs: 12, md: 6 }}>
                 <WidgetStylePreview
                   record={props.record}
                   slots={props.slots}
@@ -169,23 +208,17 @@ export const BonusBuyWidgetStyleDialog = (
                   dimensionLabel={widgetPreviewDimensionLabel}
                   validationError={widgetDraftValidationError}
                 />
-              </Grid>
-            </Grid>
-          ) : null}
-          {widgetEditError ? (
-            <Box sx={{ mt: 2 }}>
-              <StatusAlert tone="error">{widgetEditError}</StatusAlert>
-            </Box>
+              </StyledPreviewGrid>
+            </StyledContentGrid>
           ) : null}
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2, flexWrap: 'wrap', gap: 1 }}>
-          <Button
+        <StyledDialogActions>
+          <StyledMobilePreviewButton
             onClick={() => setWidgetPreviewDialogOpen(true)}
             disabled={!widgetDraft}
-            sx={{ display: { xs: 'inline-flex', md: 'none' } }}
           >
             Preview
-          </Button>
+          </StyledMobilePreviewButton>
           <Button
             component={Link}
             to={`/bonus-buy/${props.bonusBuyId}/widget`}
@@ -204,7 +237,7 @@ export const BonusBuyWidgetStyleDialog = (
           >
             {isPending ? 'Saving…' : 'Save'}
           </Button>
-        </DialogActions>
+        </StyledDialogActions>
       </Dialog>
       <Dialog
         open={widgetPreviewDialogOpen}
@@ -222,9 +255,9 @@ export const BonusBuyWidgetStyleDialog = (
             validationError={widgetDraftValidationError}
           />
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
+        <StyledPreviewDialogActions>
           <Button onClick={() => setWidgetPreviewDialogOpen(false)}>Close</Button>
-        </DialogActions>
+        </StyledPreviewDialogActions>
       </Dialog>
     </>
   )

@@ -10,20 +10,19 @@ import { validateBonusBuyWidgetDraft } from '@/lib/bonus-buy-widget-validation'
 type UseBonusBuyWidgetDraftOptions = {
   widgetSettings: BonusBuyWidgetSettings | undefined
   widgetPresets: BonusBuyWidgetStylePreset[]
-  dialogOpen: boolean
   onSave: (draft: BonusBuyWidgetSettings, presets: BonusBuyWidgetStylePreset[]) => Promise<void>
+  onError?: (message: string) => void
 }
 
 export function useBonusBuyWidgetDraft({
   widgetSettings,
   widgetPresets,
-  dialogOpen,
   onSave,
+  onError,
 }: UseBonusBuyWidgetDraftOptions) {
   const [widgetDraft, setWidgetDraft] = useState<BonusBuyWidgetSettings | null>(null)
   const [lastValidWidgetDraft, setLastValidWidgetDraft] =
     useState<BonusBuyWidgetSettings | null>(null)
-  const [widgetEditError, setWidgetEditError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
@@ -42,12 +41,6 @@ export function useBonusBuyWidgetDraft({
       setLastValidWidgetDraft(widgetDraft)
     }
   }, [widgetDraft])
-
-  useEffect(() => {
-    if (!dialogOpen) {
-      setWidgetEditError(null)
-    }
-  }, [dialogOpen])
 
   const widgetDraftValidationError = useMemo(() => {
     if (!widgetDraft) {
@@ -96,17 +89,16 @@ export function useBonusBuyWidgetDraft({
 
     const validationError = validateBonusBuyWidgetDraft(widgetDraft)
     if (validationError) {
-      setWidgetEditError(validationError)
+      onError?.(validationError)
       return
     }
 
-    setWidgetEditError(null)
     setIsSaving(true)
 
     try {
       await onSave(widgetDraft, widgetPresets)
     } catch (saveError) {
-      setWidgetEditError(
+      onError?.(
         saveError instanceof Error
           ? saveError.message
           : 'Could not save widget settings',
@@ -118,7 +110,6 @@ export function useBonusBuyWidgetDraft({
 
   return {
     widgetDraft,
-    widgetEditError,
     widgetDraftValidationError,
     widgetPreviewTheme,
     widgetPreviewDimensionLabel,
