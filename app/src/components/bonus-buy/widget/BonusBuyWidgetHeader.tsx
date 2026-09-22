@@ -28,7 +28,7 @@ export function BonusBuyWidgetHeader({
         <StyledHeaderIconWrap textColor={theme.accentColor}>
           <StyledHeaderGiftIcon aria-hidden />
         </StyledHeaderIconWrap>
-        <StyledHeaderTitle>Bonus Buy #{record.id}</StyledHeaderTitle>
+        <StyledHeaderTitle>{record.name}</StyledHeaderTitle>
       </StyledHeaderLeft>
       <StyledSlotCountPill widgetTheme={theme}>
         <StyledSlotCountIcon textColor={theme.accentColor} aria-hidden />

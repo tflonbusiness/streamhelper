@@ -303,6 +303,8 @@ export const StyledLiveName = styled(Typography, textColorProps)<TextColorProp>(
 
 export const StyledLivePurchase = styled(StyledMutedText)({
   flexShrink: 0,
+  fontSize: '22px',
+  fontWeight: 500,
 })
 
 export const StyledLiveBadge = styled(Box, {
@@ -319,7 +321,7 @@ export const StyledLiveBadge = styled(Box, {
   paddingTop: '4px',
   paddingBottom: '4px',
   flexShrink: 0,
-  marginLeft: 8,
+  marginLeft: 18,
 }))
 
 export const StyledLiveDot = styled(Box, {
@@ -340,18 +342,26 @@ export const StyledLiveLabel = styled(Typography)({
 
 export const StyledSlotRow = styled(StyledWidgetCell)({
   justifyContent: 'space-between',
-  gap: 8,
+  gap: 18,
   flexShrink: 0,
+  paddingLeft: '16px',
+  paddingRight: '16px',
+  paddingTop: '8px',
+  paddingBottom: '8px',
 })
 
 export const StyledSlotInfo = styled(Box)({
   minWidth: 0,
   flex: 1,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '1px',
 })
 
 export const StyledSlotName = styled(Typography)({
-  fontSize: '20px',
+  fontSize: '22px',
   fontWeight: 500,
+  lineHeight: 1.15,
   color: '#FFFFFF',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
@@ -361,6 +371,7 @@ export const StyledSlotName = styled(Typography)({
 export const StyledSlotProvider = styled(Typography, textColorProps)<TextColorProp>(
   ({ textColor }) => ({
     fontSize: '16px',
+    lineHeight: 1.1,
     color: textColor,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
@@ -388,10 +399,10 @@ export const StyledMultiplierBadge = styled(Box, {
   backgroundColor: alpha(badgeColor, 0.08),
   border: `1px solid ${alpha(badgeColor, 0.3)}`,
   borderRadius: '8px',
-  paddingLeft: '8px',
-  paddingRight: '8px',
-  paddingTop: '4px',
-  paddingBottom: '4px',
+  paddingLeft: '12px',
+  paddingRight: '12px',
+  paddingTop: '8px',
+  paddingBottom: '8px',
   flexShrink: 0,
 }))
 
@@ -408,8 +419,8 @@ export const StyledSlotListContainer = styled(Box)({
   flex: 1,
   minHeight: 0,
   overflow: 'hidden',
-  paddingTop: 8,
-  paddingBottom: 8,
+  paddingTop: 4,
+  paddingBottom: 4,
   maskImage: 'linear-gradient(to bottom, black 85%, transparent 100%)',
 })
 

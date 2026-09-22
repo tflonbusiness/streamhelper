@@ -35,7 +35,7 @@ export function BonusBuyWidgetSlotRow({
   const badgeColor = positive ? theme.positiveColor : theme.negativeColor
 
   return (
-    <StyledSlotRow widgetTheme={theme} cellHeight={62}>
+    <StyledSlotRow widgetTheme={theme} cellHeight={74}>
       <StyledSlotInfo>
         <StyledSlotName>{index + 1}. {slot.name}</StyledSlotName>
         <StyledSlotProvider textColor={theme.textMutedColor}>

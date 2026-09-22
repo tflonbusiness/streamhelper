@@ -20,6 +20,7 @@ export type BonusBuyWidgetTheme = Pick<
 
 export type BonusBuyWidgetCardRecord = {
   id: number
+  name: string
   startBalance: string
 }
 

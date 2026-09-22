@@ -69,7 +69,11 @@ export function BonusBuyStreamWidgetPage() {
     }
 
     return deriveBonusBuyWidgetCardProps(
-      { id: view.record.id, startBalance: view.record.startBalance },
+      {
+        id: view.record.id,
+        name: view.record.name,
+        startBalance: view.record.startBalance,
+      },
       view.slots,
       view.settings,
     )
