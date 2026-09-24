@@ -100,7 +100,7 @@ export const BonusBuySessionAddSlotSection = (
         <Box component="form" onSubmit={onSubmit} noValidate>
           <SectionHeader
             title="Quick add slot"
-            description="Enter slot details and purchase amount in USD"
+            description="Enter slot details and purchase amount"
             icon={AddIcon}
             iconVariant="success"
             action={
@@ -146,7 +146,7 @@ export const BonusBuySessionAddSlotSection = (
                     <StyledTextField
                       {...field}
                       id="session-nick-provider"
-                      label="Provider Name"
+                      label="Username/Note"
                       error={Boolean(fieldState.error)}
                       helperText={fieldState.error?.message}
                       disabled={!active || createSlotMutation.isPending}

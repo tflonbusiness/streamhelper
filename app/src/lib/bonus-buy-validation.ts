@@ -93,7 +93,7 @@ export const editBonusBuySlotFormSchema = yup.object({
   providerName: yup
     .string()
     .defined()
-    .max(200, 'Provider name must be at most 200 characters'),
+    .max(200, 'Username/Note must be at most 200 characters'),
   purchaseAmount: yup
     .string()
     .required('Purchase amount is required')

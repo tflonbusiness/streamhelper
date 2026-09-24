@@ -115,7 +115,7 @@ export const BonusBuyCreateDialog = (props: BonusBuyCreateDialogProps) => {
       <DialogTitle>New Bonus Buy</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
-          Create a bonus buy session with a name, currency, and starting balance.
+          Create a bonus buy session with a name and starting balance.
         </StyledDescription>
         <Box component="form" id="bonus-buy-create-form" onSubmit={onSubmit}>
           <StyledFormStack>

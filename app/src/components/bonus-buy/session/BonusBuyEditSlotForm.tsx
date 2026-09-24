@@ -92,7 +92,7 @@ export const BonusBuyEditSlotForm = (props: BonusBuyEditSlotFormProps) => {
           render={({ field, fieldState }) => (
             <StyledTextField
               {...field}
-              label="Provider Name"
+              label="Username/Note"
               error={Boolean(fieldState.error)}
               helperText={fieldState.error?.message}
               fullWidth

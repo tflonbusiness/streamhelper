@@ -38,7 +38,7 @@ function findCurrency(code: string): IsoCurrency | null {
 }
 
 function formatCurrencyLabel(option: IsoCurrency): string {
-  return `${option.symbol} ${option.code} — ${option.name}`
+  return `${option.symbol} ${option.code}`
 }
 
 export function BonusBuyCurrencyField(props: BonusBuyCurrencyFieldProps) {
@@ -64,9 +64,6 @@ export function BonusBuyCurrencyField(props: BonusBuyCurrencyFieldProps) {
           </SymbolBadge>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
             {option.code}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-            {option.name}
           </Typography>
         </Box>
       )}
