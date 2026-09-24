@@ -1,4 +1,4 @@
-import { Link, Skeleton, Typography } from '@mui/material'
+import { Link, Skeleton } from '@mui/material'
 import ChatIcon from '@mui/icons-material/Chat'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import { styled } from '@mui/material/styles'
@@ -61,7 +61,6 @@ export function ChatRollKickChatSection({
       <ListCardContent>
         <SectionHeader
           title="Kick chat"
-          description="Live chat for your account's linked Kick channel."
           icon={ChatIcon}
           iconVariant="info"
           action={
@@ -100,17 +99,6 @@ export function ChatRollKickChatSection({
             />
           </ChatFrameWrap>
         )}
-
-        {slug ? (
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            component="p"
-            sx={{ mt: 1.5 }}
-          >
-            kick.com/popout/{slug}/chat — sign in on Kick to send messages.
-          </Typography>
-        ) : null}
       </ListCardContent>
     </ListCard>
   )

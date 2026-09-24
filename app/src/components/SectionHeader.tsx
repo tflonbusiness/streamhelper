@@ -15,16 +15,22 @@ export const SectionDivider = styled(Divider)(({ theme }) => ({
 }))
 
 const StyledHeaderRow = styled(Stack, {
-  shouldForwardProp: (prop) => prop !== 'showDivider',
-})<{ showDivider?: boolean }>(({ theme, showDivider }) => ({
-  alignItems: 'flex-start',
-  justifyContent: 'space-between',
-  marginBottom: showDivider ? 0 : theme.spacing(3),
-}))
+  shouldForwardProp: (prop) => prop !== 'showDivider' && prop !== 'hasDescription',
+})<{ showDivider?: boolean; hasDescription?: boolean }>(
+  ({ theme, showDivider, hasDescription }) => ({
+    alignItems: hasDescription ? 'flex-start' : 'center',
+    justifyContent: 'space-between',
+    marginBottom: showDivider ? 0 : theme.spacing(3),
+  }),
+)
 
-const StyledHeaderMain = styled(Stack)(({ theme }) => ({
+const StyledHeaderMain = styled(Stack, {
+  shouldForwardProp: (prop) => prop !== 'hasDescription',
+})<{ hasDescription?: boolean }>(({ theme, hasDescription }) => ({
   flexDirection: 'row',
   gap: theme.spacing(1.5),
+  alignItems: hasDescription ? 'flex-start' : 'center',
+  minHeight: hasDescription ? undefined : 40,
 }))
 
 const StyledHeaderText = styled(Stack)({})
@@ -64,10 +70,17 @@ export function SectionHeader({
   titleComponent = 'h2',
   showDivider = true,
 }: SectionHeaderProps) {
+  const hasDescription = Boolean(description?.trim())
+
   return (
     <>
-      <StyledHeaderRow direction="row" spacing={2} showDivider={showDivider}>
-        <StyledHeaderMain>
+      <StyledHeaderRow
+        direction="row"
+        spacing={2}
+        showDivider={showDivider}
+        hasDescription={hasDescription}
+      >
+        <StyledHeaderMain hasDescription={hasDescription}>
           <IconTile icon={icon} variant={iconVariant} />
           <StyledHeaderText>
             <StyledTitle variant="subtitle1" component={titleComponent}>

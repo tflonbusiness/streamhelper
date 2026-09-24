@@ -52,7 +52,6 @@ export const ChatRollStreamWidgetSection = (
       <StyledCardContent>
         <SectionHeader
           title="Stream Widget"
-          description={`OBS overlay settings and links for chat roll.`}
           icon={MonitorIcon}
           iconVariant="info"
           action={

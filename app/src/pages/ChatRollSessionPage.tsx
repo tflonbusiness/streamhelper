@@ -3,22 +3,23 @@ import CasinoIcon from '@mui/icons-material/Casino'
 import DeleteIcon from '@mui/icons-material/Delete'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
+import GroupIcon from '@mui/icons-material/Group'
 import ReplayIcon from '@mui/icons-material/Replay'
 import SettingsIcon from '@mui/icons-material/Settings'
 import { type ReactNode, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import type { ChatRollParticipant } from '@/api/chat-roll'
 import { isChatRollReadOnly } from '@/api/chat-roll'
+import type { IconTileVariant, TileIcon } from '@/components/IconTile'
 import {
   CoefficientChip,
   EmptyListText,
   ListCard,
   ListCardContent,
-  ListHeaderStack,
   ListRowName,
   ListRowStack,
   ListRowsStack,
-  ListTitle,
   PageStack,
   ParticipantExtraStack,
   RoleLabel,
@@ -66,6 +67,8 @@ import {
 
 function NameListCard({
   title,
+  icon,
+  iconVariant = 'info',
   emptyLabel,
   removeAriaLabel,
   rows,
@@ -75,6 +78,8 @@ function NameListCard({
   readOnly,
 }: {
   title: string
+  icon: TileIcon
+  iconVariant?: IconTileVariant
   emptyLabel: string
   removeAriaLabel: string
   rows: { id: number; displayName: string }[]
@@ -86,17 +91,21 @@ function NameListCard({
   return (
     <ListCard elevation={0}>
       <ListCardContent>
-        <ListHeaderStack>
-          <ListTitle variant="subtitle1">{title}</ListTitle>
-          <Button
-            size="small"
-            variant="text"
-            onClick={onClearAll}
-            disabled={rows.length === 0 || readOnly}
-          >
-            Clear all
-          </Button>
-        </ListHeaderStack>
+        <SectionHeader
+          title={title}
+          icon={icon}
+          iconVariant={iconVariant}
+          action={
+            <Button
+              size="small"
+              variant="text"
+              onClick={onClearAll}
+              disabled={rows.length === 0 || readOnly}
+            >
+              Clear all
+            </Button>
+          }
+        />
 
         {rows.length === 0 ? (
           <EmptyListText variant="body2" color="text.secondary">
@@ -311,7 +320,6 @@ export function ChatRollSessionPage() {
               <SettingsCardContent>
                 <SectionHeader
                   title="Settings"
-                  description="Keyword, entry rules, and role weights for this session."
                   icon={SettingsIcon}
                   iconVariant="info"
                 />
@@ -445,6 +453,7 @@ export function ChatRollSessionPage() {
             <Grid size={{ xs: 12, md: 4, lg: 3 }}>
               <NameListCard
                 title="Participants"
+                icon={GroupIcon}
                 emptyLabel="No participants yet."
                 removeAriaLabel="Remove participant"
                 rows={participants}
@@ -474,6 +483,8 @@ export function ChatRollSessionPage() {
             <Grid size={{ xs: 12, md: 4, lg: 3 }}>
               <NameListCard
                 title="Winners"
+                icon={EmojiEventsIcon}
+                iconVariant="primary"
                 emptyLabel="No winners yet."
                 removeAriaLabel="Remove winner"
                 rows={wins}
