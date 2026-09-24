@@ -9,6 +9,7 @@ import {
   editBonusBuySlotFormSchema,
 } from '@/lib/bonus-buy-validation'
 import { buildBonusBuyMoneyInputSlotProps } from '@/components/bonus-buy/bonus-buy-money-input'
+import { BonusBuySlotNameField } from '@/components/bonus-buy/BonusBuySlotNameField'
 import { sanitizeDecimalInput } from '@/lib/bonus-buy-format'
 
 export type BonusBuyEditSlotFormProps = {
@@ -76,13 +77,12 @@ export const BonusBuyEditSlotForm = (props: BonusBuyEditSlotFormProps) => {
           name="name"
           control={control}
           render={({ field, fieldState }) => (
-            <StyledTextField
-              {...field}
-              label="Slot Name"
+            <BonusBuySlotNameField
+              value={field.value}
+              onChange={field.onChange}
               error={Boolean(fieldState.error)}
               helperText={fieldState.error?.message}
               autoFocus
-              fullWidth
             />
           )}
         />

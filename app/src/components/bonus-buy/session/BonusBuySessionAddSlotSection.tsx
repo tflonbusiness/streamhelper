@@ -17,6 +17,7 @@ import {
 } from '@/lib/bonus-buy-validation'
 import { buildBonusBuyMoneyInputSlotProps } from '@/components/bonus-buy/bonus-buy-money-input'
 import { sanitizeDecimalInput } from '@/lib/bonus-buy-format'
+import { BonusBuySlotNameField } from '@/components/bonus-buy/BonusBuySlotNameField'
 import { useCreateBonusBuySlot } from '@/queries/use-bonus-buy'
 import { colors } from '@/theme/colors'
 
@@ -124,16 +125,14 @@ export const BonusBuySessionAddSlotSection = (
                   name="name"
                   control={control}
                   render={({ field, fieldState }) => (
-                    <StyledTextField
-                      {...field}
+                    <BonusBuySlotNameField
                       id="session-slot-name"
-                      label="Slot Name"
+                      value={field.value}
+                      onChange={field.onChange}
                       required
                       error={Boolean(fieldState.error)}
                       helperText={fieldState.error?.message}
                       disabled={!active || createSlotMutation.isPending}
-                      fullWidth
-                      size="small"
                     />
                   )}
                 />
