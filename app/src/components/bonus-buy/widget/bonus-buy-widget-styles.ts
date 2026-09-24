@@ -1,7 +1,8 @@
-import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium'
 import { Box, Typography } from '@mui/material'
+import {
+  BonusBuyWidgetBasketIcon,
+  BonusBuyWidgetGiftIcon,
+} from '@/components/bonus-buy/widget/bonus-buy-widget-icons'
 import type { TypographyProps } from '@mui/material/Typography'
 import { alpha, styled } from '@mui/material/styles'
 import type { BonusBuyWidgetTheme } from '@/lib/bonus-buy-widget-presentation'
@@ -98,7 +99,7 @@ export const StyledHeaderIconWrap = styled(Box, textColorProps)<TextColorProp>(
   }),
 )
 
-export const StyledHeaderGiftIcon = styled(CardGiftcardIcon)({
+export const StyledHeaderGiftIcon = styled(BonusBuyWidgetGiftIcon)({
   fontSize: 28,
 })
 
@@ -126,7 +127,7 @@ export const StyledSlotCountPill = styled(Box, widgetThemeProps)<WidgetThemeProp
   }),
 )
 
-export const StyledSlotCountIcon = styled(CardGiftcardIcon, textColorProps)<
+export const StyledSlotCountIcon = styled(BonusBuyWidgetGiftIcon, textColorProps)<
   TextColorProp
 >(({ textColor }) => ({
   fontSize: 22,
@@ -150,7 +151,7 @@ export const StyledStatCellFlex = styled(StyledWidgetCell)({
   flex: 1,
 })
 
-export const StyledAccentIcon = styled(ShoppingCartIcon, textColorProps)<
+export const StyledAccentIcon = styled(BonusBuyWidgetBasketIcon, textColorProps)<
   TextColorProp
 >(({ textColor }) => ({
   fontSize: 36,
@@ -181,13 +182,6 @@ export const StyledAverageXValue = styled(Typography, textColorProps)<
   marginLeft: '10px',
   fontWeight: 600,
   fontSize: '28px',
-  color: textColor,
-}))
-
-export const StyledPremiumIcon = styled(WorkspacePremiumIcon, textColorProps)<
-  TextColorProp
->(({ textColor }) => ({
-  fontSize: 36,
   color: textColor,
 }))
 
