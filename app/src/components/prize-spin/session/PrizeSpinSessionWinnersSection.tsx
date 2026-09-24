@@ -1,4 +1,5 @@
 import { Button } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import ArchiveIcon from '@mui/icons-material/Archive'
 import { useState } from 'react'
 import type { PrizeSpinWin } from '@/api/prize-spin'
@@ -25,6 +26,7 @@ type PrizeSpinSessionWinnersSectionProps = {
 export const PrizeSpinSessionWinnersSection = (
   props: PrizeSpinSessionWinnersSectionProps,
 ) => {
+  const theme = useTheme()
   const { showSuccess, showError } = useNotification()
   const [expandedWinnerIds, setExpandedWinnerIds] = useState<Set<number>>(
     new Set(),
@@ -35,6 +37,15 @@ export const PrizeSpinSessionWinnersSection = (
     props.accountId,
     props.prizeSpinId,
   )
+
+  const handleCopyNick = async (win: PrizeSpinWin) => {
+    try {
+      await navigator.clipboard.writeText(win.participantNick)
+      showSuccess('Winner nick copied.')
+    } catch {
+      showError('Could not copy winner nick.')
+    }
+  }
 
   const handleDeleteWin = (winId: number) => {
     deleteWinMutation.mutate(winId, {
@@ -60,7 +71,9 @@ export const PrizeSpinSessionWinnersSection = (
   }
 
   const winnerColumns = buildPrizeSpinWinnerColumns({
+    theme,
     readOnly: props.readOnly,
+    onCopyNick: (win) => void handleCopyNick(win),
     onDelete: handleDeleteWin,
   })
 
