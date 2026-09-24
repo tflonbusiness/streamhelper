@@ -6,7 +6,7 @@ import { Link, type LinkProps } from 'react-router-dom'
 import { isChatRollArchived, type ChatRollRecord } from '@/api/chat-roll'
 import type { AppTableColumn } from '@/components/AppTable'
 import { chatRollSessionRoute } from '@/lib/routes'
-import { colors } from '@/theme/colors'
+import { colors, toneChipSx } from '@/theme/colors'
 
 const titleColumnSx = {
   minWidth: 0,
@@ -80,7 +80,9 @@ function recordStatusChip(record: ChatRollRecord) {
     return <MutedStatusChip label="Archived" size="small" />
   }
 
-  return <MutedStatusChip label="Active" size="small" />
+  return (
+    <Chip label="Active" size="small" sx={toneChipSx(colors.success[400])} />
+  )
 }
 
 type BuildChatRollRecordColumnsOptions = {

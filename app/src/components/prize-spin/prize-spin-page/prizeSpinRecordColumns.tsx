@@ -6,7 +6,7 @@ import { Link, type LinkProps } from 'react-router-dom'
 import { isPrizeSpinArchived, type PrizeSpinRecord } from '@/api/prize-spin'
 import type { AppTableColumn } from '@/components/AppTable'
 import { prizeSpinSessionRoute } from '@/lib/routes'
-import { colors } from '@/theme/colors'
+import { colors, toneChipSx } from '@/theme/colors'
 
 const titleColumnSx = {
   minWidth: 0,
@@ -84,7 +84,9 @@ function recordStatusChip(record: PrizeSpinRecord) {
     return <MutedStatusChip label="Archived" size="small" />
   }
 
-  return <MutedStatusChip label="Active" size="small" />
+  return (
+    <Chip label="Active" size="small" sx={toneChipSx(colors.success[400])} />
+  )
 }
 
 type BuildPrizeSpinRecordColumnsOptions = {
