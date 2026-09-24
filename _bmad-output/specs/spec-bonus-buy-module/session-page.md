@@ -100,6 +100,8 @@ Centered muted text: **No bonuses added yet.**
 
 Table or stacked rows per `bonus-buy-slots.md`. List updates immediately after quick-add without full page reload.
 
+**Download XLSX** in the Bonus list card header (visible when count > 0) exports the visible slot rows per `bonus-buy-slots-export.md`.
+
 ## States
 
 | State | UI |

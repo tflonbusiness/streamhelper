@@ -170,6 +170,10 @@ Row actions: use `RowActionsMenu` when multiple actions per row (same pattern as
 
 On delete success: close confirm dialog, refresh stats and list, decrement **Bonus list (N)**; `NotificationContext` success toast. Row remains in DB with `is_archived = true`.
 
+## XLSX export
+
+Client-side **Download XLSX** from the Bonus list panel — columns, filename, and scope per `bonus-buy-slots-export.md`. Wired on `BonusBuySessionPage`; no API change.
+
 **Edit dialog fields:**
 
 | Field | Required | Notes |

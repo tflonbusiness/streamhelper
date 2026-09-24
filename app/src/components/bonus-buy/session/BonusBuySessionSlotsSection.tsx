@@ -1,3 +1,5 @@
+import DownloadIcon from '@mui/icons-material/Download'
+import Button from '@mui/material/Button'
 import { useTheme } from '@mui/material/styles'
 import { useMemo, useState } from 'react'
 import type { BonusBuySlot } from '@/api/bonus-buy'
@@ -14,6 +16,7 @@ import {
   StyledSessionCardContent,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { useNotification } from '@/context/NotificationContext'
+import { downloadBonusBuySlotsXlsx } from '@/lib/bonus-buy-slots-export'
 import { usePatchBonusBuySlot } from '@/queries/use-bonus-buy'
 
 type BonusBuySessionSlotsSectionProps = {
@@ -30,6 +33,7 @@ export const BonusBuySessionSlotsSection = (
   const { showSuccess, showError } = useNotification()
   const patchSlotMutation = usePatchBonusBuySlot(props.accountId, props.bonusBuyId)
 
+  const [isExportingSlots, setIsExportingSlots] = useState(false)
   const [editSlot, setEditSlot] = useState<BonusBuySlot | null>(null)
   const [deleteSlot, setDeleteSlot] = useState<BonusBuySlot | null>(null)
   const [expandedSlotIds, setExpandedSlotIds] = useState<Set<number>>(new Set())
@@ -52,6 +56,27 @@ export const BonusBuySessionSlotsSection = (
       showSuccess('Slot name copied.')
     } catch {
       showError('Could not copy slot name.')
+    }
+  }
+
+  function handleDownloadSlots() {
+    if (props.slots.length === 0 || isExportingSlots) {
+      return
+    }
+
+    setIsExportingSlots(true)
+
+    try {
+      downloadBonusBuySlotsXlsx(props.slots, props.bonusBuyId)
+      showSuccess('Bonus list exported.')
+    } catch (exportError) {
+      showError(
+        exportError instanceof Error
+          ? exportError.message
+          : 'Could not export bonus list',
+      )
+    } finally {
+      setIsExportingSlots(false)
     }
   }
 
@@ -97,6 +122,20 @@ export const BonusBuySessionSlotsSection = (
             description="Track purchases, wins, and which slot is live on the overlay"
             icon={sectionTableIcon}
             iconVariant="secondary"
+            action={
+              props.slots.length > 0 ? (
+                <Button
+                  type="button"
+                  variant="outlined"
+                  size="small"
+                  startIcon={<DownloadIcon fontSize="small" aria-hidden />}
+                  disabled={isExportingSlots}
+                  onClick={handleDownloadSlots}
+                >
+                  {isExportingSlots ? 'Downloading…' : 'Download XLSX'}
+                </Button>
+              ) : null
+            }
           />
           <AppTable
             columns={slotColumns}

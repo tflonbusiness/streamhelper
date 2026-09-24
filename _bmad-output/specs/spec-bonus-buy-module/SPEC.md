@@ -4,6 +4,7 @@ companions:
   - bonus-buy-module.md
   - bonus-buy-records.md
   - bonus-buy-slots.md
+  - bonus-buy-slots-export.md
   - bonus-buy-widget.md
   - widget-theme-presets.md
   - session-page.md
@@ -123,6 +124,10 @@ sources: []
   - **intent:** The stream overlay presents slot title blocks without a placeholder when optional provider text is absent.
   - **success:** On `/bonus-buy/:id/widget`, every row that shows `{name}` + `providerName` (slot list, LIVE playing, win highlight) omits the provider line when `providerName` is null, undefined, or whitespace-only — no em dash (`—`) in that line; the slot name is vertically centered within the same title block; fixed row heights stay unchanged (slot list 74px, LIVE and win highlight 68px per `stream-widget-page.md`); when `providerName` is non-empty after trim, the muted second line renders as today.
 
+- **CAP-25**
+  - **intent:** An operator downloads the current session Bonus list as an XLSX spreadsheet from the session workspace.
+  - **success:** **Download XLSX** in the Bonus list card header (visible when at least one non-archived slot exists) builds a `.xlsx` file client-side from loaded slot rows and triggers a browser download; worksheet columns **Slot name**, **Purchase**, **Win**, **Multiplier**, **Username/Note** and filename match `bonus-buy-slots-export.md`; exported rows match on-screen Bonus list order and scope (non-archived only).
+
 ## Constraints
 
 - **Catalog delta:** `bonus-buy` in `MODULE_CATALOG` with status `available` and widget route `/bonus-buy`; do not alter existing module IDs.
@@ -159,6 +164,9 @@ sources: []
 - **Preview invalid state:** maintain `lastValidWidgetDraft` updated only when `validateWidgetDraft` passes; invalid edits render frozen last-valid `WidgetCanvas` plus semi-transparent overlay with validation text — not a blank panel.
 - **Overlay design target:** Figma frame `bb` (`1:5`, 500×600) per [stream-widget-page.md](stream-widget-page.md); default colors `#0A0A0C`, `#121215`, `#F59E0B`, `#10B981`, `#EF4444`.
 - **Overlay empty provider:** public widget only — do not render `—` for missing `providerName`; center slot name in the title block; row `cellHeight` values unchanged; session workspace expanded details and forms may still use `—` for empty provider.
+- **Client-side Bonus list XLSX:** use existing `xlsx` (SheetJS) dependency; export helper in `app/src/lib/bonus-buy-slots-export.ts`; no server export endpoint.
+- **Bonus list export scope:** XLSX includes only visible (non-archived) slots currently shown in Bonus list — archived rows excluded; export mirrors the on-screen list exactly; row order `created_at ASC`.
+- **Bonus list export columns:** five headers only per `bonus-buy-slots-export.md`; pending win and multiplier as empty cells (not **Pending** label); purchase/win/multiplier as numeric Excel values where present.
 
 ## Non-goals
 
@@ -181,10 +189,14 @@ sources: []
 - Per-currency ISO minor-unit enforcement (e.g. JPY 0 dp catalog rules) — optional 0–2 fraction digits on all money inputs in this slice.
 - Cryptocurrency or custom currency codes outside ISO 4217.
 - Aligning session workspace **Bonus list** or expanded slot detail with overlay empty-provider rules — overlay widget rows only (CAP-24).
+- CSV, PDF, or Google Sheets export for Bonus list — XLSX only in this slice.
+- Server-side or authenticated export API for slots — client-side download only.
+- Exporting archived slots, expanded-row metadata (created by, created date), or now-playing status columns.
+- Cross-session or account-wide bulk slot export from `/bonus-buy` history page.
 
 ## Success signal
 
-Owner opens `/bonus-buy` → **New** → searches **eur** in **Currency**, selects **EUR — Euro**, start balance **100** → create → history shows **€100** → **Open** → edits currency to **GBP** via session dialog → stats and slot purchase labels show **£** → **Widget style** → **Save** → adds slot purchase **50** → **Set as playing** → **Overlay** shows amounts in GBP → `npm run build` passes.
+Owner opens `/bonus-buy` → **New** → searches **eur** in **Currency**, selects **EUR — Euro**, start balance **100** → create → history shows **€100** → **Open** → edits currency to **GBP** via session dialog → stats and slot purchase labels show **£** → **Widget style** → **Save** → adds slot purchase **50** → **Set as playing** → **Overlay** shows amounts in GBP → on session page **Download XLSX** in Bonus list → file `bonus-buy-{id}-slots-{date}.xlsx` opens with five columns matching the table → `npm run build` passes.
 
 ## Assumptions
 
@@ -211,6 +223,8 @@ Owner opens `/bonus-buy` → **New** → searches **eur** in **Currency**, selec
 - `nick_provider` stores the user-facing nickname field.
 - Win pending vs recorded is inferred from `win_amount` nullability — no separate status column.
 - Overlay may poll public widget API on interval; WebSocket deferred.
+- Bonus list XLSX exports purchase/win/multiplier as numeric cells; currency symbol is not duplicated in each cell — session `currency_code` context is implicit.
+- Pending slot results export as empty Win and Multiplier cells — not the UI **Pending** label.
 - Live preview in Widget style dialog uses in-memory `widgetDraft` and session page data — not the public overlay API.
 - Invalid draft preview shows both last-valid frozen canvas and error overlay — same validation rules as **Save**.
 - Widget theme presets share 500×600 dimensions and Figma shape defaults — only colors vary unless operator edits after apply.
