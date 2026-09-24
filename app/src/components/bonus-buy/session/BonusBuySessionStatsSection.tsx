@@ -8,7 +8,7 @@ import {
   getAverageXPresentation,
 } from '@/lib/bonus-buy-widget-presentation'
 import {
-  formatUsd,
+  formatBonusBuyMoney,
   parseAverageX,
   signedValueColor,
 } from '@/components/bonus-buy/session/bonus-buy-session-utils'
@@ -77,22 +77,34 @@ export const BonusBuySessionStatsSection = (
   return (
     <Grid container spacing={1.5}>
       <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
-        <StatCard label="Start balance" value={formatUsd(props.record.startBalance)} />
+        <StatCard
+          label="Start balance"
+          value={formatBonusBuyMoney(
+            props.record.startBalance,
+            props.record.currencyCode,
+          )}
+        />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
         <StatCard
           label="Current balance"
-          value={formatUsd(props.stats.currentBalance)}
+          value={formatBonusBuyMoney(
+            props.stats.currentBalance,
+            props.record.currencyCode,
+          )}
           valueColor={signedValueColor(currentBalanceValue, theme)}
         />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
-        <StatCard label="Spent" value={formatUsd(props.stats.spent)} />
+        <StatCard
+          label="Spent"
+          value={formatBonusBuyMoney(props.stats.spent, props.record.currencyCode)}
+        />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
         <StatCard
           label="Profit"
-          value={formatUsd(props.stats.profit)}
+          value={formatBonusBuyMoney(props.stats.profit, props.record.currencyCode)}
           valueColor={signedValueColor(profitValue, theme)}
         />
       </Grid>

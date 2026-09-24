@@ -5,7 +5,7 @@ export const bonusBuyModule = MODULE_CATALOG.find(
   (module) => module.id === 'bonus-buy',
 )!
 
-export { formatUsd } from '@/lib/bonus-buy-format'
+export { formatBonusBuyMoney, formatUsd } from '@/lib/bonus-buy-format'
 
 export function formatDateTime(value: string): string {
   return new Intl.DateTimeFormat('en-US', {

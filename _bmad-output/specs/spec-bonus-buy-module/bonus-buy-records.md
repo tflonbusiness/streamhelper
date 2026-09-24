@@ -11,9 +11,10 @@ Table `bonus_buy` in `public` schema. Add via `DatabaseService.initSchema()`.
 | `id` | `BIGSERIAL PRIMARY KEY` | |
 | `account_id` | `BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE` | Tenant scope |
 | `created_by_user_id` | `BIGINT NOT NULL REFERENCES users(id)` | Session user at insert |
-| `title` | `TEXT NOT NULL` | Operator-defined label |
-| `start_balance` | `NUMERIC(12, 2) NOT NULL` | USD dollars with cents |
-| `is_active` | `BOOLEAN NOT NULL DEFAULT true` | Multiple active rows allowed per account |
+| `name` | `TEXT NOT NULL` | Operator-defined label |
+| `start_balance` | `NUMERIC(12, 2) NOT NULL` | Session amount; display per `currency_code` |
+| `currency_code` | `CHAR(3) NOT NULL DEFAULT 'USD'` | ISO 4217 — see `session-currencies.md` |
+| `status` | `TEXT NOT NULL DEFAULT 'active'` | `active` \| `archived` |
 | `created_at` | `TIMESTAMPTZ NOT NULL DEFAULT now()` | Server-set on insert |
 
 Index: `(account_id, created_at DESC)` for list queries.
@@ -28,23 +29,24 @@ Account-scoped REST under existing NestJS patterns (`TeamPage` / `accounts.contr
 |--------|------|------|----------|
 | `GET` | `/accounts/:accountId/bonus-buys` | — | `BonusBuyRecord[]` |
 | `GET` | `/accounts/:accountId/bonus-buys/:bonusBuyId` | — | `BonusBuyRecord` |
-| `POST` | `/accounts/:accountId/bonus-buys` | `{ title: string; start_balance: string }` | `BonusBuyRecord` |
+| `POST` | `/accounts/:accountId/bonus-buys` | `{ name: string; start_balance: string; currency_code: string }` | `BonusBuyRecord` |
 | `PATCH` | `/accounts/:accountId/bonus-buys/:bonusBuyId` | see below | `BonusBuyRecord` |
 
 **PATCH body** (partial — at least one field):
 
 ```ts
-{ title?: string; start_balance?: string }
+{ name?: string; start_balance?: string; currency_code?: string }
 ```
 
 | Field | Validation |
 |-------|------------|
-| `title` | non-empty, max 200 chars |
-| `start_balance` | > 0, max 2 decimal places, USD |
+| `name` | non-empty, max 200 chars |
+| `start_balance` | ≥ 0; whole number or optional fraction, max 2 decimal places |
+| `currency_code` | valid ISO 4217 code from catalog — `session-currencies.md` |
 
 **Auth:** session user required; `hasActiveMembership(accountId, userId)`.
 
-**Create:** set `account_id` from route param; `created_by_user_id` from session user; `is_active = true`; `created_at = now()`. Validate `start_balance` is a positive number with at most 2 decimal places.
+**Create:** set `account_id` from route param; `created_by_user_id` from session user; `status = active`; `created_at = now()`; `currency_code` default `USD` if omitted. Validate `start_balance` is ≥ 0 with optional fraction (at most 2 decimal places).
 
 **PATCH:** verify `bonus_buy.account_id = :accountId`; update only supplied fields; `created_by_user_id` and `created_at` immutable. Changing `start_balance` affects **Current balance** stat (via formulas in `bonus-buy-slots.md`); slot rows unchanged.
 
@@ -58,9 +60,10 @@ Account-scoped REST under existing NestJS patterns (`TeamPage` / `accounts.contr
 interface BonusBuyRecord {
   id: number
   accountId: number
-  title: string
+  name: string
   startBalance: string   // decimal string, e.g. "100.50"
-  isActive: boolean
+  currencyCode: string   // e.g. "USD"
+  status: 'active' | 'archived'
   createdAt: string      // ISO 8601
   createdByUserId: number
   createdByName: string  // users.name
@@ -95,10 +98,11 @@ Card (cardSx)
 
 | Field | Input | Validation |
 |-------|-------|------------|
-| Title | `TextField` + `inputFieldSx` | Required, non-empty, max 200 chars |
-| Start balance | `TextField` number, `step="0.01"` | Required, > 0, max 2 decimal places |
+| Name | `TextField` + `inputFieldSx` | Required, non-empty, max 200 chars |
+| Currency | `Autocomplete` per `session-currencies.md` | Required; default USD; type-to-search |
+| Start balance | `TextField` (text + `sanitizeDecimalInput`) | Required, ≥ 0; integer or optional ≤ 2 dp — see `session-currencies.md` |
 
-Label or helper text: USD (dollars and cents). Display formatted as `$1,234.56`.
+Display start balance with `formatBonusBuyMoney(startBalance, currencyCode)` — not hardcoded `$`.
 
 On success: close dialog, refresh table, `NotificationContext.showSuccess` toast. On error: `StatusAlert` tone error in dialog.
 
@@ -127,9 +131,9 @@ Shared behavior (from `AppTable` + session page):
 
 | Column | Source | Display |
 |--------|--------|---------|
-| Title | `title` | Plain text, `fontWeight: 500`, ellipsis on overflow |
-| Start balance | `startBalance` | `$X,XXX.XX` (en-US, 2 decimals) |
-| Status | `isActive` | `Chip` — **Active** via `toneChipSx(success.light)`; **Inactive** via `mutedChipSx(theme)` |
+| Name | `name` | Plain text, `fontWeight: 500`, ellipsis on overflow |
+| Start balance | `startBalance` + `currencyCode` | `formatBonusBuyMoney` |
+| Status | `status` | `Chip` — **Active** / **Archived** per status enum |
 | Action | — | Icon `Button` as `Link` to `/bonus-buy/:id` (arrow), `aria-label` includes title |
 
 #### Expandable detail (`RecordExpandedDetails`)

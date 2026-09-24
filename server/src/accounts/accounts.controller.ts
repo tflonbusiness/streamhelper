@@ -23,11 +23,13 @@ type CreateModeratorBody = {
 type CreateBonusBuyBody = {
   name?: string;
   start_balance?: string;
+  currency_code?: string;
 };
 
 type PatchBonusBuyBody = {
   name?: string;
   start_balance?: string;
+  currency_code?: string;
 };
 
 type CreateBonusBuySlotBody = {
@@ -206,6 +208,7 @@ export class AccountsController {
       user.id,
       body.name ?? '',
       body.start_balance ?? '',
+      body.currency_code ?? 'USD',
     );
 
     return record;

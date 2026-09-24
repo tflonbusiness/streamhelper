@@ -25,6 +25,7 @@ export function BonusBuyWidgetCard({
       <BonusBuyWidgetStatsRow
         stats={stats}
         theme={theme}
+        currencyCode={record.currencyCode}
         averageXColor={averageXColor}
         averageXSentiment={averageXSentiment}
       />
@@ -32,6 +33,7 @@ export function BonusBuyWidgetCard({
         <BonusBuyWidgetBestXRow
           slot={bestMultiplierSlot}
           theme={theme}
+          currencyCode={record.currencyCode}
         />
       ) : null}
       {playingSlot ? (
@@ -39,9 +41,14 @@ export function BonusBuyWidgetCard({
           playingSlot={playingSlot}
           playingIndex={playingIndex}
           theme={theme}
+          currencyCode={record.currencyCode}
         />
       ) : null}
-      <BonusBuyWidgetSlotList listSlots={listSlots} theme={theme} />
+      <BonusBuyWidgetSlotList
+        listSlots={listSlots}
+        theme={theme}
+        currencyCode={record.currencyCode}
+      />
     </StyledWidgetCard>
   )
 }

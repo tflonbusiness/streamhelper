@@ -1,6 +1,6 @@
 import type { BonusBuySlot } from '@/api/bonus-buy'
 import { formatMultiplierDisplay } from '@/lib/bonus-buy-stats'
-import { formatUsd } from '@/lib/bonus-buy-format'
+import { formatBonusBuyMoney } from '@/lib/bonus-buy-format'
 import type { BonusBuyWidgetTheme } from '@/lib/bonus-buy-widget-presentation'
 import {
   StyledMultiplierBadge,
@@ -18,12 +18,14 @@ type BonusBuyWidgetSlotRowProps = {
   slot: BonusBuySlot
   index: number
   theme: BonusBuyWidgetTheme
+  currencyCode: string
 }
 
 export function BonusBuyWidgetSlotRow({
   slot,
   index,
   theme,
+  currencyCode,
 }: BonusBuyWidgetSlotRowProps) {
   const positive = isWinPositive(slot)
   const resultColor =
@@ -43,10 +45,12 @@ export function BonusBuyWidgetSlotRow({
         </StyledSlotProvider>
       </StyledSlotInfo>
       <StyledPurchaseAmount textColor={theme.textMutedColor}>
-        {formatUsd(slot.purchaseAmount)}
+        {formatBonusBuyMoney(slot.purchaseAmount, currencyCode)}
       </StyledPurchaseAmount>
       <StyledWinAmount textColor={resultColor}>
-        {slot.winAmount !== null ? formatUsd(slot.winAmount) : '—'}
+        {slot.winAmount !== null
+          ? formatBonusBuyMoney(slot.winAmount, currencyCode)
+          : '—'}
       </StyledWinAmount>
       {slot.multiplier ? (
         <StyledMultiplierBadge badgeColor={badgeColor}>

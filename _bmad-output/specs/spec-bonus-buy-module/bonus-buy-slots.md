@@ -77,8 +77,8 @@ Nested under account-scoped bonus buy routes.
 |-------|------------|-------|
 | `slot_name` | non-empty, max 200 chars | |
 | `nick_provider` | optional; `null` clears | |
-| `purchase_amount` | > 0, max 2 decimal places | USD |
-| `win_amount` | ≥ 0, max 2 decimal places; `null` clears | |
+| `purchase_amount` | > 0; integer or optional ≤ 2 dp | format per session `currency_code` — `session-currencies.md` |
+| `win_amount` | ≥ 0; integer or optional ≤ 2 dp; `null` clears | same |
 | `is_now_playing` | boolean | `true` = now playing; atomically clears siblings; `false` = not on widget |
 
 Reject PATCH on `is_archived = true` rows (404).
@@ -176,7 +176,7 @@ On delete success: close confirm dialog, refresh stats and list, decrement **Bon
 |-------|----------|-------|
 | Slot | yes | `slot_name` |
 | Nick / provider | no | `nick_provider`; empty clears |
-| Purchase ($) | yes | `purchase_amount` |
+| Purchase | yes | `purchase_amount` — money input rules per `session-currencies.md` |
 | Win ($) | no | `win_amount`; empty clears win and multiplier |
 | Now playing | toggle | `is_now_playing`; turning on clears siblings server-side |
 

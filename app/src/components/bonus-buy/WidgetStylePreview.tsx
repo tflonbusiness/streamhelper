@@ -26,7 +26,12 @@ export function WidgetStylePreview({
     }
 
     return deriveBonusBuyWidgetCardProps(
-      { id: record.id, name: record.name, startBalance: record.startBalance },
+      {
+        id: record.id,
+        name: record.name,
+        startBalance: record.startBalance,
+        currencyCode: record.currencyCode,
+      },
       slots,
       previewTheme,
     )

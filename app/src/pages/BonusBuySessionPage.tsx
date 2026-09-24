@@ -113,6 +113,7 @@ export const BonusBuySessionPage = () => {
       <BonusBuySessionSlotsSection
         accountId={accountId}
         bonusBuyId={bonusBuyId}
+        currencyCode={record.currencyCode}
         slots={slots}
       />
       <BonusBuyEditSessionDialog

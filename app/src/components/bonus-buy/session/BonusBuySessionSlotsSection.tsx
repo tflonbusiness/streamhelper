@@ -19,6 +19,7 @@ import { usePatchBonusBuySlot } from '@/queries/use-bonus-buy'
 type BonusBuySessionSlotsSectionProps = {
   accountId: number
   bonusBuyId: number
+  currencyCode: string
   slots: BonusBuySlot[]
 }
 
@@ -74,6 +75,7 @@ export const BonusBuySessionSlotsSection = (
     () =>
       buildBonusBuySlotColumns({
         theme,
+        currencyCode: props.currencyCode,
         onCopySlotName: (slot) => {
           void handleCopySlotName(slot)
         },
@@ -83,7 +85,7 @@ export const BonusBuySessionSlotsSection = (
         onEditSlot: setEditSlot,
         onDeleteSlot: setDeleteSlot,
       }),
-    [theme],
+    [theme, props.currencyCode],
   )
 
   return (
@@ -119,6 +121,7 @@ export const BonusBuySessionSlotsSection = (
       <BonusBuyEditSlotDialog
         accountId={props.accountId}
         bonusBuyId={props.bonusBuyId}
+        currencyCode={props.currencyCode}
         slot={editSlot}
         onClose={() => setEditSlot(null)}
       />

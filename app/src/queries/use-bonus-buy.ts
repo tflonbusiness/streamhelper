@@ -65,8 +65,17 @@ export function useCreateBonusBuy(accountId: number | undefined) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input: { name: string; startBalance: string }) =>
-      createBonusBuy(accountId!, input.name, input.startBalance),
+    mutationFn: (input: {
+      name: string
+      startBalance: string
+      currencyCode: string
+    }) =>
+      createBonusBuy(
+        accountId!,
+        input.name,
+        input.startBalance,
+        input.currencyCode,
+      ),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: bonusBuyKeys.lists() })
     },

@@ -11,7 +11,7 @@ import {
 } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import {
   BONUS_BUY_DEFAULT_NAME,
 } from '@/components/bonus-buy/bonus-buy-page/bonus-buy-page-utils'
@@ -20,10 +20,9 @@ import {
   type CreateBonusBuyFormValues,
   createBonusBuyFormSchema,
 } from '@/lib/bonus-buy-validation'
-import {
-  decimalMoneyInputSlotProps,
-  sanitizeDecimalInput,
-} from '@/lib/bonus-buy-format'
+import { BonusBuyCurrencyField } from '@/components/bonus-buy/BonusBuyCurrencyField'
+import { buildBonusBuyMoneyInputSlotProps } from '@/components/bonus-buy/bonus-buy-money-input'
+import { sanitizeDecimalInput } from '@/lib/bonus-buy-format'
 import { useCreateBonusBuy } from '@/queries/use-bonus-buy'
 
 type BonusBuyCreateDialogProps = {
@@ -35,6 +34,7 @@ type BonusBuyCreateDialogProps = {
 
 const defaultValues: CreateBonusBuyFormValues = {
   name: BONUS_BUY_DEFAULT_NAME,
+  currencyCode: 'USD',
   startBalance: '0',
 }
 
@@ -74,6 +74,8 @@ export const BonusBuyCreateDialog = (props: BonusBuyCreateDialogProps) => {
     mode: 'onChange',
   })
 
+  const currencyCode = useWatch({ control, name: 'currencyCode' })
+
   const handleClose = () => {
     props.onClose()
     reset(defaultValues)
@@ -85,7 +87,11 @@ export const BonusBuyCreateDialog = (props: BonusBuyCreateDialogProps) => {
 
   const onSubmit = handleSubmit((values) => {
     createMutation.mutate(
-      { name: values.name, startBalance: values.startBalance },
+      {
+        name: values.name,
+        startBalance: values.startBalance,
+        currencyCode: values.currencyCode,
+      },
       {
         onSuccess: () => {
           showSuccess('Bonus buy session created.')
@@ -109,7 +115,7 @@ export const BonusBuyCreateDialog = (props: BonusBuyCreateDialogProps) => {
       <DialogTitle>New Bonus Buy</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
-          Create a bonus buy session with a name and starting balance in USD.
+          Create a bonus buy session with a name, currency, and starting balance.
         </StyledDescription>
         <Box component="form" id="bonus-buy-create-form" onSubmit={onSubmit}>
           <StyledFormStack>
@@ -130,18 +136,31 @@ export const BonusBuyCreateDialog = (props: BonusBuyCreateDialogProps) => {
               )}
             />
             <Controller
+              name="currencyCode"
+              control={control}
+              render={({ field, fieldState }) => (
+                <BonusBuyCurrencyField
+                  id="bonus-buy-currency"
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={Boolean(fieldState.error)}
+                  helperText={fieldState.error?.message}
+                />
+              )}
+            />
+            <Controller
               name="startBalance"
               control={control}
               render={({ field, fieldState }) => (
                 <StyledField
                   {...field}
                   id="bonus-buy-balance"
-                  label="Start balance (USD)"
+                  label="Start balance"
                   type="text"
                   onChange={(event) =>
                     field.onChange(sanitizeDecimalInput(event.target.value))
                   }
-                  slotProps={decimalMoneyInputSlotProps}
+                  slotProps={buildBonusBuyMoneyInputSlotProps(currencyCode)}
                   error={Boolean(fieldState.error)}
                   helperText={fieldState.error?.message}
                   fullWidth

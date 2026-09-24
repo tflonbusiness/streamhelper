@@ -228,16 +228,7 @@ export class AuthService {
       throw new NotFoundException('Bonus buy not found');
     }
 
-    return {
-      id: row.id,
-      accountId: row.accountId,
-      name: row.name,
-      startBalance: row.startBalance,
-      status: row.status,
-      createdAt: row.createdAt.toISOString(),
-      createdByUserId: row.createdByUserId,
-      createdByName: row.createdByName,
-    };
+    return this.formatBonusBuy(row);
   }
 
   async listBonusBuys(
@@ -291,6 +282,7 @@ export class AuthService {
     callerUserId: number,
     name: string,
     startBalance: string,
+    currencyCode: string,
   ) {
     const isMember = await this.database.hasActiveMembership(
       accountId,
@@ -306,17 +298,9 @@ export class AuthService {
         callerUserId,
         name,
         startBalance,
+        currencyCode,
       );
-      return {
-        id: row.id,
-        accountId: row.accountId,
-        name: row.name,
-        startBalance: row.startBalance,
-        status: row.status,
-        createdAt: row.createdAt.toISOString(),
-        createdByUserId: row.createdByUserId,
-        createdByName: row.createdByName,
-      };
+      return this.formatBonusBuy(row);
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === 'INVALID_NAME') {
@@ -326,6 +310,9 @@ export class AuthService {
           throw new BadRequestException(
             'Start balance must be zero or a positive number with up to 2 decimal places',
           );
+        }
+        if (error.message === 'INVALID_CURRENCY_CODE') {
+          throw new BadRequestException('Currency must be a valid ISO 4217 code');
         }
       }
       throw error;
@@ -376,6 +363,7 @@ export class AuthService {
       accountId: row.accountId,
       name: row.name,
       startBalance: row.startBalance,
+      currencyCode: row.currencyCode,
       status: row.status,
       createdAt: row.createdAt.toISOString(),
       createdByUserId: row.createdByUserId,
@@ -587,11 +575,19 @@ export class AuthService {
     accountId: number,
     callerUserId: number,
     bonusBuyId: number,
-    updates: { name?: string; start_balance?: string },
+    updates: {
+      name?: string;
+      start_balance?: string;
+      currency_code?: string;
+    },
   ) {
     await this.requireAccountMember(accountId, callerUserId);
 
-    if (updates.name === undefined && updates.start_balance === undefined) {
+    if (
+      updates.name === undefined &&
+      updates.start_balance === undefined &&
+      updates.currency_code === undefined
+    ) {
       throw new BadRequestException('At least one field is required');
     }
 
@@ -599,6 +595,7 @@ export class AuthService {
       const row = await this.database.updateBonusBuy(accountId, bonusBuyId, {
         name: updates.name,
         startBalance: updates.start_balance,
+        currencyCode: updates.currency_code,
       });
       return this.formatBonusBuy(row);
     } catch (error) {
@@ -611,8 +608,11 @@ export class AuthService {
         }
         if (error.message === 'INVALID_AMOUNT') {
           throw new BadRequestException(
-            'Start balance must be a positive number with up to 2 decimal places',
+            'Start balance must be zero or greater with up to 2 decimal places',
           );
+        }
+        if (error.message === 'INVALID_CURRENCY_CODE') {
+          throw new BadRequestException('Currency must be a valid ISO 4217 code');
         }
       }
       throw error;
@@ -874,6 +874,7 @@ export class AuthService {
         id: view.record.id,
         name: view.record.name,
         startBalance: view.record.startBalance,
+        currencyCode: view.record.currencyCode,
         status: view.record.status,
       },
       slots: view.slots.map((row) => this.formatBonusBuySlot(row)),

@@ -99,7 +99,8 @@ export function buildBonusBuyRecordColumns(): AppTableColumn<BonusBuyRecord>[] {
       width: 120,
       minWidth: 120,
       sx: balanceColumnSx,
-      render: (record) => formatBonusBuyUsd(record.startBalance),
+      render: (record) =>
+        formatBonusBuyUsd(record.startBalance, record.currencyCode),
     },
     {
       id: 'status',

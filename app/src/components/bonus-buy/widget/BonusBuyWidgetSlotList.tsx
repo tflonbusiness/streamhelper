@@ -13,6 +13,7 @@ const SLOT_LIST_GAP_PX = 10
 type BonusBuyWidgetSlotListProps = {
   listSlots: BonusBuySlot[]
   theme: BonusBuyWidgetTheme
+  currencyCode: string
 }
 
 function measureSingleListHeight(track: HTMLElement, slotCount: number): number {
@@ -35,6 +36,7 @@ function measureSingleListHeight(track: HTMLElement, slotCount: number): number 
 export function BonusBuyWidgetSlotList({
   listSlots,
   theme,
+  currencyCode,
 }: BonusBuyWidgetSlotListProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
@@ -91,6 +93,7 @@ export function BonusBuyWidgetSlotList({
             slot={slot}
             index={index % listSlots.length}
             theme={theme}
+            currencyCode={currencyCode}
           />
         ))}
       </StyledSlotScrollTrack>

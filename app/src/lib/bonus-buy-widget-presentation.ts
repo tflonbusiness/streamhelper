@@ -22,6 +22,7 @@ export type BonusBuyWidgetCardRecord = {
   id: number
   name: string
   startBalance: string
+  currencyCode: string
 }
 
 export type BonusBuyWidgetCardProps = {

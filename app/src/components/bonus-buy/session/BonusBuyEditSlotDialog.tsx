@@ -20,6 +20,7 @@ const FORM_ID = 'bonus-buy-edit-slot-form'
 type BonusBuyEditSlotDialogProps = {
   accountId: number
   bonusBuyId: number
+  currencyCode: string
   slot: BonusBuySlot | null
   onClose: () => void
 }
@@ -94,6 +95,7 @@ export const BonusBuyEditSlotDialog = (props: BonusBuyEditSlotDialogProps) => {
         <BonusBuyEditSlotForm
           formId={FORM_ID}
           slot={props.slot}
+          currencyCode={props.currencyCode}
           onSubmit={handleSaveEditSlot}
           onValidChange={setIsFormValid}
         />

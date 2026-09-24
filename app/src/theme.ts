@@ -103,15 +103,15 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 8,
-        },
-        selected: {
-          backgroundColor: alpha(colors.brand[500], 0.12),
-          color: colors.brand[400],
-          '&:hover': {
-            backgroundColor: alpha(colors.brand[500], 0.16),
-          },
-          '& .MuiTypography-root': {
-            fontWeight: 600,
+          '&.Mui-selected': {
+            backgroundColor: alpha(colors.brand[500], 0.12),
+            color: colors.brand[400],
+            '&:hover': {
+              backgroundColor: alpha(colors.brand[500], 0.16),
+            },
+            '& .MuiTypography-root': {
+              fontWeight: 600,
+            },
           },
         },
       },

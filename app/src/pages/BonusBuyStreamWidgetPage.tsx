@@ -73,6 +73,7 @@ export function BonusBuyStreamWidgetPage() {
         id: view.record.id,
         name: view.record.name,
         startBalance: view.record.startBalance,
+        currencyCode: view.record.currencyCode,
       },
       view.slots,
       view.settings,

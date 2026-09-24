@@ -1,7 +1,7 @@
 import SentimentNeutralIcon from '@mui/icons-material/SentimentNeutral'
 import SentimentSatisfiedAltIcon from '@mui/icons-material/SentimentSatisfiedAlt'
 import SentimentVeryDissatisfiedIcon from '@mui/icons-material/SentimentVeryDissatisfied'
-import { formatUsd } from '@/lib/bonus-buy-format'
+import { formatBonusBuyMoney } from '@/lib/bonus-buy-format'
 import type { BonusBuySessionStats } from '@/lib/bonus-buy-stats'
 import type {
   AverageXSentiment,
@@ -29,6 +29,7 @@ const AVERAGE_X_ICONS: Record<
 type BonusBuyWidgetStatsRowProps = {
   stats: BonusBuySessionStats
   theme: BonusBuyWidgetTheme
+  currencyCode: string
   averageXColor: string
   averageXSentiment: AverageXSentiment
 }
@@ -36,6 +37,7 @@ type BonusBuyWidgetStatsRowProps = {
 export function BonusBuyWidgetStatsRow({
   stats,
   theme,
+  currencyCode,
   averageXColor,
   averageXSentiment,
 }: BonusBuyWidgetStatsRowProps) {
@@ -45,7 +47,9 @@ export function BonusBuyWidgetStatsRow({
     <StyledStatsRow>
       <StyledStatCellFlex widgetTheme={theme} cellHeight={54}>
         <StyledAccentIcon textColor={theme.accentColor} aria-hidden />
-        <StyledStatValue>{formatUsd(stats.totalWin)}</StyledStatValue>
+        <StyledStatValue>
+          {formatBonusBuyMoney(stats.totalWin, currencyCode)}
+        </StyledStatValue>
       </StyledStatCellFlex>
       <StyledWidgetCell widgetTheme={theme} cellHeight={54}>
         <StyledAverageXIcon textColor={averageXColor} aria-hidden>

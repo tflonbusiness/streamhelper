@@ -8,14 +8,13 @@ import {
   type EditBonusBuySlotFormValues,
   editBonusBuySlotFormSchema,
 } from '@/lib/bonus-buy-validation'
-import {
-  decimalMoneyInputSlotProps,
-  sanitizeDecimalInput,
-} from '@/lib/bonus-buy-format'
+import { buildBonusBuyMoneyInputSlotProps } from '@/components/bonus-buy/bonus-buy-money-input'
+import { sanitizeDecimalInput } from '@/lib/bonus-buy-format'
 
 export type BonusBuyEditSlotFormProps = {
   formId: string
   slot: BonusBuySlot | null
+  currencyCode: string
   onSubmit: (values: EditBonusBuySlotFormValues) => void
   onValidChange?: (isValid: boolean) => void
 }
@@ -106,12 +105,12 @@ export const BonusBuyEditSlotForm = (props: BonusBuyEditSlotFormProps) => {
           render={({ field, fieldState }) => (
             <StyledTextField
               {...field}
-              label="Purchase ($)"
+              label="Purchase"
               type="text"
               onChange={(event) =>
                 field.onChange(sanitizeDecimalInput(event.target.value))
               }
-              slotProps={decimalMoneyInputSlotProps}
+              slotProps={buildBonusBuyMoneyInputSlotProps(props.currencyCode)}
               error={Boolean(fieldState.error)}
               helperText={fieldState.error?.message}
               fullWidth
@@ -124,13 +123,13 @@ export const BonusBuyEditSlotForm = (props: BonusBuyEditSlotFormProps) => {
           render={({ field, fieldState }) => (
             <StyledTextField
               {...field}
-              label="Win ($)"
+              label="Win"
               type="text"
               placeholder="Leave empty if pending"
               onChange={(event) =>
                 field.onChange(sanitizeDecimalInput(event.target.value))
               }
-              slotProps={decimalMoneyInputSlotProps}
+              slotProps={buildBonusBuyMoneyInputSlotProps(props.currencyCode)}
               error={Boolean(fieldState.error)}
               helperText={fieldState.error?.message}
               fullWidth

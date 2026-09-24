@@ -12,7 +12,7 @@ import {
   formatMultiplierDisplay,
 } from '@/lib/bonus-buy-stats'
 import {
-  formatUsd,
+  formatBonusBuyMoney,
   signedValueColor,
 } from '@/components/bonus-buy/session/bonus-buy-session-utils'
 import { slotActionIconButtonSx } from '@/components/bonus-buy/session/bonusBuySessionStyles'
@@ -20,6 +20,7 @@ import { toneChipSx } from '@/theme/colors'
 
 type BuildBonusBuySlotColumnsOptions = {
   theme: Theme
+  currencyCode: string
   onCopySlotName: (slot: BonusBuySlot) => void
   onSetPlaying: (slot: BonusBuySlot, playing: boolean) => void
   onEditSlot: (slot: BonusBuySlot) => void
@@ -28,6 +29,7 @@ type BuildBonusBuySlotColumnsOptions = {
 
 export function buildBonusBuySlotColumns({
   theme,
+  currencyCode,
   onCopySlotName,
   onSetPlaying,
   onEditSlot,
@@ -97,7 +99,8 @@ export function buildBonusBuySlotColumns({
       id: 'purchase',
       header: 'Purchase',
       width: 110,
-      render: (slot) => formatUsd(slot.purchaseAmount),
+      render: (slot) =>
+        formatBonusBuyMoney(slot.purchaseAmount, currencyCode),
     },
     {
       id: 'win',
@@ -118,7 +121,7 @@ export function buildBonusBuySlotColumns({
             component="span"
             sx={{ color: signedValueColor(value, theme) ?? 'inherit' }}
           >
-            {formatUsd(slot.winAmount)}
+            {formatBonusBuyMoney(slot.winAmount, currencyCode)}
           </Box>
         )
       },

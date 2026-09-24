@@ -1,5 +1,5 @@
 import type { BonusBuySlot } from '@/api/bonus-buy'
-import { formatUsd } from '@/lib/bonus-buy-format'
+import { formatBonusBuyMoney } from '@/lib/bonus-buy-format'
 import type { BonusBuyWidgetTheme } from '@/lib/bonus-buy-widget-presentation'
 import {
   StyledBestWinProvider,
@@ -18,12 +18,14 @@ type BonusBuyWidgetPlayingSectionsProps = {
   playingSlot: BonusBuySlot
   playingIndex: number
   theme: BonusBuyWidgetTheme
+  currencyCode: string
 }
 
 export function BonusBuyWidgetPlayingSections({
   playingSlot,
   playingIndex,
   theme,
+  currencyCode,
 }: BonusBuyWidgetPlayingSectionsProps) {
   return (
     <StyledLiveCell widgetTheme={theme} cellHeight={68}>
@@ -38,7 +40,7 @@ export function BonusBuyWidgetPlayingSections({
           </StyledBestWinProvider>
         </StyledLiveInfo>
         <StyledLivePurchase textColor={theme.textMutedColor}>
-          {formatUsd(playingSlot.purchaseAmount)}
+          {formatBonusBuyMoney(playingSlot.purchaseAmount, currencyCode)}
         </StyledLivePurchase>
       </StyledLiveContentRow>
       <StyledLiveBadge liveColor={theme.liveColor}>

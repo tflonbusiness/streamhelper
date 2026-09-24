@@ -9,6 +9,7 @@ companions:
   - session-page.md
   - stream-widget-page.md
   - widget-page.md
+  - session-currencies.md
   - ../spec-caz-team-dashboard/modules-catalog.md
   - ../spec-caz-team-dashboard/nav-shell.md
   - ../spec-caz-team-dashboard/SPEC.md
@@ -44,11 +45,11 @@ sources: []
 
 - **CAP-5**
   - **intent:** An operator creates a bonus buy record for the current account from the history page.
-  - **success:** **New** in the history card header opens a MUI `Dialog` with **Title** and **Start balance** (USD, cents) using `inputFieldSx`; valid submit calls `POST /accounts/:accountId/bonus-buys`; row persists with `is_active = true`, `created_by_user_id` from session, server `created_at`, and ensures account `bonus_buy_widget` row exists; dialog closes, table refreshes, and `NotificationContext` shows a success toast without full page reload.
+  - **success:** **New** in the history card header opens a MUI `Dialog` with **Name**, **Currency** (searchable catalog per `session-currencies.md`, default USD), and **Start balance** using `inputFieldSx`; valid submit calls `POST /accounts/:accountId/bonus-buys` with `currency_code`; row persists with `status = active`, `created_by_user_id` from session, server `created_at`, and per-session widget bootstrap; dialog closes, table refreshes start balance formatted in chosen currency, and `NotificationContext` shows a success toast without full page reload.
 
 - **CAP-6**
   - **intent:** An operator sees the history of bonus buy records for the current account on the history page.
-  - **success:** On load, `GET /accounts/:accountId/bonus-buys` populates an `AppTable` with main columns title, start balance (`$X.XX`), active/inactive status chips, and **Open** action; expanding a row reveals **Created by** (`createdByName`) and **Created** (locale date-time) in a detail panel; rows sorted newest first; **Open** links to `/bonus-buy/:id`; empty, loading, and error states handled; only the session account's records appear.
+  - **success:** On load, `GET /accounts/:accountId/bonus-buys` populates an `AppTable` with main columns name, start balance formatted with each row's `currencyCode`, status chips, and **Open** action; expanding a row reveals **Created by** (`createdByName`) and **Created** (locale date-time) in a detail panel; rows sorted newest first; **Open** links to `/bonus-buy/:id`; empty, loading, and error states handled; only the session account's records appear.
 
 - **CAP-7**
   - **intent:** An operator opens a bonus buy session and sees the full session workspace for that record.
@@ -111,8 +112,12 @@ sources: []
   - **success:** `BonusBuyPage` uses `AppTable` with column config and `expandable` prop (no raw `Table` markup); expandable behavior matches **Bonus list** on `BonusBuySessionPage` (`expandedRecordIds` Set, chevron toggle, `Collapse` detail panel, `RecordExpandedDetails` with same Grid/caption typography as `SlotExpandedDetails`); main columns Title, Start balance, Status, Open only; **Created by** and **Created** in expandable detail; status chips use `toneChipSx` / `mutedChipSx`; history section uses `cardSx` with icon tile header row; create dialog uses `TextField` + `inputFieldSx`; successful create fires a `NotificationContext` toast; main table fits at 1280px without horizontal scroll.
 
 - **CAP-15**
-  - **intent:** An operator edits the session title and start balance from the session workspace.
-  - **success:** Header pencil opens dialog with **Title**; start balance card pencil opens dialog with **Start balance ($)**; valid PATCH to `/accounts/:accountId/bonus-buys/:id` persists changes; header label `{title} #{id}` and start balance stat update; **Current balance** recalculates; success toast; errors via `StatusAlert` in dialog.
+  - **intent:** An operator edits the session name, currency, and start balance from the session workspace.
+  - **success:** Header pencil opens dialog with **Name** and **Currency** (same searchable control as create); start balance card pencil opens dialog with **Start balance** and **Currency**; valid PATCH to `/accounts/:accountId/bonus-buys/:id` persists changes; header label `{name} #{id}` and stat cards format amounts with `currencyCode`; **Current balance** recalculates; success toast; errors via `StatusAlert` in dialog.
+
+- **CAP-23**
+  - **intent:** An operator chooses which ISO currency applies to a bonus buy session when creating it and can change that currency later.
+  - **success:** Create dialog and session edit flows expose a **Currency** field implemented as a searchable dropdown over the full active ISO 4217 catalog per `session-currencies.md`; typing filters by code or name; selection is required on create (default USD); field stays enabled when slots exist; PATCH persists `currency_code` anytime; all bonus-buy monetary UI and the public overlay format amounts with the session's currency via shared `formatBonusBuyMoney`; invalid or unknown codes rejected client- and server-side.
 
 ## Constraints
 
@@ -120,7 +125,9 @@ sources: []
 - **No toggle:** Bonus Buy card has no `Switch`, no Connected/Disabled labels, and no entry in `caz-modules-{accountId}` localStorage.
 - **Card only on `/modules`:** navigation via **Open** only; no inline widget preview.
 - **Separate product module:** no coupling to `casino-stream-games` or Spin Prediction.
-- **Data model:** `bonus_buy` per `bonus-buy-records.md`; `bonus_buy_slot` per `bonus-buy-slots.md`; `bonus_buy_widget` per `bonus-buy-widget.md` (FK `account_id` UNIQUE, style columns with Figma defaults). Slot table does **not** use `is_active` — that name is reserved for `bonus_buy` sessions.
+- **Data model:** `bonus_buy` per `bonus-buy-records.md` including `currency_code` per `session-currencies.md`; `bonus_buy_slot` per `bonus-buy-slots.md`; `bonus_buy_widget` per `bonus-buy-widget.md` (per-session FK, preset-backed styles). Slot statuses use `pending` | `playing` | `archived` — not `bonus_buy.status`.
+- **Session currency:** ISO 4217 `currency_code` on `bonus_buy`; default **USD** on create; client catalog module; searchable Autocomplete on create and edit; **always editable** (never disabled when slots exist); no FX conversion when currency changes — numeric slot amounts unchanged.
+- **Money input:** optional fraction per `session-currencies.md` — whole numbers default, up to 2 dp when typed; `formatBonusBuyMoney` uses `minimumFractionDigits: 0`, `maximumFractionDigits: 2`.
 - **Widget bootstrap:** explicit default row insert on account provision and `POST .../bonus-buys`; lazy insert on widget `GET` for legacy accounts (`bonus-buy-widget-defaults.ts`, `ON CONFLICT DO NOTHING`).
 - **Widget API path:** `GET/PATCH /accounts/:accountId/bonus-buy-widget` — not nested under session id.
 - **Widget colors:** hex `#RRGGBB` or `#RGB` only — no `rgba()` or named colors in DB.
@@ -165,15 +172,21 @@ sources: []
 - iframe-based preview of `/bonus-buy/:id/widget` inside the style dialog — use in-process `WidgetCanvas` instead.
 - Per-account custom preset save or user-defined preset CRUD — built-in catalog only in this slice.
 - Server-side preset list or API — presets are app constants.
+- FX conversion or automatic slot amount recalculation when session currency changes.
+- Per-currency ISO minor-unit enforcement (e.g. JPY 0 dp catalog rules) — optional 0–2 fraction digits on all money inputs in this slice.
+- Cryptocurrency or custom currency codes outside ISO 4217.
 
 ## Success signal
 
-Owner opens `/bonus-buy` → creates session → **Open** → **Widget style** picks **Purple** preset → live preview shows purple accent before **Save** → tweaks width to 600 → **Save** → adds slot **Gates of Olympus** purchase **$50** → **Set as playing** → preview in dialog shows LIVE row → **Overlay** opens `/bonus-buy/:id/widget` at 600px with saved colors → **Edit** win **$600** → multiplier **12.00x** → overlay refetch shows updated stats → `npm run build` passes.
+Owner opens `/bonus-buy` → **New** → searches **eur** in **Currency**, selects **EUR — Euro**, start balance **100** → create → history shows **€100** → **Open** → edits currency to **GBP** via session dialog → stats and slot purchase labels show **£** → **Widget style** → **Save** → adds slot purchase **50** → **Set as playing** → **Overlay** shows amounts in GBP → `npm run build` passes.
 
 ## Assumptions
 
 - Description and icon per `bonus-buy-module.md` (`Gift`, `warning` variant).
-- `start_balance` stored and displayed as USD dollars with two decimal places.
+- Create **Currency** defaults to **USD**; existing rows backfill `USD`.
+- `start_balance` and slot amounts stored as `NUMERIC(12,2)`; operators may enter whole numbers or up to 2 optional fraction digits — inputs never force `.00`.
+- Display currency comes from `currency_code`; changing it updates formatting only — purchase and win values are not converted.
+- `currency_code` is always editable (including when slots exist) — no lock in this slice.
 - Owner and admin share the same access as `/modules`.
 - Session label uses `{title} #{id}` where `id` is `bonus_buy.id`.
 - Widget style settings are per **account** — one `bonus_buy_widget` row shared by all sessions.

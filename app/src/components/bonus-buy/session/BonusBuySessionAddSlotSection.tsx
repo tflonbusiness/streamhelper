@@ -15,10 +15,8 @@ import {
   type CreateBonusBuySlotFormValues,
   createBonusBuySlotFormSchema,
 } from '@/lib/bonus-buy-validation'
-import {
-  decimalMoneyInputSlotProps,
-  sanitizeDecimalInput,
-} from '@/lib/bonus-buy-format'
+import { buildBonusBuyMoneyInputSlotProps } from '@/components/bonus-buy/bonus-buy-money-input'
+import { sanitizeDecimalInput } from '@/lib/bonus-buy-format'
 import { useCreateBonusBuySlot } from '@/queries/use-bonus-buy'
 import { colors } from '@/theme/colors'
 
@@ -166,13 +164,15 @@ export const BonusBuySessionAddSlotSection = (
                     <StyledTextField
                       {...field}
                       id="session-purchase"
-                      label="Purchase ($)"
+                      label="Purchase"
                       required
                       type="text"
                       onChange={(event) =>
                         field.onChange(sanitizeDecimalInput(event.target.value))
                       }
-                      slotProps={decimalMoneyInputSlotProps}
+                      slotProps={buildBonusBuyMoneyInputSlotProps(
+                        props.record.currencyCode,
+                      )}
                       error={Boolean(fieldState.error)}
                       helperText={fieldState.error?.message}
                       disabled={!active || createSlotMutation.isPending}

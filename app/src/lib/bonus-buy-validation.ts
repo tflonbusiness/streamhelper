@@ -1,6 +1,15 @@
 import * as yup from 'yup'
+import { isValidIsoCurrencyCode } from '@/lib/iso-currencies'
+
+const currencyCodeField = yup
+  .string()
+  .required('Currency is required')
+  .test('iso', 'Select a valid currency', (value) =>
+    Boolean(value && isValidIsoCurrencyCode(value)),
+  )
 
 export const createBonusBuyFormSchema = yup.object({
+  currencyCode: currencyCodeField,
   name: yup
     .string()
     .trim()
@@ -26,6 +35,7 @@ export const createBonusBuyFormSchema = yup.object({
 export type CreateBonusBuyFormValues = yup.InferType<typeof createBonusBuyFormSchema>
 
 export const editBonusBuySessionFormSchema = yup.object({
+  currencyCode: currencyCodeField,
   name: yup
     .string()
     .trim()

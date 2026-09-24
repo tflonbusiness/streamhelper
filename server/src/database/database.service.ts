@@ -6,6 +6,7 @@ import {
   normalizeMoney,
   normalizePositiveMoney,
 } from '../bonus-buy/bonus-buy-math.js';
+import { normalizeCurrencyCode } from '../bonus-buy/iso-currencies.js';
 import {
   BONUS_BUY_SYSTEM_PRESET_SEEDS,
   BONUS_BUY_WIDGET_DIMENSION_DEFAULTS,
@@ -80,6 +81,7 @@ export type DbBonusBuy = {
   accountId: number;
   name: string;
   startBalance: string;
+  currencyCode: string;
   status: BonusBuyStatus;
   createdAt: Date;
   createdByUserId: number;
@@ -270,6 +272,7 @@ export type DbPublicBonusBuyRecord = {
   id: number;
   name: string;
   startBalance: string;
+  currencyCode: string;
   status: BonusBuyStatus;
 };
 
@@ -396,6 +399,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         created_by_user_id  BIGINT NOT NULL REFERENCES users(id),
         name                TEXT NOT NULL,
         start_balance       NUMERIC(12, 2) NOT NULL,
+        currency_code       CHAR(3) NOT NULL DEFAULT 'USD',
         status              TEXT NOT NULL DEFAULT 'active'
           CHECK (status IN ('active', 'archived')),
         created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -1029,6 +1033,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     account_id: string | number;
     name: string;
     start_balance: string;
+    currency_code: string;
     status: string;
     created_at: Date;
     created_by_user_id: string | number;
@@ -1039,6 +1044,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       accountId: toInt(row.account_id),
       name: row.name,
       startBalance: row.start_balance,
+      currencyCode: (row.currency_code ?? 'USD').trim().toUpperCase(),
       status: row.status as BonusBuyStatus,
       createdAt: row.created_at,
       createdByUserId: toInt(row.created_by_user_id),
@@ -1064,6 +1070,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       account_id: string | number;
       name: string;
       start_balance: string;
+      currency_code: string;
       status: string;
       created_at: Date;
       created_by_user_id: string | number;
@@ -1075,6 +1082,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           bb.account_id,
           bb.name,
           bb.start_balance::text AS start_balance,
+          bb.currency_code,
           bb.status,
           bb.created_at,
           bb.created_by_user_id,
@@ -1121,6 +1129,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       account_id: string | number;
       name: string;
       start_balance: string;
+      currency_code: string;
       status: string;
       created_at: Date;
       created_by_user_id: string | number;
@@ -1132,6 +1141,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           bb.account_id,
           bb.name,
           bb.start_balance::text AS start_balance,
+          bb.currency_code,
           bb.status,
           bb.created_at,
           bb.created_by_user_id,
@@ -1210,6 +1220,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     createdByUserId: number,
     name: string,
     startBalance: string,
+    currencyCode: string,
   ): Promise<DbBonusBuy> {
     const trimmedName = name.trim();
     if (trimmedName.length === 0 || trimmedName.length > 200) {
@@ -1226,6 +1237,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
 
     const normalizedBalance = balanceValue.toFixed(2);
+    const normalizedCurrency = normalizeCurrencyCode(currencyCode);
 
     const client = await this.pool.connect();
     try {
@@ -1236,6 +1248,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         account_id: string | number;
         name: string;
         start_balance: string;
+        currency_code: string;
         status: string;
         created_at: Date;
         created_by_user_id: string | number;
@@ -1243,20 +1256,27 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       }>(
         `
           INSERT INTO bonus_buy (
-            account_id, created_by_user_id, name, start_balance
+            account_id, created_by_user_id, name, start_balance, currency_code
           )
-          VALUES ($1, $2, $3, $4)
+          VALUES ($1, $2, $3, $4, $5)
           RETURNING
             id,
             account_id,
             name,
             start_balance::text AS start_balance,
+            currency_code,
             status,
             created_at,
             created_by_user_id,
             (SELECT name FROM users WHERE id = $2) AS created_by_name
         `,
-        [accountId, createdByUserId, trimmedName, normalizedBalance],
+        [
+          accountId,
+          createdByUserId,
+          trimmedName,
+          normalizedBalance,
+          normalizedCurrency,
+        ],
       );
 
       const row = result.rows[0];
@@ -1304,6 +1324,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       account_id: string | number;
       name: string;
       start_balance: string;
+      currency_code: string;
       status: string;
       created_at: Date;
       created_by_user_id: string | number;
@@ -1322,6 +1343,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           bb.account_id,
           bb.name,
           bb.start_balance::text AS start_balance,
+          bb.currency_code,
           bb.status,
           bb.created_at,
           bb.created_by_user_id,
@@ -1349,7 +1371,11 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   async updateBonusBuy(
     accountId: number,
     bonusBuyId: number,
-    updates: { name?: string; startBalance?: string },
+    updates: {
+      name?: string;
+      startBalance?: string;
+      currencyCode?: string;
+    },
   ): Promise<DbBonusBuy> {
     const existing = await this.getBonusBuyById(accountId, bonusBuyId);
     if (!existing) {
@@ -1364,14 +1390,20 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
     const nextBalance =
       updates.startBalance !== undefined
-        ? normalizePositiveMoney(updates.startBalance)
+        ? normalizeMoney(updates.startBalance)
         : existing.startBalance;
+
+    const nextCurrency =
+      updates.currencyCode !== undefined
+        ? normalizeCurrencyCode(updates.currencyCode)
+        : existing.currencyCode;
 
     const result = await this.pool.query<{
       id: string | number;
       account_id: string | number;
       name: string;
       start_balance: string;
+      currency_code: string;
       status: string;
       created_at: Date;
       created_by_user_id: string | number;
@@ -1379,7 +1411,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }>(
       `
         UPDATE bonus_buy bb
-        SET name = $3, start_balance = $4
+        SET name = $3, start_balance = $4, currency_code = $5
         FROM users u
         WHERE bb.created_by_user_id = u.id
           AND bb.account_id = $1
@@ -1389,12 +1421,13 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           bb.account_id,
           bb.name,
           bb.start_balance::text AS start_balance,
+          bb.currency_code,
           bb.status,
           bb.created_at,
           bb.created_by_user_id,
           u.name AS created_by_name
       `,
-      [accountId, bonusBuyId, nextName, nextBalance],
+      [accountId, bonusBuyId, nextName, nextBalance, nextCurrency],
     );
 
     return this.mapBonusBuyRow(result.rows[0]);
@@ -2158,10 +2191,17 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       account_id: string | number;
       name: string;
       start_balance: string;
+      currency_code: string;
       status: string;
     }>(
       `
-        SELECT id, account_id, name, start_balance::text AS start_balance, status
+        SELECT
+          id,
+          account_id,
+          name,
+          start_balance::text AS start_balance,
+          currency_code,
+          status
         FROM bonus_buy
         WHERE id = $1
       `,
@@ -2231,6 +2271,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         id: toInt(recordRow.id),
         name: recordRow.name,
         startBalance: recordRow.start_balance,
+        currencyCode: recordRow.currency_code.trim().toUpperCase(),
         status: recordRow.status as BonusBuyStatus,
       },
       slots: slotsResult.rows.map((row) => this.mapBonusBuySlotRow(row)),

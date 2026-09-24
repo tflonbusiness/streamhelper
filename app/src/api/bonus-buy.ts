@@ -36,6 +36,7 @@ export type BonusBuyRecord = {
   accountId: number
   name: string
   startBalance: string
+  currencyCode: string
   status: BonusBuyStatus
   createdAt: string
   createdByUserId: number
@@ -59,6 +60,7 @@ export type BonusBuySlot = {
 export type PatchBonusBuyInput = {
   name?: string
   start_balance?: string
+  currency_code?: string
 }
 
 export type PatchBonusBuySlotInput = {
@@ -116,6 +118,7 @@ export type PublicBonusBuyRecord = {
   id: number
   name: string
   startBalance: string
+  currencyCode: string
   status: BonusBuyStatus
 }
 
@@ -207,12 +210,17 @@ export async function createBonusBuy(
   accountId: number,
   name: string,
   startBalance: string,
+  currencyCode: string,
 ): Promise<BonusBuyRecord> {
   const response = await fetch(`/accounts/${accountId}/bonus-buys`, {
     method: 'POST',
     credentials: 'include',
     headers: jsonHeaders,
-    body: JSON.stringify({ name, start_balance: startBalance }),
+    body: JSON.stringify({
+      name,
+      start_balance: startBalance,
+      currency_code: currencyCode,
+    }),
   })
 
   if (!response.ok) {

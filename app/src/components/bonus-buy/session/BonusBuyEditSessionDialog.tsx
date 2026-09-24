@@ -57,7 +57,8 @@ export const BonusBuyEditSessionDialog = (
     patchSessionMutation.mutate(
       {
         name: values.name,
-        start_balance: Number.parseFloat(values.startBalance).toFixed(2),
+        currency_code: values.currencyCode,
+        start_balance: values.startBalance.trim(),
       },
       {
         onSuccess: () => {

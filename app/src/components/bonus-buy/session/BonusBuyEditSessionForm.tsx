@@ -2,16 +2,15 @@ import { Box, Stack, TextField } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useEffect } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import type { BonusBuyRecord } from '@/api/bonus-buy'
 import {
   type EditBonusBuySessionFormValues,
   editBonusBuySessionFormSchema,
 } from '@/lib/bonus-buy-validation'
-import {
-  decimalMoneyInputSlotProps,
-  sanitizeDecimalInput,
-} from '@/lib/bonus-buy-format'
+import { BonusBuyCurrencyField } from '@/components/bonus-buy/BonusBuyCurrencyField'
+import { buildBonusBuyMoneyInputSlotProps } from '@/components/bonus-buy/bonus-buy-money-input'
+import { sanitizeDecimalInput } from '@/lib/bonus-buy-format'
 
 export type BonusBuyEditSessionFormProps = {
   formId: string
@@ -23,6 +22,7 @@ export type BonusBuyEditSessionFormProps = {
 
 const emptyValues: EditBonusBuySessionFormValues = {
   name: '',
+  currencyCode: 'USD',
   startBalance: '',
 }
 
@@ -53,6 +53,7 @@ export const BonusBuyEditSessionForm = (props: BonusBuyEditSessionFormProps) => 
     if (props.open && props.record) {
       reset({
         name: props.record.name,
+        currencyCode: props.record.currencyCode ?? 'USD',
         startBalance: props.record.startBalance,
       })
     }
@@ -61,6 +62,8 @@ export const BonusBuyEditSessionForm = (props: BonusBuyEditSessionFormProps) => 
   useEffect(() => {
     props.onValidChange?.(isValid)
   }, [isValid, props.onValidChange])
+
+  const currencyCode = useWatch({ control, name: 'currencyCode' })
 
   return (
     <Box
@@ -85,17 +88,29 @@ export const BonusBuyEditSessionForm = (props: BonusBuyEditSessionFormProps) => 
           )}
         />
         <Controller
+          name="currencyCode"
+          control={control}
+          render={({ field, fieldState }) => (
+            <BonusBuyCurrencyField
+              value={field.value}
+              onChange={field.onChange}
+              error={Boolean(fieldState.error)}
+              helperText={fieldState.error?.message}
+            />
+          )}
+        />
+        <Controller
           name="startBalance"
           control={control}
           render={({ field, fieldState }) => (
             <StyledTextField
               {...field}
-              label="Start balance ($)"
+              label="Start balance"
               type="text"
               onChange={(event) =>
                 field.onChange(sanitizeDecimalInput(event.target.value))
               }
-              slotProps={decimalMoneyInputSlotProps}
+              slotProps={buildBonusBuyMoneyInputSlotProps(currencyCode)}
               error={Boolean(fieldState.error)}
               helperText={fieldState.error?.message}
               fullWidth
