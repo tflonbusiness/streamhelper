@@ -1,6 +1,8 @@
-# Chat Roll — page layout (`/chat-roll`)
+# Chat Roll — session page layout (`/modules/chat-roll/:id`)
 
-Single-page workspace. Four zones top to bottom: **PageHeader**, **Settings**, **Action bar**, **Participants | Winners**.
+Operator workspace for one chat roll session. Route: `ChatRollSessionPage` inside `AppShell`.
+
+Zones top to bottom: **PageHeader**, **session header card**, then **two-column main workspace** (settings left, lists right).
 
 ## Page header
 
@@ -10,9 +12,41 @@ Single-page workspace. Four zones top to bottom: **PageHeader**, **Settings**, *
 | Icon | `Casino` |
 | Description | Weighted chat giveaway for your stream |
 
-## Settings card
+## Session header
 
-`Card` titled **Settings**, full width above the two columns.
+Compact session card (`ChatRollSessionHeaderSection`): title `#id`, **Live** / **Archived** chips, **Go live** / **Off Air**, **Archive** — per existing session header spec.
+
+## Main workspace (desktop `lg+`)
+
+`Grid container` `spacing={3}`, `alignItems="stretch"`.
+
+```
+┌────────────────────────┬──────────────────────────────────────┐
+│  LEFT (lg: 5)          │  RIGHT (lg: 7)                       │
+│  Settings card         │  Participants | Winners (md: 6 each)  │
+│  Roll action bar       │  (side-by-side within right column)    │
+└────────────────────────┴──────────────────────────────────────┘
+```
+
+### Left column — settings and actions
+
+Stack `spacing={3}`:
+
+1. **Settings** card (full width of column) — keyword, weight combine, exclusion toggles, **Eligible roles** per `role-weights.md`. Persists on blur/change; no **Save** button.
+2. **Roll action bar** — **Roll**, **Pause entries** / **Resume entries** directly under settings (not between settings and lists globally).
+
+### Right column — participants and winners
+
+Nested `Grid container` `spacing={2}`:
+
+| Column | Content |
+|--------|---------|
+| `size={{ xs: 12, md: 6 }}` | **Participants** list card |
+| `size={{ xs: 12, md: 6 }}` | **Winners** list card |
+
+Within the right column, `md+` keeps participants and winners side by side; on narrow right (`xs` only inside right stack) lists stack participants above winners.
+
+## Settings card (left column)
 
 ### Keyword row
 
@@ -21,18 +55,6 @@ Single-page workspace. Four zones top to bottom: **PageHeader**, **Settings**, *
 | Keyword | `TextField` | `!roll` | Required, trimmed, 1–32 chars |
 
 Helper text: **Viewers must send this exact message to join.**
-
-### Role weights block
-
-Titled **Eligible roles**. Five rows per `role-weights.md`.
-
-Each row:
-
-| Element | Control |
-|---------|---------|
-| Role label | English name + short description (muted) |
-| Enabled | `Switch` |
-| Weight | `TextField` type number — visible only when enabled |
 
 ### Weight combine row
 
@@ -43,61 +65,51 @@ Each row:
 | `highest` | Use highest coefficient |
 | `sum` | Sum coefficients |
 
-Helper: **When a viewer matches multiple enabled roles, choose how weights combine for the win chance.**
+**Exclude winner from pool after roll** and **Reply in Kick chat when someone joins** toggles in the same block.
+
+### Role weights block
+
+Titled **Eligible roles**. Five rows per `role-weights.md` (enable switch + weight field).
 
 Footer hint: **Only viewers matching an enabled role can join. Weight affects pick probability when rolling.**
 
-Changes persist per session immediately — no **Save** button.
-
-## Action bar
-
-Row between Settings and the two-column lists (`RollActionBar` pattern).
+## Action bar (left column, below settings)
 
 | Control | Label | Behavior |
 |---------|-------|----------|
-| Roll | **Roll** | Weighted random pick from active participants (unchanged when entries paused) |
-| Pause / Resume | **Pause entries** when accepting; **Resume entries** when paused | Toggles `is_accepting_participants` on the session |
-| Status chip | **Accepting entries** (success tone) or **Entries paused** (warning tone) | Reflects current gate state |
+| Roll | **Roll** | Weighted random pick from eligible participants |
+| Pause / Resume | **Pause entries** / **Resume entries** | Toggles `is_accepting_participants` |
 
-When **Entries paused**: keyword messages from chat are ignored; manual participant add from UI is blocked with inline message **Entries are paused. Resume to add participants.**
+When **Entries paused**: chat intake and manual add blocked per CAP-12.
 
-## Two-column lists
+## List cards (right column)
 
-`Grid` `spacing={2}` with `size={{ xs: 12, md: 6 }}` per column.
-
-### Participants column
-
-`Card` with header row:
+### Participants
 
 | Left | Right |
 |------|-------|
-| **Participants** (`Typography` subtitle1) | **Clear all** (`Button` size small, text or outlined) |
+| **Participants** | **Clear all** |
 
-Body: vertical list of rows. Each row:
+Row: display name + role chips + coefficient chip; delete `IconButton`. Empty: **No participants yet.**
 
-| Content | Actions |
-|---------|---------|
-| Display name (monospace) + role `Chip`s + coefficient `Chip` (e.g. `2x`, tone info) | `IconButton` delete (`aria-label` **Remove participant**) |
+### Winners
 
-Coefficient recomputes from enabled role weights and combine mode. `0x` when no matching enabled roles.
+| Left | Right |
+|------|-------|
+| **Winners** | **Clear all** |
 
-Empty state: **No participants yet.**
-
-### Winners column
-
-Same structure as Participants:
-
-| Header | **Winners** + **Clear all** |
-| Row | Display name + delete `IconButton` (`aria-label` **Remove winner**) |
-| Empty | **No winners yet.** |
+Row: display name + delete. Empty: **No winners yet.**
 
 ## Responsive
 
-- `md` and up: two columns side by side
-- `xs`–`sm`: Participants stacks above Winners
+| Breakpoint | Layout |
+|------------|--------|
+| `lg+` | Settings + roll bar **left**; participants and winners **right** (pair side by side) |
+| `xs`–`md` | Single column: header → settings → roll bar → participants → winners |
 
-## Out of scope (this slice)
+## Out of scope (this companion)
 
 - Collection timer (auto-pause)
 - Kick channel status alert
 - History table below lists
+- Stream widget card (follow-on slice)

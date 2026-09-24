@@ -1559,36 +1559,6 @@ export class AuthService {
     }
   }
 
-  async goLiveChatRoll(
-    accountId: number,
-    callerUserId: number,
-    chatRollId: number,
-  ) {
-    await this.requireAccountMember(accountId, callerUserId);
-
-    try {
-      const row = await this.database.goLiveChatRoll(accountId, chatRollId);
-      return this.formatChatRollRecord(row);
-    } catch (error) {
-      this.mapChatRollMutationError(error);
-    }
-  }
-
-  async deactivateChatRoll(
-    accountId: number,
-    callerUserId: number,
-    chatRollId: number,
-  ) {
-    await this.requireAccountMember(accountId, callerUserId);
-
-    try {
-      const row = await this.database.deactivateChatRoll(accountId, chatRollId);
-      return this.formatChatRollRecord(row);
-    } catch (error) {
-      this.mapChatRollMutationError(error);
-    }
-  }
-
   async archiveChatRoll(
     accountId: number,
     callerUserId: number,

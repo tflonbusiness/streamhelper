@@ -4,6 +4,7 @@ import {
   Grid,
   IconButton,
   Radio,
+  Stack,
   Switch,
 } from '@mui/material'
 import CasinoIcon from '@mui/icons-material/Casino'
@@ -46,10 +47,10 @@ import {
   SettingsStack,
   SettingsTitle,
 } from '@/components/chat-roll/chatRollPageStyles'
-import { ChatRollDeactivateSessionDialog } from '@/components/chat-roll/session/ChatRollDeactivateSessionDialog'
 import { ChatRollSessionArchiveDialog } from '@/components/chat-roll/session/ChatRollSessionArchiveDialog'
 import { ChatRollSessionErrorState } from '@/components/chat-roll/session/ChatRollSessionErrorState'
 import { ChatRollSessionHeaderSection } from '@/components/chat-roll/session/ChatRollSessionHeaderSection'
+import { ChatRollStreamWidgetSection } from '@/components/chat-roll/session/ChatRollStreamWidgetSection'
 import { ChatRollSessionLoadingState } from '@/components/chat-roll/session/ChatRollSessionLoadingState'
 import { PageHeader } from '@/components/PageHeader'
 import { useAuth } from '@/context/AuthContext'
@@ -147,8 +148,6 @@ export function ChatRollSessionPage() {
   const [keywordError, setKeywordError] = useState<string | null>(null)
   const [keywordDraft, setKeywordDraft] = useState('')
   const [archiveSessionDialogOpen, setArchiveSessionDialogOpen] = useState(false)
-  const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false)
-
   const {
     data: session,
     isLoading,
@@ -312,21 +311,23 @@ export function ChatRollSessionPage() {
       />
 
       <ChatRollSessionHeaderSection
-        accountId={accountId}
-        chatRollId={chatRollId}
         record={record}
         onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
-        onOpenDeactivateDialog={() => setDeactivateDialogOpen(true)}
       />
 
-      <SettingsCard elevation={0}>
-        <SettingsCardContent>
-          <SettingsTitle variant="subtitle2">Settings</SettingsTitle>
+      <ChatRollStreamWidgetSection chatRollId={chatRollId} />
 
-          <SettingsStack>
-            <Grid container spacing={1.5} sx={{ alignItems: 'flex-start' }}>
-              <Grid size={{ xs: 12, sm: 4, md: 3 }}>
-                <KeywordField
+      <Grid container spacing={3} sx={{ alignItems: 'flex-start' }}>
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <Stack spacing={3}>
+            <SettingsCard elevation={0}>
+              <SettingsCardContent>
+                <SettingsTitle variant="subtitle2">Settings</SettingsTitle>
+
+                <SettingsStack>
+                  <Grid container spacing={1.5} sx={{ alignItems: 'flex-start' }}>
+                    <Grid size={{ xs: 12 }}>
+                      <KeywordField
                   label="Keyword"
                   size="small"
                   value={keywordDraft}
@@ -342,9 +343,9 @@ export function ChatRollSessionPage() {
                   fullWidth
                   disabled={settingsDisabled}
                 />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 8, md: 9 }}>
-                <FormControl component="fieldset" size="small" fullWidth>
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <FormControl component="fieldset" size="small" fullWidth>
                   <CombineFormLabel>Weight combine</CombineFormLabel>
                   <CombineRadioGroup
                     row
@@ -396,17 +397,17 @@ export function ChatRollSessionPage() {
                       Reply in Kick chat when someone joins
                     </ExclusionToggleLabel>
                   </ExclusionToggleRow>
-                </FormControl>
-              </Grid>
-            </Grid>
+                      </FormControl>
+                    </Grid>
+                  </Grid>
 
-            <RolesSection>
-              <SettingsSectionLabel>Eligible roles</SettingsSectionLabel>
-              <Grid container spacing={1}>
-                {CHAT_ROLL_ROLE_META.map((role) => {
-                  const setting = record.roleSettings[role.id]
-                  return (
-                    <Grid key={role.id} size={{ xs: 12, sm: 6, lg: 4 }}>
+                  <RolesSection>
+                    <SettingsSectionLabel>Eligible roles</SettingsSectionLabel>
+                    <Grid container spacing={1}>
+                      {CHAT_ROLL_ROLE_META.map((role) => {
+                        const setting = record.roleSettings[role.id]
+                        return (
+                          <Grid key={role.id} size={{ xs: 12, sm: 6 }}>
                       <RoleRowStack enabled={setting.enabled}>
                         <Switch
                           size="small"
@@ -433,47 +434,61 @@ export function ChatRollSessionPage() {
                           }}
                         />
                       </RoleRowStack>
+                          </Grid>
+                        )
+                      })}
                     </Grid>
+                  </RolesSection>
+                </SettingsStack>
+              </SettingsCardContent>
+            </SettingsCard>
+
+            <RollActionBar
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 1,
+                justifyContent: 'flex-start',
+              }}
+            >
+              <RollButton
+                variant="contained"
+                startIcon={<ReplayIcon />}
+                onClick={handleRoll}
+                disabled={
+                  readOnly || eligibleCount === 0 || rollMutation.isPending
+                }
+              >
+                Roll
+              </RollButton>
+              <Button
+                variant="outlined"
+                startIcon={
+                  record.isAcceptingParticipants ? (
+                    <PauseIcon fontSize="small" />
+                  ) : (
+                    <PlayArrowIcon fontSize="small" />
                   )
-                })}
-              </Grid>
-            </RolesSection>
-          </SettingsStack>
-        </SettingsCardContent>
-      </SettingsCard>
+                }
+                disabled={readOnly || patchMutation.isPending}
+                onClick={() =>
+                  patchRecord({
+                    is_accepting_participants: !record.isAcceptingParticipants,
+                  })
+                }
+              >
+                {record.isAcceptingParticipants
+                  ? 'Pause entries'
+                  : 'Resume entries'}
+              </Button>
+            </RollActionBar>
+          </Stack>
+        </Grid>
 
-      <RollActionBar>
-        <RollButton
-          variant="contained"
-          startIcon={<ReplayIcon />}
-          onClick={handleRoll}
-          disabled={readOnly || eligibleCount === 0 || rollMutation.isPending}
-        >
-          Roll
-        </RollButton>
-        <Button
-          variant="outlined"
-          startIcon={
-            record.isAcceptingParticipants ? (
-              <PauseIcon fontSize="small" />
-            ) : (
-              <PlayArrowIcon fontSize="small" />
-            )
-          }
-          disabled={readOnly || patchMutation.isPending}
-          onClick={() =>
-            patchRecord({
-              is_accepting_participants: !record.isAcceptingParticipants,
-            })
-          }
-        >
-          {record.isAcceptingParticipants ? 'Pause entries' : 'Resume entries'}
-        </Button>
-      </RollActionBar>
-
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <NameListCard
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <NameListCard
             title="Participants"
             emptyLabel="No participants yet."
             removeAriaLabel="Remove participant"
@@ -496,11 +511,11 @@ export function ChatRollSessionPage() {
                 onError: () => showError('Could not remove participant.'),
               })
             }
-          />
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <NameListCard
-            title="Winners"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <NameListCard
+                title="Winners"
             emptyLabel="No winners yet."
             removeAriaLabel="Remove winner"
             rows={wins}
@@ -515,7 +530,9 @@ export function ChatRollSessionPage() {
                 onError: () => showError('Could not remove winner.'),
               })
             }
-          />
+              />
+            </Grid>
+          </Grid>
         </Grid>
       </Grid>
 
@@ -525,12 +542,6 @@ export function ChatRollSessionPage() {
         record={record}
         open={archiveSessionDialogOpen}
         onClose={() => setArchiveSessionDialogOpen(false)}
-      />
-      <ChatRollDeactivateSessionDialog
-        accountId={accountId}
-        chatRollId={chatRollId}
-        open={deactivateDialogOpen}
-        onClose={() => setDeactivateDialogOpen(false)}
       />
     </PageStack>
   )

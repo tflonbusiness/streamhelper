@@ -12,14 +12,12 @@ import {
 import { styled } from '@mui/material/styles'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Controller, useForm } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
 import { CHAT_ROLL_DEFAULT_TITLE } from '@/components/chat-roll/chat-roll-page/chat-roll-page-utils'
 import { useNotification } from '@/context/NotificationContext'
 import {
   type CreateChatRollFormValues,
   createChatRollFormSchema,
 } from '@/lib/chat-roll-validation'
-import { chatRollSessionRoute } from '@/lib/routes'
 import { useCreateChatRoll } from '@/queries/use-chat-rolls'
 
 type ChatRollCreateDialogProps = {
@@ -55,7 +53,6 @@ const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
 }))
 
 export const ChatRollCreateDialog = (props: ChatRollCreateDialogProps) => {
-  const navigate = useNavigate()
   const { showSuccess, showError } = useNotification()
   const createMutation = useCreateChatRoll(props.accountId)
 
@@ -81,12 +78,11 @@ export const ChatRollCreateDialog = (props: ChatRollCreateDialogProps) => {
 
   const onSubmit = handleSubmit((values) => {
     createMutation.mutate(values.title, {
-      onSuccess: (record) => {
+      onSuccess: () => {
         showSuccess('Chat roll session created.')
         props.onCreated?.()
         handleClose()
         createMutation.reset()
-        navigate(chatRollSessionRoute(record.id))
       },
       onError: () => showError('Could not create chat roll session.'),
     })

@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   archiveChatRoll,
-  deactivateChatRoll,
   deleteAllChatRollParticipants,
   deleteAllChatRollWins,
   deleteChatRollParticipant,
@@ -9,12 +8,10 @@ import {
   fetchChatRoll,
   fetchChatRollParticipants,
   fetchChatRollWins,
-  goLiveChatRoll,
   patchChatRoll,
   rollChatRoll,
   type PatchChatRollInput,
 } from '@/api/chat-roll'
-import { isChatRollLive } from '@/api/chat-roll'
 import { chatRollKeys } from '@/queries/keys'
 
 export type ChatRollSessionData = {
@@ -39,8 +36,6 @@ async function fetchChatRollSession(
   return { record, participants, wins }
 }
 
-const LIVE_SESSION_POLL_MS = 5000
-
 export function useChatRollSession(
   accountId: number | undefined,
   chatRollId: number,
@@ -49,10 +44,6 @@ export function useChatRollSession(
     queryKey: sessionQueryKey(accountId ?? 0, chatRollId),
     queryFn: () => fetchChatRollSession(accountId!, chatRollId),
     enabled: accountId !== undefined && Number.isFinite(chatRollId),
-    refetchInterval: (query) => {
-      const record = query.state.data?.record
-      return record && isChatRollLive(record) ? LIVE_SESSION_POLL_MS : false
-    },
   })
 }
 
@@ -148,38 +139,6 @@ export function useDeleteAllChatRollWins(
   return useMutation({
     mutationFn: () => deleteAllChatRollWins(accountId!, chatRollId),
     onSuccess: () => invalidateSession(chatRollId),
-  })
-}
-
-export function useGoLiveChatRollSession(
-  accountId: number | undefined,
-  chatRollId: number,
-) {
-  const invalidateSession = useInvalidateChatRollSession(accountId)
-  const invalidateLists = useInvalidateChatRollLists()
-
-  return useMutation({
-    mutationFn: () => goLiveChatRoll(accountId!, chatRollId),
-    onSuccess: () => {
-      invalidateSession(chatRollId)
-      invalidateLists()
-    },
-  })
-}
-
-export function useDeactivateChatRollSession(
-  accountId: number | undefined,
-  chatRollId: number,
-) {
-  const invalidateSession = useInvalidateChatRollSession(accountId)
-  const invalidateLists = useInvalidateChatRollLists()
-
-  return useMutation({
-    mutationFn: () => deactivateChatRoll(accountId!, chatRollId),
-    onSuccess: () => {
-      invalidateSession(chatRollId)
-      invalidateLists()
-    },
   })
 }
 

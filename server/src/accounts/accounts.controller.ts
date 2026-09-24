@@ -680,30 +680,6 @@ export class AccountsController {
     );
   }
 
-  @Post(':accountId/chat-rolls/:chatRollId/go-live')
-  async goLiveChatRoll(
-    @Param('accountId', ParseIntPipe) accountId: number,
-    @Param('chatRollId', ParseIntPipe) chatRollId: number,
-    @Req() req: Request,
-  ) {
-    const session = req.session as SessionData;
-    const user = await this.authService.requireValidSessionUser(session.user);
-
-    return this.authService.goLiveChatRoll(accountId, user.id, chatRollId);
-  }
-
-  @Post(':accountId/chat-rolls/:chatRollId/deactivate')
-  async deactivateChatRoll(
-    @Param('accountId', ParseIntPipe) accountId: number,
-    @Param('chatRollId', ParseIntPipe) chatRollId: number,
-    @Req() req: Request,
-  ) {
-    const session = req.session as SessionData;
-    const user = await this.authService.requireValidSessionUser(session.user);
-
-    return this.authService.deactivateChatRoll(accountId, user.id, chatRollId);
-  }
-
   @Delete(':accountId/chat-rolls/:chatRollId')
   @HttpCode(204)
   async archiveChatRoll(

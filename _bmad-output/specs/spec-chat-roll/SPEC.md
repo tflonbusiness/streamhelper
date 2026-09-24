@@ -31,32 +31,36 @@ sources: []
   - **success:** Card renders with name **Chat Roll**, description from `chat-roll-module.md`, **Available** badge, and **Open** navigates to `/chat-roll`.
 
 - **CAP-2**
-  - **intent:** An operator opens the Chat Roll workspace from the module card.
-  - **success:** Route renders inside `AppShell` with `PageHeader` and page layout per `roll-session.md`.
+  - **intent:** An operator opens a chat roll session workspace at `/modules/chat-roll/:id`.
+  - **success:** Route renders inside `AppShell` with `PageHeader`, session header card, and main layout per `roll-session.md`; invalid id shows error state.
+
+- **CAP-13**
+  - **intent:** An operator configures roll settings and reviews participants and winners in a two-column session layout on desktop.
+  - **success:** At `lg+`, **Settings** card and **Roll** / **Pause entries** action bar occupy the **left** column (`Grid` ~5/12); **Participants** and **Winners** list cards occupy the **right** column (~7/12) side by side; below `lg`, zones stack vertically in order settings → actions → participants → winners; behavior of fields and lists unchanged from CAP-3–7 and CAP-12.
 
 - **CAP-3**
-  - **intent:** An operator sets the collection keyword in a **Settings** section.
-  - **success:** **Keyword** field visible in Settings card; default `!roll`; accepts any non-empty trimmed string; invalid empty value shows inline validation.
+  - **intent:** An operator sets the collection keyword in the **Settings** section on the left column of the session workspace.
+  - **success:** **Keyword** field visible in Settings card (left column per CAP-13); default `!roll`; accepts any non-empty trimmed string; invalid empty value shows inline validation.
 
 - **CAP-4**
   - **intent:** An operator enables viewer role categories, sets a per-role weight, and chooses how multiple matching roles combine.
   - **success:** Five role toggles per `role-weights.md`; enabled roles show **Weight** input; **Weight combine** radio offers **Highest** and **Sum**; **Exclude winner from pool after roll** toggle; settings persist per session.
 
 - **CAP-5**
-  - **intent:** An operator sees **Participants** and **Winners** as two side-by-side columns listing display names; each participant row shows their computed win coefficient.
-  - **success:** Two-column grid per `roll-session.md`; participant rows show name, optional role chips, and coefficient chip; winners show names only.
+  - **intent:** An operator sees **Participants** and **Winners** as two side-by-side list cards listing display names; each participant row shows their computed win coefficient.
+  - **success:** Both lists live in the **right** workspace column per `roll-session.md` (side by side within that column on `md+`); participant rows show name, optional role chips, and coefficient chip; winners show names only.
 
 - **CAP-6**
   - **intent:** An operator clears the full **Participants** list or removes a single participant.
-  - **success:** **Clear all** archives all active participants (`is_archived = true`); per-row delete archives one entry.
+  - **success:** **Clear all** archives all active participants (`is_archived = true`); per-row delete archives one entry; operator UI and session `GET` list endpoints return only rows with `is_archived = false` — archived participants never appear in the table.
 
 - **CAP-7**
   - **intent:** An operator clears the full **Winners** list or removes a single winner.
-  - **success:** **Clear all** archives all active win rows (`is_archived = true`); per-row delete archives one win row; rows are retained in DB.
+  - **success:** **Clear all** archives all active win rows (`is_archived = true`); per-row delete archives one win row; rows are retained in DB; operator UI and session `GET` list endpoints return only rows with `is_archived = false` — archived wins never appear in the table.
 
 - **CAP-8**
   - **intent:** An operator creates and manages **chat_roll** sessions per account with `live` / `off_air` / `archived` status lifecycle matching Prize Spin.
-  - **success:** At most one `live` session per account; session list ordered by `created_at DESC`; archived sessions excluded from default list.
+  - **success:** At most one `live` session per account; history on `/modules/chat-roll` lists only non-archived sessions (`status` `live` or `off_air`); `status = archived` sessions are omitted from history; archive moves a session off the history table; direct URL to archived session id may still load read-only workspace.
 
 - **CAP-9**
   - **intent:** Roll settings persist on the **chat_roll** session row and survive refresh.
@@ -87,7 +91,10 @@ sources: []
 - **Fixed role catalog** — exactly five categories in `role-weights.md`.
 - **Weight inputs** — `0.1`–`100`, one decimal place.
 - **MUI patterns** — consistent with Bonus Buy and Prize Spin pages.
-- **Standalone module** — `/chat-roll` route.
+- **Module routes** — history `/modules/chat-roll`, session `/modules/chat-roll/:id`; use `app/src/lib/routes.ts` helpers.
+- **Session page layout** — `lg+` two columns: left = settings + roll action bar; right = participants + winners (`roll-session.md`); supersedes full-width settings above full-width lists.
+- **Non-archived lists only** — `listChatRollParticipants` and `listChatRollWins` SQL filter `is_archived = false`; UI never renders archived participant or win rows.
+- **History sessions** — `GET /accounts/:accountId/chat-rolls` uses `archived=false` only from history UI; no **Show** filter for Archived or All.
 
 ## Non-goals
 
@@ -97,6 +104,8 @@ sources: []
 - Bot winner announcement in Kick chat.
 - Per-row role editing on live participants (roles are snapshot at join).
 - Separate account-level defaults table (copy-from-last-session instead).
+- Browsing archived sessions from history table or filter — history shows active sessions only.
+- Operator UI audit views for archived `chat_roll_participant` / `chat_roll_win` rows.
 
 ## Success signal
 
@@ -108,7 +117,5 @@ An operator creates a chat roll session, sets keyword `!join` with **Sum** combi
 - New session inherits settings from the account's most recent non-archived session.
 - API layer consuming these tables is a follow-on slice; UI may still use localStorage until wired.
 - `chat_roll_widget` defaults to 500×500 px like Prize Spin.
-
-## Open Questions
-
-- Should archived sessions expose full read-only participant/win lists in history UI, or only metadata (title, keyword, winner count)?
+- Archived participant and win rows remain in DB for audit but are excluded from all operator-facing lists.
+- Archiving a session removes it from `/modules/chat-roll` history; opening an archived session by URL shows read-only workspace with non-archived participant/win rows only (if any).

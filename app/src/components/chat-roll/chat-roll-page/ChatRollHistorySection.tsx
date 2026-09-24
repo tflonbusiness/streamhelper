@@ -1,38 +1,20 @@
-import {
-  Button,
-  Card,
-  CardContent,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-} from '@mui/material'
+import { Button, Card, CardContent, Stack } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
-import { styled, useTheme } from '@mui/material/styles'
+import { styled } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
-import {
-  isChatRollLive,
-  type ChatRollArchivedFilter,
-  type ChatRollRecord,
-} from '@/api/chat-roll'
+import type { ChatRollRecord } from '@/api/chat-roll'
 import { AppTable } from '@/components/AppTable'
 import { ChatRollArchiveDialog } from '@/components/chat-roll/chat-roll-page/ChatRollArchiveDialog'
 import { ChatRollCreateDialog } from '@/components/chat-roll/chat-roll-page/ChatRollCreateDialog'
 import { ChatRollRecordExpandedDetails } from '@/components/chat-roll/chat-roll-page/ChatRollRecordExpandedDetails'
 import {
+  CHAT_ROLL_HISTORY_EMPTY_MESSAGE,
   CHAT_ROLL_HISTORY_PAGE_SIZE,
-  historyEmptyMessage,
-  liveSessionRowSx,
 } from '@/components/chat-roll/chat-roll-page/chat-roll-page-utils'
 import { buildChatRollRecordColumns } from '@/components/chat-roll/chat-roll-page/chatRollRecordColumns'
 import { SectionHeader, sectionTableIcon } from '@/components/SectionHeader'
 import { useNotification } from '@/context/NotificationContext'
-import {
-  useDeactivateChatRoll,
-  useGoLiveChatRoll,
-  useChatRolls,
-} from '@/queries/use-chat-rolls'
+import { useChatRolls } from '@/queries/use-chat-rolls'
 
 type ChatRollHistorySectionProps = {
   accountId: number
@@ -57,29 +39,16 @@ const StyledContentStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(2),
 }))
 
-const StyledFilterFormControl = styled(FormControl)({
-  minWidth: 140,
-})
-
-const StyledFilterSelect = styled(Select)(({ theme }) => ({
-  '& .MuiOutlinedInput-root': {
-    backgroundColor: theme.palette.background.default,
-  },
-}))
-
 export const ChatRollHistorySection = ({
   accountId,
 }: ChatRollHistorySectionProps) => {
-  const theme = useTheme()
-  const { showSuccess, showError } = useNotification()
+  const { showError } = useNotification()
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [expandedRecordIds, setExpandedRecordIds] = useState<Set<number>>(
     new Set(),
   )
   const [archiveDialogRecord, setArchiveDialogRecord] =
     useState<ChatRollRecord | null>(null)
-  const [archivedFilter, setArchivedFilter] =
-    useState<ChatRollArchivedFilter>('false')
   const [recordsPage, setRecordsPage] = useState(1)
 
   const {
@@ -88,26 +57,16 @@ export const ChatRollHistorySection = ({
     isFetching: fetchingRecords,
     error: recordsQueryError,
   } = useChatRolls(accountId, {
-    archived: archivedFilter,
+    archived: 'false',
     page: recordsPage,
     limit: CHAT_ROLL_HISTORY_PAGE_SIZE,
   })
-
-  const goLiveMutation = useGoLiveChatRoll(accountId)
-  const deactivateMutation = useDeactivateChatRoll(accountId)
 
   const records = recordsResult?.records ?? []
   const recordsTotal =
     typeof recordsResult?.total === 'number'
       ? recordsResult.total
       : records.length
-
-  const liveActionRecordId =
-    goLiveMutation.isPending
-      ? goLiveMutation.variables
-      : deactivateMutation.isPending
-        ? deactivateMutation.variables
-        : null
 
   useEffect(() => {
     if (!recordsQueryError) {
@@ -128,34 +87,7 @@ export const ChatRollHistorySection = ({
     }
   }, [recordsResult, recordsPage])
 
-  const handleGoLive = (record: ChatRollRecord) => {
-    goLiveMutation.reset()
-    deactivateMutation.reset()
-    goLiveMutation.mutate(record.id, {
-      onSuccess: () => showSuccess('Session is now live.'),
-      onError: (error) => {
-        showError(error instanceof Error ? error.message : 'Could not go live')
-      },
-    })
-  }
-
-  const handleDeactivate = (record: ChatRollRecord) => {
-    goLiveMutation.reset()
-    deactivateMutation.reset()
-    deactivateMutation.mutate(record.id, {
-      onSuccess: () => showSuccess('Session taken off air.'),
-      onError: (error) => {
-        showError(
-          error instanceof Error ? error.message : 'Could not deactivate session',
-        )
-      },
-    })
-  }
-
   const recordColumns = buildChatRollRecordColumns({
-    liveActionRecordId,
-    onGoLive: handleGoLive,
-    onDeactivate: handleDeactivate,
     onArchive: setArchiveDialogRecord,
   })
 
@@ -185,32 +117,7 @@ export const ChatRollHistorySection = ({
               rows={records}
               loading={loadingRecords || fetchingRecords}
               getRowKey={(record) => record.id}
-              emptyMessage={historyEmptyMessage(archivedFilter)}
-              toolbar={
-                <StyledFilterFormControl size="small">
-                  <InputLabel id="chat-roll-archived-filter-label">
-                    Show
-                  </InputLabel>
-                  <StyledFilterSelect
-                    labelId="chat-roll-archived-filter-label"
-                    label="Show"
-                    value={archivedFilter}
-                    onChange={(event) => {
-                      setArchivedFilter(
-                        event.target.value as ChatRollArchivedFilter,
-                      )
-                      setRecordsPage(1)
-                    }}
-                  >
-                    <MenuItem value="false">Active</MenuItem>
-                    <MenuItem value="true">Archived</MenuItem>
-                    <MenuItem value="all">All</MenuItem>
-                  </StyledFilterSelect>
-                </StyledFilterFormControl>
-              }
-              getRowSx={(record) =>
-                isChatRollLive(record) ? liveSessionRowSx(theme) : undefined
-              }
+              emptyMessage={CHAT_ROLL_HISTORY_EMPTY_MESSAGE}
               pagination={{
                 count: recordsTotal,
                 page: recordsPage,

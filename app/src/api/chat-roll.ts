@@ -82,12 +82,6 @@ export type PatchChatRollWidgetInput = {
   height?: number
 }
 
-export function isChatRollLive(
-  record: Pick<ChatRollRecord, 'status'>,
-): boolean {
-  return record.status === 'live'
-}
-
 export function isChatRollArchived(
   record: Pick<ChatRollRecord, 'status'>,
 ): boolean {
@@ -198,44 +192,6 @@ export async function patchChatRoll(
 
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, 'Could not update chat roll'))
-  }
-
-  return response.json() as Promise<ChatRollRecord>
-}
-
-export async function goLiveChatRoll(
-  accountId: number,
-  chatRollId: number,
-): Promise<ChatRollRecord> {
-  const response = await fetch(
-    `/accounts/${accountId}/chat-rolls/${chatRollId}/go-live`,
-    {
-      method: 'POST',
-      credentials: 'include',
-    },
-  )
-
-  if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Could not go live'))
-  }
-
-  return response.json() as Promise<ChatRollRecord>
-}
-
-export async function deactivateChatRoll(
-  accountId: number,
-  chatRollId: number,
-): Promise<ChatRollRecord> {
-  const response = await fetch(
-    `/accounts/${accountId}/chat-rolls/${chatRollId}/deactivate`,
-    {
-      method: 'POST',
-      credentials: 'include',
-    },
-  )
-
-  if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Could not deactivate session'))
   }
 
   return response.json() as Promise<ChatRollRecord>
