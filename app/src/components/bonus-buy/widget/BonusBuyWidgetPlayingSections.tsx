@@ -13,6 +13,7 @@ import {
   StyledLiveName,
   StyledLivePurchase,
 } from '@/components/bonus-buy/widget/bonus-buy-widget-styles'
+import { getWidgetProviderLabel } from '@/components/bonus-buy/widget/bonus-buy-widget-slot-utils'
 
 type BonusBuyWidgetPlayingSectionsProps = {
   playingSlot: BonusBuySlot
@@ -27,17 +28,21 @@ export function BonusBuyWidgetPlayingSections({
   theme,
   currencyCode,
 }: BonusBuyWidgetPlayingSectionsProps) {
+  const providerLabel = getWidgetProviderLabel(playingSlot.providerName)
+
   return (
     <StyledLiveCell widgetTheme={theme} cellHeight={68}>
       <StyledLiveAccentBar textColor={theme.accentColor} />
       <StyledLiveContentRow>
-        <StyledLiveInfo>
+        <StyledLiveInfo titleOnlyCentered={providerLabel === null}>
           <StyledLiveName textColor={theme.accentColor}>
             {playingIndex + 1}. {playingSlot.name}
           </StyledLiveName>
-          <StyledBestWinProvider textColor={theme.textMutedColor}>
-            {playingSlot.providerName ?? '—'}
-          </StyledBestWinProvider>
+          {providerLabel ? (
+            <StyledBestWinProvider textColor={theme.textMutedColor}>
+              {providerLabel}
+            </StyledBestWinProvider>
+          ) : null}
         </StyledLiveInfo>
         <StyledLivePurchase textColor={theme.textMutedColor}>
           {formatBonusBuyMoney(playingSlot.purchaseAmount, currencyCode)}

@@ -15,7 +15,10 @@ import {
   StyledBestXValueViewport,
   StyledWidgetCell,
 } from '@/components/bonus-buy/widget/bonus-buy-widget-styles'
-import { isWinPositive } from '@/components/bonus-buy/widget/bonus-buy-widget-slot-utils'
+import {
+  getWidgetProviderLabel,
+  isWinPositive,
+} from '@/components/bonus-buy/widget/bonus-buy-widget-slot-utils'
 
 const StyledCrownIcon = styled(
   (props: { textColor: string }) => (
@@ -82,14 +85,18 @@ export function BonusBuyWidgetBestXRow({
   theme,
   currencyCode,
 }: BonusBuyWidgetBestXRowProps) {
+  const providerLabel = getWidgetProviderLabel(slot.providerName)
+
   return (
     <StyledWidgetCell widgetTheme={theme} cellHeight={68}>
       <StyledCrownIcon textColor={theme.accentColor} aria-hidden />
-      <StyledBestWinInfo>
+      <StyledBestWinInfo titleOnlyCentered={providerLabel === null}>
         <StyledBestWinName>{slot.name}</StyledBestWinName>
-        <StyledBestWinProvider textColor={theme.textMutedColor}>
-          {slot.providerName ?? '—'}
-        </StyledBestWinProvider>
+        {providerLabel ? (
+          <StyledBestWinProvider textColor={theme.textMutedColor}>
+            {providerLabel}
+          </StyledBestWinProvider>
+        ) : null}
       </StyledBestWinInfo>
       <BestXValue slot={slot} theme={theme} currencyCode={currencyCode} />
     </StyledWidgetCell>

@@ -189,11 +189,31 @@ export const StyledPremiumIcon = styled(WorkspacePremiumIcon, textColorProps)<
   color: textColor,
 }))
 
-export const StyledBestWinInfo = styled(Box)({
-  flex: 1,
-  marginLeft: '10px',
-  minWidth: 0,
-})
+const titleOnlyCenterProps = {
+  shouldForwardProp: (prop: string) => prop !== 'titleOnlyCentered',
+}
+
+type TitleOnlyCenteredProp = {
+  titleOnlyCentered?: boolean
+}
+
+/** Matches two-line title + provider block so single-line titles stay vertically centered. */
+const WIDGET_TITLE_BLOCK_MIN_HEIGHT = 44
+
+export const StyledBestWinInfo = styled(Box, titleOnlyCenterProps)<TitleOnlyCenteredProp>(
+  ({ titleOnlyCentered }) => ({
+    flex: 1,
+    marginLeft: '10px',
+    minWidth: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1px',
+    ...(titleOnlyCentered && {
+      justifyContent: 'center',
+      minHeight: WIDGET_TITLE_BLOCK_MIN_HEIGHT,
+    }),
+  }),
+)
 
 export const StyledBestWinName = styled(Typography)({
   fontWeight: 600,
@@ -286,10 +306,19 @@ export const StyledLiveContentRow = styled(Box)({
   gap: 16,
 })
 
-export const StyledLiveInfo = styled(Box)({
-  flex: 1,
-  minWidth: 0,
-})
+export const StyledLiveInfo = styled(Box, titleOnlyCenterProps)<TitleOnlyCenteredProp>(
+  ({ titleOnlyCentered }) => ({
+    flex: 1,
+    minWidth: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1px',
+    ...(titleOnlyCentered && {
+      justifyContent: 'center',
+      minHeight: WIDGET_TITLE_BLOCK_MIN_HEIGHT,
+    }),
+  }),
+)
 
 export const StyledLiveName = styled(Typography, textColorProps)<TextColorProp>(
   ({ textColor }) => ({
@@ -351,13 +380,19 @@ export const StyledSlotRow = styled(StyledWidgetCell)({
   paddingBottom: '8px',
 })
 
-export const StyledSlotInfo = styled(Box)({
-  minWidth: 0,
-  flex: 1,
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '1px',
-})
+export const StyledSlotInfo = styled(Box, titleOnlyCenterProps)<TitleOnlyCenteredProp>(
+  ({ titleOnlyCentered }) => ({
+    minWidth: 0,
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1px',
+    ...(titleOnlyCentered && {
+      justifyContent: 'center',
+      minHeight: WIDGET_TITLE_BLOCK_MIN_HEIGHT,
+    }),
+  }),
+)
 
 export const StyledSlotName = styled(Typography)({
   fontSize: '22px',

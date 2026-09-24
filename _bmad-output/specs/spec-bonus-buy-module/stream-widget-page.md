@@ -77,9 +77,11 @@ Shown when the **now playing** slot has `winAmount` set. Height 68px; same cell 
 | Element | Display |
 |---------|---------|
 | Crown icon | 36×36, `settings.accentColor` |
-| Slot name | `slotName`, semibold 22px white |
-| Nick / provider | `nickProvider`, 18px `settings.textMutedColor` |
+| Slot name | `name`, semibold 22px white |
+| Provider | `providerName` when non-empty after trim, 18px `settings.textMutedColor` — **omit line** when null/empty (no `—` placeholder); when omitted, **vertically center** slot name in the title block |
 | Win amount | Right-aligned, semibold 26px white |
+
+Row height stays **68px** whether provider is shown or omitted.
 
 Hidden when no playing slot or playing slot has no win yet.
 
@@ -90,10 +92,12 @@ Shown when a slot has `isNowPlaying: true`. Height 68px.
 | Element | Display |
 |---------|---------|
 | Left accent | 8px bar `settings.accentColor` with glow |
-| Title | `{index}. {slotName}` truncated, 22px `settings.accentColor` |
-| Nick | 18px `settings.textMutedColor` |
-| Purchase | `$XX` muted, right area |
+| Title | `{index}. {name}` truncated, 22px `settings.accentColor` |
+| Provider | `providerName` when non-empty after trim, 18px `settings.textMutedColor` — **omit line** when null/empty (no `—`); when omitted, **vertically center** the title line in the info block |
+| Purchase | formatted `purchaseAmount`, muted, right area |
 | LIVE badge | Dot `settings.liveColor` + **LIVE** uppercase, pill tinted from `liveColor` |
+
+Row height stays **68px** whether provider is shown or omitted.
 
 When no playing slot: omit row (do not render empty placeholder).
 
@@ -105,10 +109,12 @@ Excludes the `isNowPlaying` slot (shown in rows 3–4). Order: creation order as
 
 | Column | Source | Style |
 |--------|--------|-------|
-| Title block | `{n}. {slotName}` + `nickProvider` | Title 20px white; nick 19px `textMutedColor` |
+| Title block | `{n}. {name}` + optional `providerName` | Title 22px white; provider 16px `textMutedColor` when non-empty after trim — **omit provider line** when null/empty (no `—`); when omitted, **vertically center** the title in the block |
 | Purchase | `purchaseAmount` | 18px `textMutedColor` |
 | Win | `winAmount` or pending | `positiveColor` if win ≥ purchase, `negativeColor` if win < purchase; em dash if null |
 | Multiplier pill | `multiplier` | Pill tinted red or green matching win |
+
+Each list row height stays **74px** (`cellHeight`) whether provider is shown or omitted.
 
 Empty session (zero non-archived slots): summary row shows start balance + `0x`; no list items.
 

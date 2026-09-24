@@ -12,7 +12,10 @@ import {
   StyledSlotRow,
   StyledWinAmount,
 } from '@/components/bonus-buy/widget/bonus-buy-widget-styles'
-import { isWinPositive } from '@/components/bonus-buy/widget/bonus-buy-widget-slot-utils'
+import {
+  getWidgetProviderLabel,
+  isWinPositive,
+} from '@/components/bonus-buy/widget/bonus-buy-widget-slot-utils'
 
 type BonusBuyWidgetSlotRowProps = {
   slot: BonusBuySlot
@@ -35,14 +38,17 @@ export function BonusBuyWidgetSlotRow({
         ? theme.positiveColor
         : theme.negativeColor
   const badgeColor = positive ? theme.positiveColor : theme.negativeColor
+  const providerLabel = getWidgetProviderLabel(slot.providerName)
 
   return (
     <StyledSlotRow widgetTheme={theme} cellHeight={74}>
-      <StyledSlotInfo>
+      <StyledSlotInfo titleOnlyCentered={providerLabel === null}>
         <StyledSlotName>{index + 1}. {slot.name}</StyledSlotName>
-        <StyledSlotProvider textColor={theme.textMutedColor}>
-          {slot.providerName ?? '—'}
-        </StyledSlotProvider>
+        {providerLabel ? (
+          <StyledSlotProvider textColor={theme.textMutedColor}>
+            {providerLabel}
+          </StyledSlotProvider>
+        ) : null}
       </StyledSlotInfo>
       <StyledPurchaseAmount textColor={theme.textMutedColor}>
         {formatBonusBuyMoney(slot.purchaseAmount, currencyCode)}

@@ -119,6 +119,10 @@ sources: []
   - **intent:** An operator chooses which ISO currency applies to a bonus buy session when creating it and can change that currency later.
   - **success:** Create dialog and session edit flows expose a **Currency** field implemented as a searchable dropdown over the full active ISO 4217 catalog per `session-currencies.md`; typing filters by code or name; selection is required on create (default USD); field stays enabled when slots exist; PATCH persists `currency_code` anytime; all bonus-buy monetary UI and the public overlay format amounts with the session's currency via shared `formatBonusBuyMoney`; invalid or unknown codes rejected client- and server-side.
 
+- **CAP-24**
+  - **intent:** The stream overlay presents slot title blocks without a placeholder when optional provider text is absent.
+  - **success:** On `/bonus-buy/:id/widget`, every row that shows `{name}` + `providerName` (slot list, LIVE playing, win highlight) omits the provider line when `providerName` is null, undefined, or whitespace-only — no em dash (`—`) in that line; the slot name is vertically centered within the same title block; fixed row heights stay unchanged (slot list 74px, LIVE and win highlight 68px per `stream-widget-page.md`); when `providerName` is non-empty after trim, the muted second line renders as today.
+
 ## Constraints
 
 - **Catalog delta:** `bonus-buy` in `MODULE_CATALOG` with status `available` and widget route `/bonus-buy`; do not alter existing module IDs.
@@ -154,6 +158,7 @@ sources: []
 - **Preview layout:** form + preview side-by-side on `md+`; nested preview dialog on smaller breakpoints; scale preview with aspect ratio preserved when draft size exceeds container.
 - **Preview invalid state:** maintain `lastValidWidgetDraft` updated only when `validateWidgetDraft` passes; invalid edits render frozen last-valid `WidgetCanvas` plus semi-transparent overlay with validation text — not a blank panel.
 - **Overlay design target:** Figma frame `bb` (`1:5`, 500×600) per [stream-widget-page.md](stream-widget-page.md); default colors `#0A0A0C`, `#121215`, `#F59E0B`, `#10B981`, `#EF4444`.
+- **Overlay empty provider:** public widget only — do not render `—` for missing `providerName`; center slot name in the title block; row `cellHeight` values unchanged; session workspace expanded details and forms may still use `—` for empty provider.
 
 ## Non-goals
 
@@ -175,6 +180,7 @@ sources: []
 - FX conversion or automatic slot amount recalculation when session currency changes.
 - Per-currency ISO minor-unit enforcement (e.g. JPY 0 dp catalog rules) — optional 0–2 fraction digits on all money inputs in this slice.
 - Cryptocurrency or custom currency codes outside ISO 4217.
+- Aligning session workspace **Bonus list** or expanded slot detail with overlay empty-provider rules — overlay widget rows only (CAP-24).
 
 ## Success signal
 
