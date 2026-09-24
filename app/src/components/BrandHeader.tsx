@@ -10,7 +10,7 @@ type BrandHeaderProps = {
 }
 
 export function BrandHeader({
-  title = 'Caz Agent',
+  title = 'Stream Widgets',
   description,
   compact = false,
   horizontal = false,
@@ -30,7 +30,7 @@ export function BrandHeader({
       <Box
         component="img"
         src="/logo.svg"
-        alt="Caz Agent"
+        alt="Stream Widgets"
         sx={{
           flexShrink: 0,
           width: compact ? 32 : 48,

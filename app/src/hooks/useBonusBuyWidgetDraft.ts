@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import type { BonusBuyWidgetSettings, BonusBuyWidgetStylePreset } from '@/api/bonus-buy'
 import {
   applyBonusBuyWidgetPresetFromList,
-  extractBonusBuyWidgetStyleSettings,
   matchBonusBuyWidgetPresetFromList,
 } from '@/lib/bonus-buy-widget-presets'
 import { validateBonusBuyWidgetDraft } from '@/lib/bonus-buy-widget-validation'

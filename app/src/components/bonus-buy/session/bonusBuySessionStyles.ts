@@ -1,4 +1,4 @@
-import { Card, CardContent } from '@mui/material'
+import { CardContent } from '@mui/material'
 import { alpha, type Theme } from '@mui/material/styles'
 import { styled } from '@mui/material/styles'
 

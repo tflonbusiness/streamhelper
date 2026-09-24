@@ -2,6 +2,7 @@ import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium'
 import { Box, Typography } from '@mui/material'
+import type { TypographyProps } from '@mui/material/Typography'
 import { alpha, styled } from '@mui/material/styles'
 import type { BonusBuyWidgetTheme } from '@/lib/bonus-buy-widget-presentation'
 
@@ -130,7 +131,7 @@ export const StyledSlotCountIcon = styled(CardGiftcardIcon, textColorProps)<
   color: textColor,
 }))
 
-export const StyledSlotCountValue = styled(Typography)({
+export const StyledSlotCountValue = styled(Typography)<TypographyProps>({
   fontWeight: 600,
   fontSize: '22px',
   lineHeight: '30px',

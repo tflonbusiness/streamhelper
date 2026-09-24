@@ -324,7 +324,7 @@ export function ChatRollSessionPage() {
           <SettingsTitle variant="subtitle2">Settings</SettingsTitle>
 
           <SettingsStack>
-            <Grid container spacing={1.5} alignItems="flex-start">
+            <Grid container spacing={1.5} sx={{ alignItems: 'flex-start' }}>
               <Grid size={{ xs: 12, sm: 4, md: 3 }}>
                 <KeywordField
                   label="Keyword"

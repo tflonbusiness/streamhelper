@@ -71,14 +71,14 @@ export function LoginPage() {
                     <Box
                       component="img"
                       src="/logo.svg"
-                      alt="Caz Agent"
+                      alt="Stream Widgets"
                       sx={{ width: 44, height: 44 }}
                     />
                   </Box>
 
                   <Stack spacing={0.75}>
                     <Typography variant="h4" component="h1" sx={{ fontWeight: 700, letterSpacing: '-0.02em' }}>
-                      Caz Agent
+                      Stream Widgets
                     </Typography>
                     <Typography variant="body2" sx={loginTaglineSx}>
                       Streamer dashboard for Kick creators

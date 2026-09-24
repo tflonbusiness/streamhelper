@@ -57,8 +57,16 @@ export function BonusBuyWidgetSlotList({
     }
 
     function updateAutoScroll() {
-      const singleListHeight = measureSingleListHeight(track, listSlots.length)
-      setAutoScrollEnabled(singleListHeight > container.clientHeight)
+      const currentContainer = containerRef.current
+      const currentTrack = trackRef.current
+      if (!currentContainer || !currentTrack) {
+        return
+      }
+      const singleListHeight = measureSingleListHeight(
+        currentTrack,
+        listSlots.length,
+      )
+      setAutoScrollEnabled(singleListHeight > currentContainer.clientHeight)
     }
 
     updateAutoScroll()

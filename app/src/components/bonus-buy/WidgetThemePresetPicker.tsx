@@ -38,10 +38,12 @@ const PresetGrid = styled(Box, {
   gap: compact ? theme.spacing(0.75) : theme.spacing(1),
   gridTemplateColumns: compact
     ? 'repeat(auto-fill, minmax(112px, 1fr))'
-    : {
-        xs: 'repeat(2, minmax(0, 1fr))',
-        sm: 'repeat(4, minmax(0, 1fr))',
-      },
+    : 'repeat(2, minmax(0, 1fr))',
+  ...(!compact && {
+    [theme.breakpoints.up('sm')]: {
+      gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+    },
+  }),
 }))
 
 const PresetChip = styled(Chip, {

@@ -115,7 +115,7 @@ const StyledLogoutIcon = styled(LogoutIcon)({
 
 const MobileNav = styled('nav', {
   shouldForwardProp: (prop) => prop !== 'expanded',
-})<{ expanded?: boolean }>(({ theme, expanded = true }) => ({
+})<{ expanded?: boolean }>(({ theme }) => ({
   display: 'flex',
   gap: theme.spacing(0.5),
   overflowX: 'auto',
@@ -391,7 +391,7 @@ export function AppShell() {
               )}
             </NavToggleButton>
           </Tooltip>
-          <SidebarLogo src="/logo.svg" alt="Caz Agent" expanded />
+          <SidebarLogo src="/logo.svg" alt="Stream Widgets" expanded />
           <MobileLogoutButton
             type="button"
             variant="text"
@@ -447,7 +447,7 @@ export function AppShell() {
 
       <Sidebar expanded={isNavExpanded}>
         <SidebarHeaderRow expanded={isNavExpanded}>
-          <SidebarLogo src="/logo.svg" alt="Caz Agent" expanded={isNavExpanded} />
+          <SidebarLogo src="/logo.svg" alt="Stream Widgets" expanded={isNavExpanded} />
           <Tooltip title={isNavExpanded ? 'Collapse navigation' : 'Expand navigation'}>
             <NavToggleButton
               size="small"
