@@ -1,30 +1,17 @@
-import {
-  Button,
-  FormControl,
-  Grid,
-  IconButton,
-  Radio,
-  Stack,
-  Switch,
-} from '@mui/material'
+import { Button, Grid, IconButton, Stack, Switch } from '@mui/material'
 import CasinoIcon from '@mui/icons-material/Casino'
 import DeleteIcon from '@mui/icons-material/Delete'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import ReplayIcon from '@mui/icons-material/Replay'
+import SettingsIcon from '@mui/icons-material/Settings'
 import { type ReactNode, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import type { ChatRollParticipant } from '@/api/chat-roll'
 import { isChatRollReadOnly } from '@/api/chat-roll'
 import {
   CoefficientChip,
-  CombineFormLabel,
-  CombineOption,
-  CombineRadioGroup,
   EmptyListText,
-  ExclusionToggleLabel,
-  ExclusionToggleRow,
-  KeywordField,
   ListCard,
   ListCardContent,
   ListHeaderStack,
@@ -45,14 +32,16 @@ import {
   RollActionBar,
   RollButton,
   SettingsStack,
-  SettingsTitle,
 } from '@/components/chat-roll/chatRollPageStyles'
 import { ChatRollSessionArchiveDialog } from '@/components/chat-roll/session/ChatRollSessionArchiveDialog'
 import { ChatRollSessionErrorState } from '@/components/chat-roll/session/ChatRollSessionErrorState'
 import { ChatRollSessionHeaderSection } from '@/components/chat-roll/session/ChatRollSessionHeaderSection'
+import { ChatRollKickChatSection } from '@/components/chat-roll/session/ChatRollKickChatSection'
+import { ChatRollSessionSettingsLeftPanel } from '@/components/chat-roll/session/ChatRollSessionSettingsLeftPanel'
 import { ChatRollStreamWidgetSection } from '@/components/chat-roll/session/ChatRollStreamWidgetSection'
 import { ChatRollSessionLoadingState } from '@/components/chat-roll/session/ChatRollSessionLoadingState'
 import { PageHeader } from '@/components/PageHeader'
+import { SectionHeader } from '@/components/SectionHeader'
 import { useAuth } from '@/context/AuthContext'
 import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
 import { useNotification } from '@/context/NotificationContext'
@@ -60,7 +49,6 @@ import {
   CHAT_ROLL_ROLE_CHIP_LABEL,
   CHAT_ROLL_ROLE_META,
   type ChatRollRoleId,
-  type WeightCombineMode,
   clampRoleWeight,
   computeParticipantCoefficient,
   formatCoefficient,
@@ -317,128 +305,97 @@ export function ChatRollSessionPage() {
 
       <ChatRollStreamWidgetSection chatRollId={chatRollId} />
 
-      <Grid container spacing={3} sx={{ alignItems: 'flex-start' }}>
-        <Grid size={{ xs: 12, lg: 5 }}>
-          <Stack spacing={3}>
+      <Stack spacing={3}>
+        <Stack spacing={3}>
             <SettingsCard elevation={0}>
               <SettingsCardContent>
-                <SettingsTitle variant="subtitle2">Settings</SettingsTitle>
+                <SectionHeader
+                  title="Settings"
+                  description="Keyword, entry rules, and role weights for this session."
+                  icon={SettingsIcon}
+                  iconVariant="info"
+                />
 
                 <SettingsStack>
-                  <Grid container spacing={1.5} sx={{ alignItems: 'flex-start' }}>
-                    <Grid size={{ xs: 12 }}>
-                      <KeywordField
-                  label="Keyword"
-                  size="small"
-                  value={keywordDraft}
-                  onChange={(event) => {
-                    setKeywordDraft(event.target.value)
-                    if (event.target.value.trim()) {
-                      setKeywordError(null)
-                    }
-                  }}
-                  onBlur={handleKeywordBlur}
-                  error={Boolean(keywordError)}
-                  helperText={keywordError ?? ' '}
-                  fullWidth
-                  disabled={settingsDisabled}
-                />
+                  <Grid container spacing={3} sx={{ alignItems: 'flex-start' }}>
+                    <Grid size={{ xs: 12, md: 6, lg: 7 }}>
+                      <ChatRollSessionSettingsLeftPanel
+                        record={record}
+                        keywordDraft={keywordDraft}
+                        keywordError={keywordError}
+                        settingsDisabled={settingsDisabled}
+                        onKeywordChange={(value) => {
+                          setKeywordDraft(value)
+                          if (value.trim()) {
+                            setKeywordError(null)
+                          }
+                        }}
+                        onKeywordBlur={handleKeywordBlur}
+                        onCombineModeChange={(mode) =>
+                          patchRecord({ combine_mode: mode })
+                        }
+                        onExcludeWinnerChange={(checked) =>
+                          patchRecord({ exclude_winner_after_roll: checked })
+                        }
+                        onReplyInChatChange={(checked) =>
+                          patchRecord({ reply_in_chat: checked })
+                        }
+                      />
                     </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <FormControl component="fieldset" size="small" fullWidth>
-                  <CombineFormLabel>Weight combine</CombineFormLabel>
-                  <CombineRadioGroup
-                    row
-                    value={record.combineMode}
-                    onChange={(event) =>
-                      patchRecord({
-                        combine_mode: event.target.value as WeightCombineMode,
-                      })
-                    }
-                  >
-                    <CombineOption
-                      value="highest"
-                      control={<Radio size="small" disabled={settingsDisabled} />}
-                      label="Highest"
-                      disabled={settingsDisabled}
-                    />
-                    <CombineOption
-                      value="sum"
-                      control={<Radio size="small" disabled={settingsDisabled} />}
-                      label="Sum"
-                      disabled={settingsDisabled}
-                    />
-                  </CombineRadioGroup>
-                  <ExclusionToggleRow>
-                    <Switch
-                      size="small"
-                      checked={record.excludeWinnerAfterRoll}
-                      disabled={settingsDisabled}
-                      onChange={(event) =>
-                        patchRecord({
-                          exclude_winner_after_roll: event.target.checked,
-                        })
-                      }
-                    />
-                    <ExclusionToggleLabel variant="body2">
-                      Exclude winner from pool after roll
-                    </ExclusionToggleLabel>
-                  </ExclusionToggleRow>
-                  <ExclusionToggleRow>
-                    <Switch
-                      size="small"
-                      checked={record.replyInChat}
-                      disabled={settingsDisabled}
-                      onChange={(event) =>
-                        patchRecord({ reply_in_chat: event.target.checked })
-                      }
-                    />
-                    <ExclusionToggleLabel variant="body2">
-                      Reply in Kick chat when someone joins
-                    </ExclusionToggleLabel>
-                  </ExclusionToggleRow>
-                      </FormControl>
+                    <Grid size={{ xs: 12, md: 6, lg: 5 }}>
+                      <RolesSection>
+                        <SettingsSectionLabel>Eligible roles</SettingsSectionLabel>
+                        <Stack spacing={1}>
+                          {CHAT_ROLL_ROLE_META.map((role) => {
+                            const setting = record.roleSettings[role.id]
+                            return (
+                              <RoleRowStack
+                                key={role.id}
+                                enabled={setting.enabled}
+                              >
+                                <Switch
+                                  size="small"
+                                  checked={setting.enabled}
+                                  disabled={settingsDisabled}
+                                  onChange={(event) =>
+                                    handleRoleToggle(
+                                      role.id,
+                                      event.target.checked,
+                                    )
+                                  }
+                                />
+                                <RoleLabel variant="body2" noWrap>
+                                  {role.label}
+                                </RoleLabel>
+                                <RoleWeightField
+                                  size="small"
+                                  type="number"
+                                  label="×"
+                                  value={setting.weight}
+                                  disabled={
+                                    !setting.enabled || settingsDisabled
+                                  }
+                                  onChange={(event) =>
+                                    handleRoleWeightChange(
+                                      role.id,
+                                      event.target.value,
+                                    )
+                                  }
+                                  slotProps={{
+                                    htmlInput: {
+                                      min: 0.1,
+                                      max: 100,
+                                      step: 0.1,
+                                    },
+                                  }}
+                                />
+                              </RoleRowStack>
+                            )
+                          })}
+                        </Stack>
+                      </RolesSection>
                     </Grid>
                   </Grid>
-
-                  <RolesSection>
-                    <SettingsSectionLabel>Eligible roles</SettingsSectionLabel>
-                    <Grid container spacing={1}>
-                      {CHAT_ROLL_ROLE_META.map((role) => {
-                        const setting = record.roleSettings[role.id]
-                        return (
-                          <Grid key={role.id} size={{ xs: 12, sm: 6 }}>
-                      <RoleRowStack enabled={setting.enabled}>
-                        <Switch
-                          size="small"
-                          checked={setting.enabled}
-                          disabled={settingsDisabled}
-                          onChange={(event) =>
-                            handleRoleToggle(role.id, event.target.checked)
-                          }
-                        />
-                        <RoleLabel variant="body2" noWrap>
-                          {role.label}
-                        </RoleLabel>
-                        <RoleWeightField
-                          size="small"
-                          type="number"
-                          label="×"
-                          value={setting.weight}
-                          disabled={!setting.enabled || settingsDisabled}
-                          onChange={(event) =>
-                            handleRoleWeightChange(role.id, event.target.value)
-                          }
-                          slotProps={{
-                            htmlInput: { min: 0.1, max: 100, step: 0.1 },
-                          }}
-                        />
-                      </RoleRowStack>
-                          </Grid>
-                        )
-                      })}
-                    </Grid>
-                  </RolesSection>
                 </SettingsStack>
               </SettingsCardContent>
             </SettingsCard>
@@ -482,59 +439,59 @@ export function ChatRollSessionPage() {
                   : 'Resume entries'}
               </Button>
             </RollActionBar>
-          </Stack>
-        </Grid>
+        </Stack>
 
-        <Grid size={{ xs: 12, lg: 7 }}>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
+        <Grid container spacing={2} sx={{ alignItems: 'stretch' }}>
+            <Grid size={{ xs: 12, md: 4, lg: 3 }}>
               <NameListCard
-            title="Participants"
-            emptyLabel="No participants yet."
-            removeAriaLabel="Remove participant"
-            rows={participants}
-            renderRowExtra={(row) =>
-              renderParticipantExtra(
-                participants.find(
-                  (participant) => participant.id === row.id,
-                )!,
-              )
-            }
-            readOnly={readOnly}
-            onClearAll={() =>
-              deleteAllParticipantsMutation.mutate(undefined, {
-                onError: () => showError('Could not clear participants.'),
-              })
-            }
-            onRemove={(participantId) =>
-              deleteParticipantMutation.mutate(participantId, {
-                onError: () => showError('Could not remove participant.'),
-              })
-            }
+                title="Participants"
+                emptyLabel="No participants yet."
+                removeAriaLabel="Remove participant"
+                rows={participants}
+                renderRowExtra={(row) =>
+                  renderParticipantExtra(
+                    participants.find(
+                      (participant) => participant.id === row.id,
+                    )!,
+                  )
+                }
+                readOnly={readOnly}
+                onClearAll={() =>
+                  deleteAllParticipantsMutation.mutate(undefined, {
+                    onError: () => showError('Could not clear participants.'),
+                  })
+                }
+                onRemove={(participantId) =>
+                  deleteParticipantMutation.mutate(participantId, {
+                    onError: () => showError('Could not remove participant.'),
+                  })
+                }
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 4, lg: 6 }}>
+              <ChatRollKickChatSection accountId={accountId} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4, lg: 3 }}>
               <NameListCard
                 title="Winners"
-            emptyLabel="No winners yet."
-            removeAriaLabel="Remove winner"
-            rows={wins}
-            readOnly={readOnly}
-            onClearAll={() =>
-              deleteAllWinsMutation.mutate(undefined, {
-                onError: () => showError('Could not clear winners.'),
-              })
-            }
-            onRemove={(winId) =>
-              deleteWinMutation.mutate(winId, {
-                onError: () => showError('Could not remove winner.'),
-              })
-            }
+                emptyLabel="No winners yet."
+                removeAriaLabel="Remove winner"
+                rows={wins}
+                readOnly={readOnly}
+                onClearAll={() =>
+                  deleteAllWinsMutation.mutate(undefined, {
+                    onError: () => showError('Could not clear winners.'),
+                  })
+                }
+                onRemove={(winId) =>
+                  deleteWinMutation.mutate(winId, {
+                    onError: () => showError('Could not remove winner.'),
+                  })
+                }
               />
             </Grid>
-          </Grid>
         </Grid>
-      </Grid>
+      </Stack>
 
       <ChatRollSessionArchiveDialog
         accountId={accountId}

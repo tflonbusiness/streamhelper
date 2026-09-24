@@ -14,7 +14,7 @@ import GroupIcon from '@mui/icons-material/Group'
 import LogoutIcon from '@mui/icons-material/Logout'
 import { styled } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { BreadcrumbProvider } from '@/context/BreadcrumbContext'
 import { useAuth } from '@/context/AuthContext'
 
@@ -277,12 +277,14 @@ const MainContent = styled('main')(({ theme }) => ({
   padding: theme.spacing(3),
 }))
 
-const MainInner = styled(Box)({
+const MainInner = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'wide',
+})<{ wide?: boolean }>(({ wide }) => ({
   marginLeft: 'auto',
   marginRight: 'auto',
   width: '100%',
-  maxWidth: 1024,
-})
+  maxWidth: wide ? 1440 : 1024,
+}))
 
 function SidebarNavLink({
   to,
@@ -357,6 +359,10 @@ function MobileNavLink({
 export function AppShell() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const wideMainContent = /^\/modules\/chat-roll\/\d+(?:\/|$)/.test(
+    location.pathname,
+  )
   const [isNavExpanded, setIsNavExpanded] = useState(loadNavExpanded)
 
   useEffect(() => {
@@ -529,7 +535,7 @@ export function AppShell() {
       <MainColumn>
         <MainContent>
           <BreadcrumbProvider>
-            <MainInner>
+            <MainInner wide={wideMainContent}>
               <Outlet />
             </MainInner>
           </BreadcrumbProvider>

@@ -137,6 +137,54 @@ export const SettingsStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(1.5),
 }))
 
+export const SettingsLeftPanel = styled(Stack)(({ theme }) => ({
+  gap: theme.spacing(2),
+  height: '100%',
+}))
+
+export const SettingsGroupPanel = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(2),
+  borderRadius: theme.spacing(1.25),
+  border: '1px solid',
+  borderColor: theme.palette.divider,
+  backgroundColor: alpha(theme.palette.background.default, 0.55),
+}))
+
+export const SettingsGroupTitle = styled(Typography)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(0.75),
+  color: theme.palette.text.secondary,
+  fontWeight: 600,
+  letterSpacing: '0.04em',
+  textTransform: 'uppercase',
+  fontSize: '0.6875rem',
+  marginBottom: theme.spacing(1.25),
+  '& .MuiSvgIcon-root': {
+    fontSize: '1rem',
+    opacity: 0.85,
+  },
+}))
+
+export const SettingsToggleCard = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'flex-start',
+  gap: theme.spacing(1),
+  padding: theme.spacing(1.25, 1.5),
+  borderRadius: theme.shape.borderRadius,
+  border: '1px solid',
+  borderColor: theme.palette.divider,
+  backgroundColor: theme.palette.background.paper,
+}))
+
+export const SettingsToggleCopy = styled(Box)({
+  flex: 1,
+  minWidth: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 2,
+})
+
 export const SettingsSectionLabel = styled(Typography)(({ theme }) => ({
   display: 'block',
   color: theme.palette.text.secondary,
