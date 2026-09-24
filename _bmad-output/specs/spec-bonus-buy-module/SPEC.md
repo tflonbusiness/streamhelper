@@ -54,14 +54,18 @@ sources: []
 
 - **CAP-7**
   - **intent:** An operator opens a bonus buy session and sees the full session workspace for that record.
-  - **success:** `/bonus-buy/:id` loads the account-scoped record; layout matches `session-page.md` zones (header bar, stats strip, quick-add panel, bonus list); invalid or foreign id shows error with path back to `/bonus-buy`; loading uses skeletons per companion.
+  - **success:** `/modules/bonus-buy/:id` loads the account-scoped record; layout matches `session-page.md` zones (session header card, Stream Widget card, stats strip, quick-add panel, bonus list); invalid or foreign id shows error with path back to `/modules/bonus-buy`; loading uses skeletons per companion.
 
 - **CAP-8**
-  - **intent:** An operator uses the session header toolbar to navigate, start a new session, and access stream tools.
-  - **success:** Back and exit return to `/bonus-buy`; title displays `{title} #{id}` with edit affordance; **+ New session** opens create dialog and navigates to new session on success; **Widget style** opens style dialog per `bonus-buy-widget.md`; **OBS link** shows **Coming soon** toast; **Overlay** navigates to `/bonus-buy/:id/widget` (no query params).
+  - **intent:** An operator uses the session header card for session identity and lifecycle actions only.
+  - **success:** Title displays `{name} #{id}` with **Archived** chip when applicable; active sessions show **Edit** and **Archive**; archived sessions show read-only alert; header has no Widget style, OBS link, or Overlay controls — those live in the **Stream Widget** card (CAP-26).
+
+- **CAP-26**
+  - **intent:** An operator manages OBS overlay links and widget style from a dedicated **Stream Widget** section on the session workspace.
+  - **success:** `/modules/bonus-buy/:id` renders a **Stream Widget** card below the session header and above stats, matching `PrizeSpinStreamWidgetSection` layout (`SectionHeader` with Monitor icon, outlined actions); **Widget style** in the section header opens `BonusBuyWidgetStyleDialog` (CAP-19–22); **Open overlay** opens `/modules/bonus-buy/{id}/widget` in a new tab; **OBS link** copies `buildBonusBuyObsOverlayUrl(id)` and shows **OBS link copied.** toast; card absent from `/modules/bonus-buy` history page.
 
 - **CAP-16**
-  - **intent:** A viewer or operator opens the public stream overlay at `/bonus-buy/:id/widget` without signing in.
+  - **intent:** A viewer or operator opens the public stream overlay at `/modules/bonus-buy/:id/widget` without signing in.
   - **success:** Route is registered outside `ProtectedRoute` and `AppShell`; page fetches `GET /bonus-buys/:id/widget` without auth; unauthenticated load shows transparent viewport and centered overlay card sized and styled from `settings`; OBS Browser Source works without dashboard session cookie; unknown `:id` shows **Session not found.** on the overlay canvas.
 
 - **CAP-17**
@@ -78,7 +82,7 @@ sources: []
 
 - **CAP-20**
   - **intent:** An operator customizes account-wide stream overlay appearance from any session workspace.
-  - **success:** **Widget style** opens dialog with size, color, shape, and typography fields per `bonus-buy-widget.md`; loads account settings on open; valid **Save** PATCHes `/accounts/:accountId/bonus-buy-widget` and shows success toast; **Preview overlay** opens `/bonus-buy/:id/widget` in a new tab with saved settings; changes apply to all sessions for the account; invalid hex or dimensions show `StatusAlert` errors in dialog.
+  - **success:** **Widget style** on the **Stream Widget** card (CAP-26) opens dialog with size, color, shape, and typography fields per `bonus-buy-widget.md`; loads account settings on open; valid **Save** PATCHes `/accounts/:accountId/bonus-buy-widget` and shows success toast; **Preview overlay** opens `/modules/bonus-buy/:id/widget` in a new tab with saved settings; changes apply to all sessions for the account; invalid hex or dimensions show `StatusAlert` errors in dialog.
 
 - **CAP-21**
   - **intent:** An operator previews how the stream widget will look while editing style settings, without saving first.
@@ -155,8 +159,10 @@ sources: []
 - **Row actions on history table:** single **Open** link per row in `AppTable` Actions column — `RowActionsMenu` not required.
 - **Slot multiplier:** always `win_amount ÷ purchase_amount` via `decimal.js` on server; not client-supplied.
 - **Decimal math:** `decimal.js` for all bonus-buy monetary calculations in `app/` and `server/` — multiplier, stats, aggregations; no native float arithmetic for money.
-- **Stream overlay route:** `/bonus-buy/:id/widget` is **public** — outside `ProtectedRoute` and `AppShell`; no login redirect; live data via public widget API; authenticated PATCH for settings only.
-- **Widget style UI:** dialog on session page per `bonus-buy-widget.md` and `session-page.md` — not a stub; includes theme presets per CAP-22 and live preview per CAP-21.
+- **Stream overlay route:** `/modules/bonus-buy/:id/widget` is **public** — outside `ProtectedRoute` and `AppShell`; no login redirect; live data via public widget API; authenticated PATCH for settings only; use `bonusBuyWidgetRoute` from `app/src/lib/routes.ts`.
+- **Stream Widget card:** on `/modules/bonus-buy/:id` only — below session header, above stats; mirror `PrizeSpinStreamWidgetSection`; `BonusBuyStreamWidgetSection` + `bonus-buy-overlay-url.ts`; remove overlay controls from `BonusBuySessionHeaderSection`.
+- **Widget style UI:** dialog opened from **Stream Widget** card per `bonus-buy-widget.md` and `session-page.md` — not a stub; includes theme presets per CAP-22 and live preview per CAP-21.
+- **OBS link:** functional clipboard copy on Stream Widget card — not **Coming soon**; same toast pattern as prize spin.
 - **Widget theme presets:** client constants in `app/src/lib/bonus-buy-widget-presets.ts` — eight presets aligned with stream-helper `WIDGET_THEMES`; solid `#RRGGBB` hex only; catalog and color matrix in `widget-theme-presets.md`; no preset column in `bonus_buy_widget` table.
 - **Preset apply:** updates `widgetDraft` only — no PATCH until **Save**; `matchBonusBuyWidgetPreset(draft)` for active chip / **Custom** state.
 - **Live widget preview:** extract or reuse `WidgetCanvas` from `BonusBuyStreamWidgetPage`; pass `widgetDraft` as theme and session `record` + `slots` as data — no PATCH or public API on field change.
@@ -193,10 +199,11 @@ sources: []
 - Server-side or authenticated export API for slots — client-side download only.
 - Exporting archived slots, expanded-row metadata (created by, created date), or now-playing status columns.
 - Cross-session or account-wide bulk slot export from `/bonus-buy` history page.
+- **Stream Widget** card on `/modules/bonus-buy` history page — session workspace only (CAP-26).
 
 ## Success signal
 
-Owner opens `/bonus-buy` → **New** → searches **eur** in **Currency**, selects **EUR — Euro**, start balance **100** → create → history shows **€100** → **Open** → edits currency to **GBP** via session dialog → stats and slot purchase labels show **£** → **Widget style** → **Save** → adds slot purchase **50** → **Set as playing** → **Overlay** shows amounts in GBP → on session page **Download XLSX** in Bonus list → file `bonus-buy-{id}-slots-{date}.xlsx` opens with five columns matching the table → `npm run build` passes.
+Owner opens `/modules/bonus-buy` → **New** → searches **eur** in **Currency**, selects **EUR — Euro**, start balance **100** → create → history shows **€100** → **Open** → edits currency to **GBP** via session dialog → stats and slot purchase labels show **£** → **Stream Widget** → **Widget style** → **Save** → **OBS link** copies overlay URL → **Open overlay** shows amounts in GBP → adds slot purchase **50** → **Set as playing** → on session page **Download XLSX** in Bonus list → file `bonus-buy-{id}-slots-{date}.xlsx` opens with five columns matching the table → `npm run build` passes.
 
 ## Assumptions
 
@@ -209,7 +216,7 @@ Owner opens `/bonus-buy` → **New** → searches **eur** in **Currency**, selec
 - Session label uses `{title} #{id}` where `id` is `bonus_buy.id`.
 - Widget style settings are per **account** — one `bonus_buy_widget` row shared by all sessions.
 - Widget style dialog, authenticated settings API, public overlay API, and overlay DB-driven dimensions ship in the same slice.
-- OBS link remains **Coming soon** stub; **Overlay** navigates to `/bonus-buy/:id/widget` without query params.
+- **OBS link** and **Open overlay** live on the **Stream Widget** card (CAP-26), not the session header; overlay path `/modules/bonus-buy/:id/widget` without query params.
 - Stream overlay uses Figma frame `bb` (`1:5`); large variant `8:23` deferred.
 - `/bonus-buy/:id/widget` is a public URL — readable by anyone with the link; acceptable for OBS in this slice.
 - Session title and start balance PATCH ship in the same slice as slots (CAP-15).

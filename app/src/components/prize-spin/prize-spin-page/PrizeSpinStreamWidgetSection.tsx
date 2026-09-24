@@ -16,7 +16,7 @@ import {
 
 type PrizeSpinStreamWidgetSectionProps = {
   accountId: number
-  ucid: string
+  prizeSpinId: number
 }
 
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -48,8 +48,8 @@ export const PrizeSpinStreamWidgetSection = (
 ) => {
   const { showSuccess } = useNotification()
   const [widgetDialogOpen, setWidgetDialogOpen] = useState(false)
-  const overlayHref = buildPrizeSpinOverlayPath(props.ucid);
-  const obsOverlayUrl = buildPrizeSpinObsOverlayUrl(props.ucid);
+  const overlayHref = buildPrizeSpinOverlayPath(props.prizeSpinId)
+  const obsOverlayUrl = buildPrizeSpinObsOverlayUrl(props.prizeSpinId)
 
   const handleCopyObsLink = async () => {
     await navigator.clipboard.writeText(obsOverlayUrl)
@@ -62,7 +62,7 @@ export const PrizeSpinStreamWidgetSection = (
         <StyledCardContent>
           <SectionHeader
             title="Stream Widget"
-            description="OBS overlay settings and links for your live prize spin session"
+            description="OBS overlay settings and links for this prize spin session"
             icon={MonitorIcon}
             iconVariant="info"
             action={

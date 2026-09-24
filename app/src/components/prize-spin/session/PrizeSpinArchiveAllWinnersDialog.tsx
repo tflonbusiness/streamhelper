@@ -79,7 +79,7 @@ export const PrizeSpinArchiveAllWinnersDialog = (
         <Button
           type="button"
           variant="contained"
-          color="warning"
+          color="primary"
           onClick={() => void handleArchiveAll()}
           loading={deleteAllMutation.isPending}
           loadingPosition="start"

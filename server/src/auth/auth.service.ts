@@ -63,7 +63,6 @@ export class AuthService {
       accountName: membership.name,
       role: membership.role,
       subscriptionPlan: membership.subscriptionPlan,
-      ucid: membership.ucid,
       channelSlug,
     };
   }
@@ -80,17 +79,14 @@ export class AuthService {
 
     const channelSlug =
       user.channelSlug ?? (await this.resolveChannelSlug(user.accountId));
-    const ucid =
-      user.ucid ?? (await this.database.getAccountUcid(user.accountId));
 
-    if (channelSlug === user.channelSlug && ucid === user.ucid) {
+    if (channelSlug === user.channelSlug) {
       return user;
     }
 
     return {
       ...user,
       ...(channelSlug ? { channelSlug } : {}),
-      ...(ucid ? { ucid } : {}),
     };
   }
 
@@ -947,7 +943,7 @@ export class AuthService {
       record: {
         id: view.record.id,
         title: view.record.title,
-        isActive: view.record.status === 'live',
+        isActive: view.record.status === 'active',
       },
       sectors: view.sectors.map((row) => this.formatPrizeSpinSector(row)),
       latestWin: view.latestWin
@@ -966,15 +962,12 @@ export class AuthService {
     };
   }
 
-  async getPublicPrizeSpinWidgetByUcid(ucid: string) {
+  async getPublicPrizeSpinWidgetById(prizeSpinId: number) {
     const view =
-      await this.database.getPublicPrizeSpinWidgetViewByUcid(ucid);
+      await this.database.getPublicPrizeSpinWidgetViewForPublic(prizeSpinId);
 
     if (view === 'NOT_FOUND') {
       throw new NotFoundException('Prize spin not found');
-    }
-    if (view === 'NOT_LIVE') {
-      throw new ConflictException('NOT_LIVE');
     }
 
     return this.formatPublicPrizeSpinWidgetView(view);
@@ -1178,54 +1171,6 @@ export class AuthService {
       createdByUserId: row.createdByUserId,
       createdByName: row.createdByName,
     };
-  }
-
-  async goLivePrizeSpin(
-    accountId: number,
-    callerUserId: number,
-    prizeSpinId: number,
-  ) {
-    const isMember = await this.database.hasActiveMembership(
-      accountId,
-      callerUserId,
-    );
-    if (!isMember) {
-      throw new ForbiddenException('Not a member of this account');
-    }
-
-    try {
-      const row = await this.database.goLivePrizeSpin(accountId, prizeSpinId);
-      return this.formatPrizeSpinRecord(row);
-    } catch (error) {
-      if (error instanceof Error && error.message === 'NOT_FOUND') {
-        throw new NotFoundException('Prize spin not found');
-      }
-      throw error;
-    }
-  }
-
-  async deactivatePrizeSpin(
-    accountId: number,
-    callerUserId: number,
-    prizeSpinId: number,
-  ) {
-    const isMember = await this.database.hasActiveMembership(
-      accountId,
-      callerUserId,
-    );
-    if (!isMember) {
-      throw new ForbiddenException('Not a member of this account');
-    }
-
-    try {
-      const row = await this.database.deactivatePrizeSpin(accountId, prizeSpinId);
-      return this.formatPrizeSpinRecord(row);
-    } catch (error) {
-      if (error instanceof Error && error.message === 'NOT_FOUND') {
-        throw new NotFoundException('Prize spin not found');
-      }
-      throw error;
-    }
   }
 
   async archivePrizeSpin(

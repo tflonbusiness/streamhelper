@@ -1,4 +1,3 @@
-import { alpha, type Theme } from '@mui/material/styles'
 import type { PrizeSpinArchivedFilter } from '@/api/prize-spin'
 
 export const PRIZE_SPIN_DEFAULT_TITLE = 'Prize Spin'
@@ -10,14 +9,4 @@ export function historyEmptyMessage(filter: PrizeSpinArchivedFilter): string {
   }
 
   return 'No prize spin sessions yet'
-}
-
-export function liveSessionRowSx(theme: Theme) {
-  return {
-    bgcolor: alpha(theme.palette.warning.main, 0.08),
-    boxShadow: `inset 0 0 0 2px ${alpha(theme.palette.warning.main, 0.55)}`,
-    '&:hover': {
-      bgcolor: alpha(theme.palette.warning.main, 0.12),
-    },
-  }
 }

@@ -1,15 +1,14 @@
 import { Box, Button, Stack, TextField, Typography } from '@mui/material'
 import PersonIcon from '@mui/icons-material/Person'
 import { styled } from '@mui/material/styles'
+import { SectionHeader } from '@/components/SectionHeader'
 import { useMemo, useState } from 'react'
 import type { PrizeSpinSector } from '@/api/prize-spin'
-import { IconTile } from '@/components/IconTile'
 import {
   isCompleteWinPercentTotal,
   sumWinPercent,
 } from '@/components/prize-spin/session/prize-spin-session-utils'
 import {
-  StyledSectionDivider,
   StyledSessionCard,
   StyledSessionCardContent,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
@@ -24,14 +23,6 @@ type PrizeSpinSessionSpinSectionProps = {
   sectors: PrizeSpinSector[]
   readOnly: boolean
 }
-
-const SectionTitleRow = styled(Stack)({
-  alignItems: 'center',
-})
-
-const SectionTitle = styled(Typography)({
-  fontWeight: 600,
-})
 
 const SpinControls = styled(Stack)(({ theme }) => ({
   alignItems: 'flex-start',
@@ -56,12 +47,8 @@ const SpinButton = styled(Button)(({ theme }) => ({
   },
 }))
 
-const ReadinessAlert = styled(StatusAlert)(({ theme }) => ({
-  marginTop: theme.spacing(2),
-}))
-
-const SpinErrorAlert = styled(StatusAlert)(({ theme }) => ({
-  marginTop: theme.spacing(2),
+const SpinFormStack = styled(Stack)(({ theme }) => ({
+  gap: theme.spacing(3),
 }))
 
 export const PrizeSpinSessionSpinSection = (
@@ -152,46 +139,50 @@ export const PrizeSpinSessionSpinSection = (
   return (
     <StyledSessionCard elevation={0}>
       <StyledSessionCardContent>
-        <SectionTitleRow direction="row" spacing={1.5}>
-          <IconTile icon={PersonIcon} variant="purple" size="sm" />
-          <SectionTitle variant="h6">Spin For Viewer</SectionTitle>
-        </SectionTitleRow>
-        <StyledSectionDivider />
-        <SpinControls direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <ParticipantField
-            label="Participant nick"
-            placeholder="Viewer chat nick"
-            value={participantNick}
-            onChange={(event) => setParticipantNick(event.target.value)}
-            disabled={props.readOnly}
-            fullWidth
-            size="small"
-          />
-          <SpinButton
-            type="button"
-            variant="contained"
-            disabled={!canSpin}
-            onClick={() => void handleSpin()}
-          >
-            {isSpinning ? 'Spinning…' : 'Spin'}
-          </SpinButton>
-        </SpinControls>
-        <ReadinessAlert tone={spinReadiness.tone}>
-          {spinReadiness.messages.length === 1 ? (
-            spinReadiness.messages[0]
-          ) : (
-            <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
-              {spinReadiness.messages.map((message) => (
-                <Typography component="li" variant="body2" key={message}>
-                  {message}
-                </Typography>
-              ))}
-            </Box>
-          )}
-        </ReadinessAlert>
-        {spinError ? (
-          <SpinErrorAlert tone="error">{spinError}</SpinErrorAlert>
-        ) : null}
+        <SectionHeader
+          title="Spin for viewer"
+          description="Enter a viewer nick and run the wheel"
+          icon={PersonIcon}
+          iconVariant="purple"
+          showDivider
+        />
+        <SpinFormStack>
+          <SpinControls direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <ParticipantField
+              label="Participant nick"
+              placeholder="Viewer chat nick"
+              value={participantNick}
+              onChange={(event) => setParticipantNick(event.target.value)}
+              disabled={props.readOnly}
+              fullWidth
+              size="small"
+            />
+            <SpinButton
+              type="button"
+              variant="contained"
+              disabled={!canSpin}
+              onClick={() => void handleSpin()}
+            >
+              {isSpinning ? 'Spinning…' : 'Spin'}
+            </SpinButton>
+          </SpinControls>
+          <StatusAlert tone={spinReadiness.tone}>
+            {spinReadiness.messages.length === 1 ? (
+              spinReadiness.messages[0]
+            ) : (
+              <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
+                {spinReadiness.messages.map((message) => (
+                  <Typography component="li" variant="body2" key={message}>
+                    {message}
+                  </Typography>
+                ))}
+              </Box>
+            )}
+          </StatusAlert>
+          {spinError ? (
+            <StatusAlert tone="error">{spinError}</StatusAlert>
+          ) : null}
+        </SpinFormStack>
       </StyledSessionCardContent>
     </StyledSessionCard>
   )

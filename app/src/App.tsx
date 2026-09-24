@@ -41,7 +41,7 @@ function App() {
           />
 
           <Route
-            path="/modules/prize-spin/widget/:ucid"
+            path="/modules/prize-spin/:id/widget"
             element={<PrizeSpinStreamWidgetPage />}
           />
 

@@ -6,7 +6,6 @@ export type AuthUser = {
   role?: 'owner' | 'moderator'
   subscriptionPlan?: string
   channelSlug?: string
-  ucid?: string
 }
 
 export type AccountMember = {

@@ -1,14 +1,16 @@
-# Bonus Buy — session page (`/bonus-buy/:id`)
+# Bonus Buy — session page (`/modules/bonus-buy/:id`)
 
 Operator workspace for a single bonus buy session. Replaces the placeholder **Session details** card on `BonusBuySessionPage`.
 
 Reference mockup: user-provided screenshot (2026-09-14) — dark layout, amber primary actions, emerald positive currency.
 
+**Stream Widget card:** OBS overlay links and **Widget style** live in a dedicated section below the session header — same pattern as `PrizeSpinStreamWidgetSection` on prize spin (not in the header toolbar).
+
 ## Route
 
 | Path | Component | Guards |
 |------|-----------|--------|
-| `/bonus-buy/:id` | `BonusBuySessionPage` | `ProtectedRoute` → `AppShell` → `AccountActiveRoute` |
+| `/modules/bonus-buy/:id` | `BonusBuySessionPage` | `ProtectedRoute` → `AppShell` → `AccountActiveRoute` |
 
 Load `bonus_buy` by `:id` for the session account. Invalid id or foreign account → error state (not silent redirect).
 
@@ -17,7 +19,9 @@ Load `bonus_buy` by `:id` for the session account. Invalid id or foreign account
 Vertical stack inside `AppShell` main, `space-y-6` (or equivalent). All panels use `Card` / dark surface tokens from adopted `design-tokens.md`.
 
 ```
-SessionHeaderBar          ← bespoke bar; NOT PageHeader + Gift icon
+PageHeader                ← module title (Gift icon) — same as prize spin session page
+SessionHeaderCard         ← title, Archived chip, Edit / Archive only
+StreamWidgetCard          ← CAP-26; Monitor icon; overlay links + Widget style
 StatsStrip                ← 5 equal stat cards in responsive row
 QuickAddSlotCard          ← form panel
 BonusListCard             ← list panel with count in title
@@ -28,37 +32,44 @@ BonusListCard             ← list panel with count in title
 - **Desktop:** stats row = 5 columns; quick-add fields = 3 columns + right-aligned submit.
 - **Mobile:** stats wrap 2+2+1 or scroll-x; quick-add fields stack; header actions wrap or collapse to icon-only (implementation choice — preserve all actions reachable).
 
-## 1. Session header bar
+## 1. Session header card
 
-Single horizontal bar spanning full content width. Background: card surface; subtle border; rounded corners matching app cards.
+Compact session card (`StyledSessionCard` pattern shared with prize spin). Background: card surface; subtle border.
 
-### Left cluster
+### Content
 
 | Element | Behavior | Label (English) |
 |---------|----------|-----------------|
-| Back | `Link` or navigate to `/bonus-buy` | Icon only (`ArrowLeft`) |
-| Title | `{record.title} #{record.id}` | e.g. `test #1` |
-| Edit title | Icon button beside title | Icon only (`Pencil`) — opens dialog with **Title** field; PATCH on save |
+| Title | `{record.name} #{record.id}` | e.g. `test #1` |
+| Archived chip | When `status = archived` | **Archived** |
+| Edit | Active sessions only | **Edit** — opens session edit dialog (name, currency) |
+| Archive | Active sessions only | **Archive** — confirm dialog |
+| Read-only alert | Archived sessions | **This session is archived. View only.** |
 
-### Right cluster (left → right)
+**No** Widget style, OBS link, or Overlay buttons in the header — those live in **Stream Widget** (section 2).
 
-| Element | Variant | Label (English) |
-|---------|---------|-----------------|
-| New session | Primary (amber) | **+ New session** |
-| Widget style | Secondary outline | **Widget style** + palette icon |
-| OBS link | Secondary outline | **OBS link** + link/copy icon |
-| Overlay | Secondary outline | **Overlay** + external-link icon |
-| Exit session | Ghost/icon | Icon only (`LogOut` or `X`) — navigates to `/bonus-buy` |
+**New session:** create flow remains on history page `/modules/bonus-buy` (**New** in history card) — not duplicated in header in this slice unless product adds it later.
 
-**New session:** same create flow as `/bonus-buy` (dialog: title + start balance); on success navigate to new `/bonus-buy/:newId`.
+## 2. Stream Widget card
 
-**Widget style:** opens **Widget style** dialog per [bonus-buy-widget.md](bonus-buy-widget.md) — loads `GET /accounts/:accountId/bonus-buy-widget`, **Theme preset** row at top (CAP-22, [widget-theme-presets.md](widget-theme-presets.md)), live preview panel updates from `widgetDraft` on every change (CAP-21), PATCH on **Save**, **Preview overlay** link to `/bonus-buy/:id/widget` (saved settings, new tab).
+On `/modules/bonus-buy/:id` only — **not** on `/modules/bonus-buy` history page. Placed immediately below the session header card and above the stats strip.
 
-**OBS link:** stub — click shows `NotificationContext` toast **Coming soon**.
+Reuse layout and styling from `PrizeSpinStreamWidgetSection` (`SectionHeader`, outlined action buttons, `cardSx`-equivalent card).
 
-**Overlay:** navigates to `/bonus-buy/:id/widget` (same tab, no query params). Opens stream overlay preview per `stream-widget-page.md`.
+| Control | Label (English) | Behavior |
+|---------|-----------------|----------|
+| Section title | **Stream Widget** | `Monitor` icon; description mentions OBS overlay for this session |
+| Widget style | **Widget style** | In `SectionHeader` `action` slot — opens `BonusBuyWidgetStyleDialog` per [bonus-buy-widget.md](bonus-buy-widget.md) (CAP-19–22) |
+| Open overlay | **Open overlay** | New tab → `/modules/bonus-buy/{id}/widget` via `bonusBuyWidgetRoute` |
+| OBS link | **OBS link** | Copy `buildBonusBuyObsOverlayUrl(id)` to clipboard; success toast **OBS link copied.** |
 
-## 2. Stats strip
+Component: `app/src/components/bonus-buy/session/BonusBuyStreamWidgetSection.tsx` (or `bonus-buy-page/` mirror of prize spin folder layout).
+
+URL helpers: `app/src/lib/bonus-buy-overlay-url.ts` — `buildBonusBuyOverlayPath`, `buildBonusBuyObsOverlayUrl` (same contract as `prize-spin-overlay-url.ts`).
+
+Dialog state: parent `BonusBuySessionPage` owns `widgetDialogOpen` and renders `BonusBuyWidgetStyleDialog` once — section receives `onOpenWidgetDialog` callback.
+
+## 3. Stats strip
 
 Five stat cards in one row. Each card: uppercase muted label (xs), large value below.
 
@@ -72,7 +83,7 @@ Five stat cards in one row. Each card: uppercase muted label (xs), large value b
 
 Empty session (no slots): start balance from record; spent/profit/average = `$0` / `$0` / `0x`; current balance = start balance.
 
-## 3. Quick add slot
+## 4. Quick add slot
 
 Panel title: **Quick add slot**
 
@@ -88,7 +99,7 @@ Submit: primary amber button bottom-right of panel — **+ Add slot**
 
 Validation: inline on submit; disable button while saving. Clear slot + purchase fields on success; keep nick optional field as entered or clear per UX preference.
 
-## 4. Bonus list
+## 5. Bonus list
 
 Panel title: **Bonus list ({count})** — count = number of slot rows for this session.
 

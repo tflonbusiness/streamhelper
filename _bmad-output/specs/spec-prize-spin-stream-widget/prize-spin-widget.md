@@ -1,6 +1,6 @@
 # Prize Spin — widget settings (`prize_spin_widget`)
 
-Account-level size configuration for stream overlays at `/prize-spin/widget/:channelSlug`. **One row per account** — shared across every prize spin session. Sector colors come from `prize_spin_sector.color`; this table controls overlay canvas size only.
+Account-level size configuration for stream overlays at `/modules/prize-spin/:prizeSpinId/widget`. **One row per account** — shared across every prize spin session. Sector colors come from `prize_spin_sector.color`; this table controls overlay canvas size only.
 
 Live session selection uses `prize_spin.is_active` — see [live-session-control.md](live-session-control.md).
 
@@ -34,17 +34,6 @@ No theme/color columns in this slice — defer full palette to a follow-on.
 | `is_active` | `true` = live on stream overlay; at most one per `account_id` |
 
 Consider changing insert default to `false` so new sessions do not auto-go-live.
-
-**Channel lookup** (public overlay):
-
-```sql
-SELECT account_id
-FROM account_channels
-WHERE provider = 'kick'
-  AND is_primary = true
-  AND channel_slug = $1
-LIMIT 1
-```
 
 ## API — authenticated
 
@@ -81,21 +70,19 @@ interface PrizeSpinWidgetSettings {
 
 Remove `POST .../prize-spins/:id/end` — replaced by deactivate.
 
-**Auth session:** add `channelSlug` to `SessionUser` / `AuthUser` from `getPrimaryKickChannel(accountId)` for dashboard Overlay link.
-
 ## API — public overlay
 
 | Method | Path | Auth | Response |
 |--------|------|------|----------|
-| `GET` | `/prize-spin/widget/:channelSlug` | none | `PrizeSpinWidgetView` |
+| `GET` | `/prize-spins/:prizeSpinId/widget` | none | `PrizeSpinWidgetView` |
 
-**Removed:** `GET /prize-spins/:prizeSpinId/widget`, `/prize-spin/:id/widget`.
+**Removed:** `GET /prize-spins/widget/:ucid`, `/modules/prize-spin/widget/:ucid`, channel-slug resolution.
 
 **Resolution:**
 
-1. Resolve `account_id` from `account_channels` by `:channelSlug` (primary Kick channel). Missing → `404`.
-2. Select `prize_spin` where `account_id = resolved AND is_active = true LIMIT 1`. None → `409` with `{ message: 'NOT_LIVE' }`.
-3. Join sectors, latest win, and `prize_spin_widget` settings.
+1. Load `prize_spin` by `:prizeSpinId`. Missing → `404`.
+2. If `is_active = false` → `409` with `{ message: 'NOT_LIVE' }`.
+3. Join sectors, latest win, and `prize_spin_widget` settings for the session's `account_id`.
 
 **Response shape:**
 
@@ -128,7 +115,7 @@ interface PrizeSpinWidgetView {
 ```
 
 - `sectors`: non-archived only; order by `sort_order ASC`.
-- `latestWin`: newest non-archived `prize_spin_win` for the live session (`created_at DESC`); `null` when no wins.
+- `latestWin`: newest non-archived `prize_spin_win` for the session (`created_at DESC`); `null` when no wins.
 - `settings`: resolved via `account_id` (`ensureAccountPrizeSpinWidget`).
 
 **Client error mapping:**
@@ -138,18 +125,23 @@ interface PrizeSpinWidgetView {
 | `404` | **Session not found.** |
 | `409` / `NOT_LIVE` | **No live session.** |
 
-Register controller at `server/src/prize-spin/prize-spin.controller.ts` with `@Controller('prize-spin')` for the public widget route.
+Register public handler at `server/src/prize-spin/prize-spin.controller.ts` — e.g. `@Get(':prizeSpinId/widget')` on `prize-spins` controller (replace `widget/:ucid`).
 
-## Session workspace — Widget size dialog
+## Session workspace — Stream Widget card
 
-On `/prize-spin/:id` session header actions (alongside **Overlay**, **Go live** / **Deactivate**):
+On `/modules/prize-spin/:id` only — **not** on `/modules/prize-spin` history page.
+
+Card pattern: reuse `PrizeSpinStreamWidgetSection` (or session-scoped variant) below the session header card.
 
 | Control | Label (English) | Behavior |
 |---------|-----------------|----------|
-| Widget size | **Widget size** | Opens MUI `Dialog` with **Width** and **Height** number fields (px) |
-| Save | **Save** | `PATCH /accounts/:accountId/prize-spin-widget`; success toast |
-| Cancel | **Cancel** | Close without save |
+| Section title | **Stream Widget** | Monitor icon; description mentions OBS overlay |
+| Widget settings | **Widget settings** | Opens MUI `Dialog` with **Width** and **Height** (px) |
+| Open overlay | **Open overlay** | New tab → `/modules/prize-spin/{id}/widget` |
+| OBS link | **OBS link** | Copy full URL with `window.location.origin` |
+| Save (dialog) | **Save** | `PATCH /accounts/:accountId/prize-spin-widget`; success toast |
+| Cancel (dialog) | **Cancel** | Close without save |
 
-Load settings on dialog open. Validate 200–2400 per field; `StatusAlert` on error. No live preview in this slice — operator uses **Overlay** to verify.
+Load settings on dialog open. Validate 200–2400 per field; `StatusAlert` on error. No live preview in this slice — operator uses **Open overlay** to verify.
 
-**OBS link:** **Coming soon** toast stub (match Bonus Buy session page).
+**History page:** remove `PrizeSpinStreamWidgetSection` from `PrizeSpinPage` — widget configuration is session-scoped in navigation only.

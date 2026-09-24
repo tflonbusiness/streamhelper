@@ -9,10 +9,9 @@ import {
   Stack,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
-import { styled, useTheme } from '@mui/material/styles'
+import { styled } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
 import {
-  isPrizeSpinLive,
   type PrizeSpinArchivedFilter,
   type PrizeSpinRecord,
 } from '@/api/prize-spin'
@@ -22,17 +21,12 @@ import { PrizeSpinCreateDialog } from '@/components/prize-spin/prize-spin-page/P
 import { PrizeSpinRecordExpandedDetails } from '@/components/prize-spin/prize-spin-page/PrizeSpinRecordExpandedDetails'
 import {
   historyEmptyMessage,
-  liveSessionRowSx,
   PRIZE_SPIN_HISTORY_PAGE_SIZE,
 } from '@/components/prize-spin/prize-spin-page/prize-spin-page-utils'
 import { buildPrizeSpinRecordColumns } from '@/components/prize-spin/prize-spin-page/prizeSpinRecordColumns'
 import { SectionHeader, sectionTableIcon } from '@/components/SectionHeader'
 import { useNotification } from '@/context/NotificationContext'
-import {
-  useDeactivatePrizeSpin,
-  useGoLivePrizeSpin,
-  usePrizeSpins,
-} from '@/queries/use-prize-spins'
+import { usePrizeSpins } from '@/queries/use-prize-spins'
 
 type PrizeSpinHistorySectionProps = {
   accountId: number
@@ -70,8 +64,7 @@ const StyledFilterSelect = styled(Select)(({ theme }) => ({
 export const PrizeSpinHistorySection = ({
   accountId,
 }: PrizeSpinHistorySectionProps) => {
-  const theme = useTheme()
-  const { showSuccess, showError } = useNotification()
+  const { showError } = useNotification()
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [expandedRecordIds, setExpandedRecordIds] = useState<Set<number>>(
     new Set(),
@@ -91,23 +84,13 @@ export const PrizeSpinHistorySection = ({
     archived: archivedFilter,
     page: recordsPage,
     limit: PRIZE_SPIN_HISTORY_PAGE_SIZE,
-  });
-
-  const goLiveMutation = useGoLivePrizeSpin(accountId)
-  const deactivateMutation = useDeactivatePrizeSpin(accountId)
+  })
 
   const records = recordsResult?.records ?? []
   const recordsTotal =
     typeof recordsResult?.total === 'number'
       ? recordsResult.total
       : records.length
-
-  const liveActionRecordId =
-    goLiveMutation.isPending
-      ? goLiveMutation.variables
-      : deactivateMutation.isPending
-        ? deactivateMutation.variables
-        : null
 
   useEffect(() => {
     if (!recordsQueryError) {
@@ -128,34 +111,8 @@ export const PrizeSpinHistorySection = ({
     }
   }, [recordsResult, recordsPage])
 
-  const handleGoLive = (record: PrizeSpinRecord) => {
-    goLiveMutation.reset()
-    deactivateMutation.reset()
-    goLiveMutation.mutate(record.id, {
-      onSuccess: () => showSuccess('Session is now live.'),
-      onError: (error) => {
-        showError(
-          error instanceof Error ? error.message : 'Could not go live',
-        )
-      },
-    })
-  }
-
-  const handleDeactivate = (record: PrizeSpinRecord) => {
-    goLiveMutation.reset()
-    deactivateMutation.reset()
-    deactivateMutation.mutate(record.id, {
-      onSuccess: () => showSuccess('Session taken off air.'),
-      onError: (error) => {
-        showError(
-          error instanceof Error ? error.message : 'Could not deactivate session',
-        )
-      },
-    })
-  }
-
-  const openArchiveDialog = (record: PrizeSpinRecord) => setArchiveDialogRecord(record);
-  
+  const openArchiveDialog = (record: PrizeSpinRecord) =>
+    setArchiveDialogRecord(record)
 
   const toggleRecordExpanded = (recordId: number) => {
     setExpandedRecordIds((previous) => {
@@ -170,9 +127,6 @@ export const PrizeSpinHistorySection = ({
   }
 
   const recordColumns = buildPrizeSpinRecordColumns({
-    liveActionRecordId,
-    onGoLive: handleGoLive,
-    onDeactivate: handleDeactivate,
     onArchive: openArchiveDialog,
   })
 
@@ -180,23 +134,23 @@ export const PrizeSpinHistorySection = ({
     <>
       <StyledCard elevation={0}>
         <StyledCardContent>
-          <SectionHeader
-            title="History"
-            description="Prize spin sessions for this account"
-            icon={sectionTableIcon}
-            iconVariant="secondary"
-            action={
-              <Button
-                type="button"
-                variant="contained"
-                startIcon={<AddIcon fontSize="small" />}
-                onClick={() => setCreateDialogOpen(true)}
-              >
-                New
-              </Button>
-            }
-          />
           <StyledContentStack>
+            <SectionHeader
+              title="History"
+              description="Past and active prize spin sessions"
+              icon={sectionTableIcon}
+              iconVariant="purple"
+              action={
+                <Button
+                  type="button"
+                  variant="contained"
+                  startIcon={<AddIcon fontSize="small" aria-hidden />}
+                  onClick={() => setCreateDialogOpen(true)}
+                >
+                  New
+                </Button>
+              }
+            />
             <AppTable
               columns={recordColumns}
               rows={records}
@@ -224,11 +178,6 @@ export const PrizeSpinHistorySection = ({
                     <MenuItem value="all">All</MenuItem>
                   </StyledFilterSelect>
                 </StyledFilterFormControl>
-              }
-              getRowSx={(record) =>
-                isPrizeSpinLive(record)
-                  ? liveSessionRowSx(theme)
-                  : undefined
               }
               pagination={{
                 count: recordsTotal,

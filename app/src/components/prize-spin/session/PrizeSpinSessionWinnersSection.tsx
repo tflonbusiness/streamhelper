@@ -1,6 +1,5 @@
 import { Button } from '@mui/material'
 import ArchiveIcon from '@mui/icons-material/Archive'
-import { alpha, styled } from '@mui/material/styles'
 import { useState } from 'react'
 import type { PrizeSpinWin } from '@/api/prize-spin'
 import { AppTable } from '@/components/AppTable'
@@ -22,15 +21,6 @@ type PrizeSpinSessionWinnersSectionProps = {
   wins: PrizeSpinWin[]
   readOnly: boolean
 }
-
-const ArchiveAllButton = styled(Button)(({ theme }) => ({
-  borderColor: alpha(theme.palette.warning.main, 0.4),
-  color: theme.palette.warning.main,
-  '&:hover': {
-    borderColor: theme.palette.warning.main,
-    backgroundColor: alpha(theme.palette.warning.main, 0.1),
-  },
-}))
 
 export const PrizeSpinSessionWinnersSection = (
   props: PrizeSpinSessionWinnersSectionProps,
@@ -80,11 +70,12 @@ export const PrizeSpinSessionWinnersSection = (
         <StyledSessionCardContent>
           <SectionHeader
             title={`History (${props.wins.length})`}
+            description="Recorded spins and prizes"
             icon={sectionTableIcon}
             iconVariant="secondary"
             action={
               props.wins.length > 0 ? (
-                <ArchiveAllButton
+                <Button
                   type="button"
                   variant="outlined"
                   size="small"
@@ -93,7 +84,7 @@ export const PrizeSpinSessionWinnersSection = (
                   onClick={() => setArchiveAllDialogOpen(true)}
                 >
                   Archive all
-                </ArchiveAllButton>
+                </Button>
               ) : undefined
             }
           />

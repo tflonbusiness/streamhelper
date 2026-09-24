@@ -6,7 +6,6 @@ export type SessionUser = {
   role?: 'owner' | 'moderator';
   subscriptionPlan?: string;
   channelSlug?: string;
-  ucid?: string;
 };
 
 export type SessionData = {

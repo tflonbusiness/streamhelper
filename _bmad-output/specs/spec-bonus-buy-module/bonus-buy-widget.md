@@ -1,6 +1,6 @@
 # Bonus Buy — widget style settings (`bonus_buy_widget`)
 
-Account-level style configuration for all stream overlays at `/bonus-buy/:id/widget`. **One row per account** — shared across every bonus buy session. Defaults match Figma compact frame `bb` (`1:5`, 500×600).
+Account-level style configuration for all stream overlays at `/modules/bonus-buy/:id/widget`. **One row per account** — shared across every bonus buy session. Defaults match Figma compact frame `bb` (`1:5`, 500×600).
 
 ## Database
 
@@ -113,7 +113,9 @@ interface BonusBuyWidgetView {
 
 ## Session workspace UI
 
-**Widget style** on `/bonus-buy/:id` edits **account** settings via `GET/PATCH /accounts/:accountId/bonus-buy-widget` — changes apply to every session overlay for the team.
+**Stream Widget** card on `/modules/bonus-buy/:id` only (CAP-26) — not on history page. **Widget style** in the card header opens the style dialog; **Open overlay** and **OBS link** sit in the card body per [session-page.md](session-page.md).
+
+**Widget style** dialog edits **account** settings via `GET/PATCH /accounts/:accountId/bonus-buy-widget` — changes apply to every session overlay for the team.
 
 ### Theme presets (CAP-22)
 
@@ -138,7 +140,7 @@ Dialog includes a **live preview** of the stream widget that updates on every fi
 | Layout | `md+`: form left, preview panel right inside the same dialog; `<md`: **Preview** opens nested `Dialog` with identical live canvas |
 | Scaling | When `widgetDraft.width` / `height` exceed preview container, scale down with `transform: scale()` preserving aspect ratio; label shows actual px (e.g. `600 × 800`) |
 | Save | **Save** still PATCHes account settings; preview never writes to DB |
-| External link | **Preview overlay** remains — opens `/bonus-buy/:id/widget` in new tab with **saved** settings (post-Save) |
+| External link | **Preview overlay** remains — opens `/modules/bonus-buy/:id/widget` in new tab with **saved** settings (post-Save) |
 
 **Invalid draft state** (same rules as Save validation):
 
@@ -146,4 +148,4 @@ Dialog includes a **live preview** of the stream widget that updates on every fi
 2. Layer a semi-transparent **error placeholder overlay** on the preview panel with the validation message (e.g. bad hex, out-of-range width).
 3. Update `lastValidWidgetDraft` only when `validateWidgetDraft(draft)` returns null.
 
-**OBS link** remains **Coming soon** stub.
+**OBS link** on the Stream Widget card copies the full public overlay URL (see [session-page.md](session-page.md)) — not a stub.

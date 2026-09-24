@@ -8,6 +8,7 @@ import { BonusBuyArchiveSessionDialog } from '@/components/bonus-buy/session/Bon
 import { BonusBuySessionAddSlotSection } from '@/components/bonus-buy/session/BonusBuySessionAddSlotSection'
 import { BonusBuySessionErrorState } from '@/components/bonus-buy/session/BonusBuySessionErrorState'
 import { BonusBuySessionHeaderSection } from '@/components/bonus-buy/session/BonusBuySessionHeaderSection'
+import { BonusBuyStreamWidgetSection } from '@/components/bonus-buy/session/BonusBuyStreamWidgetSection'
 import { BonusBuySessionLoadingState } from '@/components/bonus-buy/session/BonusBuySessionLoadingState'
 import { BonusBuySessionSlotsSection } from '@/components/bonus-buy/session/BonusBuySessionSlotsSection'
 import { BonusBuySessionStatsSection } from '@/components/bonus-buy/session/BonusBuySessionStatsSection'
@@ -94,10 +95,12 @@ export const BonusBuySessionPage = () => {
         iconVariant={bonusBuyModule.iconVariant}
       />
       <BonusBuySessionHeaderSection
-        bonusBuyId={bonusBuyId}
         record={record}
         onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
         onOpenEditDialog={() => setEditSessionDialogOpen(true)}
+      />
+      <BonusBuyStreamWidgetSection
+        bonusBuyId={bonusBuyId}
         onOpenWidgetDialog={() => setWidgetDialogOpen(true)}
       />
       <BonusBuySessionStatsSection

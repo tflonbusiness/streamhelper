@@ -1,89 +1,54 @@
 # Prize Spin — session status (`prize_spin.status`)
 
-Replaces separate `is_active` and `is_archived` booleans with one enum column. Eliminates the invalid `is_active=true AND is_archived=true` combination and makes transitions explicit.
+Two-state lifecycle for prize spin sessions.
 
-## Enum values
+| `status` | UI label | Meaning |
+|----------|----------|---------|
+| `active` | **Active** | Default; editable; public overlay at `/modules/prize-spin/{id}/widget` serves this session |
+| `archived` | **Archived** | Read-only workspace; hidden from **Active** history filter; overlay returns **Session not found.** |
 
-| DB / API value | UI label | Meaning |
-|----------------|----------|---------|
-| `live` | **Live** | On stream overlay; at most one per account; fully editable |
-| `off_air` | **Off air** | In History, fully editable; not on overlay |
-| `archived` | **Archived** | Read-only in dashboard; not on overlay; mutations blocked |
+**Default for new sessions:** `active`.
 
-**Default for new sessions:** `off_air`.
+**Removed:** `live`, `off_air`, go-live/deactivate, singleton live index, and **Live** / **Off air** chips.
 
-**Why not `active` as a status value:** History filter **Active** already means “non-archived” (`live` + `off_air`). The old `is_active` column meant live-on-air, not “session exists”. Using `active` in the enum would collide with both.
-
-**Why `off_air` for the third state:** Matches existing operator copy in the stream widget spec (**Live** / **Off air** chips). Alternatives considered: `idle` (accurate but less domain-specific), `inactive` (confusable with archived), `draft` (implies incomplete setup).
-
-## State machine
+## Transitions
 
 ```mermaid
 stateDiagram-v2
-  [*] --> off_air: create session
-  off_air --> live: go live
-  live --> off_air: deactivate
-  off_air --> archived: archive
-  live --> archived: archive
-  archived --> [*]: terminal (no unarchive)
+  [*] --> active: create session
+  active --> archived: archive
 ```
 
-**Go live:** in one transaction, set prior `live` row on same account → `off_air`, then target → `live`. Rejects when target is `archived`.
+**Archive:** `active` → `archived` (one `UPDATE`; idempotent reject if already archived or missing).
 
-**Deactivate:** `live` → `off_air` (idempotent if already `off_air`).
+## Database
 
-**Archive:** `live` or `off_air` → `archived`. No separate deactivate step when archiving a live session.
+| Column | Contract |
+|--------|----------|
+| `status` | `TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'archived'))` |
 
-## Schema
+Index `idx_prize_spin_account_created` on `(account_id, created_at DESC) WHERE status = 'active'`.
 
-Replace on `prize_spin`:
+## API
 
-| Remove | Replace with |
-|--------|--------------|
-| `is_active BOOLEAN` | `status TEXT NOT NULL DEFAULT 'off_air' CHECK (status IN ('live', 'off_air', 'archived'))` |
-| `is_archived BOOLEAN` | ( absorbed into `status` ) |
+`PrizeSpinRecord.status`: `'active' | 'archived'`.
 
-**Indexes:**
+**List filter** (`archived` query param):
 
-- Partial unique: `(account_id) WHERE status = 'live'` — singleton live session
-- Partial list: `(account_id, created_at DESC) WHERE status != 'archived'` — active History queries
-
-## API surface
-
-`PrizeSpinRecord.status`: `'live' | 'off_air' | 'archived'`.
-
-**Derived helpers (client, optional during transition):**
-
-- `isLive` → `status === 'live'`
-- `isArchived` → `status === 'archived'`
-- `readOnly` → `status === 'archived'`
-
-**List filter** (`archived` query param — unchanged labels):
-
-| Param | SQL filter |
-|-------|------------|
-| `false` (default) | `status IN ('live', 'off_air')` |
+| Value | SQL |
+|-------|-----|
+| `false` (default) | `status = 'active'` |
 | `true` | `status = 'archived'` |
 | `all` | no status filter |
 
-**Get session / sectors / wins:** allowed for all statuses including `archived`.
+**Mutations** (spin, sector/win CRUD, widget settings): reject with `404` when parent `status = 'archived'`.
 
-**Mutations** (go live, deactivate, spin, sector/win CRUD, title, widget): reject with `404` when parent `status = 'archived'`.
+**Public widget:** `GET /prize-spins/:id/widget` when `status = 'active'`; archived → `404`.
 
-**Public widget:** resolve row where `account_id` matches and `status = 'live'`.
+## UI
 
-**Go live / deactivate:** transition `off_air` ↔ `live`; reject when `status = 'archived'`.
-
-## UI mapping
-
-| Location | `live` | `off_air` | `archived` |
-|----------|--------|-----------|------------|
-| History Status chip | **Live** (success) | none | **Archived** (muted) |
-| History row border | orange inset | default | muted title |
-| History actions | Deactivate, Archive, Open | Go live, Archive, Open | Open enabled; others visible, disabled |
-| Session workspace | **Live** chip + Deactivate; full edit | Go live; full edit | **Archived** chip; read-only — controls visible, disabled |
-| History filter **Active** | includes | includes | excludes |
-
-## Cross-spec impact
-
-Adopted companions that reference `is_active` / `is_archived` on `prize_spin` (`live-session-control.md`, stream widget SPEC, session page SPEC) follow this enum on implement — archived sessions become read-only workspace, not 404.
+| Location | `active` | `archived` |
+|----------|----------|------------|
+| History status chip | **Active** | **Archived** |
+| History actions | Archive, Open | Open only (Archive disabled) |
+| Session workspace | full edit | **Archived** chip; read-only — controls visible, disabled |

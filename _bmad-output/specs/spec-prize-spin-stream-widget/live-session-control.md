@@ -1,13 +1,13 @@
 # Prize Spin — live session control (`is_active`)
 
-Account-scoped broadcast flag on `prize_spin.is_active`. The stream overlay URL is fixed per Kick channel slug; the API resolves whichever session is live.
+Account-scoped broadcast flag on `prize_spin.is_active`. The stream overlay URL is **per session id**; the public API serves that session only when it is live.
 
 ## Semantics
 
 | `is_active` | Meaning |
 |-------------|---------|
-| `true` | This session is **live** — public overlay serves its sectors and wins |
-| `false` | Session is **off air** — not shown on overlay; workspace remains editable |
+| `true` | This session is **live** — public overlay at `/modules/prize-spin/{id}/widget` serves its sectors and wins |
+| `false` | Session is **off air** — overlay for that id returns `NOT_LIVE` / **No live session.**; workspace remains editable |
 
 **Singleton per account:** at most one `prize_spin` row per `account_id` may have `is_active = true`. Enforced in a single DB transaction on go-live.
 
@@ -36,7 +36,7 @@ Account-scoped; `hasActiveMembership(accountId, userId)`.
 
 Remove or repurpose `POST .../end` — deactivate replaces it.
 
-## Session workspace UI (`/prize-spin/:id`)
+## Session workspace UI (`/modules/prize-spin/:id`)
 
 | State | Header indicator | Primary action |
 |-------|------------------|----------------|
@@ -45,20 +45,20 @@ Remove or repurpose `POST .../end` — deactivate replaces it.
 
 - **Go live** → `POST go-live` → toast **Session is now live** → header shows **Live** chip.
 - **Deactivate** → confirm dialog (optional, match Bonus Buy end pattern) → `POST deactivate` → toast **Session taken off air**.
-- **Overlay** → `/prize-spin/widget/{channelSlug}` in new tab (always; off-air state shown on overlay page).
+- **Stream Widget** card → **Open overlay** and **OBS link** use `/modules/prize-spin/{currentId}/widget` (see [prize-spin-widget.md](prize-spin-widget.md)).
 
-`channelSlug` from `AuthUser.channelSlug`.
-
-## List page (`/prize-spin`)
+## List page (`/modules/prize-spin`)
 
 Replace **Active** / **Inactive** status chips with **Live** / **Off air** driven by `isActive`.
 
+**No Stream Widget section** on the history page — widget settings and overlay links live on the session page only.
+
 ## Public overlay behavior
 
-| Account state | Overlay at `/prize-spin/widget/:channelSlug` |
-|---------------|---------------------------------------------|
-| One session `is_active = true` | Normal widget for that session |
-| No session `is_active = true` | **No live session.** |
-| Unknown slug | **Session not found.** |
-| Deactivated while OBS open | Next poll → **No live session.** |
-| Switched live session | Next poll → new session's wheel (same URL) |
+| Session state | Overlay at `/modules/prize-spin/:prizeSpinId/widget` |
+|---------------|------------------------------------------------------|
+| `is_active = true` for that id | Normal widget for that session |
+| `is_active = false` | **No live session.** (409 / poll transition) |
+| Unknown id | **Session not found.** |
+
+When the operator go-lives a different session, they update OBS to the new session's overlay URL — paths are not shared across sessions.

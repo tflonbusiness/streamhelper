@@ -3,12 +3,11 @@ import BarChartIcon from '@mui/icons-material/BarChart'
 import { alpha, styled, useTheme } from '@mui/material/styles'
 import { useMemo } from 'react'
 import type { PrizeSpinSector, PrizeSpinWin } from '@/api/prize-spin'
-import { IconTile } from '@/components/IconTile'
+import { SectionHeader } from '@/components/SectionHeader'
 import { buildWinnerSectorStats } from '@/components/prize-spin/session/prize-spin-session-utils'
 import { PrizeSpinSessionColorSwatch } from '@/components/prize-spin/session/PrizeSpinSessionColorSwatch'
 import { PrizeSpinSessionTruncatedText } from '@/components/prize-spin/session/PrizeSpinSessionTruncatedText'
 import {
-  StyledSectionDivider,
   StyledSessionCard,
   StyledSessionCardContent,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
@@ -19,19 +18,6 @@ type PrizeSpinSessionStatsCardProps = {
   wins: PrizeSpinWin[]
   sectors: PrizeSpinSector[]
 }
-
-const StatsHeader = styled(Stack)({
-  alignItems: 'center',
-  justifyContent: 'space-between',
-})
-
-const StatsTitleRow = styled(Stack)({
-  alignItems: 'center',
-})
-
-const StatsTitle = styled(Typography)({
-  fontWeight: 600,
-})
 
 const StatRows = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(1.5),
@@ -98,18 +84,20 @@ export const PrizeSpinSessionStatsCard = (
   return (
     <StyledSessionCard elevation={0}>
       <StyledSessionCardContent>
-        <StatsHeader direction="row" spacing={2}>
-          <StatsTitleRow direction="row" spacing={1.5}>
-            <IconTile icon={BarChartIcon} variant="info" size="sm" />
-            <StatsTitle variant="h6">Stats</StatsTitle>
-          </StatsTitleRow>
-          <Chip
-            label={`${total} total roll${total === 1 ? '' : 's'}`}
-            size="small"
-            sx={mutedChipSx(theme)}
-          />
-        </StatsHeader>
-        <StyledSectionDivider />
+        <SectionHeader
+          title="Stats"
+          description="How often each sector has won compared to its weight"
+          icon={BarChartIcon}
+          iconVariant="info"
+          showDivider
+          action={
+            <Chip
+              label={`${total} total roll${total === 1 ? '' : 's'}`}
+              size="small"
+              sx={mutedChipSx(theme)}
+            />
+          }
+        />
         {rows.length > 0 ? (
           <StatRows>
             {rows.map((row) => (

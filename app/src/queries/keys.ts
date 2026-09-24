@@ -24,8 +24,8 @@ export const prizeSpinKeys = {
     [...prizeSpinKeys.all, 'widget', accountId] as const,
   session: (accountId: number, prizeSpinId: number) =>
     [...prizeSpinKeys.all, 'session', accountId, prizeSpinId] as const,
-  publicWidget: (ucid: string) =>
-    [...prizeSpinKeys.all, 'publicWidget', ucid] as const,
+  publicWidget: (prizeSpinId: number) =>
+    [...prizeSpinKeys.all, 'publicWidget', prizeSpinId] as const,
 }
 
 export type BonusBuyListParams = {

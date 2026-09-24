@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { isPrizeSpinReadOnly } from '@/api/prize-spin'
 import { PageHeader } from '@/components/PageHeader'
-import { PrizeSpinDeactivateSessionDialog } from '@/components/prize-spin/session/PrizeSpinDeactivateSessionDialog'
 import { PrizeSpinSessionArchiveDialog } from '@/components/prize-spin/session/PrizeSpinSessionArchiveDialog'
 import { PrizeSpinSessionErrorState } from '@/components/prize-spin/session/PrizeSpinSessionErrorState'
 import { PrizeSpinSessionHeaderSection } from '@/components/prize-spin/session/PrizeSpinSessionHeaderSection'
@@ -13,6 +12,7 @@ import { PrizeSpinSessionSectorsSection } from '@/components/prize-spin/session/
 import { PrizeSpinSessionSpinSection } from '@/components/prize-spin/session/PrizeSpinSessionSpinSection'
 import { PrizeSpinSessionStatsCard } from '@/components/prize-spin/session/PrizeSpinSessionStatsCard'
 import { PrizeSpinSessionWinnersSection } from '@/components/prize-spin/session/PrizeSpinSessionWinnersSection'
+import { PrizeSpinStreamWidgetSection } from '@/components/prize-spin/prize-spin-page/PrizeSpinStreamWidgetSection'
 import { prizeSpinModule } from '@/components/prize-spin/session/prize-spin-session-utils'
 import { useAuth } from '@/context/AuthContext'
 import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
@@ -41,8 +41,6 @@ export const PrizeSpinSessionPage = () => {
   const { user } = useAuth()
 
   const [archiveSessionDialogOpen, setArchiveSessionDialogOpen] = useState(false)
-  const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false)
-
   const {
     data: session,
     isLoading: loading,
@@ -91,7 +89,10 @@ export const PrizeSpinSessionPage = () => {
         record={record}
         wins={wins}
         onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
-        onOpenDeactivateDialog={() => setDeactivateDialogOpen(true)}
+      />
+      <PrizeSpinStreamWidgetSection
+        accountId={accountId}
+        prizeSpinId={prizeSpinId}
       />
       <ContentGrid container spacing={3}>
         <Grid size={{ xs: 12, lg: 7 }}>
@@ -128,12 +129,6 @@ export const PrizeSpinSessionPage = () => {
         record={record}
         open={archiveSessionDialogOpen}
         onClose={() => setArchiveSessionDialogOpen(false)}
-      />
-      <PrizeSpinDeactivateSessionDialog
-        accountId={accountId}
-        prizeSpinId={prizeSpinId}
-        open={deactivateDialogOpen}
-        onClose={() => setDeactivateDialogOpen(false)}
       />
     </PageStack>
   )

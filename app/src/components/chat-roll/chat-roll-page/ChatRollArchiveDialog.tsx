@@ -74,7 +74,7 @@ export const ChatRollArchiveDialog = (props: ChatRollArchiveDialogProps) => {
         <Button
           type="button"
           variant="contained"
-          color="warning"
+          color="primary"
           onClick={handleArchive}
           loading={archiveMutation.isPending}
           loadingPosition="start"

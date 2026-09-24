@@ -54,7 +54,7 @@ const ActionsStack = styled(Stack)({
   justifyContent: 'flex-end',
 })
 
-type ActionButtonVariant = 'error' | 'success' | 'warning'
+type ActionButtonVariant = 'error' | 'success' | 'primary'
 
 const StyledActionIconButton = styled(IconButton, {
   shouldForwardProp: (prop) => prop !== 'actionVariant',
@@ -64,7 +64,7 @@ const StyledActionIconButton = styled(IconButton, {
       ? theme.palette.error
       : actionVariant === 'success'
         ? theme.palette.success
-        : theme.palette.warning
+        : theme.palette.primary
 
   return {
     borderRadius: theme.shape.borderRadius,
@@ -189,7 +189,7 @@ export function buildChatRollRecordColumns({
               <span>
                 <StyledActionIconButton
                   type="button"
-                  actionVariant="warning"
+                  actionVariant="primary"
                   aria-label={`Archive ${record.title}`}
                   size="small"
                   disabled={readOnly || isUpdating}

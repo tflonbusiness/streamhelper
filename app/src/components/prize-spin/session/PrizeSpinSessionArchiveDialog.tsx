@@ -86,7 +86,7 @@ export const PrizeSpinSessionArchiveDialog = (
         <Button
           type="button"
           variant="contained"
-          color="warning"
+          color="primary"
           startIcon={<ArchiveIcon fontSize="small" aria-hidden />}
           onClick={() => void handleArchive()}
           loading={archiveMutation.isPending}

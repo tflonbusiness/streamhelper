@@ -75,15 +75,6 @@ const GoLiveButton = styled(Button)(({ theme }) => ({
   },
 }))
 
-const ArchiveButton = styled(Button)(({ theme }) => ({
-  borderColor: alpha(theme.palette.warning.main, 0.4),
-  color: theme.palette.warning.main,
-  '&:hover': {
-    borderColor: theme.palette.warning.main,
-    backgroundColor: alpha(theme.palette.warning.main, 0.1),
-  },
-}))
-
 const ReadOnlyAlert = styled(StatusAlert)(({ theme }) => ({
   marginTop: theme.spacing(2),
 }))
@@ -167,7 +158,7 @@ export const ChatRollSessionHeaderSection = (
               </GoLiveButton>
             ) : null}
             {!readOnly ? (
-              <ArchiveButton
+              <Button
                 type="button"
                 variant="outlined"
                 size="small"
@@ -176,7 +167,7 @@ export const ChatRollSessionHeaderSection = (
                 onClick={props.onOpenArchiveDialog}
               >
                 Archive
-              </ArchiveButton>
+              </Button>
             ) : null}
           </ActionsStack>
         </HeaderStack>

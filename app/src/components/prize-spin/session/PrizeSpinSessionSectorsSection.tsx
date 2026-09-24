@@ -93,7 +93,8 @@ export const PrizeSpinSessionSectorsSection = (
       <StyledSessionCard elevation={0}>
         <StyledSessionCardContent>
           <SectionHeader
-            title={`Wheel Sectors (${props.sectors.length})`}
+            title={`Wheel sectors (${props.sectors.length})`}
+            description="Labels, colors, and win weights — total must equal 100%"
             icon={PieChartIcon}
             iconVariant="purple"
             action={

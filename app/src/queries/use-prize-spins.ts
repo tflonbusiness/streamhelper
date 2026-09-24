@@ -7,11 +7,9 @@ import {
 import {
   archivePrizeSpin,
   createPrizeSpin,
-  deactivatePrizeSpin,
   fetchPrizeSpinWidget,
   fetchPrizeSpins,
   fetchPublicPrizeSpinWidget,
-  goLivePrizeSpin,
   patchPrizeSpinWidget,
   type PatchPrizeSpinWidgetInput,
 } from '@/api/prize-spin'
@@ -51,29 +49,6 @@ export function useCreatePrizeSpin(accountId: number | undefined) {
   })
 }
 
-export function useGoLivePrizeSpin(accountId: number | undefined) {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (prizeSpinId: number) => goLivePrizeSpin(accountId!, prizeSpinId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: prizeSpinKeys.lists() })
-    },
-  })
-}
-
-export function useDeactivatePrizeSpin(accountId: number | undefined) {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (prizeSpinId: number) =>
-      deactivatePrizeSpin(accountId!, prizeSpinId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: prizeSpinKeys.lists() })
-    },
-  })
-}
-
 export function useArchivePrizeSpin(accountId: number | undefined) {
   const queryClient = useQueryClient()
 
@@ -87,11 +62,11 @@ export function useArchivePrizeSpin(accountId: number | undefined) {
 
 const WIDGET_POLL_MS = 5000
 
-export function usePublicPrizeSpinWidget(ucid: string | undefined) {
+export function usePublicPrizeSpinWidget(prizeSpinId: number | undefined) {
   return useQuery({
-    queryKey: prizeSpinKeys.publicWidget(ucid ?? ''),
-    queryFn: () => fetchPublicPrizeSpinWidget(ucid!),
-    enabled: ucid !== undefined && ucid.length > 0,
+    queryKey: prizeSpinKeys.publicWidget(prizeSpinId ?? 0),
+    queryFn: () => fetchPublicPrizeSpinWidget(prizeSpinId!),
+    enabled: prizeSpinId !== undefined && Number.isFinite(prizeSpinId),
     refetchInterval: WIDGET_POLL_MS,
     retry: false,
   })

@@ -1,9 +1,6 @@
 import { Box } from '@mui/material'
 import { useParams } from 'react-router-dom'
-import {
-  PrizeSpinWidgetNotFoundError,
-  PrizeSpinWidgetNotLiveError,
-} from '@/api/prize-spin'
+import { PrizeSpinWidgetNotFoundError } from '@/api/prize-spin'
 import { PrizeSpinWidgetCard } from '@/components/prize-spin/widget/PrizeSpinWidgetCard'
 import { PrizeSpinWidgetLoading } from '@/components/prize-spin/widget/PrizeSpinWidgetLoading'
 import { PrizeSpinWidgetMessage } from '@/components/prize-spin/widget/PrizeSpinWidgetMessage'
@@ -11,19 +8,18 @@ import { PRIZE_SPIN_WIDGET_THEME } from '@/lib/prize-spin-widget-theme'
 import { usePublicPrizeSpinWidget } from '@/queries/use-prize-spins'
 
 export function PrizeSpinStreamWidgetPage() {
-  const { ucid } = useParams<{ ucid: string }>()
-  const { data: view, error, isLoading, isPending } = usePublicPrizeSpinWidget(ucid)
+  const { id } = useParams<{ id: string }>()
+  const prizeSpinId = Number.parseInt(id ?? '', 10)
+  const isValidId = Number.isFinite(prizeSpinId)
+  const { data: view, error, isLoading, isPending } =
+    usePublicPrizeSpinWidget(isValidId ? prizeSpinId : undefined)
 
-  if (!ucid) {
+  if (!isValidId) {
     return <PrizeSpinWidgetMessage message="Session not found." tone="muted" />
   }
 
   if (isPending && isLoading) {
     return <PrizeSpinWidgetLoading />
-  }
-
-  if (error instanceof PrizeSpinWidgetNotLiveError) {
-    return <PrizeSpinWidgetMessage message="No live session." tone="warning" />
   }
 
   if (error instanceof PrizeSpinWidgetNotFoundError || error || !view) {

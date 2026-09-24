@@ -1,13 +1,10 @@
 import { Button, Chip, Stack, Typography } from '@mui/material'
 import ArchiveIcon from '@mui/icons-material/Archive'
 import DownloadIcon from '@mui/icons-material/Download'
-import PodcastsIcon from '@mui/icons-material/Podcasts'
-import { SquareRounded as SquareRoundedIcon } from '@mui/icons-material'
-import { alpha, styled, useTheme } from '@mui/material/styles'
+import { styled, useTheme } from '@mui/material/styles'
 import { useState } from 'react'
 import type { PrizeSpinRecord, PrizeSpinWin } from '@/api/prize-spin'
-import { isPrizeSpinLive, isPrizeSpinReadOnly } from '@/api/prize-spin'
-import { LiveStatusChip } from '@/components/LiveStatusChip'
+import { isPrizeSpinReadOnly } from '@/api/prize-spin'
 import {
   StyledCompactSessionCardContent,
   StyledSessionCard,
@@ -15,11 +12,7 @@ import {
 import { StatusAlert } from '@/components/StatusAlert'
 import { useNotification } from '@/context/NotificationContext'
 import { downloadWinnersXlsx } from '@/lib/prize-spin-winners-export'
-import {
-  useArchivePrizeSpinSession,
-  useDeactivatePrizeSpinSession,
-  useGoLivePrizeSpinSession,
-} from '@/queries/use-prize-spin-session'
+import { useArchivePrizeSpinSession } from '@/queries/use-prize-spin-session'
 import { mutedChipSx } from '@/theme/colors'
 
 type PrizeSpinSessionHeaderSectionProps = {
@@ -28,7 +21,6 @@ type PrizeSpinSessionHeaderSectionProps = {
   record: PrizeSpinRecord
   wins: PrizeSpinWin[]
   onOpenArchiveDialog: () => void
-  onOpenDeactivateDialog: () => void
 }
 
 const HeaderStack = styled(Stack)(({ theme }) => ({
@@ -62,33 +54,6 @@ const ActionsStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(1),
 }))
 
-const OffAirButton = styled(Button)(({ theme }) => ({
-  borderColor: alpha(theme.palette.error.main, 0.4),
-  color: theme.palette.error.main,
-  '&:hover': {
-    borderColor: theme.palette.error.main,
-    backgroundColor: alpha(theme.palette.error.main, 0.1),
-  },
-}))
-
-const GoLiveButton = styled(Button)(({ theme }) => ({
-  borderColor: alpha(theme.palette.success.main, 0.4),
-  color: theme.palette.success.light,
-  '&:hover': {
-    borderColor: theme.palette.success.main,
-    backgroundColor: alpha(theme.palette.success.main, 0.1),
-  },
-}))
-
-const ArchiveButton = styled(Button)(({ theme }) => ({
-  borderColor: alpha(theme.palette.warning.main, 0.4),
-  color: theme.palette.warning.main,
-  '&:hover': {
-    borderColor: theme.palette.warning.main,
-    backgroundColor: alpha(theme.palette.warning.main, 0.1),
-  },
-}))
-
 const ReadOnlyAlert = styled(StatusAlert)(({ theme }) => ({
   marginTop: theme.spacing(2),
 }))
@@ -100,25 +65,13 @@ export const PrizeSpinSessionHeaderSection = (
   const { showSuccess, showError } = useNotification()
   const [isExportingWinners, setIsExportingWinners] = useState(false)
 
-  const goLiveMutation = useGoLivePrizeSpinSession(
-    props.accountId,
-    props.prizeSpinId,
-  )
-  const deactivateMutation = useDeactivatePrizeSpinSession(
-    props.accountId,
-    props.prizeSpinId,
-  )
   const archiveSessionMutation = useArchivePrizeSpinSession(
     props.accountId,
     props.prizeSpinId,
   )
 
   const readOnly = isPrizeSpinReadOnly(props.record)
-  const isLive = isPrizeSpinLive(props.record)
-  const actionsPending =
-    archiveSessionMutation.isPending ||
-    deactivateMutation.isPending ||
-    goLiveMutation.isPending
+  const actionsPending = archiveSessionMutation.isPending
 
   const handleDownloadWinners = () => {
     if (props.wins.length === 0 || isExportingWinners) {
@@ -141,17 +94,6 @@ export const PrizeSpinSessionHeaderSection = (
     }
   }
 
-  const handleGoLive = () => {
-    goLiveMutation.mutate(undefined, {
-      onSuccess: () => showSuccess('Session is now live.'),
-      onError: (error) => {
-        showError(
-          error instanceof Error ? error.message : 'Could not go live',
-        )
-      },
-    })
-  }
-
   return (
     <StyledSessionCard elevation={0}>
       <StyledCompactSessionCardContent>
@@ -160,7 +102,6 @@ export const PrizeSpinSessionHeaderSection = (
             <SessionTitle variant="h6" noWrap>
               {props.record.title} <SessionId>#{props.record.id}</SessionId>
             </SessionTitle>
-            {isLive ? <LiveStatusChip /> : null}
             {readOnly ? (
               <Chip label="Archived" size="small" sx={mutedChipSx(theme)} />
             ) : null}
@@ -176,34 +117,8 @@ export const PrizeSpinSessionHeaderSection = (
             >
               {isExportingWinners ? 'Downloading…' : 'Download History'}
             </Button>
-            {!readOnly && isLive ? (
-              <OffAirButton
-                type="button"
-                variant="outlined"
-                size="small"
-                startIcon={
-                  <SquareRoundedIcon sx={{ fontSize: 16 }} aria-hidden />
-                }
-                disabled={deactivateMutation.isPending}
-                onClick={props.onOpenDeactivateDialog}
-              >
-                Off Air
-              </OffAirButton>
-            ) : null}
-            {!readOnly && !isLive ? (
-              <GoLiveButton
-                type="button"
-                variant="outlined"
-                size="small"
-                startIcon={<PodcastsIcon fontSize="small" aria-hidden />}
-                disabled={goLiveMutation.isPending}
-                onClick={() => void handleGoLive()}
-              >
-                {goLiveMutation.isPending ? 'Going live…' : 'Go live'}
-              </GoLiveButton>
-            ) : null}
             {!readOnly ? (
-              <ArchiveButton
+              <Button
                 type="button"
                 variant="outlined"
                 size="small"
@@ -212,7 +127,7 @@ export const PrizeSpinSessionHeaderSection = (
                 onClick={props.onOpenArchiveDialog}
               >
                 Archive
-              </ArchiveButton>
+              </Button>
             ) : null}
           </ActionsStack>
         </HeaderStack>

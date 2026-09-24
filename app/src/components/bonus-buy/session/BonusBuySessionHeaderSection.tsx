@@ -1,11 +1,7 @@
 import { Button, Chip, Stack, Typography } from '@mui/material'
 import ArchiveIcon from '@mui/icons-material/Archive'
 import EditIcon from '@mui/icons-material/Edit'
-import LinkIcon from '@mui/icons-material/Link'
-import OpenInNewIcon from '@mui/icons-material/OpenInNew'
-import PaletteIcon from '@mui/icons-material/Palette'
-import { alpha, styled, useTheme } from '@mui/material/styles'
-import { Link } from 'react-router-dom'
+import { styled, useTheme } from '@mui/material/styles'
 import type { BonusBuyRecord } from '@/api/bonus-buy'
 import { isBonusBuyActive } from '@/api/bonus-buy'
 import {
@@ -13,16 +9,12 @@ import {
   StyledSessionCard,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { StatusAlert } from '@/components/StatusAlert'
-import { useNotification } from '@/context/NotificationContext'
-import { bonusBuyWidgetRoute } from '@/lib/routes'
 import { mutedChipSx } from '@/theme/colors'
 
 type BonusBuySessionHeaderSectionProps = {
-  bonusBuyId: number
   record: BonusBuyRecord
   onOpenArchiveDialog: () => void
   onOpenEditDialog: () => void
-  onOpenWidgetDialog: () => void
 }
 
 const HeaderStack = styled(Stack)(({ theme }) => ({
@@ -56,15 +48,6 @@ const ActionsStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(1),
 }))
 
-const ArchiveButton = styled(Button)(({ theme }) => ({
-  borderColor: alpha(theme.palette.warning.main, 0.4),
-  color: theme.palette.warning.main,
-  '&:hover': {
-    borderColor: theme.palette.warning.main,
-    backgroundColor: alpha(theme.palette.warning.main, 0.1),
-  },
-}))
-
 const ReadOnlyAlert = styled(StatusAlert)(({ theme }) => ({
   marginTop: theme.spacing(2),
 }))
@@ -73,88 +56,52 @@ export const BonusBuySessionHeaderSection = (
   props: BonusBuySessionHeaderSectionProps,
 ) => {
   const theme = useTheme()
-  const { showSuccess } = useNotification()
   const active = isBonusBuyActive(props.record)
 
   return (
-    <>
-      <StyledSessionCard elevation={0}>
-        <StyledCompactSessionCardContent>
-          <HeaderStack direction={{ xs: 'column', lg: 'row' }} spacing={2}>
-            <TitleStack direction="row" spacing={1}>
-              <SessionTitle variant="h6" noWrap>
-                {props.record.name}{' '}
-                <SessionId>#{props.record.id}</SessionId>
-              </SessionTitle>
-              {!active ? (
-                <Chip
-                  label="Archived"
-                  size="small"
-                  sx={mutedChipSx(theme)}
-                />
-              ) : null}
-            </TitleStack>
-            <ActionsStack direction="row">
-              {active ? (
-                <ArchiveButton
-                  type="button"
-                  variant="outlined"
-                  size="small"
-                  startIcon={<ArchiveIcon fontSize="small" aria-hidden />}
-                  onClick={props.onOpenArchiveDialog}
-                >
-                  Archive
-                </ArchiveButton>
-              ) : null}
-              {active ? (
-                <Button
-                  type="button"
-                  variant="outlined"
-                  size="small"
-                  startIcon={<EditIcon fontSize="small" aria-hidden />}
-                  onClick={props.onOpenEditDialog}
-                >
-                  Edit
-                </Button>
-              ) : null}
+    <StyledSessionCard elevation={0}>
+      <StyledCompactSessionCardContent>
+        <HeaderStack direction={{ xs: 'column', lg: 'row' }} spacing={2}>
+          <TitleStack direction="row" spacing={1}>
+            <SessionTitle variant="h6" noWrap>
+              {props.record.name}{' '}
+              <SessionId>#{props.record.id}</SessionId>
+            </SessionTitle>
+            {!active ? (
+              <Chip label="Archived" size="small" sx={mutedChipSx(theme)} />
+            ) : null}
+          </TitleStack>
+          <ActionsStack direction="row">
+            {active ? (
               <Button
                 type="button"
                 variant="outlined"
                 size="small"
-                startIcon={<PaletteIcon fontSize="small" aria-hidden />}
-                onClick={props.onOpenWidgetDialog}
+                startIcon={<ArchiveIcon fontSize="small" aria-hidden />}
+                onClick={props.onOpenArchiveDialog}
               >
-                Widget Style
+                Archive
               </Button>
+            ) : null}
+            {active ? (
               <Button
                 type="button"
                 variant="outlined"
                 size="small"
-                startIcon={<LinkIcon fontSize="small" aria-hidden />}
-                onClick={() => showSuccess('Coming soon')}
+                startIcon={<EditIcon fontSize="small" aria-hidden />}
+                onClick={props.onOpenEditDialog}
               >
-                OBS Link
+                Edit
               </Button>
-              <Button
-                component={Link}
-                to={bonusBuyWidgetRoute(props.bonusBuyId)}
-                target="_blank"
-                rel="noopener noreferrer"
-                variant="outlined"
-                size="small"
-                startIcon={<OpenInNewIcon fontSize="small" aria-hidden />}
-              >
-                Overlay
-              </Button>
-            </ActionsStack>
-          </HeaderStack>
-          {!active ? (
-            <ReadOnlyAlert tone="info">
-              This session is archived. View only.
-            </ReadOnlyAlert>
-          ) : null}
-        </StyledCompactSessionCardContent>
-      </StyledSessionCard>
-    </>
+            ) : null}
+          </ActionsStack>
+        </HeaderStack>
+        {!active ? (
+          <ReadOnlyAlert tone="info">
+            This session is archived. View only.
+          </ReadOnlyAlert>
+        ) : null}
+      </StyledCompactSessionCardContent>
+    </StyledSessionCard>
   )
 }

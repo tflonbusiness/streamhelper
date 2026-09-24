@@ -425,30 +425,6 @@ export class AccountsController {
     );
   }
 
-  @Post(':accountId/prize-spins/:prizeSpinId/go-live')
-  async goLivePrizeSpin(
-    @Param('accountId', ParseIntPipe) accountId: number,
-    @Param('prizeSpinId', ParseIntPipe) prizeSpinId: number,
-    @Req() req: Request,
-  ) {
-    const session = req.session as SessionData;
-    const user = await this.authService.requireValidSessionUser(session.user);
-
-    return this.authService.goLivePrizeSpin(accountId, user.id, prizeSpinId);
-  }
-
-  @Post(':accountId/prize-spins/:prizeSpinId/deactivate')
-  async deactivatePrizeSpin(
-    @Param('accountId', ParseIntPipe) accountId: number,
-    @Param('prizeSpinId', ParseIntPipe) prizeSpinId: number,
-    @Req() req: Request,
-  ) {
-    const session = req.session as SessionData;
-    const user = await this.authService.requireValidSessionUser(session.user);
-
-    return this.authService.deactivatePrizeSpin(accountId, user.id, prizeSpinId);
-  }
-
   @Delete(':accountId/prize-spins/:prizeSpinId')
   @HttpCode(204)
   async archivePrizeSpin(

@@ -1,19 +1,13 @@
 import { Chip, IconButton, type IconButtonProps, Stack, Tooltip } from '@mui/material'
-import { SquareRounded as SquareRoundedIcon } from '@mui/icons-material'
 import ArchiveIcon from '@mui/icons-material/Archive'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
-import PodcastsIcon from '@mui/icons-material/Podcasts'
-import { alpha, styled } from '@mui/material/styles'
+import { styled } from '@mui/material/styles'
 import { Link, type LinkProps } from 'react-router-dom'
-import {
-  isPrizeSpinArchived,
-  isPrizeSpinLive,
-  type PrizeSpinRecord,
-} from '@/api/prize-spin'
+import { isPrizeSpinArchived, type PrizeSpinRecord } from '@/api/prize-spin'
 import type { AppTableColumn } from '@/components/AppTable'
-import { LiveStatusChip } from '@/components/LiveStatusChip'
 import { prizeSpinSessionRoute } from '@/lib/routes'
 import { colors } from '@/theme/colors'
+
 const titleColumnSx = {
   minWidth: 0,
   overflow: 'hidden',
@@ -35,10 +29,10 @@ const MutedStatusChip = styled(Chip)(({ theme }) => ({
   height: 24,
   fontSize: '0.75rem',
   fontWeight: 500,
-  bgcolor: alpha(theme.palette.text.primary, 0.06),
+  bgcolor: theme.palette.action.hover,
   color: theme.palette.text.secondary,
   border: '1px solid',
-  borderColor: alpha(theme.palette.text.primary, 0.1),
+  borderColor: theme.palette.divider,
 }))
 
 const RecordTitle = styled('span', {
@@ -53,27 +47,18 @@ const ActionsStack = styled(Stack)({
   justifyContent: 'flex-end',
 })
 
-type ActionButtonVariant = 'error' | 'success' | 'warning'
-
-const StyledActionIconButton = styled(IconButton, {
-  shouldForwardProp: (prop) => prop !== 'actionVariant',
-})<{ actionVariant: ActionButtonVariant }>(({ theme, actionVariant }) => {
-  const palette =
-    actionVariant === 'error'
-      ? theme.palette.error
-      : actionVariant === 'success'
-        ? theme.palette.success
-        : theme.palette.warning
+const StyledActionIconButton = styled(IconButton)(({ theme }) => {
+  const palette = theme.palette.primary
 
   return {
     borderRadius: theme.shape.borderRadius,
     width: 28,
     height: 28,
     border: '1px solid',
-    borderColor: alpha(palette.main, 0.4),
-    color: actionVariant === 'success' ? palette.light : palette.main,
+    borderColor: `${palette.main}66`,
+    color: palette.main,
     '&:hover': {
-      bgcolor: alpha(palette.main, 0.1),
+      bgcolor: `${palette.main}1A`,
       borderColor: palette.main,
     },
   }
@@ -99,24 +84,14 @@ function recordStatusChip(record: PrizeSpinRecord) {
     return <MutedStatusChip label="Archived" size="small" />
   }
 
-  if (isPrizeSpinLive(record)) {
-    return <LiveStatusChip />
-  }
-
-  return <MutedStatusChip label="Off Air" size="small" />
+  return <MutedStatusChip label="Active" size="small" />
 }
 
 type BuildPrizeSpinRecordColumnsOptions = {
-  liveActionRecordId: number | null
-  onGoLive: (record: PrizeSpinRecord) => void
-  onDeactivate: (record: PrizeSpinRecord) => void
   onArchive: (record: PrizeSpinRecord) => void
 }
 
 export function buildPrizeSpinRecordColumns({
-  liveActionRecordId,
-  onGoLive,
-  onDeactivate,
   onArchive,
 }: BuildPrizeSpinRecordColumnsOptions): AppTableColumn<PrizeSpinRecord>[] {
   return [
@@ -143,69 +118,37 @@ export function buildPrizeSpinRecordColumns({
       id: 'action',
       header: '',
       align: 'right',
-      width: 128,
-      minWidth: 128,
+      width: 88,
+      minWidth: 88,
       sx: actionColumnSx,
       render: (record) => {
-        const isUpdating = liveActionRecordId === record.id
         const readOnly = isPrizeSpinArchived(record)
 
         return (
           <ActionsStack direction="row" spacing={0.5}>
-            {!readOnly && isPrizeSpinLive(record) ? (
-              <Tooltip title="Off Air">
-                <span>
-                  <StyledActionIconButton
-                    type="button"
-                    actionVariant="error"
-                    aria-label={`Take ${record.title} off Air`}
-                    size="small"
-                    disabled={isUpdating}
-                    onClick={() => void onDeactivate(record)}
-                  >
-                    <SquareRoundedIcon sx={actionIconSx} aria-hidden />
-                  </StyledActionIconButton>
-                </span>
-              </Tooltip>
-            ) : null}
-            {!readOnly && !isPrizeSpinLive(record) ? (
-              <Tooltip title="Go live">
-                <span>
-                  <StyledActionIconButton
-                    type="button"
-                    actionVariant="success"
-                    aria-label={`Go live with ${record.title}`}
-                    size="small"
-                    disabled={isUpdating}
-                    onClick={() => void onGoLive(record)}
-                  >
-                    <PodcastsIcon sx={actionIconSx} aria-hidden />
-                  </StyledActionIconButton>
-                </span>
-              </Tooltip>
-            ) : null}
             <Tooltip title="Archive">
               <span>
                 <StyledActionIconButton
                   type="button"
-                  actionVariant="warning"
                   aria-label={`Archive ${record.title}`}
                   size="small"
-                  disabled={readOnly || isUpdating}
+                  disabled={readOnly}
                   onClick={() => onArchive(record)}
                 >
                   <ArchiveIcon sx={actionIconSx} aria-hidden />
                 </StyledActionIconButton>
               </span>
             </Tooltip>
-            <StyledOpenIconButton
-              component={Link}
-              to={prizeSpinSessionRoute(record.id)}
-              aria-label={`Open ${record.title}`}
-              size="small"
-            >
-              <ArrowForwardIcon sx={actionIconSx} aria-hidden />
-            </StyledOpenIconButton>
+            <Tooltip title="Open">
+              <StyledOpenIconButton
+                component={Link}
+                to={prizeSpinSessionRoute(record.id)}
+                aria-label={`Open ${record.title}`}
+                size="small"
+              >
+                <ArrowForwardIcon sx={actionIconSx} aria-hidden />
+              </StyledOpenIconButton>
+            </Tooltip>
           </ActionsStack>
         )
       },

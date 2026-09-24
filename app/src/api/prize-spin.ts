@@ -4,7 +4,7 @@ const jsonHeaders = {
 
 export type PrizeSpinArchivedFilter = 'false' | 'true' | 'all'
 
-export type PrizeSpinStatus = 'live' | 'off_air' | 'archived'
+export type PrizeSpinStatus = 'active' | 'archived'
 
 export type PrizeSpinListResult = {
   records: PrizeSpinRecord[]
@@ -21,12 +21,6 @@ export type PrizeSpinRecord = {
   createdAt: string
   createdByUserId: number
   createdByName: string
-}
-
-export function isPrizeSpinLive(
-  record: Pick<PrizeSpinRecord, 'status'>,
-): boolean {
-  return record.status === 'live'
 }
 
 export function isPrizeSpinArchived(
@@ -152,48 +146,6 @@ export async function createPrizeSpin(
   if (!response.ok) {
     throw new Error(
       await readErrorMessage(response, 'Could not create prize spin'),
-    )
-  }
-
-  return response.json() as Promise<PrizeSpinRecord>
-}
-
-export async function goLivePrizeSpin(
-  accountId: number,
-  prizeSpinId: number,
-): Promise<PrizeSpinRecord> {
-  const response = await fetch(
-    `/accounts/${accountId}/prize-spins/${prizeSpinId}/go-live`,
-    {
-      method: 'POST',
-      credentials: 'include',
-    },
-  )
-
-  if (!response.ok) {
-    throw new Error(
-      await readErrorMessage(response, 'Could not go live'),
-    )
-  }
-
-  return response.json() as Promise<PrizeSpinRecord>
-}
-
-export async function deactivatePrizeSpin(
-  accountId: number,
-  prizeSpinId: number,
-): Promise<PrizeSpinRecord> {
-  const response = await fetch(
-    `/accounts/${accountId}/prize-spins/${prizeSpinId}/deactivate`,
-    {
-      method: 'POST',
-      credentials: 'include',
-    },
-  )
-
-  if (!response.ok) {
-    throw new Error(
-      await readErrorMessage(response, 'Could not deactivate session'),
     )
   }
 
@@ -472,26 +424,13 @@ export class PrizeSpinWidgetNotFoundError extends Error {
   }
 }
 
-export class PrizeSpinWidgetNotLiveError extends Error {
-  constructor() {
-    super('No live session.')
-    this.name = 'PrizeSpinWidgetNotLiveError'
-  }
-}
-
 export async function fetchPublicPrizeSpinWidget(
-  ucid: string,
+  prizeSpinId: number,
 ): Promise<PrizeSpinWidgetView> {
-  const response = await fetch(
-    `/prize-spins/widget/${encodeURIComponent(ucid)}`,
-  )
+  const response = await fetch(`/prize-spins/${prizeSpinId}/widget`)
 
   if (response.status === 404) {
     throw new PrizeSpinWidgetNotFoundError()
-  }
-
-  if (response.status === 409) {
-    throw new PrizeSpinWidgetNotLiveError()
   }
 
   if (!response.ok) {

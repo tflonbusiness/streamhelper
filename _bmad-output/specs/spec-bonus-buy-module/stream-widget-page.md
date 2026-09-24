@@ -1,4 +1,4 @@
-# Bonus Buy — stream overlay (`/bonus-buy/:id/widget`)
+# Bonus Buy — stream overlay (`/modules/bonus-buy/:id/widget`)
 
 OBS Browser Source surface for a single bonus buy session. Operators preview from the session workspace; OBS loads the same URL.
 
@@ -8,11 +8,11 @@ OBS Browser Source surface for a single bonus buy session. Operators preview fro
 
 | Path | Component | Guards |
 |------|-----------|--------|
-| `/bonus-buy/:id/widget` | `BonusBuyStreamWidgetPage` | **Public** — no `ProtectedRoute`, no login redirect |
+| `/modules/bonus-buy/:id/widget` | `BonusBuyStreamWidgetPage` | **Public** — no `ProtectedRoute`, no login redirect |
 
 Register in `App.tsx` as a top-level route **outside** `ProtectedRoute` and `AppShell`. OBS Browser Source must load the URL without a dashboard session cookie. No sidebar, `PageHeader`, or breadcrumbs.
 
-**URL:** `/bonus-buy/:id/widget` only — no `width`, `height`, `w`, or `h` query params. Card size comes from `bonus_buy_widget.width` / `height` via public API.
+**URL:** `/modules/bonus-buy/:id/widget` only — no `width`, `height`, `w`, or `h` query params. Card size comes from `bonus_buy_widget.width` / `height` via public API.
 
 `:id` loads live data from `GET /bonus-buys/:id/widget` (session slots + **account** widget settings). Unknown id → centered **Session not found.** on transparent canvas.
 
@@ -118,9 +118,25 @@ Each list row height stays **74px** (`cellHeight`) whether provider is shown or 
 
 Empty session (zero non-archived slots): summary row shows start balance + `0x`; no list items.
 
-## Session workspace link
+## Session workspace — Stream Widget card
 
-`/bonus-buy/:id` **Overlay** button → `/bonus-buy/:id/widget` (same tab). **Widget style** opens style dialog per `bonus-buy-widget.md`. **OBS link** remains **Coming soon** stub.
+`/modules/bonus-buy/:id` — **Stream Widget** card (not on history page). See [session-page.md](session-page.md) section 2.
+
+| Control | Label | Target / behavior |
+|---------|-------|-------------------|
+| Widget style | **Widget style** | Opens `BonusBuyWidgetStyleDialog` per `bonus-buy-widget.md` |
+| Open overlay | **Open overlay** | New tab → `/modules/bonus-buy/{id}/widget` |
+| OBS link | **OBS link** | Copy `window.location.origin` + same path; toast **OBS link copied.** |
+
+Pattern reference: `PrizeSpinStreamWidgetSection` + [prize-spin stream-widget-page.md](../spec-prize-spin-stream-widget/stream-widget-page.md).
+
+## Component structure (session workspace)
+
+| File | Role |
+|------|------|
+| `app/src/components/bonus-buy/session/BonusBuyStreamWidgetSection.tsx` | Stream Widget card on session page only |
+| `app/src/lib/bonus-buy-overlay-url.ts` | `buildBonusBuyOverlayPath`, `buildBonusBuyObsOverlayUrl` |
+| `app/src/lib/routes.ts` | `bonusBuyWidgetRoute(id)` |
 
 ## Figma → English label map
 
@@ -150,6 +166,6 @@ Compact frame uses icon+count instead of “Purchased” text.
 
 - Large `8:23` layout variant
 - WebSocket, SSE, signed OBS token
-- Copy OBS URL (**OBS link** stub on session page)
+- Duplicate Stream Widget card on `/modules/bonus-buy` history page
 - Chat-bot integration
 - URL query param overrides for width/height
