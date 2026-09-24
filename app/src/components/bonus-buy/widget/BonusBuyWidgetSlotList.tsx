@@ -81,7 +81,7 @@ export function BonusBuyWidgetSlotList({
   }, [listSlots])
 
   return (
-    <StyledSlotListContainer ref={containerRef}>
+    <StyledSlotListContainer ref={containerRef} widgetTheme={theme}>
       <StyledSlotScrollTrack
         ref={trackRef}
         autoScrollEnabled={autoScrollEnabled}

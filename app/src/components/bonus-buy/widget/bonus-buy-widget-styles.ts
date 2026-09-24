@@ -7,6 +7,8 @@ import { alpha, styled } from '@mui/material/styles'
 import type { BonusBuyWidgetTheme } from '@/lib/bonus-buy-widget-presentation'
 
 export const BORDER_SUBTLE = 'rgba(255,255,255,0.12)'
+const WIDGET_SECTION_DIVIDER = '#1F1F24'
+const SLOT_LIST_EDGE_FADE_PX = 28
 
 type WidgetThemeProp = {
   widgetTheme: BonusBuyWidgetTheme
@@ -451,14 +453,87 @@ export const StyledMultiplierValue = styled(Typography, textColorProps)<
   lineHeight: '28px',
 }))
 
-export const StyledSlotListContainer = styled(Box)({
-  flex: 1,
-  minHeight: 0,
-  overflow: 'hidden',
-  paddingTop: 4,
-  paddingBottom: 4,
-  maskImage: 'linear-gradient(to bottom, black 85%, transparent 100%)',
-})
+export const StyledSlotListSection = styled(Box, widgetThemeProps)<WidgetThemeProp>(
+  ({ widgetTheme }) => ({
+    flex: 1,
+    minHeight: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    position: 'relative',
+    minWidth: 0,
+    paddingTop: 6,
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: 2,
+      background: `linear-gradient(
+        90deg,
+        transparent 0%,
+        ${alpha(WIDGET_SECTION_DIVIDER, 0.15)} 12%,
+        ${WIDGET_SECTION_DIVIDER} 50%,
+        ${alpha(WIDGET_SECTION_DIVIDER, 0.15)} 88%,
+        transparent 100%
+      )`,
+      pointerEvents: 'none',
+    },
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: SLOT_LIST_EDGE_FADE_PX + 8,
+      background: `linear-gradient(
+        180deg,
+        ${widgetTheme.backgroundColor} 0%,
+        ${alpha(widgetTheme.backgroundColor, 0.85)} 35%,
+        transparent 100%
+      )`,
+      pointerEvents: 'none',
+      zIndex: 1,
+    },
+  }),
+)
+
+export const StyledSlotListContainer = styled(Box, widgetThemeProps)<WidgetThemeProp>(
+  ({ widgetTheme }) => ({
+    flex: 1,
+    minHeight: 0,
+    overflow: 'hidden',
+    position: 'relative',
+    zIndex: 0,
+    paddingTop: 4,
+    paddingBottom: 4,
+    maskImage: `linear-gradient(
+      to bottom,
+      transparent 0px,
+      black ${SLOT_LIST_EDGE_FADE_PX}px,
+      black calc(100% - ${SLOT_LIST_EDGE_FADE_PX}px),
+      transparent 100%
+    )`,
+    WebkitMaskImage: `linear-gradient(
+      to bottom,
+      transparent 0px,
+      black ${SLOT_LIST_EDGE_FADE_PX}px,
+      black calc(100% - ${SLOT_LIST_EDGE_FADE_PX}px),
+      transparent 100%
+    )`,
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: SLOT_LIST_EDGE_FADE_PX,
+      background: `linear-gradient(180deg, transparent 0%, ${widgetTheme.backgroundColor} 100%)`,
+      pointerEvents: 'none',
+      zIndex: 1,
+    },
+  }),
+)
 
 export const StyledSlotScrollTrack = styled(Box, {
   shouldForwardProp: (prop) =>

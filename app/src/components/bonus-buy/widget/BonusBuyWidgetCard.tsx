@@ -1,5 +1,8 @@
 import type { BonusBuyWidgetCardProps } from '@/lib/bonus-buy-widget-presentation'
-import { StyledWidgetCard } from '@/components/bonus-buy/widget/bonus-buy-widget-styles'
+import {
+  StyledSlotListSection,
+  StyledWidgetCard,
+} from '@/components/bonus-buy/widget/bonus-buy-widget-styles'
 import { BonusBuyWidgetBestXRow } from '@/components/bonus-buy/widget/BonusBuyWidgetBestXRow'
 import { BonusBuyWidgetHeader } from '@/components/bonus-buy/widget/BonusBuyWidgetHeader'
 import { BonusBuyWidgetPlayingSections } from '@/components/bonus-buy/widget/BonusBuyWidgetPlayingSections'
@@ -44,11 +47,13 @@ export function BonusBuyWidgetCard({
           currencyCode={record.currencyCode}
         />
       ) : null}
-      <BonusBuyWidgetSlotList
-        listSlots={listSlots}
-        theme={theme}
-        currencyCode={record.currencyCode}
-      />
+      <StyledSlotListSection widgetTheme={theme}>
+        <BonusBuyWidgetSlotList
+          listSlots={listSlots}
+          theme={theme}
+          currencyCode={record.currencyCode}
+        />
+      </StyledSlotListSection>
     </StyledWidgetCard>
   )
 }
