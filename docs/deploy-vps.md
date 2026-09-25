@@ -172,6 +172,27 @@ docker compose --env-file .env.production -f docker-compose.prod.yml exec postgr
   pg_dump -U postgres caz_agent > backup-$(date +%F).sql
 ```
 
+## 10. TablePlus (и другие GUI) через SSH
+
+В `docker-compose.prod.yml` Postgres проброшен только на **localhost VPS**: `127.0.0.1:5433` → контейнер `5432`. В интернет порт не открыт.
+
+После изменения compose на VPS:
+
+```bash
+cd /opt/streamhelper
+git pull   # или залейте обновлённый yml
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d
+```
+
+В TablePlus: **PostgreSQL**, включить **Over SSH** (хост VPS, пользователь SSH), в подключении к БД:
+
+| Поле | Значение |
+|------|----------|
+| Host | `127.0.0.1` |
+| Port | `5433` |
+| User / Database | из `.env.production` (`POSTGRES_USER`, `POSTGRES_DB`) |
+| Password | `POSTGRES_PASSWORD` |
+
 ## Справка: файлы окружения
 
 | Файл | Где | В git |
