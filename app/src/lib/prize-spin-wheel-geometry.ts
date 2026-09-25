@@ -77,6 +77,26 @@ export function polarToCartesian(
   }
 }
 
+/** Full pie slice from center (stream-helper OBS wheel). */
+export function describePieSegment(
+  centerX: number,
+  centerY: number,
+  radius: number,
+  startAngle: number,
+  endAngle: number,
+): string {
+  const start = polarToCartesian(centerX, centerY, radius, startAngle)
+  const end = polarToCartesian(centerX, centerY, radius, endAngle)
+  const largeArc = endAngle - startAngle > 180 ? 1 : 0
+
+  return [
+    `M ${centerX} ${centerY}`,
+    `L ${start.x} ${start.y}`,
+    `A ${radius} ${radius} 0 ${largeArc} 1 ${end.x} ${end.y}`,
+    'Z',
+  ].join(' ')
+}
+
 export function describeArcSegment(
   centerX: number,
   centerY: number,
@@ -106,6 +126,30 @@ export function shouldShowSectorLabel(
   minDegrees = 18,
 ): boolean {
   return endAngle - startAngle >= minDegrees
+}
+
+/** Tick index while spinning — stream-helper `floor(angle % 2π / arc)` with variable arcs. */
+export function rotationTickIndex(
+  angleRadians: number,
+  sectors: WheelSectorGeometry[],
+): number {
+  if (sectors.length === 0) {
+    return -1
+  }
+
+  const twoPi = Math.PI * 2
+  const mod = ((angleRadians % twoPi) + twoPi) % twoPi
+  let acc = 0
+  const deg = Math.PI / 180
+
+  for (let i = 0; i < sectors.length; i++) {
+    acc += (sectors[i].endAngle - sectors[i].startAngle) * deg
+    if (mod < acc) {
+      return i
+    }
+  }
+
+  return sectors.length - 1
 }
 
 export function truncateSectorLabel(label: string, maxLength = 14): string {

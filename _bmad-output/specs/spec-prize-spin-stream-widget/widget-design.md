@@ -1,13 +1,13 @@
 # Prize Spin — overlay visual design
 
-Invented stream-overlay look for `/prize-spin/widget/:channelSlug`. Dark casino-wheel aesthetic aligned with Caz Agent tokens (`design-tokens.md`) and Prize Spin module purple (`colors.purple`). Sector fill colors always come from `prize_spin_sector.color`.
+Stream-overlay look for `/modules/prize-spin/:prizeSpinId/widget`. Dark glass **card** aligned with Caz Agent tokens (`design-tokens.md`) and Prize Spin module purple (`colors.purple`). **Wheel** styling matches [stream-helper `/wheel/overlay`](https://github.com/novapointstrix/stream-helper) (`stream-helper-wheel-reference.md`). Sector fill colors always come from `prize_spin_sector.color`.
 
 **Warning state (no card):** centered **No live session.** — 16px/500, amber `#F59E0B` or `textMuted`; transparent canvas. Distinct from **Session not found.** (`textMuted` only).
 
 ## Design intent
 
 - **Hero:** the wheel dominates the card — viewers recognize a game-show spin instantly.
-- **Contrast:** dark glass card + bright sector colors + amber pointer (brand accent) + purple module chrome.
+- **Contrast:** dark glass card + bright sector colors + white wheel pointer (stream-helper) + purple module chrome on header/hub icon.
 - **OBS-safe:** outer viewport stays transparent; only the card and its contents are opaque. No full-screen tint.
 
 ## Fixed tokens (not in DB this slice)
@@ -21,8 +21,8 @@ Invented stream-overlay look for `/prize-spin/widget/:channelSlug`. Dark casino-
 | `surface` | `#121215` | Header strip, hub inner, winner pill bg |
 | `moduleAccent` | `#A78BFA` | Header icon, prize text, hub glow |
 | `moduleAccentGlow` | `rgba(167,139,250,0.35)` | Hub ring pulse on win |
-| `pointerFill` | `#F59E0B` | Top pointer chevron (brand amber) |
-| `pointerStroke` | `#D97706` | Pointer outline |
+| `wheelPointerFill` | `#FFFFFF` | Wheel pointer triangle (stream-helper) |
+| `wheelPointerGlow` | `0 3px 10px rgba(255,255,255,0.55)` | Pointer drop shadow |
 | `textPrimary` | `#FFFFFF` | Titles, winner nick |
 | `textMuted` | `#9CA3AF` | **Winner:** prefix, empty state |
 | `divider` | `rgba(255,255,255,0.12)` | Segment separators |
@@ -74,56 +74,55 @@ No session title from `record.title` on overlay — id is enough for OBS debuggi
 
 ## Pointer (12 o'clock)
 
-Fixed above wheel center; does not rotate.
+Fixed above wheel center; does not rotate. Matches stream-helper OBS wheel overlay (white triangle, not card amber).
 
 | Property | Value |
 |----------|-------|
-| Shape | Inverted equilateral triangle (chevron pointing down into wheel) |
-| Size | 28px wide × 24px tall |
-| Position | Centered on wheel top edge; tip overlaps outer ring by 6px |
-| Fill | `pointerFill` |
-| Stroke | 2px `pointerStroke` |
-| Shadow | `0 2px 8px rgba(245,158,11,0.5)` |
+| Shape | Inverted triangle pointing into wheel |
+| Size | 20px wide × 20px tall at 500px base (scale with card) |
+| Position | Centered on wheel top; sits between header and wheel like stream-helper |
+| Fill | `wheelPointerFill` |
+| Shadow | `wheelPointerGlow` |
 
-**Land bounce:** on animation end, pointer scales `1 → 1.15 → 1` over 300ms.
+**Land bounce:** on animation end, pointer scales `1 → 1.1 → 1` over 300ms.
 
 ## Wheel
 
-SVG implementation in `PrizeSpinWheel.tsx`. Single `<g transform="rotate(angle)">` for spin animation.
+SVG in `PrizeSpinWheel.tsx` — visual parity with stream-helper `drawStaticWheel` (`stream-helper-wheel-reference.md`). Single rotating `<g>` for spin animation.
 
 ### Geometry
 
 | Property | Rule |
 |----------|------|
-| Segments | Arc from `prize-spin-wheel-geometry.ts`; angle ∝ `winPercent` |
-| Start angle | First sector at 12 o'clock (−90° in SVG coords), clockwise |
-| Outer radius | `(wheelDiameter / 2) - 4` |
-| Inner radius (donut) | `outerRadius * 0.22` — thick ring, readable on stream |
+| Segments | **Pie** from center; arcs from `prize-spin-wheel-geometry.ts`; angle ∝ `winPercent` |
+| Start angle | First sector at 12 o'clock (−90° SVG), clockwise |
+| Outer radius | `(wheelDiameter / 2) - 24` at 500px base (scale `rimInset`) |
 | Segment fill | `sector.color` ?? `defaultSectorColor(sortOrder)` |
-| Segment stroke | 2px `divider` between adjacent sectors |
-| Outer ring | 4px stroke `#1F1F24` around full wheel |
+| Gloss overlay | Linear white→transparent→black on each sector (reference recipe) |
+| Dividers | Center to rim, `rgba(255,255,255,0.28)`, 2px |
+| Outer rings | Outer stroke `rgba(255,255,255,0.20)` 5px; inner inset `rgba(0,0,0,0.20)` 2px |
+| Ambient halo | Soft outer ring `rgba(255,255,255,0.10)` + blur behind wheel (subtle) |
 
 ### Labels
 
 | Property | Rule |
 |----------|------|
 | Show when | Arc ≥ 18° |
-| Font | 11px/600 `fontFamily`, `textPrimary` |
-| Shadow | `0 1px 3px rgba(0,0,0,0.8)` |
-| Position | Radial at mid-angle, 58% of outer radius |
-| Rotation | Text upright-readable (flip if mid-angle in lower half) |
+| Font | 12–17px/800 `fontFamily`, `#FFFFFF` |
+| Shadow | `0 0 6px rgba(0,0,0,0.55)` |
+| Position | ~`(outerRadius - 28)` along sector mid-angle |
+| Rotation | Upright-readable (flip in lower half) |
 | Truncate | Max 14 chars + ellipsis |
 
 ### Hub (center cap)
 
 | Property | Value |
 |----------|-------|
-| Outer circle | Diameter `innerRadius * 1.6`, fill radial gradient `#A78BFA` → `#7C3AED` |
-| Border | 3px `#FFFFFF` at 90% opacity |
-| Inner dot | 8px white circle at center |
-| Idle shadow | `0 0 20px moduleAccentGlow` |
+| Outer disc | r ≈ 39px at 480px wheel — fill `#111318`, shadow blur |
+| Inner disc | r ≈ 36px — fill `#17191F`, stroke `rgba(255,255,255,0.16)` 3px |
+| Center icon | `RotateCw` ~24px, `moduleAccent` (no custom stream PNG) |
 
-During spin: hub `box-shadow` pulses between `moduleAccentGlow` and `rgba(167,139,250,0.6)` every 400ms.
+No gold rim band, studs, or purple gradient hub — those are superseded by stream-helper styling.
 
 ### Empty state (< 2 sectors)
 
@@ -135,7 +134,7 @@ Replace wheel with dashed ring (same diameter), stroke `divider`, 2px dash. Cent
 |-------|----------|----------|
 | Trigger | — | New `latestWin.id` detected; hide winner banner; show **SPINNING** badge |
 | Spin | 3800ms | `cubic-bezier(0.12, 0.75, 0.1, 1)` rotation: `baseRotations * 360° + targetOffset` where `baseRotations = 5` full turns |
-| Settle | 300ms | Pointer bounce; hub flash `moduleAccentGlow` → transparent |
+| Settle | 300ms | Pointer bounce only |
 | Reveal | 400ms | Winner banner slides up 16px + fade in; **SPINNING** badge hides |
 
 **Target offset:** rotation that places winning sector's mid-angle under the pointer (12 o'clock).
@@ -188,4 +187,6 @@ Idle                    Spinning (t=2s)              Revealed
 
 - Sound effects, particle confetti, 3D perspective tilt
 - Per-account color theme overrides (fixed tokens above)
-- Sector icons or images inside segments
+- Sector icons or images inside segments (hub uses module icon only)
+- stream-helper center burger / `stream_icon` assets
+- Premium gold `WheelCanvas` rim preset (different product surface)

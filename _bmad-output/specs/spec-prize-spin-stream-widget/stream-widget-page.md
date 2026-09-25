@@ -1,10 +1,10 @@
 # Prize Spin — stream overlay (`/modules/prize-spin/:prizeSpinId/widget`)
 
-OBS Browser Source surface for a single prize spin session. The URL includes the session id; the session must be **live** (`prize_spin.is_active = true`) for widget data.
+OBS Browser Source surface for a single prize spin session. The URL includes the session id; the session must be **active** (`prize_spin.status = 'active'`) for widget data.
 
-**Visual design:** full token, layout, animation, and component styling in [widget-design.md](widget-design.md).
+**Visual design:** card chrome in [widget-design.md](widget-design.md); wheel look from [stream-helper-wheel-reference.md](stream-helper-wheel-reference.md).
 
-**Live control:** go-live / deactivate semantics in [live-session-control.md](live-session-control.md).
+**Session status:** `active` vs `archived` per [../spec-prize-spin-history-archive/session-status.md](../spec-prize-spin-history-archive/session-status.md).
 
 ## Route
 
@@ -18,15 +18,14 @@ OBS Browser Source must load the URL without a dashboard session cookie. No side
 
 **URL:** `/modules/prize-spin/{prizeSpinId}/widget` — e.g. `/modules/prize-spin/1/widget`. No `channelSlug`, `ucid`, or `accountId`; no `width`/`height` query params.
 
-Resolves live data from `GET /prize-spins/:prizeSpinId/widget`.
+Resolves widget data from `GET /prize-spins/:prizeSpinId/widget`.
 
 ## Empty and warning states
 
 | Condition | Copy | Tone |
 |-----------|------|------|
 | Unknown `prizeSpinId` | **Session not found.** | `textMuted` |
-| Known session, `is_active = false` | **No live session.** | warning — amber `#F59E0B` or `textMuted` |
-| Deactivated during poll | **No live session.** | same as above |
+| Known session, `status = 'archived'` | **Session not found.** | `textMuted` |
 
 Centered on transparent canvas; no card rendered in warning/error states.
 
@@ -34,7 +33,7 @@ Centered on transparent canvas; no card rendered in warning/error states.
 
 On mount, read `prizeSpinId` from `useParams()`; fetch `GET /prize-spins/:prizeSpinId/widget` (see [prize-spin-widget.md](prize-spin-widget.md)). Use `record`, `sectors`, `latestWin`, and `settings` on success.
 
-**Poll interval:** 5000 ms (match `BonusBuyStreamWidgetPage` `WIDGET_POLL_MS`). Compare `latestWin.id` across polls. When `record.id` changes (different route param), reset animation state. On `NOT_LIVE` during poll, show **No live session.**
+**Poll interval:** 5000 ms (match `BonusBuyStreamWidgetPage` `WIDGET_POLL_MS`). Compare `latestWin.id` across polls. When `record.id` changes (different route param), reset animation state. On `404` during poll (e.g. session archived), show **Session not found.**
 
 Loading: purple spinner on transparent canvas per `widget-design.md`.
 

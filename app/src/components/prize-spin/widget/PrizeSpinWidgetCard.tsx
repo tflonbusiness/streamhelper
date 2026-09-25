@@ -1,21 +1,27 @@
 import { Box, Typography } from '@mui/material'
-import AutorenewIcon from '@mui/icons-material/Autorenew'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type TransitionEvent } from 'react'
 import type { PrizeSpinWidgetLatestWin, PrizeSpinSector } from '@/api/prize-spin'
 import {
-  restRotationForSector,
-  spinRotationFromCurrent,
   buildWheelSectors,
+  rotationTickIndex,
+  spinRotationFromCurrent,
 } from '@/lib/prize-spin-wheel-geometry'
 import {
-  buildPrizeSpinWidgetTheme,
-  scaledPx,
-} from '@/lib/prize-spin-widget-theme'
-import { PrizeSpinWheel } from '@/components/prize-spin/widget/PrizeSpinWheel'
-import { PrizeSpinWinnerBanner } from '@/components/prize-spin/widget/PrizeSpinWinnerBanner'
+  degreesToRadians,
+  radiansToDegrees,
+  streamHelperSpinEase,
+} from '@/lib/prize-spin-wheel-canvas'
+import { prizeSpinWheelAudio } from '@/lib/prize-spin-wheel-audio'
+import {
+  WHEEL_OVERLAY_FADE_MS,
+  WHEEL_OVERLAY_TOTAL_MS,
+  WHEEL_SPIN_DURATION_MS,
+  WHEEL_SPIN_START_DELAY_MS,
+} from '@/lib/prize-spin-wheel-overlay-timing'
+import { buildPrizeSpinWidgetTheme, scaledPx } from '@/lib/prize-spin-widget-theme'
+import { PrizeSpinWheelCanvas } from '@/components/prize-spin/widget/PrizeSpinWheelCanvas'
 
-const SPIN_DURATION_MS = 3800
-const POINTER_BOUNCE_MS = 300
+const EXTRA_FULL_ROTATIONS = 8
 
 type PrizeSpinWidgetCardProps = {
   recordId: number
@@ -26,7 +32,6 @@ type PrizeSpinWidgetCardProps = {
 }
 
 export function PrizeSpinWidgetCard({
-  recordId,
   sectors,
   latestWin,
   width,
@@ -34,32 +39,38 @@ export function PrizeSpinWidgetCard({
 }: PrizeSpinWidgetCardProps) {
   const theme = useMemo(() => buildPrizeSpinWidgetTheme(width, height), [width, height])
   const scale = theme.scale
-  const padding = scaledPx(16, scale)
-  const headerHeight = scaledPx(44, scale)
-  const gap = scaledPx(8, scale)
-  const bannerReserve = scaledPx(80, scale)
-  const hasBannerSpace = latestWin !== null
-
-  const wheelDiameter = useMemo(() => {
-    const innerHeight = height - padding * 2
-    const reserved = headerHeight + gap + (hasBannerSpace ? bannerReserve + gap : 0)
-    const available = innerHeight - reserved
-    const maxByWidth = width - padding * 2
-    return Math.max(0, Math.min(available, maxByWidth))
-  }, [height, width, padding, headerHeight, gap, bannerReserve, hasBannerSpace])
-
   const geometries = useMemo(() => buildWheelSectors(sectors), [sectors])
   const geometryById = useMemo(
     () => new Map(geometries.map((sector) => [sector.id, sector])),
     [geometries],
   )
 
-  const [rotation, setRotation] = useState(0)
-  const [isAnimating, setIsAnimating] = useState(false)
-  const [showBanner, setShowBanner] = useState(latestWin !== null)
-  const [pointerBounce, setPointerBounce] = useState(false)
+  const winnerReserve = scaledPx(112, scale)
+  const pillAndPointerReserve = scaledPx(56, scale)
+  const wheelSize = Math.max(
+    120,
+    Math.min(width, height - winnerReserve - pillAndPointerReserve),
+  )
+
+  const [angleRadians, setAngleRadians] = useState(0)
+  const angleRadiansRef = useRef(0)
+  const [overlayVisible, setOverlayVisible] = useState(false)
+  const [shouldRender, setShouldRender] = useState(false)
+  const [showWinner, setShowWinner] = useState(false)
+  const [playerNick, setPlayerNick] = useState<string | null>(null)
+
   const lastAnimatedWinIdRef = useRef<number | null>(null)
+  const lastSectorIndexRef = useRef(-1)
   const initializedRef = useRef(false)
+  const animFrameRef = useRef<number | null>(null)
+  const spinStartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hideOverlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hideCleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hideCleanupDoneRef = useRef(false)
+
+  useEffect(() => {
+    angleRadiansRef.current = angleRadians
+  }, [angleRadians])
 
   useEffect(() => {
     if (initializedRef.current) {
@@ -67,16 +78,87 @@ export function PrizeSpinWidgetCard({
     }
 
     if (latestWin) {
-      const sector = geometryById.get(latestWin.sectorId)
-      if (sector) {
-        setRotation(restRotationForSector(sector.midAngle))
-      }
-      setShowBanner(true)
       lastAnimatedWinIdRef.current = latestWin.id
     }
 
     initializedRef.current = true
   }, [latestWin, geometryById])
+
+  useEffect(() => {
+    if (overlayVisible) {
+      setShouldRender(true)
+    }
+  }, [overlayVisible])
+
+  const finishOverlayHide = () => {
+    if (hideCleanupDoneRef.current) {
+      return
+    }
+    hideCleanupDoneRef.current = true
+    setShouldRender(false)
+    setShowWinner(false)
+    setPlayerNick(null)
+  }
+
+  const scheduleOverlayHideCleanup = () => {
+    if (hideCleanupTimerRef.current !== null) {
+      window.clearTimeout(hideCleanupTimerRef.current)
+    }
+    hideCleanupTimerRef.current = window.setTimeout(() => {
+      finishOverlayHide()
+      hideCleanupTimerRef.current = null
+    }, WHEEL_OVERLAY_FADE_MS)
+  }
+
+  const handleOverlayTransitionEnd = (event: TransitionEvent<HTMLDivElement>) => {
+    if (event.propertyName !== 'opacity' || overlayVisible) {
+      return
+    }
+    if (event.target !== event.currentTarget) {
+      return
+    }
+    finishOverlayHide()
+  }
+
+  useEffect(() => {
+    if (overlayVisible) {
+      hideCleanupDoneRef.current = false
+      return
+    }
+    if (!shouldRender) {
+      return
+    }
+    scheduleOverlayHideCleanup()
+    return () => {
+      if (hideCleanupTimerRef.current !== null) {
+        window.clearTimeout(hideCleanupTimerRef.current)
+        hideCleanupTimerRef.current = null
+      }
+    }
+  }, [overlayVisible, shouldRender])
+
+  const clearSpinTimers = () => {
+    if (animFrameRef.current !== null) {
+      cancelAnimationFrame(animFrameRef.current)
+      animFrameRef.current = null
+    }
+    if (spinStartTimerRef.current !== null) {
+      window.clearTimeout(spinStartTimerRef.current)
+      spinStartTimerRef.current = null
+    }
+    if (hideOverlayTimerRef.current !== null) {
+      window.clearTimeout(hideOverlayTimerRef.current)
+      hideOverlayTimerRef.current = null
+    }
+    if (hideCleanupTimerRef.current !== null) {
+      window.clearTimeout(hideCleanupTimerRef.current)
+      hideCleanupTimerRef.current = null
+    }
+  }
+
+  useEffect(() => {
+    return () => clearSpinTimers()
+  }, [])
 
   useEffect(() => {
     if (!latestWin || !initializedRef.current) {
@@ -90,128 +172,228 @@ export function PrizeSpinWidgetCard({
     const sector = geometryById.get(latestWin.sectorId)
     if (!sector) {
       lastAnimatedWinIdRef.current = latestWin.id
-      setShowBanner(true)
       return
     }
 
-    setShowBanner(false)
-    setIsAnimating(true)
-    setRotation((current) => spinRotationFromCurrent(current, sector.midAngle))
+    clearSpinTimers()
 
-    const spinTimer = window.setTimeout(() => {
-      setIsAnimating(false)
-      setPointerBounce(true)
-      window.setTimeout(() => setPointerBounce(false), POINTER_BOUNCE_MS)
-      setShowBanner(true)
-      lastAnimatedWinIdRef.current = latestWin.id
-    }, SPIN_DURATION_MS)
+    setPlayerNick(latestWin.participantNick)
+    setShowWinner(false)
+    setOverlayVisible(true)
+    setAngleRadians(0)
+    angleRadiansRef.current = 0
+    lastSectorIndexRef.current = -1
 
-    return () => window.clearTimeout(spinTimer)
-  }, [latestWin, geometryById])
+    hideOverlayTimerRef.current = window.setTimeout(() => {
+      setOverlayVisible(false)
+    }, WHEEL_OVERLAY_TOTAL_MS)
+
+    spinStartTimerRef.current = window.setTimeout(() => {
+      const startRadians = 0
+      const targetDegrees = spinRotationFromCurrent(
+        radiansToDegrees(startRadians),
+        sector.midAngle,
+        EXTRA_FULL_ROTATIONS,
+      )
+      const targetRadians = degreesToRadians(targetDegrees)
+      const startTime = performance.now()
+
+      const animate = (now: number) => {
+        const elapsed = now - startTime
+        const progress = Math.min(elapsed / WHEEL_SPIN_DURATION_MS, 1)
+        const eased = streamHelperSpinEase(progress)
+        const current = startRadians + (targetRadians - startRadians) * eased
+        setAngleRadians(current)
+
+        const sectorIndex = rotationTickIndex(current, geometries)
+        if (sectorIndex !== lastSectorIndexRef.current) {
+          prizeSpinWheelAudio.playTick()
+          lastSectorIndexRef.current = sectorIndex
+        }
+
+        if (progress < 1) {
+          animFrameRef.current = requestAnimationFrame(animate)
+        } else {
+          setShowWinner(true)
+          prizeSpinWheelAudio.playWin()
+          lastAnimatedWinIdRef.current = latestWin.id
+          animFrameRef.current = null
+        }
+      }
+
+      animFrameRef.current = requestAnimationFrame(animate)
+    }, WHEEL_SPIN_START_DELAY_MS)
+
+    return () => clearSpinTimers()
+  }, [latestWin, geometryById, geometries])
+
+  const showPlayerPill = Boolean(shouldRender && playerNick)
+
+  if (sectors.length < 2) {
+    return (
+      <Box
+        sx={{
+          width,
+          height,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: 'transparent',
+          fontFamily: theme.fontFamily,
+        }}
+      >
+        <Typography sx={{ color: theme.textMuted, fontSize: scaledPx(14, scale) }}>
+          Add sectors in dashboard
+        </Typography>
+      </Box>
+    )
+  }
+
+  if (!shouldRender) {
+    return (
+      <Box
+        sx={{
+          width,
+          height,
+          bgcolor: 'transparent',
+        }}
+      />
+    )
+  }
 
   return (
     <Box
       sx={{
         width,
         height,
-        bgcolor: theme.cardBg,
-        border: `1px solid ${theme.cardBorder}`,
-        borderRadius: `${scaledPx(theme.cardRadius, scale)}px`,
-        boxShadow: theme.cardShadow,
-        p: `${padding}px`,
+        bgcolor: 'transparent',
         display: 'flex',
         flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+        userSelect: 'none',
         fontFamily: theme.fontFamily,
-        boxSizing: 'border-box',
+        position: 'relative',
+        opacity: overlayVisible ? 1 : 0,
+        transform: overlayVisible
+          ? 'translate3d(0, 0, 0) scale(1)'
+          : 'translate3d(0, 0, 0) scale(0.96)',
+        transition: `opacity ${WHEEL_OVERLAY_FADE_MS}ms ease-in-out, transform ${WHEEL_OVERLAY_FADE_MS}ms ease-in-out`,
+        willChange: overlayVisible ? 'auto' : 'opacity, transform',
+        backfaceVisibility: 'hidden',
+        pointerEvents: overlayVisible ? 'auto' : 'none',
       }}
+      onTransitionEnd={handleOverlayTransitionEnd}
     >
       <Box
         sx={{
-          height: headerHeight,
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 1,
-          flexShrink: 0,
+          justifyContent: 'center',
+          flex: 1,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: `${scaledPx(10, scale)}px`, minWidth: 0 }}>
-          <AutorenewIcon
-            sx={{
-              fontSize: scaledPx(28, scale),
-              color: theme.moduleAccent,
-              flexShrink: 0,
-              filter: `drop-shadow(0 0 ${scaledPx(8, scale)}px ${theme.moduleAccentGlow})`,
-            }}
-            aria-hidden
-          />
-          <Typography
-            sx={{
-              color: theme.textPrimary,
-              fontSize: scaledPx(16, scale),
-              fontWeight: 600,
-              letterSpacing: '-0.01em',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Prize Spin #{recordId}
-          </Typography>
-        </Box>
-        {isAnimating ? (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            zIndex: 30,
+            mb: `${scaledPx(-5, scale)}px`,
+          }}
+        >
+          {showPlayerPill ? (
+            <Box
+              sx={{
+                fontSize: scaledPx(14, scale),
+                fontWeight: 700,
+                letterSpacing: '0.02em',
+                color: '#FFFFFF',
+                bgcolor: 'rgba(17,19,24,0.95)',
+                border: '1px solid rgba(255,255,255,0.10)',
+                backdropFilter: 'blur(24px)',
+                px: `${scaledPx(24, scale)}px`,
+                py: `${scaledPx(10, scale)}px`,
+                borderRadius: '999px',
+                mb: `${scaledPx(4, scale)}px`,
+              }}
+            >
+              <Box component="span" sx={{ color: 'rgba(255,255,255,0.45)' }}>
+                Spinning
+              </Box>
+              <Box component="span" sx={{ mx: `${scaledPx(8, scale)}px`, color: 'rgba(255,255,255,0.20)' }}>
+                •
+              </Box>
+              <Box component="span">{playerNick}</Box>
+            </Box>
+          ) : null}
+
           <Box
             sx={{
-              bgcolor: theme.surface,
-              border: `1px solid ${theme.divider}`,
-              borderRadius: `${scaledPx(8, scale)}px`,
-              px: `${scaledPx(8, scale)}px`,
-              py: `${scaledPx(4, scale)}px`,
-              color: theme.moduleAccent,
-              fontSize: scaledPx(10, scale),
-              fontWeight: 700,
-              letterSpacing: '0.06em',
-              flexShrink: 0,
+              width: 0,
+              height: 0,
+              borderLeft: `${scaledPx(10, scale)}px solid transparent`,
+              borderRight: `${scaledPx(10, scale)}px solid transparent`,
+              borderTop: `${scaledPx(20, scale)}px solid #FFFFFF`,
+              mt: `${scaledPx(-1, scale)}px`,
+              zIndex: 40,
+            }}
+          />
+        </Box>
+
+        <PrizeSpinWheelCanvas sectors={geometries} angleRadians={angleRadians} size={wheelSize} />
+      </Box>
+
+      <Box
+        sx={{
+          height: winnerReserve,
+          mt: `${scaledPx(8, scale)}px`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {showWinner && latestWin ? (
+          <Box
+            sx={{
+              textAlign: 'center',
+              bgcolor: 'rgba(17,19,24,0.95)',
+              border: '1px solid rgba(255,255,255,0.10)',
+              backdropFilter: 'blur(24px)',
+              color: '#FFFFFF',
+              px: `${scaledPx(36, scale)}px`,
+              py: `${scaledPx(12, scale)}px`,
+              borderRadius: `${scaledPx(16, scale)}px`,
+              opacity: showWinner ? 1 : 0,
+              transform: showWinner ? 'translate3d(0, 0, 0)' : 'translate3d(0, 8px, 0)',
+              transition: 'opacity 400ms ease, transform 400ms ease',
             }}
           >
-            SPINNING
+            <Typography
+              sx={{
+                fontSize: scaledPx(10, scale),
+                fontWeight: 700,
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                color: 'rgba(255,255,255,0.40)',
+                mb: 0.5,
+              }}
+            >
+              Prize
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: scaledPx(30, scale),
+                fontWeight: 900,
+                letterSpacing: '-0.02em',
+                lineHeight: 1.1,
+              }}
+            >
+              {latestWin.sectorLabel}
+            </Typography>
           </Box>
-        ) : null}
-      </Box>
-
-      <Box
-        sx={{
-          mt: `${gap}px`,
-          position: 'relative',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          flex: hasBannerSpace ? '0 0 auto' : 1,
-          minHeight: wheelDiameter > 0 ? wheelDiameter : 0,
-        }}
-      >
-        <PrizeSpinWheel
-          sectors={sectors}
-          rotation={rotation}
-          isAnimating={isAnimating}
-          pointerBounce={pointerBounce}
-          wheelDiameter={wheelDiameter}
-          theme={theme}
-        />
-      </Box>
-
-      <Box
-        sx={{
-          mt: `${gap}px`,
-          minHeight: hasBannerSpace ? bannerReserve : 0,
-          flexShrink: 0,
-        }}
-      >
-        {latestWin ? (
-          <PrizeSpinWinnerBanner
-            participantNick={latestWin.participantNick}
-            sectorLabel={latestWin.sectorLabel}
-            theme={theme}
-            visible={showBanner}
-          />
         ) : null}
       </Box>
     </Box>

@@ -2,7 +2,7 @@
 
 Account-level size configuration for stream overlays at `/modules/prize-spin/:prizeSpinId/widget`. **One row per account** — shared across every prize spin session. Sector colors come from `prize_spin_sector.color`; this table controls overlay canvas size only.
 
-Live session selection uses `prize_spin.is_active` — see [live-session-control.md](live-session-control.md).
+Public overlay serves sessions with `prize_spin.status = 'active'` — see [../spec-prize-spin-history-archive/session-status.md](../spec-prize-spin-history-archive/session-status.md).
 
 ## Database
 

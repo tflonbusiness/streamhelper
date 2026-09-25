@@ -1,4 +1,5 @@
 import { Box } from '@mui/material'
+import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { PrizeSpinWidgetNotFoundError } from '@/api/prize-spin'
 import { PrizeSpinWidgetCard } from '@/components/prize-spin/widget/PrizeSpinWidgetCard'
@@ -13,6 +14,17 @@ export function PrizeSpinStreamWidgetPage() {
   const isValidId = Number.isFinite(prizeSpinId)
   const { data: view, error, isLoading, isPending } =
     usePublicPrizeSpinWidget(isValidId ? prizeSpinId : undefined)
+
+  useEffect(() => {
+    const prevBody = document.body.style.overflow
+    const prevHtml = document.documentElement.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prevBody
+      document.documentElement.style.overflow = prevHtml
+    }
+  }, [])
 
   if (!isValidId) {
     return <PrizeSpinWidgetMessage message="Session not found." tone="muted" />
@@ -29,13 +41,16 @@ export function PrizeSpinStreamWidgetPage() {
   return (
     <Box
       sx={{
-        minHeight: '100svh',
+        width: view.settings.width,
+        height: view.settings.height,
+        minHeight: view.settings.height,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         bgcolor: 'transparent',
-        p: 2,
+        overflow: 'hidden',
         fontFamily: PRIZE_SPIN_WIDGET_THEME.fontFamily,
+        mx: 'auto',
       }}
     >
       <PrizeSpinWidgetCard
