@@ -58,7 +58,7 @@ export const MODULE_CATALOG: ModuleDefinition[] = [
     name: 'Chat Roll',
     description:
       'Weighted chat giveaway — viewers join with a keyword; pick a random winner with VIP and subscriber boost.',
-    status: 'available',
+    status: 'coming_soon',
     icon: CasinoIcon,
     iconVariant: 'info',
     widgetRoute: CHAT_ROLL_ROUTE,
