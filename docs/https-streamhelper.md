@@ -2,6 +2,8 @@
 
 Let's Encrypt + nginx в Docker. Каталог на VPS: **`/opt/streamhelper`**.
 
+**Пошаговый чеклист от DNS до Kick:** [instrukciya-https.md](instrukciya-https.md).
+
 Связанные документы: [деплой](deploy-vps.md), [обновление env](obnovlenie-env-production.md).
 
 ## Схема
@@ -33,8 +35,6 @@ NGINX_CONFIG=nginx.http-acme.conf
 HTTP_PORT=80
 HTTPS_PORT=443
 ```
-
-Пока **не** переключайте `APP_URL` на `https://`, пока сертификата нет.
 
 ```bash
 docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build nginx

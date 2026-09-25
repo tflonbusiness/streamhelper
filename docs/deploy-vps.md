@@ -144,7 +144,7 @@ cd /opt/streamhelper && dcprod ps
 
 ## 7. HTTPS и домен
 
-Пошагово для **streamhelper.best**: **[https-streamhelper.md](https-streamhelper.md)** (certbot, `NGINX_CONFIG`, `https://` в env и Kick).
+Пошагово для **streamhelper.best**: **[instrukciya-https.md](instrukciya-https.md)** (полный чеклист). Справка и renew: [https-streamhelper.md](https-streamhelper.md).
 
 Кратко: DNS → `NGINX_CONFIG=nginx.http-acme.conf` → certbot → `NGINX_CONFIG=nginx.conf` → `APP_URL` / Kick на `https://`.
 
