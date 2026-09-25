@@ -1173,6 +1173,39 @@ export class AuthService {
     };
   }
 
+  async copyPrizeSpin(
+    accountId: number,
+    callerUserId: number,
+    sourcePrizeSpinId: number,
+    title: string,
+  ) {
+    const isMember = await this.database.hasActiveMembership(
+      accountId,
+      callerUserId,
+    );
+    if (!isMember) {
+      throw new ForbiddenException('Not a member of this account');
+    }
+
+    try {
+      const row = await this.database.copyPrizeSpin(
+        accountId,
+        sourcePrizeSpinId,
+        callerUserId,
+        title,
+      );
+      return this.formatPrizeSpinRecord(row);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'INVALID_TITLE') {
+        throw new BadRequestException('Title must be 1-200 characters');
+      }
+      if (error instanceof Error && error.message === 'NOT_FOUND') {
+        throw new NotFoundException('Prize spin not found');
+      }
+      throw error;
+    }
+  }
+
   async archivePrizeSpin(
     accountId: number,
     callerUserId: number,

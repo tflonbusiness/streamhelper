@@ -438,6 +438,25 @@ export class AccountsController {
     await this.authService.archivePrizeSpin(accountId, user.id, prizeSpinId);
   }
 
+  @Post(':accountId/prize-spins/:prizeSpinId/copy')
+  @HttpCode(201)
+  async copyPrizeSpin(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('prizeSpinId', ParseIntPipe) prizeSpinId: number,
+    @Body() body: CreatePrizeSpinBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.copyPrizeSpin(
+      accountId,
+      user.id,
+      prizeSpinId,
+      body.title ?? '',
+    );
+  }
+
   @Get(':accountId/prize-spins/:prizeSpinId/sectors')
   async listPrizeSpinSectors(
     @Param('accountId', ParseIntPipe) accountId: number,

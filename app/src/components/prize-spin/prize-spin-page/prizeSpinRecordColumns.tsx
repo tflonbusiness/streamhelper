@@ -1,6 +1,7 @@
 import { Chip, IconButton, type IconButtonProps, Stack, Tooltip } from '@mui/material'
 import ArchiveIcon from '@mui/icons-material/Archive'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import { styled } from '@mui/material/styles'
 import { Link, type LinkProps } from 'react-router-dom'
 import { isPrizeSpinArchived, type PrizeSpinRecord } from '@/api/prize-spin'
@@ -91,10 +92,12 @@ function recordStatusChip(record: PrizeSpinRecord) {
 
 type BuildPrizeSpinRecordColumnsOptions = {
   onArchive: (record: PrizeSpinRecord) => void
+  onCopy: (record: PrizeSpinRecord) => void
 }
 
 export function buildPrizeSpinRecordColumns({
   onArchive,
+  onCopy,
 }: BuildPrizeSpinRecordColumnsOptions): AppTableColumn<PrizeSpinRecord>[] {
   return [
     {
@@ -120,8 +123,8 @@ export function buildPrizeSpinRecordColumns({
       id: 'action',
       header: '',
       align: 'right',
-      width: 88,
-      minWidth: 88,
+      width: 120,
+      minWidth: 120,
       sx: actionColumnSx,
       render: (record) => {
         const readOnly = isPrizeSpinArchived(record)
@@ -140,6 +143,16 @@ export function buildPrizeSpinRecordColumns({
                   <ArchiveIcon sx={actionIconSx} aria-hidden />
                 </StyledActionIconButton>
               </span>
+            </Tooltip>
+            <Tooltip title="Copy session">
+              <StyledActionIconButton
+                type="button"
+                aria-label={`Copy session ${record.title}`}
+                size="small"
+                onClick={() => onCopy(record)}
+              >
+                <ContentCopyIcon sx={actionIconSx} aria-hidden />
+              </StyledActionIconButton>
             </Tooltip>
             <Tooltip title="Open">
               <StyledOpenIconButton

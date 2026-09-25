@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-query'
 import {
   archivePrizeSpin,
+  copyPrizeSpin,
   createPrizeSpin,
   fetchPrizeSpinWidget,
   fetchPrizeSpins,
@@ -54,6 +55,23 @@ export function useArchivePrizeSpin(accountId: number | undefined) {
 
   return useMutation({
     mutationFn: (prizeSpinId: number) => archivePrizeSpin(accountId!, prizeSpinId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: prizeSpinKeys.lists() })
+    },
+  })
+}
+
+export function useCopyPrizeSpin(accountId: number | undefined) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      sourcePrizeSpinId,
+      title,
+    }: {
+      sourcePrizeSpinId: number
+      title: string
+    }) => copyPrizeSpin(accountId!, sourcePrizeSpinId, title),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: prizeSpinKeys.lists() })
     },

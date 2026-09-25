@@ -152,6 +152,30 @@ export async function createPrizeSpin(
   return response.json() as Promise<PrizeSpinRecord>
 }
 
+export async function copyPrizeSpin(
+  accountId: number,
+  sourcePrizeSpinId: number,
+  title: string,
+): Promise<PrizeSpinRecord> {
+  const response = await fetch(
+    `/accounts/${accountId}/prize-spins/${sourcePrizeSpinId}/copy`,
+    {
+      method: 'POST',
+      credentials: 'include',
+      headers: jsonHeaders,
+      body: JSON.stringify({ title }),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, 'Could not copy prize spin session'),
+    )
+  }
+
+  return response.json() as Promise<PrizeSpinRecord>
+}
+
 export async function archivePrizeSpin(
   accountId: number,
   prizeSpinId: number,

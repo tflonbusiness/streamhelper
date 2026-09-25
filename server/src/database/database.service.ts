@@ -2531,6 +2531,105 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  async copyPrizeSpin(
+    accountId: number,
+    sourcePrizeSpinId: number,
+    createdByUserId: number,
+    title: string,
+  ): Promise<DbPrizeSpin> {
+    const trimmedTitle = title.trim();
+    if (trimmedTitle.length === 0 || trimmedTitle.length > 200) {
+      throw new Error('INVALID_TITLE');
+    }
+
+    const source = await this.getPrizeSpinById(accountId, sourcePrizeSpinId);
+    if (!source) {
+      throw new Error('NOT_FOUND');
+    }
+
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const result = await client.query<{
+        id: string | number;
+        account_id: string | number;
+        title: string;
+        status: string;
+        created_at: Date;
+        created_by_user_id: string | number;
+        created_by_name: string;
+      }>(
+        `
+          INSERT INTO prize_spin (account_id, created_by_user_id, title)
+          VALUES ($1, $2, $3)
+          RETURNING
+            id,
+            account_id,
+            title,
+            status,
+            created_at,
+            created_by_user_id,
+            (SELECT name FROM users WHERE id = $2) AS created_by_name
+        `,
+        [accountId, createdByUserId, trimmedTitle],
+      );
+
+      const newPrizeSpinId = toInt(result.rows[0].id);
+
+      const sectors = await client.query<{
+        label: string;
+        win_percent: string;
+        color: string | null;
+        sort_order: number;
+      }>(
+        `
+          SELECT
+            label,
+            win_percent::text AS win_percent,
+            color,
+            sort_order
+          FROM prize_spin_sector
+          WHERE prize_spin_id = $1
+            AND is_archived = false
+          ORDER BY sort_order ASC, id ASC
+        `,
+        [sourcePrizeSpinId],
+      );
+
+      for (const sector of sectors.rows) {
+        await client.query(
+          `
+            INSERT INTO prize_spin_sector (
+              prize_spin_id,
+              label,
+              win_percent,
+              color,
+              sort_order
+            )
+            VALUES ($1, $2, $3, $4, $5)
+          `,
+          [
+            newPrizeSpinId,
+            sector.label,
+            sector.win_percent,
+            sector.color,
+            sector.sort_order,
+          ],
+        );
+      }
+
+      await client.query('COMMIT');
+
+      return this.mapPrizeSpinRow(result.rows[0]);
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
   private mapPrizeSpinSectorRow(row: {
     id: string | number;
     prize_spin_id: string | number;

@@ -17,6 +17,7 @@ import {
 } from '@/api/prize-spin'
 import { AppTable } from '@/components/AppTable'
 import { PrizeSpinArchiveDialog } from '@/components/prize-spin/prize-spin-page/PrizeSpinArchiveDialog'
+import { PrizeSpinCopyDialog } from '@/components/prize-spin/prize-spin-page/PrizeSpinCopyDialog'
 import { PrizeSpinCreateDialog } from '@/components/prize-spin/prize-spin-page/PrizeSpinCreateDialog'
 import { PrizeSpinRecordExpandedDetails } from '@/components/prize-spin/prize-spin-page/PrizeSpinRecordExpandedDetails'
 import {
@@ -71,6 +72,8 @@ export const PrizeSpinHistorySection = ({
   )
   const [archiveDialogRecord, setArchiveDialogRecord] =
     useState<PrizeSpinRecord | null>(null)
+  const [copyDialogRecord, setCopyDialogRecord] =
+    useState<PrizeSpinRecord | null>(null)
   const [archivedFilter, setArchivedFilter] =
     useState<PrizeSpinArchivedFilter>('false')
   const [recordsPage, setRecordsPage] = useState(1)
@@ -114,6 +117,8 @@ export const PrizeSpinHistorySection = ({
   const openArchiveDialog = (record: PrizeSpinRecord) =>
     setArchiveDialogRecord(record)
 
+  const openCopyDialog = (record: PrizeSpinRecord) => setCopyDialogRecord(record)
+
   const toggleRecordExpanded = (recordId: number) => {
     setExpandedRecordIds((previous) => {
       const next = new Set(previous)
@@ -128,6 +133,7 @@ export const PrizeSpinHistorySection = ({
 
   const recordColumns = buildPrizeSpinRecordColumns({
     onArchive: openArchiveDialog,
+    onCopy: openCopyDialog,
   })
 
   return (
@@ -205,6 +211,12 @@ export const PrizeSpinHistorySection = ({
         open={!!archiveDialogRecord}
         record={archiveDialogRecord}
         onClose={() => setArchiveDialogRecord(null)}
+      />
+      <PrizeSpinCopyDialog
+        accountId={accountId}
+        open={!!copyDialogRecord}
+        record={copyDialogRecord}
+        onClose={() => setCopyDialogRecord(null)}
       />
       <PrizeSpinCreateDialog
         accountId={accountId}
