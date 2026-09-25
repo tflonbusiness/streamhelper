@@ -1,0 +1,6 @@
+# Production / deploy secrets (see .env.production.example)
+.env
+.env.production
+
+# OS
+.DS_Store
