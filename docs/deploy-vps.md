@@ -4,7 +4,7 @@
 
 Каталог на сервере: **`/opt/streamhelper`**.
 
-См. также: [обновление переменных `.env.production`](obnovlenie-env-production.md).
+См. также: [обновление переменных `.env.production`](obnovlenie-env-production.md), [подключение к БД через TablePlus](podklyuchenie-bazy-gui.md).
 
 ## Что нужно заранее
 
@@ -144,14 +144,9 @@ cd /opt/streamhelper && dcprod ps
 
 ## 7. HTTPS и домен
 
-Пока TLS не настроен, nginx отдаёт только **HTTP на порту 80**.
+Пошагово для **streamhelper.best**: **[https-streamhelper.md](https-streamhelper.md)** (certbot, `NGINX_CONFIG`, `https://` в env и Kick).
 
-В production у API cookie сессии с флагом **secure** (`NODE_ENV=production`). Вход через Kick по `http://IP` может не работать — нужны:
-
-1. DNS **A**-запись на IP VPS  
-2. TLS (например Let's Encrypt); пример — `deploy/nginx/nginx.https.conf.example`  
-3. В `.env.production`: `APP_URL`, `CORS_ORIGIN`, `KICK_*` на `https://your-domain.com` ([как применить env](obnovlenie-env-production.md))  
-4. `docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build`
+Кратко: DNS → `NGINX_CONFIG=nginx.http-acme.conf` → certbot → `NGINX_CONFIG=nginx.conf` → `APP_URL` / Kick на `https://`.
 
 В production **не** включайте `KICK_OAUTH_MOCK` и `KICK_CHAT_MOCK`.
 
@@ -172,26 +167,9 @@ docker compose --env-file .env.production -f docker-compose.prod.yml exec postgr
   pg_dump -U postgres caz_agent > backup-$(date +%F).sql
 ```
 
-## 10. TablePlus (и другие GUI) через SSH
+## 10. Подключение к БД с Mac (TablePlus)
 
-В `docker-compose.prod.yml` Postgres проброшен только на **localhost VPS**: `127.0.0.1:5433` → контейнер `5432`. В интернет порт не открыт.
-
-После изменения compose на VPS:
-
-```bash
-cd /opt/streamhelper
-git pull   # или залейте обновлённый yml
-docker compose --env-file .env.production -f docker-compose.prod.yml up -d
-```
-
-В TablePlus: **PostgreSQL**, включить **Over SSH** (хост VPS, пользователь SSH), в подключении к БД:
-
-| Поле | Значение |
-|------|----------|
-| Host | `127.0.0.1` |
-| Port | `5433` |
-| User / Database | из `.env.production` (`POSTGRES_USER`, `POSTGRES_DB`) |
-| Password | `POSTGRES_PASSWORD` |
+Пошаговая настройка SSH, порт `127.0.0.1:5433`, типичные ошибки: **[podklyuchenie-bazy-gui.md](podklyuchenie-bazy-gui.md)**.
 
 ## Справка: файлы окружения
 

@@ -11,10 +11,12 @@ RUN npx vite build
 
 FROM nginx:alpine
 
-COPY deploy/nginx/nginx.conf /etc/nginx/conf.d/default.conf
 COPY deploy/nginx/proxy-api.conf /etc/nginx/snippets/proxy-api.conf
+COPY deploy/nginx/snippets/app-proxy.conf /etc/nginx/snippets/app-proxy.conf
+# default.conf is overridden in docker-compose.prod.yml via NGINX_CONFIG
+COPY deploy/nginx/nginx.http-acme.conf /etc/nginx/conf.d/default.conf
 COPY --from=app-builder /app/dist /usr/share/nginx/html
 
-EXPOSE 80
+EXPOSE 80 443
 
 CMD ["nginx", "-g", "daemon off;"]

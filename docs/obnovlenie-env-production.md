@@ -1,6 +1,6 @@
 # Обновление переменных `.env.production`
 
-Инструкция для уже развёрнутого стека на VPS. Первый деплой — в [deploy-vps.md](deploy-vps.md).
+Инструкция для уже развёрнутого стека на VPS. Первый деплой — в [deploy-vps.md](deploy-vps.md). Подключение к БД (TablePlus): [podklyuchenie-bazy-gui.md](podklyuchenie-bazy-gui.md).
 
 Каталог на сервере: **`/opt/streamhelper`**.  
 Рабочий файл: **`/opt/streamhelper/.env.production`** (локальная копия у вас на Mac, в git не коммитится).
