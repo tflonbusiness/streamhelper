@@ -36,12 +36,18 @@ const StyledCardContent = styled(CardContent)(({ theme }) => ({
 
 const StyledActionsStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(1),
-  alignItems: 'flex-start',
+  alignItems: 'stretch',
+  width: '100%',
 }))
 
 const ActionButton = styled(Button)(() => ({
   minHeight: 36.5,
 }))
+
+const FullWidthActionButton = styled(ActionButton)({
+  width: '100%',
+  justifyContent: 'flex-start',
+})
 
 export const PrizeSpinStreamWidgetSection = (
   props: PrizeSpinStreamWidgetSectionProps,
@@ -65,19 +71,17 @@ export const PrizeSpinStreamWidgetSection = (
             description="OBS overlay settings and links for this prize spin session"
             icon={MonitorIcon}
             iconVariant="info"
-            action={
-              <Button
-                type="button"
-                variant="outlined"
-                startIcon={<SettingsIcon fontSize="small" aria-hidden />}
-                onClick={() => setWidgetDialogOpen(true)}
-              >
-                Widget settings
-              </Button>
-            }
           />
-          <StyledActionsStack direction={{ xs: 'column', sm: 'row' }}>
-            <ActionButton
+          <StyledActionsStack direction="column">
+            <FullWidthActionButton
+              type="button"
+              variant="outlined"
+              startIcon={<SettingsIcon fontSize="small" aria-hidden />}
+              onClick={() => setWidgetDialogOpen(true)}
+            >
+              Widget settings
+            </FullWidthActionButton>
+            <FullWidthActionButton
               variant="outlined"
               disabled={!overlayHref}
               startIcon={<OpenInNewIcon fontSize="small" aria-hidden />}
@@ -91,8 +95,8 @@ export const PrizeSpinStreamWidgetSection = (
                 : { type: 'button' })}
             >
               Open overlay
-            </ActionButton>
-            <ActionButton
+            </FullWidthActionButton>
+            <FullWidthActionButton
               type="button"
               variant="outlined"
               startIcon={<LinkIcon fontSize="small" aria-hidden />}
@@ -100,7 +104,7 @@ export const PrizeSpinStreamWidgetSection = (
               onClick={() => void handleCopyObsLink()}
             >
               OBS link
-            </ActionButton>
+            </FullWidthActionButton>
           </StyledActionsStack>
         </StyledCardContent>
       </StyledCard>

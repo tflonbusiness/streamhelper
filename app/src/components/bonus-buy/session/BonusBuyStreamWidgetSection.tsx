@@ -34,12 +34,18 @@ const StyledCardContent = styled(CardContent)(({ theme }) => ({
 
 const StyledActionsStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(1),
-  alignItems: 'flex-start',
+  alignItems: 'stretch',
+  width: '100%',
 }))
 
 const ActionButton = styled(Button)(() => ({
   minHeight: 36.5,
 }))
+
+const FullWidthActionButton = styled(ActionButton)({
+  width: '100%',
+  justifyContent: 'flex-start',
+})
 
 export const BonusBuyStreamWidgetSection = (
   props: BonusBuyStreamWidgetSectionProps,
@@ -61,19 +67,17 @@ export const BonusBuyStreamWidgetSection = (
           description="OBS overlay settings and links for this bonus buy session"
           icon={MonitorIcon}
           iconVariant="info"
-          action={
-            <Button
-              type="button"
-              variant="outlined"
-              startIcon={<PaletteIcon fontSize="small" aria-hidden />}
-              onClick={props.onOpenWidgetDialog}
-            >
-              Widget style
-            </Button>
-          }
         />
-        <StyledActionsStack direction={{ xs: 'column', sm: 'row' }}>
-          <ActionButton
+        <StyledActionsStack direction="column">
+          <FullWidthActionButton
+            type="button"
+            variant="outlined"
+            startIcon={<PaletteIcon fontSize="small" aria-hidden />}
+            onClick={props.onOpenWidgetDialog}
+          >
+            Widget style
+          </FullWidthActionButton>
+          <FullWidthActionButton
             variant="outlined"
             disabled={!overlayHref}
             startIcon={<OpenInNewIcon fontSize="small" aria-hidden />}
@@ -87,8 +91,8 @@ export const BonusBuyStreamWidgetSection = (
               : { type: 'button' })}
           >
             Open overlay
-          </ActionButton>
-          <ActionButton
+          </FullWidthActionButton>
+          <FullWidthActionButton
             type="button"
             variant="outlined"
             startIcon={<LinkIcon fontSize="small" aria-hidden />}
@@ -96,7 +100,7 @@ export const BonusBuyStreamWidgetSection = (
             onClick={() => void handleCopyObsLink()}
           >
             OBS link
-          </ActionButton>
+          </FullWidthActionButton>
         </StyledActionsStack>
       </StyledCardContent>
     </StyledCard>

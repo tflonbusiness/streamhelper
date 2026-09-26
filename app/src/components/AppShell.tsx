@@ -509,9 +509,10 @@ export function AppShell() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const wideMainContent = /^\/modules\/chat-roll\/\d+(?:\/|$)/.test(
-    location.pathname,
-  )
+  const wideMainContent =
+    /^\/modules\/(?:bonus-buy|chat-roll|prize-spin)\/\d+(?:\/|$)/.test(
+      location.pathname,
+    )
   const [isNavExpanded, setIsNavExpanded] = useState(loadNavExpanded)
 
   useEffect(() => {

@@ -30,7 +30,7 @@ const MainColumnStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(3),
 }))
 
-const SideColumnStack = styled(Stack)(({ theme }) => ({
+const WorkspaceColumnStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(3),
 }))
 
@@ -83,44 +83,52 @@ export const PrizeSpinSessionPage = () => {
         icon={prizeSpinModule.icon}
         iconVariant={prizeSpinModule.iconVariant}
       />
-      <PrizeSpinSessionHeaderSection
-        accountId={accountId}
-        prizeSpinId={prizeSpinId}
-        record={record}
-        wins={wins}
-        onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
-      />
-      <PrizeSpinStreamWidgetSection
-        accountId={accountId}
-        prizeSpinId={prizeSpinId}
-      />
       <ContentGrid container spacing={3}>
-        <Grid size={{ xs: 12, lg: 7 }}>
+        <Grid size={{ xs: 12, lg: 9 }}>
           <MainColumnStack>
-            <PrizeSpinSessionSpinSection
+            <PrizeSpinSessionHeaderSection
               accountId={accountId}
               prizeSpinId={prizeSpinId}
-              sectors={sectors}
-              readOnly={readOnly}
+              record={record}
+              wins={wins}
+              onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
             />
-            <PrizeSpinSessionSectorsSection
-              accountId={accountId}
-              prizeSpinId={prizeSpinId}
-              sectors={sectors}
-              readOnly={readOnly}
-            />
+            <Grid container spacing={3} sx={{ alignItems: 'stretch' }}>
+              <Grid size={{ xs: 12, lg: 7 }}>
+                <WorkspaceColumnStack>
+                  <PrizeSpinSessionSpinSection
+                    accountId={accountId}
+                    prizeSpinId={prizeSpinId}
+                    sectors={sectors}
+                    readOnly={readOnly}
+                  />
+                  <PrizeSpinSessionSectorsSection
+                    accountId={accountId}
+                    prizeSpinId={prizeSpinId}
+                    sectors={sectors}
+                    readOnly={readOnly}
+                  />
+                </WorkspaceColumnStack>
+              </Grid>
+              <Grid size={{ xs: 12, lg: 5 }}>
+                <WorkspaceColumnStack>
+                  <PrizeSpinSessionStatsCard wins={wins} sectors={sectors} />
+                  <PrizeSpinSessionWinnersSection
+                    accountId={accountId}
+                    prizeSpinId={prizeSpinId}
+                    wins={wins}
+                    readOnly={readOnly}
+                  />
+                </WorkspaceColumnStack>
+              </Grid>
+            </Grid>
           </MainColumnStack>
         </Grid>
-        <Grid size={{ xs: 12, lg: 5 }}>
-          <SideColumnStack>
-            <PrizeSpinSessionStatsCard wins={wins} sectors={sectors} />
-            <PrizeSpinSessionWinnersSection
-              accountId={accountId}
-              prizeSpinId={prizeSpinId}
-              wins={wins}
-              readOnly={readOnly}
-            />
-          </SideColumnStack>
+        <Grid size={{ xs: 12, lg: 3 }}>
+          <PrizeSpinStreamWidgetSection
+            accountId={accountId}
+            prizeSpinId={prizeSpinId}
+          />
         </Grid>
       </ContentGrid>
       <PrizeSpinSessionArchiveDialog

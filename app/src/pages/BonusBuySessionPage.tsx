@@ -1,4 +1,4 @@
-import { Stack } from '@mui/material'
+import { Grid, Stack } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
@@ -21,6 +21,14 @@ import { useBonusBuySession, useBonusBuyWidget } from '@/queries/use-bonus-buy'
 
 const PageStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(4),
+}))
+
+const ContentGrid = styled(Grid)({
+  alignItems: 'stretch',
+})
+
+const MainColumnStack = styled(Stack)(({ theme }) => ({
+  gap: theme.spacing(3),
 }))
 
 export const BonusBuySessionPage = () => {
@@ -94,31 +102,39 @@ export const BonusBuySessionPage = () => {
         icon={bonusBuyModule.icon}
         iconVariant={bonusBuyModule.iconVariant}
       />
-      <BonusBuySessionHeaderSection
-        record={record}
-        onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
-        onOpenEditDialog={() => setEditSessionDialogOpen(true)}
-      />
-      <BonusBuyStreamWidgetSection
-        bonusBuyId={bonusBuyId}
-        onOpenWidgetDialog={() => setWidgetDialogOpen(true)}
-      />
-      <BonusBuySessionStatsSection
-        record={record}
-        stats={stats}
-        averageXPositiveColor={widgetSettings?.positiveColor}
-      />
-      <BonusBuySessionAddSlotSection
-        accountId={accountId}
-        bonusBuyId={bonusBuyId}
-        record={record}
-      />
-      <BonusBuySessionSlotsSection
-        accountId={accountId}
-        bonusBuyId={bonusBuyId}
-        currencyCode={record.currencyCode}
-        slots={slots}
-      />
+      <ContentGrid container spacing={3}>
+        <Grid size={{ xs: 12, lg: 9 }}>
+          <MainColumnStack>
+            <BonusBuySessionHeaderSection
+              record={record}
+              onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
+              onOpenEditDialog={() => setEditSessionDialogOpen(true)}
+            />
+            <BonusBuySessionStatsSection
+              record={record}
+              stats={stats}
+              averageXPositiveColor={widgetSettings?.positiveColor}
+            />
+            <BonusBuySessionAddSlotSection
+              accountId={accountId}
+              bonusBuyId={bonusBuyId}
+              record={record}
+            />
+            <BonusBuySessionSlotsSection
+              accountId={accountId}
+              bonusBuyId={bonusBuyId}
+              currencyCode={record.currencyCode}
+              slots={slots}
+            />
+          </MainColumnStack>
+        </Grid>
+        <Grid size={{ xs: 12, lg: 3 }}>
+          <BonusBuyStreamWidgetSection
+            bonusBuyId={bonusBuyId}
+            onOpenWidgetDialog={() => setWidgetDialogOpen(true)}
+          />
+        </Grid>
+      </ContentGrid>
       <BonusBuyEditSessionDialog
         accountId={accountId}
         bonusBuyId={bonusBuyId}
