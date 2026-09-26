@@ -8,7 +8,7 @@ import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import CreditCardIcon from '@mui/icons-material/CreditCard'
 import DashboardIcon from '@mui/icons-material/Dashboard'
-import ExtensionIcon from '@mui/icons-material/Extension'
+import SportsEsportsIcon from '@mui/icons-material/SportsEsports'
 import GroupIcon from '@mui/icons-material/Group'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { IconTile } from '@/components/IconTile'
@@ -22,7 +22,7 @@ const ICON_TILE_HEIGHT = 40
 const breadcrumbIcons: Record<string, SvgIconComponent> = {
   Home: DashboardIcon,
   Team: GroupIcon,
-  Modules: ExtensionIcon,
+  Widgets: SportsEsportsIcon,
   Subscription: CreditCardIcon,
   'Bonus Buy': CardGiftcardIcon,
 }

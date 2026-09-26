@@ -9,7 +9,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import CreditCardIcon from '@mui/icons-material/CreditCard'
 import DashboardIcon from '@mui/icons-material/Dashboard'
-import ExtensionIcon from '@mui/icons-material/Extension'
+import SportsEsportsIcon from '@mui/icons-material/SportsEsports'
 import GroupIcon from '@mui/icons-material/Group'
 import LogoutIcon from '@mui/icons-material/Logout'
 import { alpha, styled } from '@mui/material/styles'
@@ -58,8 +58,8 @@ const navItems: NavItem[] = [
   },
   {
     to: MODULES_ROUTE,
-    label: 'Modules',
-    icon: ExtensionIcon,
+    label: 'Widgets',
+    icon: SportsEsportsIcon,
     end: false,
     requiresAccount: true,
   },
@@ -452,7 +452,7 @@ function SidebarModulesNav({
         collapsed={false}
       />
       {submodules.length > 0 ? (
-        <SidebarSubmoduleList component="ul" aria-label="Module shortcuts">
+        <SidebarSubmoduleList component="ul" aria-label="Widget shortcuts">
           {submodules.map((module) => (
             <SidebarSubmoduleLink
               key={module.id}

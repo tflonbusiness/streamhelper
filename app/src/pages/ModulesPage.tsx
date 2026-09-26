@@ -78,7 +78,7 @@ export function ModulesPage() {
   return (
     <PageStack>
       <PageHeader
-        title="Modules"
+        title="Widgets"
         description="Tools for your team's streamers"
         icon={SportsEsportsIcon}
         iconVariant="primary"

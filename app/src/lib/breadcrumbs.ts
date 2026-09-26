@@ -22,15 +22,15 @@ export function buildBreadcrumbs(
     case '/team':
       return [home, { label: 'Team' }]
     case MODULES_ROUTE:
-      return [home, { label: 'Modules' }]
+      return [home, { label: 'Widgets' }]
     case '/subscription':
       return [home, { label: 'Subscription' }]
     case BONUS_BUY_ROUTE:
-      return [home, { label: 'Modules', to: MODULES_ROUTE }, { label: 'Bonus Buy' }]
+      return [home, { label: 'Widgets', to: MODULES_ROUTE }, { label: 'Bonus Buy' }]
     case PRIZE_SPIN_ROUTE:
-      return [home, { label: 'Modules', to: MODULES_ROUTE }, { label: 'Prize Spin' }]
+      return [home, { label: 'Widgets', to: MODULES_ROUTE }, { label: 'Prize Spin' }]
     case CHAT_ROLL_ROUTE:
-      return [home, { label: 'Modules', to: MODULES_ROUTE }, { label: 'Chat Roll' }]
+      return [home, { label: 'Widgets', to: MODULES_ROUTE }, { label: 'Chat Roll' }]
     default:
       break
   }
@@ -38,7 +38,7 @@ export function buildBreadcrumbs(
   if (pathname.startsWith(`${BONUS_BUY_ROUTE}/`)) {
     return [
       home,
-      { label: 'Modules', to: MODULES_ROUTE },
+      { label: 'Widgets', to: MODULES_ROUTE },
       { label: 'Bonus Buy', to: BONUS_BUY_ROUTE },
       { label: dynamicLabel ?? 'Session' },
     ]
@@ -47,7 +47,7 @@ export function buildBreadcrumbs(
   if (pathname.startsWith(`${PRIZE_SPIN_ROUTE}/`)) {
     return [
       home,
-      { label: 'Modules', to: MODULES_ROUTE },
+      { label: 'Widgets', to: MODULES_ROUTE },
       { label: 'Prize Spin', to: PRIZE_SPIN_ROUTE },
       { label: dynamicLabel ?? 'Session' },
     ]
@@ -56,7 +56,7 @@ export function buildBreadcrumbs(
   if (pathname.startsWith(`${CHAT_ROLL_ROUTE}/`)) {
     return [
       home,
-      { label: 'Modules', to: MODULES_ROUTE },
+      { label: 'Widgets', to: MODULES_ROUTE },
       { label: 'Chat Roll', to: CHAT_ROLL_ROUTE },
       { label: dynamicLabel ?? 'Session' },
     ]
