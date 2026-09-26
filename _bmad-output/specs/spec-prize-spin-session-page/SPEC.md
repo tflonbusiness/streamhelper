@@ -27,7 +27,7 @@ sources: []
 
 - **CAP-2**
   - **intent:** An operator manages wheel sectors for the session — add, edit, delete, set win percentage, and choose segment color.
-  - **success:** **Wheel sectors** panel lists active sectors with label, win %, and color swatch; **+ Add sector** form creates a row with label, win %, and color; each row has **Edit** (dialog with label, win %, and color picker) and **Delete** (archives sector); total active win % indicator stays ≤ 100 after any change; list updates immediately without full page reload; empty state prompts to add at least two sectors.
+  - **success:** **Wheel sectors** panel lists active sectors with label, win %, and color swatch; header explains weights must total **100%**; running indicator **Total: {sum}% / 100%** updates after every add, edit, or delete; **Split 100%** redistributes active sectors evenly when at least one exists; **+ Add sector** creates a row with label, win %, and color; each row has **Edit** and **Delete** (archives); per-change validation keeps the active sum from exceeding 100%; spin stays blocked until the active sum equals 100%; list updates without full page reload; empty state prompts to add at least two sectors.
 
 - **CAP-3**
   - **intent:** An operator enters a viewer's chat nick on the session page before running a spin.
@@ -35,7 +35,7 @@ sources: []
 
 - **CAP-4**
   - **intent:** An operator executes a weighted spin for the entered participant nick and records the winning sector as a new winner.
-  - **success:** **Spin** calls `POST .../spin` with `participant_nick`; server selects a sector by `win_percent` weights among active sectors; response appears at top of **Winners** list with nick, sector label, and time; spin is disabled when nick is empty, fewer than two sectors exist, or a spin request is in flight.
+  - **success:** **Spin** calls `POST .../spin` with `participant_nick`; server selects a sector by `win_percent` weights among active sectors; response appears at top of **Winners** list with nick, sector label, and time; spin is disabled when nick is empty, fewer than two sectors exist, active sector win % sum is not exactly 100%, or a spin request is in flight.
 
 - **CAP-5**
   - **intent:** An operator opens a prize spin session and sees the full session workspace layout for that record.
@@ -50,7 +50,7 @@ sources: []
 - **English UI** copy on all labels, buttons, and empty states per adopted `spec-app-english-only`.
 - **Account-scoped auth** on every nested route; verify `prize_spin.account_id = :accountId`.
 - **Soft delete only** for winners and sectors — `is_archived = true`; no hard delete.
-- **Sector weights** — sum of `win_percent` for active sectors in a session must not exceed 100; at least two active sectors before spin.
+- **Sector weights** — sum of `win_percent` for active sectors must not exceed 100 on create or update; **Spin** requires the active sum to equal **100%** (compare at two decimal places); at least two active sectors before spin; **Wheel sectors** panel shows **Total: {sum}% / 100%** and optional **Split 100%** even redistribution.
 - **Sector color** — `#RRGGBB` hex on create and edit; reuse `HexColorField` pattern from Bonus Buy widget style dialog.
 - **Streamer-initiated spin** — operator clicks **Spin** in the dashboard; viewers do not trigger spins from chat in this slice.
 - **MUI patterns** — reuse `PageHeader`, `Card`, `TextField`, `AppTable`/`Stack`, `StatusAlert`, `inputFieldSx`, `cardSx` consistent with Bonus Buy session page.

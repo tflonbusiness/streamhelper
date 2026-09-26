@@ -19,9 +19,13 @@ Brownfield tables already exist in `DatabaseService.initSchema()`.
 | `is_archived` | `BOOLEAN NOT NULL DEFAULT false` | Soft-delete — excluded from wheel and lists |
 | `created_at` | `TIMESTAMPTZ NOT NULL DEFAULT now()` | Server-set |
 
-**Active sector sum:** sum of `win_percent` for non-archived sectors in a session must not exceed `100` after any create or update. Reject with `400` when the change would push the sum over `100`.
+**Active sector sum (edit):** sum of `win_percent` for non-archived sectors must not exceed `100` after any create or update. Reject with `400` when the change would push the sum over `100`.
+
+**Active sector sum (spin):** weighted spin requires the active sum to equal **100%** exactly (compare totals rounded to two decimal places). Reject with `400` when sum ≠ 100 even if ≤ 100.
 
 **Minimum wheel:** at least **two** non-archived sectors required before `POST .../spin` is allowed.
+
+**Even split:** `POST .../sectors/distribute-equally` sets each active sector’s `win_percent` so the active sum is exactly `100` — powers UI **Split 100%**.
 
 **Archive sector:** `DELETE` sets `is_archived = true`. Past `prize_spin_win` rows referencing the sector remain unchanged.
 
@@ -51,6 +55,7 @@ Nested under account-scoped prize spin routes. Auth: session cookie + account me
 | `POST` | `/accounts/:accountId/prize-spins/:prizeSpinId/sectors` | `{ label, win_percent, color? }` | `PrizeSpinSector` |
 | `PATCH` | `/accounts/:accountId/prize-spins/:prizeSpinId/sectors/:sectorId` | partial — see below | `PrizeSpinSector` |
 | `DELETE` | `/accounts/:accountId/prize-spins/:prizeSpinId/sectors/:sectorId` | — | `204 No Content` |
+| `POST` | `/accounts/:accountId/prize-spins/:prizeSpinId/sectors/distribute-equally` | — | `{ sectors: PrizeSpinSector[] }` |
 | `GET` | `/accounts/:accountId/prize-spins/:prizeSpinId/wins` | — | `{ wins: PrizeSpinWin[] }` |
 | `DELETE` | `/accounts/:accountId/prize-spins/:prizeSpinId/wins/:winId` | — | `204 No Content` |
 | `POST` | `/accounts/:accountId/prize-spins/:prizeSpinId/spin` | `{ participant_nick }` | `PrizeSpinWin` |
@@ -121,7 +126,7 @@ At least one field required:
 
 **Selection:** weighted random among non-archived sectors using `win_percent` as weights. Use transparent server-side RNG; persist `sector_id`, `participant_nick`, `spun_by_user_id` from session user.
 
-Reject with `400` when fewer than two active sectors or nick empty.
+Reject with `400` when fewer than two active sectors, active `win_percent` sum ≠ 100, or nick empty.
 
 **Response** includes denormalized `sectorLabel` and `spunByName` for list display without extra round-trips.
 
@@ -133,7 +138,7 @@ Reject with `400` when fewer than two active sectors or nick empty.
 
 Extend `app/src/api/prize-spin.ts` with:
 
-- `fetchPrizeSpinSectors`, `createPrizeSpinSector`, `updatePrizeSpinSector`, `deletePrizeSpinSector`
+- `fetchPrizeSpinSectors`, `createPrizeSpinSector`, `updatePrizeSpinSector`, `deletePrizeSpinSector`, `distributePrizeSpinSectorsEqually`
 - `fetchPrizeSpinWins`, `deletePrizeSpinWin`
 - `spinPrizeSpin`
 

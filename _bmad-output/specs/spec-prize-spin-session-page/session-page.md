@@ -44,7 +44,13 @@ On success: append winner to **Winners** list, clear nick field, show success to
 
 Panel title: **Wheel sectors ({count})** — count = non-archived sectors.
 
-### Add form (match Bonus Buy quick-add pattern)
+Section description (English): **Labels, colors, and win weights — total must equal 100%**
+
+**Percent allocation:** Each active sector carries a `win_percent` weight. The operator fills weights until the **sum of all active sectors equals 100%** — not a partial wheel. Show a running total **Total: {sum}% / 100%** (update after add, edit, delete). When the sum is below 100%, the gap is unallocated weight; when above 100%, add/edit is rejected (client and server). **Spin** stays disabled until **Total** reads **100% / 100%** (two-decimal equality).
+
+Header action **Split 100%** (outlined, beside **Add sector**): when at least one sector exists, redistribute active sectors evenly so their weights sum to exactly 100%; disabled while request pending or in read-only mode.
+
+### Add sector (dialog — match Bonus Buy add pattern)
 
 | Field | Required | Control | Placeholder (English) |
 |-------|----------|---------|----------------------|
@@ -52,11 +58,11 @@ Panel title: **Wheel sectors ({count})** — count = non-archived sectors.
 | Win % | yes | `TextField` `type="number"`; min 0.01; max 100; step 0.01 | Win chance (%) |
 | Color | no | `HexColorField` (reuse from `app/src/components/bonus-buy/HexColorField.tsx`) | — |
 
-Submit: primary button **+ Add sector**
+Submit: primary button in dialog header flow **Add sector** (opens dialog from section header).
 
-Validation: inline on submit; disable while saving. Clear label and win % on success; reset color to next palette default.
+Validation: inline on submit; disable while saving. Reject when `existingTotal + new win_percent` would exceed 100%. Clear fields on success; reset color to next palette default.
 
-Show running total of win % for active sectors (e.g. **Total: 75% / 100%**) so the operator sees remaining headroom before the server rejects `> 100%`.
+Display **Total: {sum}% / 100%** in the sectors panel (not only inside the dialog) so remaining headroom is visible while configuring the wheel.
 
 ### Sector list
 

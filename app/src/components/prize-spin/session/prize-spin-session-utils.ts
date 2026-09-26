@@ -24,6 +24,10 @@ export function isCompleteWinPercentTotal(total: number): boolean {
   return Number(total.toFixed(2)) === 100
 }
 
+export function formatActiveWinPercentTotalLabel(total: number): string {
+  return `Total: ${total.toFixed(2)}% / 100%`
+}
+
 export function buildWinnerSectorStats(
   wins: PrizeSpinWin[],
   sectors: PrizeSpinSector[],

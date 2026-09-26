@@ -1,4 +1,4 @@
-import { Button, Stack } from '@mui/material'
+import { Button, Stack, Typography } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import BalanceIcon from '@mui/icons-material/Balance'
 import PieChartIcon from '@mui/icons-material/PieChart'
@@ -10,10 +10,15 @@ import { SectionHeader } from '@/components/SectionHeader'
 import { PrizeSpinAddSectorDialog } from '@/components/prize-spin/session/PrizeSpinAddSectorDialog'
 import { PrizeSpinEditSectorDialog } from '@/components/prize-spin/session/PrizeSpinEditSectorDialog'
 import { buildPrizeSpinSectorColumns } from '@/components/prize-spin/session/prizeSpinSectorColumns'
-import { sumWinPercent } from '@/components/prize-spin/session/prize-spin-session-utils'
+import {
+  formatActiveWinPercentTotalLabel,
+  isCompleteWinPercentTotal,
+  sumWinPercent,
+} from '@/components/prize-spin/session/prize-spin-session-utils'
 import {
   StyledSessionCard,
   StyledSessionCardContent,
+  StyledSectionDivider,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { StatusAlert } from '@/components/StatusAlert'
 import { useNotification } from '@/context/NotificationContext'
@@ -32,6 +37,23 @@ type PrizeSpinSessionSectorsSectionProps = {
 const SectionActions = styled(Stack)({
   flexShrink: 0,
 })
+
+type WinPercentTotalTone = 'complete' | 'under' | 'over'
+
+const WinPercentTotal = styled(Typography, {
+  shouldForwardProp: (prop) => prop !== '$tone',
+})<{ $tone: WinPercentTotalTone }>(({ theme, $tone }) => ({
+  marginBottom: theme.spacing(1.5),
+  fontWeight: 700,
+  fontSize: '0.9375rem',
+  letterSpacing: '-0.01em',
+  color:
+    $tone === 'complete'
+      ? theme.palette.success.main
+      : $tone === 'under'
+        ? theme.palette.error.main
+        : theme.palette.warning.main,
+}))
 
 export const PrizeSpinSessionSectorsSection = (
   props: PrizeSpinSessionSectorsSectionProps,
@@ -53,6 +75,13 @@ export const PrizeSpinSessionSectorsSection = (
     () => sumWinPercent(props.sectors),
     [props.sectors],
   )
+  const winPercentTotalTone: WinPercentTotalTone = isCompleteWinPercentTotal(
+    totalWinPercent,
+  )
+    ? 'complete'
+    : Number(totalWinPercent.toFixed(2)) < 100
+      ? 'under'
+      : 'over'
 
   const handleDeleteSector = (sectorId: number) => {
     deleteSectorMutation.mutate(sectorId, {
@@ -97,6 +126,7 @@ export const PrizeSpinSessionSectorsSection = (
             description="Labels, colors, and win weights — total must equal 100%"
             icon={PieChartIcon}
             iconVariant="purple"
+            showDivider={false}
             action={
               <SectionActions direction="row" spacing={1}>
                 <Button
@@ -128,6 +158,12 @@ export const PrizeSpinSessionSectorsSection = (
               </SectionActions>
             }
           />
+          {props.sectors.length > 0 ? (
+            <WinPercentTotal variant="body1" $tone={winPercentTotalTone}>
+              {formatActiveWinPercentTotalLabel(totalWinPercent)}
+            </WinPercentTotal>
+          ) : null}
+          <StyledSectionDivider />
           {props.sectors.length > 0 ? (
             <AppTable
               columns={sectorColumns}
