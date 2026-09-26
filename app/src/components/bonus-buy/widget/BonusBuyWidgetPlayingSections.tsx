@@ -7,7 +7,7 @@ import {
   StyledLiveBadge,
   StyledLiveCell,
   StyledLiveContentRow,
-  StyledLiveDot,
+  StyledLivePulseIcon,
   StyledLiveInfo,
   StyledLiveLabel,
   StyledLiveName,
@@ -49,7 +49,7 @@ export function BonusBuyWidgetPlayingSections({
         </StyledLivePurchase>
       </StyledLiveContentRow>
       <StyledLiveBadge liveColor={theme.liveColor}>
-        <StyledLiveDot liveColor={theme.liveColor} />
+        <StyledLivePulseIcon aria-hidden />
         <StyledLiveLabel>LIVE</StyledLiveLabel>
       </StyledLiveBadge>
     </StyledLiveCell>

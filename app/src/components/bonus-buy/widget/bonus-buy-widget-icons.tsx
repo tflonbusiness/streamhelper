@@ -1,4 +1,5 @@
 import SvgIcon, { type SvgIconProps } from '@mui/material/SvgIcon'
+import { useId } from 'react'
 
 const outlineOnlyProps = (props: SvgIconProps): SvgIconProps => ({
   ...props,
@@ -54,43 +55,26 @@ export function BonusBuyWidgetGiftIcon(props: SvgIconProps) {
 export function BonusBuyWidgetBasketIcon(props: SvgIconProps) {
   return (
     <SvgIcon {...outlineOnlyProps(props)} viewBox="0 0 36 36">
-      <path
-        d="M6 6H8.43845C9.2895 6 9.71503 6 10.0532 6.1865C10.1927 6.26341 10.319 6.36204 10.4274 6.47868C10.6904 6.76153 10.7936 7.17435 11 8L11.2724 9.08957C11.424 9.69602 11.4998 9.99925 11.6168 10.2536C12.023 11.1367 12.8319 11.7683 13.7872 11.9482C14.0623 12 14.3749 12 15 12"
-        fill="none"
+      <circle
+        cx="18"
+        cy="18"
+        r="15"
         stroke="currentColor"
         strokeWidth={3}
         strokeLinecap="round"
       />
       <path
-        d="M27 25.5H11.3264C11.1071 25.5 10.9974 25.5 10.9142 25.4907C10.0329 25.392 9.42907 24.5543 9.61417 23.6869C9.63164 23.6051 9.66631 23.5011 9.73566 23.293C9.81265 23.062 9.85115 22.9466 9.89368 22.8446C10.3291 21.8012 11.3142 21.0912 12.4417 21.0081C12.5518 21 12.6736 21 12.9171 21H21"
-        fill="none"
+        d="M18.2001 9.95001V26.45"
         stroke="currentColor"
-        strokeWidth={3}
+        strokeWidth={2.8}
+        strokeLinecap="round"
+      />
+      <path
+        d="M21.95 14.45C21.95 12.8 20.3 11.45 18.2 11.45C16.1 11.45 14.45 12.8 14.45 14.45C14.45 16.4 16.1 17.45 18.2 17.825C20.3 18.2 21.95 19.25 21.95 21.2C21.95 23 20.3 24.95 18.2 24.95C16.1 24.95 14.45 23.45 14.45 21.95"
+        stroke="currentColor"
+        strokeWidth={2.8}
         strokeLinecap="round"
         strokeLinejoin="round"
-      />
-      <path
-        d="M23.6459 21H14.5414C13.0749 21 11.8233 19.9398 11.5822 18.4932L10.9366 14.6199C10.7081 13.2485 11.7657 12 13.156 12H27.5729C28.688 12 29.4133 13.1735 28.9146 14.1708L26.3292 19.3416C25.821 20.358 24.7822 21 23.6459 21Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={3}
-        strokeLinecap="round"
-      />
-      <circle
-        cx={25.5}
-        cy={30}
-        r={1.5}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={3}
-      />
-      <circle
-        cx={13.5}
-        cy={30}
-        r={1.5}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={3}
       />
     </SvgIcon>
   )
@@ -115,6 +99,84 @@ export function BonusBuyWidgetCrownIcon(props: SvgIconProps) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </SvgIcon>
+  )
+}
+
+const LIVE_PULSE_SPLINE = '.52,.6,.25,.99'
+
+export function BonusBuyWidgetLivePulseIcon(props: SvgIconProps) {
+  const base = useId().replace(/:/g, '')
+  const pulse0 = `${base}p0`
+  const pulse1 = `${base}p1`
+  const pulse2 = `${base}p2`
+
+  return (
+    <SvgIcon {...props} viewBox="0 0 24 24" aria-hidden>
+      <title>pulse-multiple</title>
+      <circle cx="12" cy="12" r="0" fill="currentColor">
+        <animate
+          id={pulse0}
+          fill="freeze"
+          attributeName="r"
+          begin={`0;${pulse2}.end`}
+          calcMode="spline"
+          dur="1.2s"
+          keySplines={LIVE_PULSE_SPLINE}
+          values="0;11"
+        />
+        <animate
+          fill="freeze"
+          attributeName="opacity"
+          begin={`0;${pulse2}.end`}
+          calcMode="spline"
+          dur="1.2s"
+          keySplines={LIVE_PULSE_SPLINE}
+          values="1;0"
+        />
+      </circle>
+      <circle cx="12" cy="12" r="0" fill="currentColor">
+        <animate
+          id={pulse1}
+          fill="freeze"
+          attributeName="r"
+          begin={`${pulse0}.begin+0.2s`}
+          calcMode="spline"
+          dur="1.2s"
+          keySplines={LIVE_PULSE_SPLINE}
+          values="0;11"
+        />
+        <animate
+          fill="freeze"
+          attributeName="opacity"
+          begin={`${pulse0}.begin+0.2s`}
+          calcMode="spline"
+          dur="1.2s"
+          keySplines={LIVE_PULSE_SPLINE}
+          values="1;0"
+        />
+      </circle>
+      <circle cx="12" cy="12" r="0" fill="currentColor">
+        <animate
+          id={pulse2}
+          fill="freeze"
+          attributeName="r"
+          begin={`${pulse0}.begin+0.4s`}
+          calcMode="spline"
+          dur="1.2s"
+          keySplines={LIVE_PULSE_SPLINE}
+          values="0;11"
+        />
+        <animate
+          fill="freeze"
+          attributeName="opacity"
+          begin={`${pulse0}.begin+0.4s`}
+          calcMode="spline"
+          dur="1.2s"
+          keySplines={LIVE_PULSE_SPLINE}
+          values="1;0"
+        />
+      </circle>
     </SvgIcon>
   )
 }

@@ -2,7 +2,9 @@ import { Box, Typography } from '@mui/material'
 import {
   BonusBuyWidgetBasketIcon,
   BonusBuyWidgetGiftIcon,
+  BonusBuyWidgetLivePulseIcon,
 } from '@/components/bonus-buy/widget/bonus-buy-widget-icons'
+import { colors } from '@/theme/colors'
 import type { TypographyProps } from '@mui/material/Typography'
 import { alpha, styled } from '@mui/material/styles'
 import type { BonusBuyWidgetTheme } from '@/lib/bonus-buy-widget-presentation'
@@ -336,8 +338,9 @@ export const StyledLivePurchase = styled(StyledMutedText)({
 export const StyledLiveBadge = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'liveColor',
 })<{ liveColor: string }>(({ liveColor }) => ({
-  display: 'flex',
+  display: 'inline-flex',
   alignItems: 'center',
+  justifyContent: 'center',
   gap: '4px',
   backgroundColor: alpha(liveColor, 0.08),
   border: `1px solid ${alpha(liveColor, 0.4)}`,
@@ -350,20 +353,25 @@ export const StyledLiveBadge = styled(Box, {
   marginLeft: 18,
 }))
 
-export const StyledLiveDot = styled(Box, {
-  shouldForwardProp: (prop) => prop !== 'liveColor',
-})<{ liveColor: string }>(({ liveColor }) => ({
-  width: 10,
-  height: 10,
-  borderRadius: '50%',
-  backgroundColor: liveColor,
-}))
+export const StyledLivePulseIcon = styled(BonusBuyWidgetLivePulseIcon)({
+  fontSize: 16,
+  width: 16,
+  height: 16,
+  flexShrink: 0,
+  color: colors.error[500],
+  display: 'block',
+  lineHeight: 0,
+})
 
 export const StyledLiveLabel = styled(Typography)({
   fontWeight: 800,
   fontSize: '14px',
+  lineHeight: '16px',
   letterSpacing: '1.2px',
   color: '#FFFFFF',
+  display: 'flex',
+  alignItems: 'center',
+  margin: 0,
 })
 
 export const StyledSlotRow = styled(StyledWidgetCell)({
