@@ -1,6 +1,6 @@
 # English-only UI conventions
 
-Rules for Stream Widgets after the English migration. Apply to all new UI work.
+Rules for Stream Helper after the English migration. Apply to all new UI work.
 
 ## Language
 

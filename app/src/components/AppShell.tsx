@@ -397,7 +397,7 @@ export function AppShell() {
               )}
             </NavToggleButton>
           </Tooltip>
-          <SidebarLogo src="/logo.svg" alt="Stream Widgets" expanded />
+          <SidebarLogo src="/logo.svg" alt="Stream Helper" expanded />
           <MobileLogoutButton
             type="button"
             variant="text"
@@ -453,7 +453,7 @@ export function AppShell() {
 
       <Sidebar expanded={isNavExpanded}>
         <SidebarHeaderRow expanded={isNavExpanded}>
-          <SidebarLogo src="/logo.svg" alt="Stream Widgets" expanded={isNavExpanded} />
+          <SidebarLogo src="/logo.svg" alt="Stream Helper" expanded={isNavExpanded} />
           <Tooltip title={isNavExpanded ? 'Collapse navigation' : 'Expand navigation'}>
             <NavToggleButton
               size="small"
