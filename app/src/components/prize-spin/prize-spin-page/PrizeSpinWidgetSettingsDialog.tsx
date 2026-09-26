@@ -18,6 +18,7 @@ import {
   type PrizeSpinWidgetSettingsFormValues,
   prizeSpinWidgetSettingsFormSchema,
 } from '@/lib/prize-spin-validation'
+import { PRIZE_SPIN_WIDGET_DEFAULTS } from '@/lib/prize-spin-widget-defaults'
 import {
   usePatchPrizeSpinWidget,
   usePrizeSpinWidget,
@@ -30,8 +31,8 @@ type PrizeSpinWidgetSettingsDialogProps = {
 }
 
 const defaultValues: PrizeSpinWidgetSettingsFormValues = {
-  width: 500,
-  height: 500,
+  width: PRIZE_SPIN_WIDGET_DEFAULTS.width,
+  height: PRIZE_SPIN_WIDGET_DEFAULTS.height,
 }
 
 const StyledLoadingText = styled(Typography)(({ theme }) => ({

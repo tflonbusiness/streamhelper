@@ -178,8 +178,8 @@ CREATE INDEX idx_prize_spin_win_history
 CREATE TABLE prize_spin_widget (
   id                  BIGSERIAL PRIMARY KEY,
   account_id          BIGINT NOT NULL UNIQUE REFERENCES accounts(id) ON DELETE CASCADE,
-  width               INTEGER NOT NULL DEFAULT 500,
-  height              INTEGER NOT NULL DEFAULT 500,
+  width               INTEGER NOT NULL DEFAULT 800,
+  height              INTEGER NOT NULL DEFAULT 800,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );

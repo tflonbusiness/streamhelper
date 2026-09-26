@@ -1,6 +1,6 @@
 export const PRIZE_SPIN_WIDGET_DEFAULTS = {
-  width: 500,
-  height: 500,
+  width: 800,
+  height: 800,
 } as const;
 
 export const PRIZE_SPIN_WIDGET_INSERT_SQL = `

@@ -12,8 +12,8 @@ Table `prize_spin_widget` exists in `public` schema (brownfield). Columns today:
 |--------|------|---------|-------|
 | `id` | `BIGSERIAL PRIMARY KEY` | | |
 | `account_id` | `BIGINT NOT NULL UNIQUE REFERENCES accounts(id) ON DELETE CASCADE` | | One row per account |
-| `width` | `INTEGER NOT NULL` | `500` | Wheel/card width px |
-| `height` | `INTEGER NOT NULL` | `500` | Wheel/card height px |
+| `width` | `INTEGER NOT NULL` | `800` | Wheel/card width px |
+| `height` | `INTEGER NOT NULL` | `800` | Wheel/card height px |
 | `created_at` | `TIMESTAMPTZ NOT NULL` | `now()` | Server-set on insert |
 | `updated_at` | `TIMESTAMPTZ NOT NULL` | `now()` | Server-set on PATCH |
 

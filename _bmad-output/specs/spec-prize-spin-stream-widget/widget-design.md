@@ -30,9 +30,9 @@ Stream-overlay look for `/modules/prize-spin/:prizeSpinId/widget`. Dark glass **
 
 Constants live in `app/src/lib/prize-spin-widget-theme.ts` (overlay-only; not persisted).
 
-## Card layout (default 500×500)
+## Card layout (default 800×800)
 
-Proportions scale linearly when `settings.width` / `height` change. Base math at 500×500:
+Proportions scale linearly when `settings.width` / `height` change. Base math at 800×800 account default:
 
 ```
 ┌──────────────────────────────────────┐  cardRadius 20, padding 16
@@ -41,7 +41,7 @@ Proportions scale linearly when `settings.width` / `height` change. Base math at
 │            ▼ pointer                 │  pointer overhangs 12px above wheel
 │         ╭─────────╮                  │
 │        │  wheel    │                 │  wheel diameter = min(w,h) - 16 - 44 - 80 - 32
-│        │  340px    │                 │  = 340px at 500×500 default
+│        │  544px    │                 │  ≈ 340px × (800/500) at 800×800 default
 │         ╰─────────╯                  │
 │                                      │
 │  ┌────────────────────────────────┐  │  winner banner 72px (when visible)
@@ -59,7 +59,7 @@ Proportions scale linearly when `settings.width` / `height` change. Base math at
 | Banner reserve | `80px` when `latestWin` or animating; `0` when no wins yet | Banner slides into this space |
 | Gap wheel→banner | `8px` | |
 
-When no `latestWin` and not spinning, wheel expands into banner reserve (wheel ~420px at 500×500).
+When no `latestWin` and not spinning, wheel expands into banner reserve (wheel ~672px at 800×800 default).
 
 ## Header bar
 

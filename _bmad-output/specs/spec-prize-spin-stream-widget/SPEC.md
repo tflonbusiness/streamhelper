@@ -64,7 +64,7 @@ sources: []
 - **Module routes** — history `/modules/prize-spin`, session `/modules/prize-spin/:id`, overlay `/modules/prize-spin/:id/widget`; use `app/src/lib/routes.ts` helpers (`prizeSpinSessionRoute`, `prizeSpinWidgetRoute`).
 - **Session status** — public widget serves `prize_spin.status = 'active'` only per adopted `session-status.md`; no go-live/deactivate or `is_active` singleton.
 - **Poll interval** — 5000 ms refetch on overlay page (match Bonus Buy stream widget).
-- **Widget dimensions** — width and height each 200–2400 px; defaults 500×500; overlay reads from DB only — no URL size query params.
+- **Widget dimensions** — width and height each 200–2400 px; defaults 800×800 per `prize-spin-widget.md`; overlay reads from DB only — no URL size query params.
 - **Sector visuals** — wheel segment fill from `prize_spin_sector.color`; wheel pointer, rim, hub, and gloss per `stream-helper-wheel-reference.md`; card chrome from `prize-spin-widget-theme.ts`; no theme columns on `prize_spin_widget` in this slice.
 - **Overlay card** — dark glass `#0A0A0CE6` with 20px radius and shadow; viewport outside card stays transparent for OBS chroma-key.
 - **Wheel implementation** — SVG in `PrizeSpinWheel.tsx` / `prize-spin-wheel-visual.ts`; reproduce stream-helper canvas look without switching to HTML canvas.
