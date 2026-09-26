@@ -14,8 +14,6 @@ import {
   loginCardOuterSx,
   loginCardShineSx,
   loginDividerSx,
-  loginEyebrowDotSx,
-  loginEyebrowSx,
   loginFeatureItemSx,
   loginLogoRingSx,
   loginTaglineSx,
@@ -62,17 +60,12 @@ export function LoginPage() {
 
               <Stack spacing={3} sx={loginCardContentSx}>
                 <Stack spacing={2} sx={{ alignItems: 'center', textAlign: 'center' }}>
-                  <Box sx={loginEyebrowSx}>
-                    <Box sx={loginEyebrowDotSx} aria-hidden />
-                    Stream tools
-                  </Box>
-
                   <Box sx={loginLogoRingSx}>
                     <Box
                       component="img"
                       src="/logo.svg"
                       alt="Stream Helper"
-                      sx={{ width: 44, height: 44 }}
+                      sx={{ width: 64, height: 64, borderRadius: 2 }}
                     />
                   </Box>
 

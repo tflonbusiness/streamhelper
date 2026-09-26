@@ -14,7 +14,7 @@ sources: []
 
 ## Why
 
-**Mandate + opportunity:** Production runs at **https://streamhelper.best**; the in-app and landing brand **Stream Widgets** no longer matches the domain or repo (`streamhelper`). Rebrand to **Stream Helper** with the user-supplied S ribbon logo so operators and visitors see one name and one mark that match the public URL and deployment docs.
+**Mandate + opportunity:** Production runs at **https://streamhelper.best**; the in-app and landing brand **Stream Widgets** no longer matches the domain or repo (`streamhelper`). Rebrand to **Stream Helper** with the user-supplied S ribbon logo so operators and visitors see one name and one mark that match the public URL and deployment docs. The login screen is the first brand touchpoint for operators.
 
 **Who:** Kick casino streamer operators and landing visitors. **Backdrop:** English-only UI remains (`spec-app-english-only`); this slice changes display name strings, accessibility labels, and logo artwork in `app/` and `landing/`.
 
@@ -36,11 +36,16 @@ sources: []
   - **intent:** English UI conventions reference **Stream Helper** so future work does not reintroduce **Stream Widgets**.
   - **success:** `conventions.md` (adopted companion) names **Stream Helper** in its product-name guidance.
 
+- **CAP-5**
+  - **intent:** On login, an operator sees the Stream Helper mark prominently in the card hero and the official Kick glyph on **Sign in with Kick**.
+  - **success:** `LoginPage` renders `/logo.svg` at 64×64 with `alt` **Stream Helper**; `KickLoginButton` renders `/kick-logo-24.png` (24×24, decorative) per `brand.md`; no inline substitute Kick wordmark SVG on that button.
+
 ## Constraints
 
 - **Scope** follows `touchpoints.md` for user-facing copy and logo files in `app/` and `landing/`; do not rename Postgres `caz_agent`, Docker defaults, or `localStorage` keys in this slice.
 - **Supersedes** display name **Stream Widgets** from `spec-app-rename-stream-widgets`; other English-only rules unchanged.
 - **Logo source of truth** is `logo-reference.png` in this spec folder (`brand.md`); deployed `logo.svg` files must render that mark (embedded raster acceptable until a vector trace exists).
+- **Kick login asset** is `kick-logo-24.png` in this spec folder, deployed only to `app/public/kick-logo-24.png` for the OAuth button — not for shell navigation.
 - **Historical** `_bmad-output` specs are not bulk-rewritten.
 
 ## Non-goals
@@ -53,7 +58,7 @@ sources: []
 
 ## Success signal
 
-An operator opens login and the signed-in shell; a visitor opens `landing/index.html`. Both see **Stream Helper** with the new S ribbon logo and no visible **Stream Widgets**. `rg 'Stream Widgets' app/ landing/` returns no matches, and `npm run build` in `app/` still passes.
+An operator opens `/login`: the card hero shows the S ribbon at 64×64 and **Stream Helper** copy; **Sign in with Kick** shows the green Kick mascot. After sign-in, shell branding still matches CAP-1/CAP-3. A visitor opens `landing/index.html` with the same mark. `rg 'Stream Widgets' app/ landing/` returns no matches.
 
 ## Assumptions
 

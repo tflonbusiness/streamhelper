@@ -60,31 +60,6 @@ export const loginCardContentSx: SxProps<Theme> = {
   p: { xs: 3, sm: 4 },
 }
 
-export const loginEyebrowSx: SxProps<Theme> = {
-  display: 'inline-flex',
-  alignSelf: 'center',
-  alignItems: 'center',
-  gap: 0.75,
-  px: 1.25,
-  py: 0.5,
-  borderRadius: 999,
-  fontSize: '0.6875rem',
-  fontWeight: 600,
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
-  color: colors.purple[400],
-  bgcolor: alpha(colors.purple[500], 0.12),
-  border: `1px solid ${alpha(colors.purple[400], 0.22)}`,
-}
-
-export const loginEyebrowDotSx: SxProps<Theme> = {
-  width: 6,
-  height: 6,
-  borderRadius: '50%',
-  bgcolor: colors.purple[400],
-  boxShadow: `0 0 10px ${alpha(colors.purple[400], 0.9)}`,
-}
-
 export const loginTaglineSx: SxProps<Theme> = {
   background: `linear-gradient(90deg, ${colors.purple[400]} 0%, ${alpha(colors.neutral[100], 0.85)} 55%, ${colors.brand[400]} 100%)`,
   WebkitBackgroundClip: 'text',
@@ -131,9 +106,9 @@ export const loginLogoRingSx: SxProps<Theme> = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  width: 72,
-  height: 72,
-  borderRadius: '50%',
+  width: 88,
+  height: 88,
+  borderRadius: 3,
   background: `radial-gradient(circle at 30% 30%, ${alpha(colors.purple[400], 0.25)}, ${alpha(colors.neutral[900], 0.6)} 70%)`,
   border: `1px solid ${alpha(colors.purple[400], 0.3)}`,
   boxShadow: `

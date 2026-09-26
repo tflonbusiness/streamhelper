@@ -8,8 +8,11 @@ Replace every **Stream Widgets** literal in these files with **Stream Helper** u
 |------|----------------|
 | `index.html` | `<title>`; favicon still `logo.svg` |
 | `public/logo.svg` | Full graphic per `logo-reference.png`; `aria-label` **Stream Helper** |
+| `public/kick-logo-24.png` | Kick mascot per `kick-logo-24.png` in this spec folder |
+| `src/pages/LoginPage.tsx` | Hero `/logo.svg` 64×64, `alt` **Stream Helper**, title **Stream Helper** |
+| `src/components/KickLoginButton.tsx` | `/kick-logo-24.png` 24×24 on **Sign in with Kick** |
+| `src/components/login/loginPageStyles.ts` | Hero logo container sized for 64×64 mark |
 | `src/components/BrandHeader.tsx` | Default `title` prop and logo `alt` |
-| `src/pages/LoginPage.tsx` | Logo `alt` and visible brand title |
 | `src/components/AppShell.tsx` | `SidebarLogo` `alt` (mobile and desktop) |
 
 ## `landing/`
@@ -46,4 +49,4 @@ rg 'Stream Widgets' app/ landing/
 
 Expect **no matches** after implementation.
 
-Visual check: open login and landing; favicon and header logos match `logo-reference.png` in this spec folder.
+Visual check: `/login` — 64×64 S ribbon and Kick mascot on the green button; landing favicon/header match `logo-reference.png`.
