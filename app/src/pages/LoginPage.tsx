@@ -27,19 +27,19 @@ const features = [
     icon: SportsEsportsIcon,
     variant: 'purple' as const,
     title: 'Chat games',
-    description: 'Interactive games for Kick chat',
+    description: 'Run interactive games in Kick chat',
   },
   {
     icon: GroupIcon,
     variant: 'info' as const,
     title: 'Team access',
-    description: 'Manage moderators and permissions',
+    description: 'Invite mods and manage permissions',
   },
   {
     icon: LayersIcon,
     variant: 'primary' as const,
     title: 'OBS overlays',
-    description: 'Browser sources for your stream',
+    description: 'Add browser sources to your stream',
   },
 ]
 
@@ -74,7 +74,7 @@ export function LoginPage() {
                       Stream Helper
                     </Typography>
                     <Typography variant="body2" sx={loginTaglineSx}>
-                      Streamer dashboard for Kick creators
+                      Make your Kick stream interactive
                     </Typography>
                   </Stack>
                 </Stack>
@@ -107,12 +107,16 @@ export function LoginPage() {
                       <IconTile
                         icon={feature.icon}
                         variant={feature.variant}
-                        size="sm"
+                        size="md"
                       />
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
                         {feature.title}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.4 }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ lineHeight: 1.45, display: 'block' }}
+                      >
                         {feature.description}
                       </Typography>
                     </Stack>

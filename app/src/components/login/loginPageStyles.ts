@@ -88,18 +88,13 @@ export const loginFeatureItemSx: SxProps<Theme> = {
   flex: 1,
   minWidth: 0,
   alignItems: 'center',
-  gap: 1,
-  p: 1.5,
-  borderRadius: 3,
+  gap: 1.25,
+  p: 2,
+  borderRadius: 2.5,
   textAlign: 'center',
-  bgcolor: alpha(colors.neutral[950], 0.35),
-  border: `1px solid ${alpha(colors.purple[500], 0.14)}`,
-  transition: 'border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease',
-  '&:hover': {
-    bgcolor: alpha(colors.purple[500], 0.08),
-    borderColor: alpha(colors.purple[400], 0.28),
-    transform: 'translateY(-2px)',
-  },
+  bgcolor: alpha(colors.neutral[950], 0.4),
+  border: `1px solid ${alpha(colors.neutral[100], 0.06)}`,
+  boxShadow: `inset 0 1px 0 ${alpha(colors.neutral[100], 0.04)}`,
 }
 
 export const loginLogoRingSx: SxProps<Theme> = {

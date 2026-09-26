@@ -30,6 +30,13 @@ export type ModuleDefinition = {
   hasToggle?: boolean
 }
 
+/** Modules shown as sidebar quick links under Modules (catalog `available` only). */
+export function getAvailableNavModules(): ModuleDefinition[] {
+  return MODULE_CATALOG.filter(
+    (module) => module.status === 'available' && module.widgetRoute,
+  )
+}
+
 export const MODULE_CATALOG: ModuleDefinition[] = [
   {
     id: 'bonus-buy',

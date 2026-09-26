@@ -12,11 +12,15 @@ import DashboardIcon from '@mui/icons-material/Dashboard'
 import ExtensionIcon from '@mui/icons-material/Extension'
 import GroupIcon from '@mui/icons-material/Group'
 import LogoutIcon from '@mui/icons-material/Logout'
-import { styled } from '@mui/material/styles'
+import { alpha, styled } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { IconTile } from '@/components/IconTile'
 import { BreadcrumbProvider } from '@/context/BreadcrumbContext'
 import { useAuth } from '@/context/AuthContext'
+import { getAvailableNavModules, type ModuleIconVariant } from '@/lib/modules'
+import { MODULES_ROUTE } from '@/lib/routes'
+import { colors } from '@/theme/colors'
 
 type NavItem = {
   to: string
@@ -53,10 +57,10 @@ const navItems: NavItem[] = [
     requiresAccount: false,
   },
   {
-    to: '/modules',
+    to: MODULES_ROUTE,
     label: 'Modules',
     icon: ExtensionIcon,
-    end: true,
+    end: false,
     requiresAccount: true,
   },
   {
@@ -241,6 +245,42 @@ const SidebarNavList = styled(Box, {
   gap: theme.spacing(0.5),
 }))
 
+const SidebarModulesGroup = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: theme.spacing(0.25),
+  marginBottom: theme.spacing(0.5),
+}))
+
+const SidebarSubmoduleList = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: theme.spacing(0.25),
+  margin: 0,
+  padding: theme.spacing(0, 0.25),
+  listStyle: 'none',
+}))
+
+const SidebarSubmoduleButton = styled(ListItemButton)(({ theme }) => ({
+  borderRadius: theme.shape.borderRadius,
+  gap: theme.spacing(1),
+  padding: theme.spacing(0.5, 0.75),
+  justifyContent: 'flex-start',
+  alignItems: 'center',
+  minHeight: 36,
+  color: theme.palette.text.secondary,
+  '&.Mui-selected': {
+    color: theme.palette.text.primary,
+    backgroundColor: alpha(colors.purple[500], 0.12),
+  },
+  '&.Mui-selected:hover': {
+    backgroundColor: alpha(colors.purple[500], 0.16),
+  },
+  '&:hover': {
+    backgroundColor: alpha(theme.palette.text.primary, 0.04),
+  },
+}))
+
 const DisabledSidebarNavButton = styled(ListItemButton, {
   shouldForwardProp: (prop) => prop !== 'collapsed',
 })<{ collapsed?: boolean }>(({ theme, collapsed }) => ({
@@ -317,6 +357,115 @@ function SidebarNavLink({
   }
 
   return link
+}
+
+function SidebarSubmoduleLink({
+  to,
+  label,
+  icon,
+  iconVariant,
+}: {
+  to: string
+  label: string
+  icon: SvgIconComponent
+  iconVariant: ModuleIconVariant
+}) {
+  return (
+    <Box component="li" sx={{ display: 'block' }}>
+      <SidebarRouterLink to={to} end={false}>
+        {({ isActive }) => (
+          <SidebarSubmoduleButton selected={isActive} dense>
+            <IconTile icon={icon} variant={iconVariant} size="sm" />
+            <Typography
+              variant="body2"
+              component="span"
+              sx={{
+                fontSize: '0.8125rem',
+                fontWeight: isActive ? 600 : 500,
+                lineHeight: 1.3,
+                color: 'inherit',
+              }}
+              noWrap
+            >
+              {label}
+            </Typography>
+          </SidebarSubmoduleButton>
+        )}
+      </SidebarRouterLink>
+    </Box>
+  )
+}
+
+function SidebarModulesNav({
+  collapsed,
+  disabled,
+  icon: Icon,
+  label,
+}: {
+  collapsed: boolean
+  disabled: boolean
+  icon: SvgIconComponent
+  label: string
+}) {
+  const submodules = getAvailableNavModules()
+
+  if (disabled) {
+    const disabledButton = (
+      <DisabledSidebarNavButton disabled collapsed={collapsed}>
+        <NavIconSlot>
+          <Icon aria-hidden />
+        </NavIconSlot>
+        {!collapsed ? <Typography variant="body2">{label}</Typography> : null}
+      </DisabledSidebarNavButton>
+    )
+
+    if (collapsed) {
+      return (
+        <Tooltip title={label} placement="right">
+          <span>{disabledButton}</span>
+        </Tooltip>
+      )
+    }
+
+    return disabledButton
+  }
+
+  if (collapsed) {
+    return (
+      <SidebarNavLink
+        to={MODULES_ROUTE}
+        label={label}
+        icon={Icon}
+        end={false}
+        collapsed={collapsed}
+      />
+    )
+  }
+
+  return (
+    <SidebarModulesGroup>
+      <SidebarNavLink
+        to={MODULES_ROUTE}
+        label={label}
+        icon={Icon}
+        end={false}
+        collapsed={false}
+      />
+      {submodules.length > 0 ? (
+        <SidebarSubmoduleList component="ul" aria-label="Module shortcuts">
+          {submodules.map((module) => (
+            <SidebarSubmoduleLink
+              key={module.id}
+              to={module.widgetRoute!}
+              label={module.name}
+              icon={module.icon}
+              iconVariant={module.iconVariant}
+            />
+          ))}
+        </SidebarSubmoduleList>
+      ) : null}
+    </SidebarModulesGroup>
+  )
 }
 
 function MobileNavLink({
@@ -493,6 +642,18 @@ export function AppShell() {
               }
 
               return disabledButton
+            }
+
+            if (item.to === MODULES_ROUTE) {
+              return (
+                <SidebarModulesNav
+                  key={item.to}
+                  collapsed={isNavCollapsed}
+                  disabled={false}
+                  icon={item.icon}
+                  label={item.label}
+                />
+              )
             }
 
             return (
