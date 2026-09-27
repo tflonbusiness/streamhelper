@@ -1,4 +1,4 @@
-/** Prize spin overlay — soft casino wheel tick + mellow win fanfare (Web Audio, no files). */
+/** Prize spin overlay — soft casino wheel tick + two-note win bell (Web Audio, no files). */
 class PrizeSpinWheelAudio {
   private ctx: AudioContext | null = null
 
@@ -81,46 +81,58 @@ class PrizeSpinWheelAudio {
     }
   }
 
-  private playFanfareNote(
+  private envelope(
+    gain: GainNode,
+    start: number,
+    peak: number,
+    attackSec: number,
+    decaySec: number,
+  ): void {
+    gain.gain.setValueAtTime(0.0001, start)
+    gain.gain.linearRampToValueAtTime(peak, start + attackSec)
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + decaySec)
+  }
+
+  private playStudioBell(
     ctx: AudioContext,
     start: number,
     freq: number,
-    peakGain: number,
-    durationSec: number,
+    peak: number,
+    ringSec: number,
   ): void {
     const osc = ctx.createOscillator()
-    osc.type = 'triangle'
+    osc.type = 'sine'
     osc.frequency.setValueAtTime(freq, start)
 
-    const filter = ctx.createBiquadFilter()
-    filter.type = 'lowpass'
-    filter.frequency.setValueAtTime(1800, start)
-    filter.frequency.exponentialRampToValueAtTime(700, start + durationSec * 0.9)
-    filter.Q.setValueAtTime(0.4, start)
+    const partial = ctx.createOscillator()
+    partial.type = 'sine'
+    partial.frequency.setValueAtTime(freq * 2.01, start)
 
-    osc.connect(filter)
-    this.connectToOutput(ctx, start, filter, peakGain, 0.012, durationSec)
+    const gain = ctx.createGain()
+    this.envelope(gain, start, peak, 0.006, ringSec)
+
+    const partialGain = ctx.createGain()
+    partialGain.gain.setValueAtTime(peak * 0.16, start)
+    partialGain.gain.exponentialRampToValueAtTime(0.0001, start + ringSec * 0.75)
+
+    osc.connect(gain)
+    partial.connect(partialGain)
+    gain.connect(ctx.destination)
+    partialGain.connect(ctx.destination)
+
+    const stopAt = start + ringSec + 0.04
     osc.start(start)
-    osc.stop(start + durationSec + 0.05)
+    partial.start(start)
+    osc.stop(stopAt)
+    partial.stop(stopAt)
   }
 
-  /** Softer ascending fanfare + warm final chord. */
   playWin(): void {
     try {
       const ctx = this.getContext()
       const t = ctx.currentTime
-      const run = [523.25, 659.25, 783.99, 987.77, 1046.5]
-      const step = 0.078
-
-      run.forEach((freq, idx) => {
-        this.playFanfareNote(ctx, t + idx * step, freq, 0.085, 0.2)
-      })
-
-      const chordStart = t + run.length * step + 0.04
-      const chord = [1046.5, 1318.51, 1567.98]
-      for (const freq of chord) {
-        this.playFanfareNote(ctx, chordStart, freq, 0.07, 0.55)
-      }
+      this.playStudioBell(ctx, t, 523.25, 0.1, 0.35)
+      this.playStudioBell(ctx, t + 0.14, 783.99, 0.095, 0.55)
     } catch {
       // ignore
     }
