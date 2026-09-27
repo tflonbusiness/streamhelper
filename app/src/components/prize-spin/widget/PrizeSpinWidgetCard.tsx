@@ -189,6 +189,8 @@ export function PrizeSpinWidgetCard({
     }, WHEEL_OVERLAY_TOTAL_MS)
 
     spinStartTimerRef.current = window.setTimeout(() => {
+      void prizeSpinWheelAudio.unlock()
+
       const startRadians = 0
       const targetDegrees = spinRotationFromCurrent(
         radiansToDegrees(startRadians),

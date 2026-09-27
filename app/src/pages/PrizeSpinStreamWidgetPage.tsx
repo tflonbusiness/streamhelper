@@ -5,6 +5,7 @@ import { PrizeSpinWidgetNotFoundError } from '@/api/prize-spin'
 import { PrizeSpinWidgetCard } from '@/components/prize-spin/widget/PrizeSpinWidgetCard'
 import { PrizeSpinWidgetLoading } from '@/components/prize-spin/widget/PrizeSpinWidgetLoading'
 import { PrizeSpinWidgetMessage } from '@/components/prize-spin/widget/PrizeSpinWidgetMessage'
+import { attachPrizeSpinWheelAudioUnlock } from '@/lib/prize-spin-wheel-audio'
 import { PRIZE_SPIN_WIDGET_THEME } from '@/lib/prize-spin-widget-theme'
 import { usePublicPrizeSpinWidget } from '@/queries/use-prize-spins'
 
@@ -25,6 +26,8 @@ export function PrizeSpinStreamWidgetPage() {
       document.documentElement.style.overflow = prevHtml
     }
   }, [])
+
+  useEffect(() => attachPrizeSpinWheelAudioUnlock(), [])
 
   if (!isValidId) {
     return <PrizeSpinWidgetMessage message="Session not found." tone="muted" />

@@ -1,6 +1,9 @@
 /** Prize spin overlay — soft casino wheel tick + two-note win bell (Web Audio, no files). */
 class PrizeSpinWheelAudio {
   private ctx: AudioContext | null = null
+  private outputDest: MediaStreamAudioDestinationNode | null = null
+  private mediaElement: HTMLAudioElement | null = null
+  private unlockInFlight: Promise<boolean> | null = null
 
   private getContext(): AudioContext {
     if (!this.ctx) {
@@ -12,14 +15,80 @@ class PrizeSpinWheelAudio {
       }
       this.ctx = new AudioCtx()
     }
-    if (this.ctx.state === 'suspended') {
-      void this.ctx.resume()
-    }
     return this.ctx
+  }
+
+  /** Routes Web Audio into a hidden <audio> element — OBS browser sources capture this reliably. */
+  private getOutput(ctx: AudioContext): AudioNode {
+    if (!this.outputDest) {
+      this.outputDest = ctx.createMediaStreamDestination()
+      const el = document.createElement('audio')
+      el.autoplay = true
+      el.setAttribute('playsinline', 'true')
+      el.muted = false
+      el.volume = 1
+      el.style.cssText = 'position:fixed;width:0;height:0;opacity:0;pointer-events:none'
+      el.srcObject = this.outputDest.stream
+      document.body.appendChild(el)
+      this.mediaElement = el
+    }
+    return this.outputDest
+  }
+
+  /**
+   * Unlocks playback for OBS / autoplay policies. Safe to call repeatedly.
+   * In OBS: Interact with the browser source once if sound is still muted.
+   */
+  unlock(): Promise<boolean> {
+    if (!this.unlockInFlight) {
+      this.unlockInFlight = this.doUnlock().finally(() => {
+        this.unlockInFlight = null
+      })
+    }
+    return this.unlockInFlight
+  }
+
+  private async doUnlock(): Promise<boolean> {
+    try {
+      const ctx = this.getContext()
+      const out = this.getOutput(ctx)
+
+      if (this.mediaElement) {
+        await this.mediaElement.play().catch(() => {})
+      }
+
+      if (ctx.state === 'suspended') {
+        await ctx.resume()
+      }
+
+      if (ctx.state !== 'running') {
+        return false
+      }
+
+      const primer = ctx.createBufferSource()
+      primer.buffer = ctx.createBuffer(1, 1, ctx.sampleRate)
+      primer.connect(out)
+      primer.start()
+      primer.stop(ctx.currentTime + 0.001)
+
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  private async ensureRunning(): Promise<AudioContext | null> {
+    await this.unlock()
+    const ctx = this.ctx
+    if (!ctx || ctx.state !== 'running') {
+      return null
+    }
+    return ctx
   }
 
   private connectToOutput(
     ctx: AudioContext,
+    out: AudioNode,
     start: number,
     source: AudioNode,
     peakGain: number,
@@ -31,13 +100,21 @@ class PrizeSpinWheelAudio {
     gain.gain.linearRampToValueAtTime(peakGain, start + attackSec)
     gain.gain.exponentialRampToValueAtTime(0.0001, start + decaySec)
     source.connect(gain)
-    gain.connect(ctx.destination)
+    gain.connect(out)
   }
 
   /** Muted peg tick: light transient + gentle pitch drop. */
   playTick(): void {
+    void this.playTickAsync()
+  }
+
+  private async playTickAsync(): Promise<void> {
     try {
-      const ctx = this.getContext()
+      const ctx = await this.ensureRunning()
+      if (!ctx) {
+        return
+      }
+      const out = this.getOutput(ctx)
       const t = ctx.currentTime
       const clickDur = 0.014
 
@@ -58,7 +135,7 @@ class PrizeSpinWheelAudio {
       clickFilter.Q.setValueAtTime(0.6, t)
 
       noise.connect(clickFilter)
-      this.connectToOutput(ctx, t, clickFilter, 0.055, 0.003, clickDur + 0.012)
+      this.connectToOutput(ctx, out, t, clickFilter, 0.055, 0.003, clickDur + 0.012)
 
       const peg = ctx.createOscillator()
       peg.type = 'sine'
@@ -70,7 +147,7 @@ class PrizeSpinWheelAudio {
       pegGain.gain.linearRampToValueAtTime(0.09, t + 0.004)
       pegGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.038)
       peg.connect(pegGain)
-      pegGain.connect(ctx.destination)
+      pegGain.connect(out)
 
       noise.start(t)
       noise.stop(t + clickDur + 0.01)
@@ -95,6 +172,7 @@ class PrizeSpinWheelAudio {
 
   private playStudioBell(
     ctx: AudioContext,
+    out: AudioNode,
     start: number,
     freq: number,
     peak: number,
@@ -117,8 +195,8 @@ class PrizeSpinWheelAudio {
 
     osc.connect(gain)
     partial.connect(partialGain)
-    gain.connect(ctx.destination)
-    partialGain.connect(ctx.destination)
+    gain.connect(out)
+    partialGain.connect(out)
 
     const stopAt = start + ringSec + 0.04
     osc.start(start)
@@ -128,11 +206,19 @@ class PrizeSpinWheelAudio {
   }
 
   playWin(): void {
+    void this.playWinAsync()
+  }
+
+  private async playWinAsync(): Promise<void> {
     try {
-      const ctx = this.getContext()
+      const ctx = await this.ensureRunning()
+      if (!ctx) {
+        return
+      }
+      const out = this.getOutput(ctx)
       const t = ctx.currentTime
-      this.playStudioBell(ctx, t, 523.25, 0.1, 0.35)
-      this.playStudioBell(ctx, t + 0.14, 783.99, 0.095, 0.55)
+      this.playStudioBell(ctx, out, t, 523.25, 0.1, 0.35)
+      this.playStudioBell(ctx, out, t + 0.14, 783.99, 0.095, 0.55)
     } catch {
       // ignore
     }
@@ -140,3 +226,30 @@ class PrizeSpinWheelAudio {
 }
 
 export const prizeSpinWheelAudio = new PrizeSpinWheelAudio()
+
+export function attachPrizeSpinWheelAudioUnlock(): () => void {
+  void prizeSpinWheelAudio.unlock()
+
+  const retryUnlock = () => {
+    void prizeSpinWheelAudio.unlock()
+  }
+
+  const gestureOptions: AddEventListenerOptions = { capture: true, passive: true }
+  window.addEventListener('pointerdown', retryUnlock, gestureOptions)
+  window.addEventListener('keydown', retryUnlock, gestureOptions)
+  window.addEventListener('touchstart', retryUnlock, gestureOptions)
+
+  const onVisibility = () => {
+    if (document.visibilityState === 'visible') {
+      retryUnlock()
+    }
+  }
+  document.addEventListener('visibilitychange', onVisibility)
+
+  return () => {
+    window.removeEventListener('pointerdown', retryUnlock, gestureOptions)
+    window.removeEventListener('keydown', retryUnlock, gestureOptions)
+    window.removeEventListener('touchstart', retryUnlock, gestureOptions)
+    document.removeEventListener('visibilitychange', onVisibility)
+  }
+}
