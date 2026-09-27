@@ -1,20 +1,13 @@
 import { Box, Typography } from '@mui/material'
-import { useEffect, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { BonusBuySessionArchivedError } from '@/api/bonus-buy'
 import { BonusBuyWidgetCard } from '@/components/bonus-buy/widget/BonusBuyWidgetCard'
 import { deriveBonusBuyWidgetCardProps } from '@/lib/bonus-buy-widget-presentation'
-import {
-  readStoredLocale,
-  resolveInitialLocale,
-} from '@/i18n/app-locale'
-import { applyDocumentLocale } from '@/i18n/init-i18n'
+import { usePinWidgetUiEnglish, widgetUiCopy } from '@/i18n/widget-ui'
 import { usePublicBonusBuyWidget } from '@/queries/use-bonus-buy'
 
 function WidgetNotFound({ textMutedColor }: { textMutedColor?: string }) {
-  const { t } = useTranslation()
-
   return (
     <Box
       sx={{
@@ -27,15 +20,13 @@ function WidgetNotFound({ textMutedColor }: { textMutedColor?: string }) {
       }}
     >
       <Typography sx={{ color: textMutedColor ?? '#9CA3AF', fontSize: '1rem' }}>
-        {t('errors.sessionNotFound')}
+        {widgetUiCopy.sessionNotFound}
       </Typography>
     </Box>
   )
 }
 
 function WidgetInactive() {
-  const { t } = useTranslation()
-
   return (
     <Box
       sx={{
@@ -50,23 +41,15 @@ function WidgetInactive() {
       }}
     >
       <Typography sx={{ color: '#9CA3AF', fontSize: '1rem', maxWidth: 420 }}>
-        {t('bonusBuy.widgetInactive')}
+        {widgetUiCopy.bonusBuyInactive}
       </Typography>
     </Box>
   )
 }
 
 export function BonusBuyStreamWidgetPage() {
-  const { i18n } = useTranslation()
+  usePinWidgetUiEnglish()
   const { id } = useParams<{ id: string }>()
-
-  useEffect(() => {
-    const initial = resolveInitialLocale(readStoredLocale())
-    if (i18n.language !== initial) {
-      void i18n.changeLanguage(initial)
-      applyDocumentLocale(initial)
-    }
-  }, [i18n])
   const bonusBuyId = useMemo(() => {
     if (!id) {
       return null

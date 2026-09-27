@@ -715,7 +715,11 @@ export function AppShell() {
               px: isNavExpanded ? 0 : 0.5,
             }}
           >
-            {isNavExpanded ? <LanguageSwitcher /> : null}
+            {isNavExpanded ? (
+              <LanguageSwitcher />
+            ) : (
+              <LanguageSwitcher compact />
+            )}
             {isNavExpanded ? (
               <SidebarLogoutButton
                 type="button"

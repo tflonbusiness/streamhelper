@@ -385,6 +385,9 @@ export const ru = {
     couldNotRemoveWinner: "Не удалось удалить победителя",
     archiveAll: "Архивировать всех",
     archiveAllWinnersTitle: "Архивировать всех победителей?",
+    archiveAllWinnersDescription:
+      "Из списка будут убраны все победители ({{count}}). Записи останутся в базе.",
+    archiveAllWinnersButton: "Архивировать всех",
     allWinnersArchived: "Все победители отправлены в архив.",
     couldNotArchiveWinners: "Не удалось архивировать победителей",
     couldNotSpin: "Не удалось крутить колесо",
@@ -420,6 +423,10 @@ export const ru = {
     noSessions: "Сессий chat roll пока нет",
     createDialogTitle: "Новая сессия",
     archiveSessionTitle: "Архивировать сессию?",
+    noSessionToArchive: "Нет сессии для архивации.",
+    archiveListIntro: "«{{title}}» будет убрана из списка активных.",
+    archiveListOutro:
+      "Архивные сессии можно открыть для просмотра, но не редактировать.",
     sessionCreated: "Сессия chat roll создана.",
     couldNotCreateSession: "Не удалось создать сессию chat roll.",
     couldNotLoadSession: "Не удалось загрузить сессию chat roll",
@@ -604,6 +611,14 @@ export const ru = {
     paddingRange: "Отступ: от 0 до 100",
     fontFamilyRange: "Шрифт: от 1 до 200 символов",
     fieldColorHex: "{{field}} должно быть корректным hex-цветом",
+    widgetColorBackground: "Цвет фона",
+    widgetColorSurface: "Цвет поверхности",
+    widgetColorBorder: "Цвет границы",
+    widgetColorAccent: "Акцентный цвет",
+    widgetColorPositive: "Цвет положительного",
+    widgetColorNegative: "Цвет отрицательного",
+    widgetColorLive: "Цвет «в эфире»",
+    widgetColorTextMuted: "Цвет приглушённого текста",
     winAmount: "Сумма выигрыша"
   }
 } as const

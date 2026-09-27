@@ -8,11 +8,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
   FormControlLabel,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
   TextField,
   Typography,
@@ -22,8 +18,6 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useNotification } from '@/context/NotificationContext'
-import { useLocale } from '@/context/LocaleProvider'
-import type { AppLocale } from '@/i18n/app-locale'
 import {
   type PrizeSpinWidgetSettingsFormValues,
   createPrizeSpinWidgetSettingsFormSchema,
@@ -73,7 +67,6 @@ export const PrizeSpinWidgetSettingsDialog = (
   props: PrizeSpinWidgetSettingsDialogProps,
 ) => {
   const { t } = useTranslation()
-  const { locale, setLocale } = useLocale()
   const validationSchema = useMemo(
     () => createPrizeSpinWidgetSettingsFormSchema(t),
     [t],
@@ -230,22 +223,6 @@ export const PrizeSpinWidgetSettingsDialog = (
                   />
                 )}
               />
-              <FormControl fullWidth size="small">
-                <InputLabel id="prize-spin-overlay-locale-label">
-                  {t('common.overlayLanguage')}
-                </InputLabel>
-                <Select
-                  labelId="prize-spin-overlay-locale-label"
-                  label={t('common.overlayLanguage')}
-                  value={locale}
-                  onChange={(event) =>
-                    setLocale(event.target.value as AppLocale)
-                  }
-                >
-                  <MenuItem value="en">{t('common.languageEn')}</MenuItem>
-                  <MenuItem value="ru">{t('common.languageRu')}</MenuItem>
-                </Select>
-              </FormControl>
             </StyledFormStack>
           </Box>
         )}

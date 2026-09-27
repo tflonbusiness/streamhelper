@@ -1,6 +1,6 @@
 import type { BonusBuySlot } from '@/api/bonus-buy'
-import { useTranslation } from 'react-i18next'
 import { formatBonusBuyMoney } from '@/lib/bonus-buy-format'
+import { widgetUiCopy } from '@/i18n/widget-ui'
 import type { BonusBuyWidgetTheme } from '@/lib/bonus-buy-widget-presentation'
 import {
   StyledBestWinProvider,
@@ -29,7 +29,6 @@ export function BonusBuyWidgetPlayingSections({
   theme,
   currencyCode,
 }: BonusBuyWidgetPlayingSectionsProps) {
-  const { t } = useTranslation()
   const providerLabel = getWidgetProviderLabel(playingSlot.providerName)
 
   return (
@@ -52,7 +51,7 @@ export function BonusBuyWidgetPlayingSections({
       </StyledLiveContentRow>
       <StyledLiveBadge liveColor={theme.liveColor}>
         <StyledLivePulseIcon aria-hidden />
-        <StyledLiveLabel>{t('common.live')}</StyledLiveLabel>
+        <StyledLiveLabel>{widgetUiCopy.live}</StyledLiveLabel>
       </StyledLiveBadge>
     </StyledLiveCell>
   )

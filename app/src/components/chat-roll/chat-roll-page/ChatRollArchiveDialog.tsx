@@ -45,13 +45,13 @@ export const ChatRollArchiveDialog = (props: ChatRollArchiveDialogProps) => {
 
   const handleArchive = () => {
     if (!props.record) {
-      showError(t('prizeSpin.noSessionToArchive'))
+      showError(t('chatRoll.noSessionToArchive'))
       return
     }
 
     archiveMutation.mutate(props.record.id, {
       onSuccess: () => {
-        showSuccess(t('bonusBuy.sessionArchived'))
+        showSuccess(t('chatRoll.sessionArchived'))
         props.onArchived?.()
         handleClose()
         archiveMutation.reset()
@@ -65,13 +65,14 @@ export const ChatRollArchiveDialog = (props: ChatRollArchiveDialogProps) => {
       <DialogTitle>{t('chatRoll.archiveSessionTitle')}</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
-          <b>{props.record?.title}</b> will be removed from the active list.
-          Archived sessions can be opened for review but not edited.
+          {t('chatRoll.archiveListIntro', { title: props.record?.title ?? '' })}
+          {' '}
+          {t('chatRoll.archiveListOutro')}
         </StyledDescription>
       </DialogContent>
       <StyledDialogActions>
         <Button type="button" variant="outlined" onClick={handleClose}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           type="button"
@@ -82,7 +83,7 @@ export const ChatRollArchiveDialog = (props: ChatRollArchiveDialogProps) => {
           loadingPosition="start"
           disabled={!props.record}
         >
-          Archive
+          {t('common.archive')}
         </Button>
       </StyledDialogActions>
     </Dialog>

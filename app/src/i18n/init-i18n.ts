@@ -1,14 +1,10 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
-import {
-  readStoredLocale,
-  resolveInitialLocale,
-  type AppLocale,
-} from '@/i18n/app-locale'
+import { resolveAppLocaleFromWindow, type AppLocale } from '@/i18n/app-locale'
 import { en } from '@/i18n/resources/en'
 import { ru } from '@/i18n/resources/ru'
 
-const initialLocale: AppLocale = resolveInitialLocale(readStoredLocale())
+const initialLocale: AppLocale = resolveAppLocaleFromWindow()
 
 void i18n.use(initReactI18next).init({
   resources: {

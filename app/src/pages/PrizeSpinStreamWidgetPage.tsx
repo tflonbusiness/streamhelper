@@ -1,6 +1,5 @@
 import { Box } from '@mui/material'
 import { useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { PrizeSpinWidgetNotFoundError } from '@/api/prize-spin'
 import { PrizeSpinWidgetCard } from '@/components/prize-spin/widget/PrizeSpinWidgetCard'
@@ -9,28 +8,16 @@ import { PrizeSpinWidgetMessage } from '@/components/prize-spin/widget/PrizeSpin
 import { attachPrizeSpinWheelAudioUnlock } from '@/lib/prize-spin-wheel-audio'
 import { PRIZE_SPIN_WIDGET_DEFAULTS } from '@/lib/prize-spin-widget-defaults'
 import { PRIZE_SPIN_WIDGET_THEME } from '@/lib/prize-spin-widget-theme'
-import {
-  readStoredLocale,
-  resolveInitialLocale,
-} from '@/i18n/app-locale'
-import { applyDocumentLocale } from '@/i18n/init-i18n'
+import { usePinWidgetUiEnglish, widgetUiCopy } from '@/i18n/widget-ui'
 import { usePublicPrizeSpinWidget } from '@/queries/use-prize-spins'
 
 export function PrizeSpinStreamWidgetPage() {
-  const { t, i18n } = useTranslation()
+  usePinWidgetUiEnglish()
   const { id } = useParams<{ id: string }>()
   const prizeSpinId = Number.parseInt(id ?? '', 10)
   const isValidId = Number.isFinite(prizeSpinId)
   const { data: view, error, isLoading, isPending } =
     usePublicPrizeSpinWidget(isValidId ? prizeSpinId : undefined)
-
-  useEffect(() => {
-    const initial = resolveInitialLocale(readStoredLocale())
-    if (i18n.language !== initial) {
-      void i18n.changeLanguage(initial)
-      applyDocumentLocale(initial)
-    }
-  }, [i18n])
 
   useEffect(() => {
     const prevBody = document.body.style.overflow
@@ -47,7 +34,10 @@ export function PrizeSpinStreamWidgetPage() {
 
   if (!isValidId) {
     return (
-      <PrizeSpinWidgetMessage message={t('errors.sessionNotFound')} tone="muted" />
+      <PrizeSpinWidgetMessage
+        message={widgetUiCopy.sessionNotFound}
+        tone="muted"
+      />
     )
   }
 
@@ -57,7 +47,10 @@ export function PrizeSpinStreamWidgetPage() {
 
   if (error instanceof PrizeSpinWidgetNotFoundError || error || !view) {
     return (
-      <PrizeSpinWidgetMessage message={t('errors.sessionNotFound')} tone="muted" />
+      <PrizeSpinWidgetMessage
+        message={widgetUiCopy.sessionNotFound}
+        tone="muted"
+      />
     )
   }
 

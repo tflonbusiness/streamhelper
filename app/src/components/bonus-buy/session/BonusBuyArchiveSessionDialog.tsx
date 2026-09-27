@@ -77,13 +77,16 @@ export const BonusBuyArchiveSessionDialog = (
       <DialogTitle>{t('bonusBuy.archiveSessionTitle')}</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
-          The <b>"{props.record?.name}"</b> session will be removed from the active list. Archived
-          sessions can be opened for review but not edited.
+          {t('bonusBuy.archiveSessionListIntro', {
+            name: props.record?.name ?? '',
+          })}
+          {' '}
+          {t('bonusBuy.archiveSessionListOutro')}
         </StyledDescription>
       </DialogContent>
       <StyledDialogActions>
         <Button type="button" variant="outlined" onClick={handleClose}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           type="button"
@@ -95,7 +98,7 @@ export const BonusBuyArchiveSessionDialog = (
           loadingPosition="start"
           disabled={!props.record}
         >
-          Archive
+          {t('common.archive')}
         </Button>
       </StyledDialogActions>
     </Dialog>

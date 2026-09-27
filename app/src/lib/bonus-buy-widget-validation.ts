@@ -8,7 +8,7 @@ export function validateBonusBuyWidgetDraft(
 ): string | null {
   const translate = t ?? i18n.t.bind(i18n)
   const hexPattern = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/
-  const colorFields: Array<keyof BonusBuyWidgetSettings> = [
+  const colorFields = [
     'backgroundColor',
     'surfaceColor',
     'borderColor',
@@ -17,12 +17,24 @@ export function validateBonusBuyWidgetDraft(
     'negativeColor',
     'liveColor',
     'textMutedColor',
-  ]
+  ] as const satisfies ReadonlyArray<keyof BonusBuyWidgetSettings>
+
+  const colorFieldLabelKey: Record<(typeof colorFields)[number], string> = {
+    backgroundColor: 'validation.widgetColorBackground',
+    surfaceColor: 'validation.widgetColorSurface',
+    borderColor: 'validation.widgetColorBorder',
+    accentColor: 'validation.widgetColorAccent',
+    positiveColor: 'validation.widgetColorPositive',
+    negativeColor: 'validation.widgetColorNegative',
+    liveColor: 'validation.widgetColorLive',
+    textMutedColor: 'validation.widgetColorTextMuted',
+  }
 
   for (const field of colorFields) {
     const value = draft[field]
     if (typeof value !== 'string' || !hexPattern.test(value.trim())) {
-      return translate('validation.fieldColorHex', { field })
+      const fieldLabel = translate(colorFieldLabelKey[field])
+      return translate('validation.fieldColorHex', { field: fieldLabel })
     }
   }
 

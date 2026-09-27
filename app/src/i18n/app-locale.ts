@@ -50,3 +50,10 @@ export function resolveInitialLocale(
 ): AppLocale {
   return readLocaleFromSearchParams(search) ?? stored ?? detectBrowserLocale()
 }
+
+export function resolveAppLocaleFromWindow(): AppLocale {
+  if (typeof window === 'undefined') {
+    return detectBrowserLocale()
+  }
+  return resolveInitialLocale(readStoredLocale(), window.location.search)
+}

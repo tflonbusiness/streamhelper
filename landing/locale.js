@@ -164,9 +164,9 @@
   function readStored() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY)
-      return LOCALES.indexOf(raw) >= 0 ? raw : 'en'
+      return LOCALES.indexOf(raw) >= 0 ? raw : null
     } catch {
-      return 'en'
+      return null
     }
   }
 
@@ -181,6 +181,11 @@
   function readQueryLocale() {
     var value = new URLSearchParams(window.location.search).get('lang')
     return LOCALES.indexOf(value) >= 0 ? value : null
+  }
+
+  function detectBrowserLocale() {
+    var lang = (navigator.language || '').toLowerCase()
+    return lang.indexOf('ru') === 0 ? 'ru' : 'en'
   }
 
   function apply(locale) {
@@ -203,7 +208,7 @@
   }
 
   function init() {
-    var locale = readQueryLocale() || readStored()
+    var locale = readQueryLocale() || readStored() || detectBrowserLocale()
     writeStored(locale)
     apply(locale)
 

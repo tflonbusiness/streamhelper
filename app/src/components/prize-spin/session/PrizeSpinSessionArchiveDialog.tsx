@@ -60,7 +60,7 @@ export const PrizeSpinSessionArchiveDialog = (
 
     archiveMutation.mutate(undefined, {
       onSuccess: () => {
-        showSuccess(t('bonusBuy.sessionArchived'))
+        showSuccess(t('prizeSpin.sessionArchived'))
         handleClose()
         archiveMutation.reset()
       },

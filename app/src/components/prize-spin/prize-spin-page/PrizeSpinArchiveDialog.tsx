@@ -51,7 +51,7 @@ export const PrizeSpinArchiveDialog = (props: PrizeSpinArchiveDialogProps) => {
 
     archiveMutation.mutate(props.record.id, {
       onSuccess: () => {
-        showSuccess(t('bonusBuy.sessionArchived'))
+        showSuccess(t('prizeSpin.sessionArchived'))
         props.onArchived?.()
         handleClose()
         archiveMutation.reset()

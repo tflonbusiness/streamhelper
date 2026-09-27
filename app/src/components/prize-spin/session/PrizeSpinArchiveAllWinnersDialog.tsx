@@ -69,14 +69,14 @@ export const PrizeSpinArchiveAllWinnersDialog = (
       <DialogTitle>{t('prizeSpin.archiveAllWinnersTitle')}</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
-          This removes all {props.winnerCount} winner
-          {props.winnerCount === 1 ? '' : 's'} from the list. Archived records
-          stay in the database.
+          {t('prizeSpin.archiveAllWinnersDescription', {
+            count: props.winnerCount,
+          })}
         </StyledDescription>
       </DialogContent>
       <StyledDialogActions>
         <Button type="button" variant="outlined" onClick={handleClose}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           type="button"
@@ -86,7 +86,7 @@ export const PrizeSpinArchiveAllWinnersDialog = (
           loading={deleteAllMutation.isPending}
           loadingPosition="start"
         >
-          Archive all
+          {t('prizeSpin.archiveAllWinnersButton')}
         </Button>
       </StyledDialogActions>
     </Dialog>

@@ -63,7 +63,7 @@ export const ChatRollSessionArchiveDialog = (
 
     archiveMutation.mutate(undefined, {
       onSuccess: () => {
-        showSuccess(t('bonusBuy.sessionArchived'))
+        showSuccess(t('chatRoll.sessionArchived'))
         handleClose()
         archiveMutation.reset()
         navigate(CHAT_ROLL_ROUTE)
@@ -81,13 +81,14 @@ export const ChatRollSessionArchiveDialog = (
       <DialogTitle>{t('chatRoll.archiveSessionTitle')}</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
-          {props.record?.title} will be removed from the active list. Archived
-          sessions can be opened for review but not edited.
+          {t('chatRoll.archiveListIntro', { title: props.record?.title ?? '' })}
+          {' '}
+          {t('chatRoll.archiveListOutro')}
         </StyledDescription>
       </DialogContent>
       <StyledDialogActions>
         <Button type="button" variant="outlined" onClick={handleClose}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           type="button"
@@ -99,7 +100,7 @@ export const ChatRollSessionArchiveDialog = (
           loadingPosition="start"
           disabled={!props.record}
         >
-          Archive
+          {t('common.archive')}
         </Button>
       </StyledDialogActions>
     </Dialog>

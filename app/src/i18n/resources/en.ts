@@ -382,6 +382,9 @@ export const en = {
     couldNotRemoveWinner: "Could not remove winner",
     archiveAll: "Archive all",
     archiveAllWinnersTitle: "Archive all winners?",
+    archiveAllWinnersDescription:
+      "This removes all {{count}} winner(s) from the list. Archived records stay in the database.",
+    archiveAllWinnersButton: "Archive all",
     allWinnersArchived: "All winners archived.",
     couldNotArchiveWinners: "Could not archive winners",
     couldNotSpin: "Could not spin prize wheel",
@@ -415,6 +418,10 @@ export const en = {
     noSessions: "No chat roll sessions yet",
     createDialogTitle: "New Session",
     archiveSessionTitle: "Archive session?",
+    noSessionToArchive: "No session to archive.",
+    archiveListIntro: "{{title}} will be removed from the active list.",
+    archiveListOutro:
+      "Archived sessions can be opened for review but not edited.",
     sessionCreated: "Chat roll session created.",
     couldNotCreateSession: "Could not create chat roll session.",
     couldNotLoadSession: "Could not load chat roll session",
@@ -599,6 +606,14 @@ export const en = {
     paddingRange: "Padding must be between 0 and 100",
     fontFamilyRange: "Font family must be 1-200 characters",
     fieldColorHex: "{{field}} must be a valid hex color",
+    widgetColorBackground: "Background color",
+    widgetColorSurface: "Surface color",
+    widgetColorBorder: "Border color",
+    widgetColorAccent: "Accent color",
+    widgetColorPositive: "Positive color",
+    widgetColorNegative: "Negative color",
+    widgetColorLive: "Live color",
+    widgetColorTextMuted: "Muted text color",
     winAmount: "Win amount"
   }
 } as const

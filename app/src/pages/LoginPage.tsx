@@ -20,6 +20,7 @@ import {
   loginTaglineSx,
 } from '@/components/login/loginPageStyles'
 import { KickLoginButton } from '@/components/KickLoginButton'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { PageShell } from '@/components/PageShell'
 import { StatusAlert } from '@/components/StatusAlert'
 
@@ -61,6 +62,11 @@ export function LoginPage() {
               <Box sx={loginCardShineSx} aria-hidden />
 
               <Stack spacing={3} sx={loginCardContentSx}>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Box sx={{ width: 120 }}>
+                    <LanguageSwitcher compact />
+                  </Box>
+                </Box>
                 <Stack spacing={2} sx={{ alignItems: 'center', textAlign: 'center' }}>
                   <Box sx={loginLogoRingSx}>
                     <Box

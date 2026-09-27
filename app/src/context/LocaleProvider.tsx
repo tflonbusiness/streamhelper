@@ -9,6 +9,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import {
   isAppLocale,
+  LOCALE_STORAGE_KEY,
   readStoredLocale,
   resolveInitialLocale,
   writeStoredLocale,
@@ -33,6 +34,20 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     applyDocumentLocale(locale)
   }, [locale])
+
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== LOCALE_STORAGE_KEY || !isAppLocale(event.newValue)) {
+        return
+      }
+      if (i18n.language !== event.newValue) {
+        void i18n.changeLanguage(event.newValue)
+        applyDocumentLocale(event.newValue)
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [i18n])
 
   const setLocale = useCallback(
     (next: AppLocale) => {
