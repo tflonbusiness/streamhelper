@@ -18,7 +18,7 @@ sources: []
 
 ## Why
 
-**Pain:** Prize Spin session workspace (`spec-prize-spin-session-page`) lets operators configure sectors and run spins from the dashboard, but viewers on stream see nothing without an OBS overlay. The wheel must read clearly on broadcast and match the proven look from [stream-helper `/wheel/overlay`](https://github.com/novapointstrix/stream-helper) while fitting Caz Agent card chrome, proportional sectors, and session-scoped URLs (`/modules/prize-spin/:id/widget`).
+**Pain:** Prize Spin session workspace (`spec-prize-spin-session-page`) lets operators configure sectors and run spins from the dashboard, but viewers on stream see nothing without an OBS overlay. The wheel must read clearly on broadcast and match the proven look from [stream-helper `/wheel/overlay`](https://github.com/novapointstrix/stream-helper) while fitting Caz Agent card chrome, configurable sector geometry (weighted or equal slices), and session-scoped URLs (`/modules/prize-spin/:id/widget`).
 
 **Who:** Stream operator (configures widget, copies OBS URL for a session) and stream viewers (see wheel animation and winner). English UI per adopted `spec-app-english-only`.
 
@@ -29,12 +29,12 @@ sources: []
   - **success:** Route registered outside `ProtectedRoute` and `AppShell`; page fetches `GET /prize-spins/:prizeSpinId/widget` without auth; transparent viewport outside the card; OBS Browser Source works without dashboard session cookie; unknown id → **Session not found.**; known id with `status = 'archived'` → **Session not found.** (or equivalent 404).
 
 - **CAP-2**
-  - **intent:** The overlay renders a prize wheel from the session's active sectors inside a dark glass card, with wheel visuals matching stream-helper's OBS pie wheel.
-  - **success:** Full **pie** wheel (not donut); arc size proportional to `winPercent`; white top pointer; sector gloss and white dividers; dark hub with module icon; outer rim strokes and soft halo per `widget-design.md` and `stream-helper-wheel-reference.md`; fewer than two sectors shows empty state; card chrome (header, dimensions) unchanged.
+  - **intent:** The overlay renders a prize wheel from the session's active sectors inside a dark glass card, with wheel visuals matching stream-helper's OBS pie wheel; arc **display** follows account widget settings without changing how wins are chosen.
+  - **success:** Full **pie** wheel (not donut); when `settings.equalSectorSlices` is false, drawn arc size proportional to `winPercent`; when true, each active sector drawn with equal `360° / n` arc (stream-helper-style); white top pointer; sector gloss and white dividers; dark hub with module icon; outer rim strokes and soft halo per `widget-design.md` and `stream-helper-wheel-reference.md`; idle layout and spin **animation** use the same display geometry as drawing; fewer than two sectors shows empty state; card chrome (header, dimensions) unchanged; sector `winPercent` values in API unchanged regardless of toggle.
 
 - **CAP-3**
   - **intent:** The overlay animates a wheel spin and lands on the winning sector when a new win appears.
-  - **success:** Polling detects a new `latestWin.id`; **SPINNING** badge shows; wheel rotates 5 full turns over 3.8s with `cubic-bezier(0.12, 0.75, 0.1, 1)` and stops with winning `sectorId` under pointer; pointer bounce on settle; same win id never re-animated; geometry from `prize-spin-wheel-geometry.ts`; when `record.id` changes (navigation to another session URL), reset animation state.
+  - **success:** Polling detects a new `latestWin.id` (winner already determined server-side by `win_percent` weights); **SPINNING** badge shows; wheel rotates 5 full turns over 3.8s with `cubic-bezier(0.12, 0.75, 0.1, 1)` and stops with winning `sectorId` under pointer using **display** geometry only; pointer bounce on settle; same win id never re-animated; geometry from `prize-spin-wheel-geometry.ts` respecting `equalSectorSlices`; when `record.id` changes (navigation to another session URL), reset animation state.
 
 - **CAP-4**
   - **intent:** The overlay shows the latest winner's nick and prize after the spin completes.
@@ -45,12 +45,12 @@ sources: []
   - **success:** **Stream Widget** card on `/modules/prize-spin/:id` exposes **Open overlay** → `/modules/prize-spin/{id}/widget` in a new tab; **OBS link** copies the full origin + same path; archived session → overlay shows **Session not found.** after load or poll.
 
 - **CAP-6**
-  - **intent:** The system persists account-level widget dimensions shared by all prize spin sessions.
-  - **success:** `prize_spin_widget` row per `account_id` with `width`/`height` per `prize-spin-widget.md`; **standard default 800×800 px** on insert/bootstrap (account provision, first `POST .../prize-spins`, lazy widget GET); authenticated `GET`/`PATCH /accounts/:accountId/prize-spin-widget`; public overlay resolves settings via session account; client and server constants in `prize-spin-widget-defaults.ts` match DB defaults.
+  - **intent:** The system persists account-level widget dimensions and equal-slice display mode shared by all prize spin sessions.
+  - **success:** `prize_spin_widget` row per `account_id` with `width`, `height`, and `equal_sector_slices` per `prize-spin-widget.md`; **standard default 800×800 px** and `equal_sector_slices = true` on insert/bootstrap; authenticated `GET`/`PATCH /accounts/:accountId/prize-spin-widget`; public overlay `settings` includes `width`, `height`, and `equalSectorSlices`; client and server constants in `prize-spin-widget-defaults.ts` match DB defaults.
 
 - **CAP-7**
-  - **intent:** An operator adjusts overlay width and height and accesses overlay links from the session workspace, not the history page.
-  - **success:** `/modules/prize-spin/:id` renders a **Stream Widget** card (Monitor icon, description, **Widget settings** button, **Open overlay**, **OBS link** copy) per `prize-spin-widget.md`; **Widget settings** dialog loads account dimensions on open; valid **Save** PATCHes settings and shows success toast; `/modules/prize-spin` history page has no Stream Widget section.
+  - **intent:** An operator adjusts overlay width, height, equal-sector display, and accesses overlay links from the session workspace, not the history page.
+  - **success:** `/modules/prize-spin/:id` renders a **Stream Widget** card (Monitor icon, description, **Widget settings** button, **Open overlay**, **OBS link** copy) per `prize-spin-widget.md`; **Widget settings** dialog loads account settings on open with **Width**, **Height**, and **Equal sector slices** checkbox; valid **Save** PATCHes settings and shows success toast; `/modules/prize-spin` history page has no Stream Widget section.
 
 - **CAP-9**
   - **intent:** The public overlay API resolves a single prize spin session by id without channel slug or ucid in the URL.
@@ -65,7 +65,8 @@ sources: []
 - **Session status** — public widget serves `prize_spin.status = 'active'` only per adopted `session-status.md`; no go-live/deactivate or `is_active` singleton.
 - **Poll interval** — 5000 ms refetch on overlay page (match Bonus Buy stream widget).
 - **Widget dimensions** — width and height each 200–2400 px; **standard size 800×800 px** (account default on bootstrap and Widget settings form fallback) per `prize-spin-widget.md`; overlay reads from DB only — no URL size query params.
-- **Sector visuals** — wheel segment fill from `prize_spin_sector.color`; wheel pointer, rim, hub, and gloss per `stream-helper-wheel-reference.md`; card chrome from `prize-spin-widget-theme.ts`; no theme columns on `prize_spin_widget` in this slice.
+- **Display-only equal slices** — `equal_sector_slices` changes overlay drawing and spin animation geometry only (client); no API, DB sector weights, `POST .../spin`, or `pickWeightedSectorId` changes; session **Wheel sectors** panel and 100% rules unchanged (`spec-prize-spin-session-page`).
+- **Sector visuals** — wheel segment fill from `prize_spin_sector.color`; wheel pointer, rim, hub, and gloss per `stream-helper-wheel-reference.md`; card chrome from `prize-spin-widget-theme.ts`; no theme color columns on `prize_spin_widget` in this slice.
 - **Overlay card** — dark glass `#0A0A0CE6` with 20px radius and shadow; viewport outside card stays transparent for OBS chroma-key.
 - **Wheel implementation** — SVG in `PrizeSpinWheel.tsx` / `prize-spin-wheel-visual.ts`; reproduce stream-helper canvas look without switching to HTML canvas.
 - **Latest win only** on overlay — no scrollable winner history; full history stays on session page.
@@ -73,7 +74,8 @@ sources: []
 
 ## Non-goals
 
-- Full widget theme presets (background, accent palette, border radius) on `prize_spin_widget` — dimensions only in this slice.
+- Full widget theme presets (background, accent palette, border radius) on `prize_spin_widget` — dimensions and equal-slice toggle only in this slice.
+- Auto-adjusting sector `win_percent` when equal slices is enabled — weights stay operator-controlled on the session page.
 - WebSocket, SSE, or signed OBS token for overlay updates.
 - Kick chat integration or viewer-triggered participation on the overlay.
 - Winner history list, drop statistics, or XLSX export on the overlay page.
@@ -88,11 +90,12 @@ sources: []
 
 ## Success signal
 
-An operator opens `/modules/prize-spin/12`, opens **Widget settings** on the same page, sets 600×600, saves, and copies **OBS link** for `/modules/prize-spin/12/widget`. They enter a viewer nick and **Spin** — within one poll cycle the overlay shows a stream-helper-style white-pointer pie wheel inside the card, animates, and shows the winner banner. Archiving session 12 makes that overlay URL return **Session not found.** on next load.
+An operator opens `/modules/prize-spin/12`, opens **Widget settings**, enables **Equal sector slices**, sets 600×600, saves, and copies **OBS link** for `/modules/prize-spin/12/widget`. With uneven sector weights on the session, the overlay still shows equal pie slices. They enter a viewer nick and **Spin** — within one poll cycle the wheel animates and lands on the correct winning sector; disabling the checkbox restores arcs proportional to **win %**.
 
 ## Assumptions
 
-- Wheel segment arc angles are proportional to `winPercent` values (stream-helper reference uses equal slices only for visuals, not math).
+- Default `equal_sector_slices` is **true** (equal overlay slices out of the box); operators disable the checkbox for weighted arc display.
+- `buildWheelSectors` (or equivalent) takes `equalSectorSlices` from public overlay settings; `rotationTickIndex` uses the same arc layout as drawing.
 - Fixed overlay tokens in `prize-spin-widget-theme.ts` scale linearly from the 800×800 standard canvas via `scaleForSize` (`baseSize: 800`).
 - On initial overlay load with an existing `latestWin`, wheel rests on that sector and banner shows without replay animation.
 - `latestWin` in the public API is the newest non-archived win (`created_at DESC`).

@@ -29,6 +29,7 @@ type PrizeSpinWidgetCardProps = {
   latestWin: PrizeSpinWidgetLatestWin | null
   width: number
   height: number
+  equalSectorSlices: boolean
 }
 
 export function PrizeSpinWidgetCard({
@@ -36,10 +37,14 @@ export function PrizeSpinWidgetCard({
   latestWin,
   width,
   height,
+  equalSectorSlices,
 }: PrizeSpinWidgetCardProps) {
   const theme = useMemo(() => buildPrizeSpinWidgetTheme(width, height), [width, height])
   const scale = theme.scale
-  const geometries = useMemo(() => buildWheelSectors(sectors), [sectors])
+  const geometries = useMemo(
+    () => buildWheelSectors(sectors, { equalSectorSlices }),
+    [sectors, equalSectorSlices],
+  )
   const geometryById = useMemo(
     () => new Map(geometries.map((sector) => [sector.id, sector])),
     [geometries],

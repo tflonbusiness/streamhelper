@@ -374,6 +374,7 @@ export type PrizeSpinWidgetSettings = {
   accountId: number
   width: number
   height: number
+  equalSectorSlices: boolean
   createdAt: string
   updatedAt: string
 }
@@ -397,12 +398,14 @@ export type PrizeSpinWidgetView = {
   settings: {
     width: number
     height: number
+    equalSectorSlices: boolean
   }
 }
 
 export type PatchPrizeSpinWidgetInput = {
   width?: number
   height?: number
+  equalSectorSlices?: boolean
 }
 
 export async function fetchPrizeSpinWidget(

@@ -2,13 +2,13 @@
 
 **Source:** [novapointstrix/stream-helper](https://github.com/novapointstrix/stream-helper) — route `/wheel/overlay`, implementation `src/pages/OBSWheelOverlayPage.tsx` (`drawStaticWheel`).
 
-Prize Spin adopts this **wheel** look inside the existing dark glass card (`widget-design.md`). Card chrome, polling, and `winPercent`-proportional arcs stay Caz Agent–specific.
+Prize Spin adopts this **wheel** look inside the existing dark glass card (`widget-design.md`). Card chrome and polling stay Caz Agent–specific; arc layout defaults to **equal `360°/n`** (`equal_sector_slices` true) or **weighted by `winPercent`** when the operator turns equal slices off (`prize-spin-widget.md`).
 
 ## What to match
 
 | Element | stream-helper behavior | Prize Spin adaptation |
 |---------|------------------------|------------------------|
-| Sector shape | Full **pie** from center (`moveTo` center → arc → close) | Same; arc size from `winPercent`, not equal slices |
+| Sector shape | Full **pie** from center (`moveTo` center → arc → close) | Same; equal arcs when **Equal sector slices** is on, else ∝ `winPercent` |
 | Sector fill | `sector.color` + linear gloss overlay (white top → transparent mid → black bottom) | Per-sector `prize_spin_sector.color` + same gloss recipe |
 | Dividers | White lines center → rim, `rgba(255,255,255,0.28)`, 2px | Same at each sector boundary |
 | Outer ring | Double stroke: outer `rgba(255,255,255,0.20)` 5px; inner `rgba(0,0,0,0.20)` 2px inset | Scale with wheel diameter |
@@ -23,7 +23,7 @@ Prize Spin adopts this **wheel** look inside the existing dark glass card (`widg
 - Supabase broadcast / token URL / show-hide whole overlay lifecycle
 - Player pill **«Крутит • name»** above pointer (Prize Spin uses card header + winner banner instead)
 - `wheelAudio` tick/win sounds
-- Equal sector count math (`360 / n`)
+- Forcing equal slices without the widget setting (stream-helper always uses `360 / n`; Prize Spin uses it only when `equal_sector_slices` is true)
 - Premium preset gold rim from `WheelCanvas.tsx` `preset: 'premium'` (different from OBS canvas wheel)
 
 ## Implementation files
@@ -32,4 +32,4 @@ Prize Spin adopts this **wheel** look inside the existing dark glass card (`widg
 |------|------|
 | `app/src/components/prize-spin/widget/PrizeSpinWheel.tsx` | SVG pie wheel + pointer |
 | `app/src/lib/prize-spin-wheel-visual.ts` | Shared colors, gloss helpers, rim/hub constants aligned to reference |
-| `app/src/lib/prize-spin-wheel-geometry.ts` | Arcs, labels, spin math (unchanged contract) |
+| `app/src/lib/prize-spin-wheel-geometry.ts` | Display arcs, labels, animation landing angles; `equalSectorSlices` switches equal vs weighted **drawing** only (winner from server) |

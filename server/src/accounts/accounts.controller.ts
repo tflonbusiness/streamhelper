@@ -79,6 +79,7 @@ type SpinPrizeSpinBody = {
 type PatchPrizeSpinWidgetBody = {
   width?: number;
   height?: number;
+  equalSectorSlices?: boolean;
 };
 
 type CreateChatRollBody = {

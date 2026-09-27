@@ -884,6 +884,7 @@ export class AuthService {
       accountId: row.accountId,
       width: row.width,
       height: row.height,
+      equalSectorSlices: row.equalSectorSlices,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };
@@ -912,13 +913,14 @@ export class AuthService {
   async patchPrizeSpinWidget(
     accountId: number,
     callerUserId: number,
-    body: { width?: number; height?: number },
+    body: { width?: number; height?: number; equalSectorSlices?: boolean },
   ) {
     await this.requireAccountMember(accountId, callerUserId);
 
     const input = {
       width: body.width,
       height: body.height,
+      equalSectorSlices: body.equalSectorSlices,
     };
 
     const defined = Object.entries(input).filter(([, value]) => value !== undefined);
@@ -958,6 +960,7 @@ export class AuthService {
       settings: {
         width: view.settings.width,
         height: view.settings.height,
+        equalSectorSlices: view.settings.equalSectorSlices,
       },
     };
   }

@@ -96,7 +96,7 @@ Session header (separate from Stream Widget card):
 | `app/src/components/prize-spin/widget/PrizeSpinWheel.tsx` | SVG wheel render + CSS/SVG spin animation |
 | `app/src/components/prize-spin/widget/PrizeSpinWinnerBanner.tsx` | Winner pill with slide-in reveal |
 | `app/src/components/prize-spin/session/PrizeSpinStreamWidgetSection.tsx` | Stream Widget card on **session** page only |
-| `app/src/lib/prize-spin-wheel-geometry.ts` | Arc angles from `winPercent`; target rotation for `sectorId` |
+| `app/src/lib/prize-spin-wheel-geometry.ts` | Arc angles from `winPercent` or equal slices per `settings.equalSectorSlices`; target rotation for `sectorId` |
 | `app/src/lib/prize-spin-widget-theme.ts` | Fixed overlay tokens + `scaleForSize(width,height)` helper |
 | `app/src/api/prize-spin.ts` | `fetchPublicPrizeSpinWidget(prizeSpinId)`, go-live/deactivate, widget settings GET/PATCH |
 

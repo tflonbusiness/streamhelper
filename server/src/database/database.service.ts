@@ -29,6 +29,7 @@ import {
   chatRollWidgetInsertParams,
 } from '../chat-roll/chat-roll-widget-defaults.js';
 import {
+  PRIZE_SPIN_WIDGET_DEFAULTS,
   PRIZE_SPIN_WIDGET_INSERT_SQL,
   prizeSpinWidgetInsertParams,
 } from '../prize-spin/prize-spin-widget-defaults.js';
@@ -132,6 +133,7 @@ export type DbPrizeSpinWidget = {
   accountId: number;
   width: number;
   height: number;
+  equalSectorSlices: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -139,6 +141,7 @@ export type DbPrizeSpinWidget = {
 export type PatchPrizeSpinWidgetInput = {
   width?: number;
   height?: number;
+  equalSectorSlices?: boolean;
 };
 
 export type PatchPrizeSpinSectorInput = {
@@ -2916,6 +2919,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     account_id: string | number;
     width: string | number;
     height: string | number;
+    equal_sector_slices: boolean;
     created_at: Date;
     updated_at: Date;
   }): DbPrizeSpinWidget {
@@ -2924,6 +2928,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       accountId: toInt(row.account_id),
       width: toInt(row.width),
       height: toInt(row.height),
+      equalSectorSlices: row.equal_sector_slices,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
@@ -2944,6 +2949,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           w.account_id,
           w.width,
           w.height,
+          w.equal_sector_slices,
           w.created_at,
           w.updated_at
         FROM prize_spin_widget w
@@ -2957,7 +2963,38 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       throw new Error('NOT_FOUND');
     }
 
-    return this.mapPrizeSpinWidgetRow(row);
+    const mapped = this.mapPrizeSpinWidgetRow(row);
+    if (mapped.width === 500 && mapped.height === 500) {
+      const upgraded = await this.pool.query(
+        `
+          UPDATE prize_spin_widget w
+          SET
+            width = $2,
+            height = $3,
+            updated_at = now()
+          WHERE w.account_id = $1
+          RETURNING
+            w.id,
+            w.account_id,
+            w.width,
+            w.height,
+            w.equal_sector_slices,
+            w.created_at,
+            w.updated_at
+        `,
+        [
+          accountId,
+          PRIZE_SPIN_WIDGET_DEFAULTS.width,
+          PRIZE_SPIN_WIDGET_DEFAULTS.height,
+        ],
+      );
+      const upgradedRow = upgraded.rows[0];
+      if (upgradedRow) {
+        return this.mapPrizeSpinWidgetRow(upgradedRow);
+      }
+    }
+
+    return mapped;
   }
 
   async getPrizeSpinWidget(accountId: number): Promise<DbPrizeSpinWidget> {
@@ -2979,6 +3016,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         input.height !== undefined
           ? this.clampWidgetDimension(input.height)
           : existing.height,
+      equalSectorSlices:
+        input.equalSectorSlices !== undefined
+          ? input.equalSectorSlices
+          : existing.equalSectorSlices,
     };
 
     const result = await this.pool.query(
@@ -2987,6 +3028,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         SET
           width = $2,
           height = $3,
+          equal_sector_slices = $4,
           updated_at = now()
         WHERE w.account_id = $1
         RETURNING
@@ -2994,10 +3036,11 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           w.account_id,
           w.width,
           w.height,
+          w.equal_sector_slices,
           w.created_at,
           w.updated_at
       `,
-      [accountId, next.width, next.height],
+      [accountId, next.width, next.height, next.equalSectorSlices],
     );
 
     const row = result.rows[0];

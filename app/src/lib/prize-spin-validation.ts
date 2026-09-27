@@ -120,6 +120,7 @@ export const createPrizeSpinFormSchema = yup.object({
 export type PrizeSpinWidgetSettingsFormValues = {
   width: number
   height: number
+  equalSectorSlices: boolean
 }
 
 const widgetDimensionSchema = (label: string) =>
@@ -134,4 +135,5 @@ const widgetDimensionSchema = (label: string) =>
 export const prizeSpinWidgetSettingsFormSchema = yup.object({
   width: widgetDimensionSchema('Width'),
   height: widgetDimensionSchema('Height'),
+  equalSectorSlices: yup.boolean().required(),
 })

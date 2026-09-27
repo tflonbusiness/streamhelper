@@ -6,6 +6,7 @@ import { PrizeSpinWidgetCard } from '@/components/prize-spin/widget/PrizeSpinWid
 import { PrizeSpinWidgetLoading } from '@/components/prize-spin/widget/PrizeSpinWidgetLoading'
 import { PrizeSpinWidgetMessage } from '@/components/prize-spin/widget/PrizeSpinWidgetMessage'
 import { attachPrizeSpinWheelAudioUnlock } from '@/lib/prize-spin-wheel-audio'
+import { PRIZE_SPIN_WIDGET_DEFAULTS } from '@/lib/prize-spin-widget-defaults'
 import { PRIZE_SPIN_WIDGET_THEME } from '@/lib/prize-spin-widget-theme'
 import { usePublicPrizeSpinWidget } from '@/queries/use-prize-spins'
 
@@ -62,6 +63,10 @@ export function PrizeSpinStreamWidgetPage() {
         latestWin={view.latestWin}
         width={view.settings.width}
         height={view.settings.height}
+        equalSectorSlices={
+          view.settings.equalSectorSlices ??
+          PRIZE_SPIN_WIDGET_DEFAULTS.equalSectorSlices
+        }
       />
     </Box>
   )

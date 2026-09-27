@@ -20,14 +20,25 @@ export type WheelSectorGeometry = {
 
 const START_ANGLE = -90
 
+export type BuildWheelSectorsOptions = {
+  /** Overlay display only — does not affect server weighted spin. */
+  equalSectorSlices?: boolean
+}
+
 export function buildWheelSectors(
   sectors: WheelSectorInput[],
+  options?: BuildWheelSectorsOptions,
 ): WheelSectorGeometry[] {
+  const equalSectorSlices = options?.equalSectorSlices ?? true
+  const equalSweep =
+    sectors.length > 0 ? 360 / sectors.length : 0
   let cursor = START_ANGLE
 
   return sectors.map((sector) => {
     const winPercent = Number.parseFloat(sector.winPercent)
-    const sweep = (winPercent / 100) * 360
+    const sweep = equalSectorSlices
+      ? equalSweep
+      : (winPercent / 100) * 360
     const startAngle = cursor
     const endAngle = cursor + sweep
     const midAngle = startAngle + sweep / 2

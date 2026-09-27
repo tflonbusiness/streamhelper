@@ -1,6 +1,6 @@
 # Prize Spin — widget settings (`prize_spin_widget`)
 
-Account-level size configuration for stream overlays at `/modules/prize-spin/:prizeSpinId/widget`. **One row per account** — shared across every prize spin session. Sector colors come from `prize_spin_sector.color`; this table controls overlay canvas size only.
+Account-level overlay configuration for stream widgets at `/modules/prize-spin/:prizeSpinId/widget`. **One row per account** — shared across every prize spin session. Sector colors come from `prize_spin_sector.color`; this table controls canvas size and whether wheel arcs are equal or weighted on the overlay.
 
 **Standard dimensions:** **800×800 px** width and height — the default for new `prize_spin_widget` rows, DB column defaults, bootstrap inserts, and the Widget settings dialog when no saved settings exist (`PRIZE_SPIN_WIDGET_DEFAULTS` in app and server).
 
@@ -16,10 +16,13 @@ Table `prize_spin_widget` exists in `public` schema (brownfield). Columns today:
 | `account_id` | `BIGINT NOT NULL UNIQUE REFERENCES accounts(id) ON DELETE CASCADE` | | One row per account |
 | `width` | `INTEGER NOT NULL` | `800` | Wheel/card width px |
 | `height` | `INTEGER NOT NULL` | `800` | Wheel/card height px |
+| `equal_sector_slices` | `BOOLEAN NOT NULL` | `true` | **Display only** on overlay: equal `360°/n` arcs when `true`, drawn arcs ∝ `win_percent` when `false`; does not alter stored sector weights or spin outcome |
 | `created_at` | `TIMESTAMPTZ NOT NULL` | `now()` | Server-set on insert |
 | `updated_at` | `TIMESTAMPTZ NOT NULL` | `now()` | Server-set on PATCH |
 
 **Dimension validation:** `width` and `height` each ≥ 200 and ≤ 2400.
+
+**Migration:** add `equal_sector_slices BOOLEAN NOT NULL DEFAULT true` via new SQL migration (existing rows backfill to `true` via column default); update bootstrap `INSERT` in `prize-spin-widget-defaults.ts` to include the column (default true).
 
 **Bootstrap:** explicit insert from `server/src/prize-spin/prize-spin-widget-defaults.ts` (`ON CONFLICT (account_id) DO NOTHING`):
 
@@ -54,6 +57,7 @@ Account-scoped REST; `hasActiveMembership(accountId, userId)`.
 {
   width?: number
   height?: number
+  equalSectorSlices?: boolean
 }
 ```
 
@@ -65,6 +69,7 @@ interface PrizeSpinWidgetSettings {
   accountId: number
   width: number
   height: number
+  equalSectorSlices: boolean
   createdAt: string
   updatedAt: string
 }
@@ -112,6 +117,7 @@ interface PrizeSpinWidgetView {
   settings: {
     width: number
     height: number
+    equalSectorSlices: boolean
   }
 }
 ```
@@ -138,7 +144,7 @@ Card pattern: reuse `PrizeSpinStreamWidgetSection` (or session-scoped variant) b
 | Control | Label (English) | Behavior |
 |---------|-----------------|----------|
 | Section title | **Stream Widget** | Monitor icon; description mentions OBS overlay |
-| Widget settings | **Widget settings** | Opens MUI `Dialog` with **Width** and **Height** (px) |
+| Widget settings | **Widget settings** | Opens MUI `Dialog` with **Width**, **Height** (px), and **Equal sector slices** checkbox |
 | Open overlay | **Open overlay** | New tab → `/modules/prize-spin/{id}/widget` |
 | OBS link | **OBS link** | Copy full URL with `window.location.origin` |
 | Save (dialog) | **Save** | `PATCH /accounts/:accountId/prize-spin-widget`; success toast |

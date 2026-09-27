@@ -94,7 +94,7 @@ SVG in `PrizeSpinWheel.tsx` — visual parity with stream-helper `drawStaticWhee
 
 | Property | Rule |
 |----------|------|
-| Segments | **Pie** from center; arcs from `prize-spin-wheel-geometry.ts`; angle ∝ `winPercent` |
+| Segments | **Pie** from center; arcs from `prize-spin-wheel-geometry.ts`; equal `360°/n` when `equalSectorSlices`, else ∝ `winPercent` |
 | Start angle | First sector at 12 o'clock (−90° SVG), clockwise |
 | Outer radius | `(wheelDiameter / 2) - 24` at 500px base (scale `rimInset`) |
 | Segment fill | `sector.color` ?? `defaultSectorColor(sortOrder)` |

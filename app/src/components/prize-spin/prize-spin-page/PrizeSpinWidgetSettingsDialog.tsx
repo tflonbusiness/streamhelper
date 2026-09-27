@@ -1,10 +1,12 @@
 import {
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   Stack,
   TextField,
   Typography,
@@ -33,6 +35,7 @@ type PrizeSpinWidgetSettingsDialogProps = {
 const defaultValues: PrizeSpinWidgetSettingsFormValues = {
   width: PRIZE_SPIN_WIDGET_DEFAULTS.width,
   height: PRIZE_SPIN_WIDGET_DEFAULTS.height,
+  equalSectorSlices: PRIZE_SPIN_WIDGET_DEFAULTS.equalSectorSlices,
 }
 
 const StyledLoadingText = styled(Typography)(({ theme }) => ({
@@ -87,6 +90,7 @@ export const PrizeSpinWidgetSettingsDialog = (
       reset({
         width: widgetSettings.width,
         height: widgetSettings.height,
+        equalSectorSlices: widgetSettings.equalSectorSlices,
       })
     }
   }, [props.open, widgetSettings, reset])
@@ -101,7 +105,11 @@ export const PrizeSpinWidgetSettingsDialog = (
     props.onClose()
     reset(
       widgetSettings
-        ? { width: widgetSettings.width, height: widgetSettings.height }
+        ? {
+            width: widgetSettings.width,
+            height: widgetSettings.height,
+            equalSectorSlices: widgetSettings.equalSectorSlices,
+          }
         : defaultValues,
     )
 
@@ -112,7 +120,11 @@ export const PrizeSpinWidgetSettingsDialog = (
 
   const onSubmit = handleSubmit((values) => {
     patchMutation.mutate(
-      { width: values.width, height: values.height },
+      {
+        width: values.width,
+        height: values.height,
+        equalSectorSlices: values.equalSectorSlices,
+      },
       {
         onSuccess: () => {
           showSuccess('Widget settings saved.')
@@ -186,6 +198,21 @@ export const PrizeSpinWidgetSettingsDialog = (
                     }}
                     fullWidth
                     size="small"
+                  />
+                )}
+              />
+              <Controller
+                name="equalSectorSlices"
+                control={control}
+                render={({ field }) => (
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={field.value}
+                        onChange={(_, checked) => field.onChange(checked)}
+                      />
+                    }
+                    label="Equal sector slices"
                   />
                 )}
               />
