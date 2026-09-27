@@ -1,4 +1,5 @@
 import { Button, Card, CardContent, Stack } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import LinkIcon from '@mui/icons-material/Link'
 import MonitorIcon from '@mui/icons-material/Monitor'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
@@ -50,21 +51,22 @@ const FullWidthActionButton = styled(ActionButton)({
 export const BonusBuyStreamWidgetSection = (
   props: BonusBuyStreamWidgetSectionProps,
 ) => {
+  const { t } = useTranslation()
   const { showSuccess } = useNotification()
   const overlayHref = buildBonusBuyOverlayPath(props.bonusBuyId)
   const obsOverlayUrl = buildBonusBuyObsOverlayUrl(props.bonusBuyId)
 
   const handleCopyObsLink = async () => {
     await navigator.clipboard.writeText(obsOverlayUrl)
-    showSuccess('OBS link copied.')
+    showSuccess(t('bonusBuy.obsLinkCopied'))
   }
 
   return (
     <StyledCard elevation={0}>
       <StyledCardContent>
         <SectionHeader
-          title="Stream Widget"
-          description="OBS overlay settings and links for this bonus buy session"
+          title={t('bonusBuy.streamWidgetTitle')}
+          description={t('bonusBuy.streamWidgetDescription')}
           icon={MonitorIcon}
           iconVariant="info"
         />
@@ -75,7 +77,7 @@ export const BonusBuyStreamWidgetSection = (
             startIcon={<PaletteIcon fontSize="small" aria-hidden />}
             onClick={props.onOpenWidgetDialog}
           >
-            Widget style
+            {t('bonusBuy.widgetStyle')}
           </FullWidthActionButton>
           <FullWidthActionButton
             variant="outlined"
@@ -90,7 +92,7 @@ export const BonusBuyStreamWidgetSection = (
                 }
               : { type: 'button' })}
           >
-            Open overlay
+            {t('chatRoll.openOverlay')}
           </FullWidthActionButton>
           <FullWidthActionButton
             type="button"
@@ -99,7 +101,7 @@ export const BonusBuyStreamWidgetSection = (
             disabled={!obsOverlayUrl}
             onClick={() => void handleCopyObsLink()}
           >
-            OBS link
+            {t('chatRoll.obsLink')}
           </FullWidthActionButton>
         </StyledActionsStack>
       </StyledCardContent>

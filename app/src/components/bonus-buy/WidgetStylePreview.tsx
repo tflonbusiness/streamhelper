@@ -1,6 +1,7 @@
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { BonusBuyRecord, BonusBuySlot, BonusBuyWidgetSettings } from '@/api/bonus-buy'
 import { BonusBuyWidgetCard } from '@/components/bonus-buy/widget/BonusBuyWidgetCard'
 import { deriveBonusBuyWidgetCardProps } from '@/lib/bonus-buy-widget-presentation'
@@ -20,6 +21,7 @@ export function WidgetStylePreview({
   dimensionLabel,
   validationError,
 }: WidgetStylePreviewProps) {
+  const { t } = useTranslation()
   const cardProps = useMemo(() => {
     if (!record || !previewTheme) {
       return null
@@ -51,7 +53,7 @@ export function WidgetStylePreview({
           borderColor: 'divider',
         }}
       >
-        <Typography sx={{ color: 'text.secondary' }}>Preview unavailable</Typography>
+        <Typography sx={{ color: 'text.secondary' }}>{t('common.previewUnavailable')}</Typography>
       </Box>
     )
   }

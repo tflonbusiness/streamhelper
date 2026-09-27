@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Box,
   Button,
@@ -35,16 +36,16 @@ import {
 } from '@/queries/use-team'
 import { cardSx, inputFieldSx, mutedChipSx, toneChipSx } from '@/theme/colors'
 
-function roleBadge(role: AccountMember['role']) {
-  return role === 'owner' ? 'Owner' : 'Moderator'
-}
-
-function memberRoleChip(role: AccountMember['role'], palette: Theme['palette']) {
+function memberRoleChip(
+  role: AccountMember['role'],
+  palette: Theme['palette'],
+  t: ReturnType<typeof useTranslation>['t'],
+) {
   const isOwner = role === 'owner'
 
   return (
     <Chip
-      label={roleBadge(role)}
+      label={isOwner ? t('auth.owner') : t('team.roleModerator')}
       size="small"
       sx={toneChipSx(
         isOwner ? palette.primary.light : palette.info.light,
@@ -57,11 +58,12 @@ function memberStatusChip(
   isActive: boolean,
   palette: Theme['palette'],
   theme: Theme,
+  t: ReturnType<typeof useTranslation>['t'],
 ) {
   if (isActive) {
     return (
       <Chip
-        label="Active"
+        label={t('team.activeStatus')}
         size="small"
         sx={toneChipSx(palette.success.light)}
       />
@@ -69,11 +71,12 @@ function memberStatusChip(
   }
 
   return (
-    <Chip label="Revoked" size="small" sx={mutedChipSx(theme)} />
+    <Chip label={t('team.revoked')} size="small" sx={mutedChipSx(theme)} />
   )
 }
 
 export function TeamPage() {
+  const { t } = useTranslation()
   const theme = useTheme()
   const { user } = useAuth()
   const { showSuccess, showError } = useNotification()
@@ -96,7 +99,7 @@ export function TeamPage() {
     membersQueryError instanceof Error
       ? membersQueryError.message
       : membersQueryError
-        ? 'Could not load team'
+        ? t('team.couldNotLoadTeam')
         : null
 
   function resetCreateForm() {
@@ -123,12 +126,10 @@ export function TeamPage() {
       await createMutation.mutateAsync(moderatorName)
       setCreateDialogOpen(false)
       resetCreateForm()
-      showSuccess(
-        'Copy the link and share it with the moderator.',
-      )
+      showSuccess(t('team.createModeratorSuccess'))
     } catch (error) {
       setCreateError(
-        error instanceof Error ? error.message : 'Could not create moderator',
+        error instanceof Error ? error.message : t('team.couldNotCreateModerator'),
       )
     }
   }
@@ -143,10 +144,10 @@ export function TeamPage() {
     try {
       const joinUrl = await inviteLinkMutation.mutateAsync(member.userId)
       await navigator.clipboard.writeText(joinUrl)
-      showSuccess(`Link for ${member.name} copied.`)
+      showSuccess(t('team.linkCopied', { name: member.name }))
     } catch (error) {
       showError(
-        error instanceof Error ? error.message : 'Could not copy link',
+        error instanceof Error ? error.message : t('team.couldNotCopyLink'),
       )
     } finally {
       setCopyingMemberId(null)
@@ -160,10 +161,10 @@ export function TeamPage() {
 
     try {
       await revokeMutation.mutateAsync(member.userId)
-      showSuccess('Moderator access revoked.')
+      showSuccess(t('team.moderatorRevoked'))
     } catch (error) {
       showError(
-        error instanceof Error ? error.message : 'Could not revoke access',
+        error instanceof Error ? error.message : t('team.couldNotRevoke'),
       )
     }
   }
@@ -179,7 +180,9 @@ export function TeamPage() {
       actions.push({
         id: 'copy-link',
         label:
-          copyingMemberId === member.userId ? 'Copying…' : 'Copy link',
+          copyingMemberId === member.userId
+            ? t('common.copying')
+            : t('team.copyLink'),
         icon: <LinkIcon fontSize="small" aria-hidden />,
         disabled: copyingMemberId === member.userId,
         onClick: () => void handleCopyInviteLink(member),
@@ -188,7 +191,7 @@ export function TeamPage() {
 
     actions.push({
       id: 'revoke',
-      label: 'Revoke',
+      label: t('team.revoke'),
       icon: <PersonRemoveIcon fontSize="small" aria-hidden />,
       destructive: true,
       onClick: () => void handleRevokeModerator(member),
@@ -200,7 +203,7 @@ export function TeamPage() {
   const memberColumns: AppTableColumn<AccountMember>[] = [
     {
       id: 'name',
-      header: 'Name',
+      header: t('common.name'),
       width: '100%',
       sx: {
         fontWeight: 500,
@@ -213,23 +216,24 @@ export function TeamPage() {
     },
     {
       id: 'role',
-      header: 'Role',
+      header: t('common.role'),
       width: 100,
       minWidth: 100,
       sx: { px: 1.5, whiteSpace: 'nowrap' },
-      render: (member) => memberRoleChip(member.role, theme.palette),
+      render: (member) => memberRoleChip(member.role, theme.palette, t),
     },
     {
       id: 'status',
-      header: 'Status',
+      header: t('common.status'),
       width: 100,
       minWidth: 100,
       sx: { px: 1.5, whiteSpace: 'nowrap' },
-      render: (member) => memberStatusChip(member.isActive, theme.palette, theme),
+      render: (member) =>
+        memberStatusChip(member.isActive, theme.palette, theme, t),
     },
     {
       id: 'action',
-      header: 'Actions',
+      header: t('common.actions'),
       align: 'right',
       width: 80,
       minWidth: 80,
@@ -241,7 +245,7 @@ export function TeamPage() {
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <RowActionsMenu
               actions={actions}
-              ariaLabel={`Actions for ${member.name}`}
+              ariaLabel={t('team.actionsFor', { name: member.name })}
             />
           </Box>
         ) : null
@@ -252,8 +256,8 @@ export function TeamPage() {
   return (
     <Stack spacing={4}>
       <PageHeader
-        title="Team"
-        description="Invite moderators and manage access"
+        title={t('team.title')}
+        description={t('team.description')}
         icon={GroupIcon}
         iconVariant="info"
       />
@@ -282,10 +286,10 @@ export function TeamPage() {
               </Box>
               <Stack spacing={0.5}>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Members
+                  {t('team.membersTitle')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Manage moderator access
+                  {t('team.manageModeratorAccess')}
                 </Typography>
               </Stack>
             </Stack>
@@ -296,7 +300,7 @@ export function TeamPage() {
                 startIcon={<PersonAddIcon fontSize="small" aria-hidden />}
                 onClick={() => setCreateDialogOpen(true)}
               >
-                Add
+                {t('common.add')}
               </Button>
             ) : null}
           </Stack>
@@ -320,7 +324,7 @@ export function TeamPage() {
               />
             ) : null}
             {!loadingMembers && !membersError && members.length === 1 ? (
-              <StatusAlert tone="info">Only the owner so far</StatusAlert>
+              <StatusAlert tone="info">{t('team.onlyOwnerSoFar')}</StatusAlert>
             ) : null}
           </Stack>
         </CardContent>
@@ -332,17 +336,14 @@ export function TeamPage() {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Add</DialogTitle>
+        <DialogTitle>{t('common.add')}</DialogTitle>
         <DialogContent>
           <Stack spacing={1.5} sx={{ mb: 3 }}>
             <Typography variant="body2" color="text.secondary">
-              The moderator will get access to the team dashboard: view
-              the home page, manage streamer modules, and revoke access for
-              other moderators. Only the owner can add new members.
+              {t('team.createDialogBody1')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Enter a name and share the link — they will join the team
-              through it.
+              {t('team.createDialogBody2')}
             </Typography>
           </Stack>
           <Box
@@ -353,7 +354,7 @@ export function TeamPage() {
             <Stack spacing={2.5}>
               <TextField
                 id="moderator-name"
-                label="Name"
+                label={t('team.nameLabel')}
                 value={moderatorName}
                 onChange={(event) => setModeratorName(event.target.value)}
                 required
@@ -365,8 +366,8 @@ export function TeamPage() {
               />
               <TextField
                 id="moderator-role"
-                label="Role"
-                value="Moderator"
+                label={t('common.role')}
+                value={t('team.roleModerator')}
                 disabled
                 fullWidth
                 size="small"
@@ -385,7 +386,7 @@ export function TeamPage() {
             onClick={() => handleCreateDialogChange(false)}
             disabled={createMutation.isPending}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             type="submit"
@@ -393,7 +394,7 @@ export function TeamPage() {
             variant="contained"
             disabled={createMutation.isPending}
           >
-            {createMutation.isPending ? 'Adding…' : 'Add'}
+            {createMutation.isPending ? t('common.adding') : t('common.add')}
           </Button>
         </DialogActions>
       </Dialog>

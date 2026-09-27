@@ -1,9 +1,10 @@
 import { Grid, Stack } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { isPrizeSpinReadOnly } from '@/api/prize-spin'
-import { PageHeader } from '@/components/PageHeader'
+import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { PrizeSpinSessionArchiveDialog } from '@/components/prize-spin/session/PrizeSpinSessionArchiveDialog'
 import { PrizeSpinSessionErrorState } from '@/components/prize-spin/session/PrizeSpinSessionErrorState'
 import { PrizeSpinSessionHeaderSection } from '@/components/prize-spin/session/PrizeSpinSessionHeaderSection'
@@ -35,6 +36,7 @@ const WorkspaceColumnStack = styled(Stack)(({ theme }) => ({
 }))
 
 export const PrizeSpinSessionPage = () => {
+  const { t } = useTranslation()
   const { id } = useParams()
   const prizeSpinId = Number.parseInt(id ?? '', 10)
   const isValidId = Number.isFinite(prizeSpinId)
@@ -51,11 +53,11 @@ export const PrizeSpinSessionPage = () => {
   const sectors = session?.sectors ?? []
   const wins = session?.wins ?? []
   const error = !isValidId
-    ? 'Session not found'
+    ? t('prizeSpin.sessionNotFound')
     : sessionError instanceof Error
       ? sessionError.message
       : sessionError
-        ? 'Could not load prize spin session'
+        ? t('prizeSpin.couldNotLoadSession')
         : null
 
   useSetBreadcrumbLabel(record ? `${record.title} #${record.id}` : null)
@@ -67,7 +69,7 @@ export const PrizeSpinSessionPage = () => {
   if (error || !record || user?.accountId === undefined) {
     return (
       <PrizeSpinSessionErrorState
-        message={error ?? 'Session not found'}
+        message={error ?? t('prizeSpin.sessionNotFound')}
       />
     )
   }
@@ -77,12 +79,7 @@ export const PrizeSpinSessionPage = () => {
 
   return (
     <PageStack>
-      <PageHeader
-        title={prizeSpinModule.name}
-        description={prizeSpinModule.description}
-        icon={prizeSpinModule.icon}
-        iconVariant={prizeSpinModule.iconVariant}
-      />
+      <ModuleSessionPageHeader module={prizeSpinModule} />
       <ContentGrid container spacing={3}>
         <Grid size={{ xs: 12, lg: 9 }}>
           <MainColumnStack>

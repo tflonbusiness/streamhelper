@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   Dialog,
@@ -33,6 +34,7 @@ const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
 export const PrizeSpinSessionArchiveDialog = (
   props: PrizeSpinSessionArchiveDialogProps,
 ) => {
+  const { t } = useTranslation()
   const { showSuccess, showError } = useNotification()
   const archiveMutation = useArchivePrizeSpinSession(
     props.accountId,
@@ -58,13 +60,13 @@ export const PrizeSpinSessionArchiveDialog = (
 
     archiveMutation.mutate(undefined, {
       onSuccess: () => {
-        showSuccess('Session archived.')
+        showSuccess(t('bonusBuy.sessionArchived'))
         handleClose()
         archiveMutation.reset()
       },
       onError: (error) => {
         showError(
-          error instanceof Error ? error.message : 'Could not archive session',
+          error instanceof Error ? error.message : t('prizeSpin.couldNotArchiveSession'),
         )
       },
     })
@@ -72,16 +74,17 @@ export const PrizeSpinSessionArchiveDialog = (
 
   return (
     <Dialog open={props.open} onClose={handleClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Archive session?</DialogTitle>
+      <DialogTitle>{t('prizeSpin.archiveSessionTitle')}</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
-          <b>{props.record?.title}</b> will be removed from the active list. Archived
-          sessions can be opened for review but not edited.
+          {t('prizeSpin.archiveListIntro', { title: props.record?.title ?? '' })}
+          {' '}
+          {t('prizeSpin.archiveListOutro')}
         </StyledDescription>
       </DialogContent>
       <StyledDialogActions>
         <Button type="button" variant="outlined" onClick={handleClose}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           type="button"
@@ -93,7 +96,7 @@ export const PrizeSpinSessionArchiveDialog = (
           loadingPosition="start"
           disabled={!props.record}
         >
-          Archive
+          {t('common.archive')}
         </Button>
       </StyledDialogActions>
     </Dialog>

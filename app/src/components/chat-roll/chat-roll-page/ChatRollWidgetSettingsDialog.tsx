@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Box,
   Button,
@@ -16,7 +18,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { useNotification } from '@/context/NotificationContext'
 import {
   type ChatRollWidgetSettingsFormValues,
-  chatRollWidgetSettingsFormSchema,
+  createChatRollWidgetSettingsFormSchema,
 } from '@/lib/chat-roll-validation'
 import {
   useChatRollWidget,
@@ -60,6 +62,11 @@ const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
 export const ChatRollWidgetSettingsDialog = (
   props: ChatRollWidgetSettingsDialogProps,
 ) => {
+  const { t } = useTranslation()
+  const validationSchema = useMemo(
+    () => createChatRollWidgetSettingsFormSchema(t),
+    [t],
+  )
   const { showSuccess, showError } = useNotification()
 
   const {
@@ -77,7 +84,7 @@ export const ChatRollWidgetSettingsDialog = (
     formState: { isValid },
   } = useForm({
     defaultValues,
-    resolver: yupResolver(chatRollWidgetSettingsFormSchema),
+    resolver: yupResolver(validationSchema),
     mode: 'onChange',
   })
 
@@ -104,22 +111,22 @@ export const ChatRollWidgetSettingsDialog = (
   const onSubmit = handleSubmit((values) => {
     patchMutation.mutate(values, {
       onSuccess: () => {
-        showSuccess('Widget settings saved.')
+        showSuccess(t('chatRoll.widgetSettingsSaved'))
         handleClose()
       },
-      onError: () => showError('Could not save widget settings.'),
+      onError: () => showError(t('chatRoll.couldNotSaveWidgetSettings')),
     })
   })
 
   return (
     <Dialog open={props.open} onClose={handleClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Widget Settings</DialogTitle>
+      <DialogTitle>{t('chatRoll.widgetSettingsTitle')}</DialogTitle>
       <DialogContent>
         {isLoading ? (
-          <StyledLoadingText variant="body2">Loading settings…</StyledLoadingText>
+          <StyledLoadingText variant="body2">{t('common.loadingSettings')}</StyledLoadingText>
         ) : loadError ? (
           <StyledLoadingText variant="body2">
-            Could not load widget settings.
+            {t('chatRoll.couldNotLoadWidgetSettings')}
           </StyledLoadingText>
         ) : (
           <Box component="form" id="chat-roll-widget-settings-form" onSubmit={onSubmit}>
@@ -130,7 +137,7 @@ export const ChatRollWidgetSettingsDialog = (
                 render={({ field, fieldState }) => (
                   <StyledSizeField
                     {...field}
-                    label="Width (px)"
+                    label={t('common.widthPx')}
                     type="number"
                     size="small"
                     fullWidth
@@ -148,7 +155,7 @@ export const ChatRollWidgetSettingsDialog = (
                 render={({ field, fieldState }) => (
                   <StyledSizeField
                     {...field}
-                    label="Height (px)"
+                    label={t('common.heightPx')}
                     type="number"
                     size="small"
                     fullWidth
@@ -166,7 +173,7 @@ export const ChatRollWidgetSettingsDialog = (
       </DialogContent>
       <StyledDialogActions>
         <Button type="button" variant="outlined" onClick={handleClose}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           type="submit"
@@ -176,7 +183,7 @@ export const ChatRollWidgetSettingsDialog = (
           loadingPosition="start"
           disabled={!isValid || isLoading || Boolean(loadError)}
         >
-          Save
+          {t('common.save')}
         </Button>
       </StyledDialogActions>
     </Dialog>

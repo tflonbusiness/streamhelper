@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next'
+
 export type ChatRollRoleId =
   | 'moderator'
   | 'vip'
@@ -71,6 +73,29 @@ export const CHAT_ROLL_ROLE_CHIP_LABEL: Record<ChatRollRoleId, string> = {
   og: 'OG',
   channel_follower: 'Follower',
   paid_subscriber: 'Sub',
+}
+
+const CHAT_ROLL_ROLE_IDS: ChatRollRoleId[] = [
+  'moderator',
+  'vip',
+  'og',
+  'channel_follower',
+  'paid_subscriber',
+]
+
+export function getChatRollRoleMeta(t: TFunction) {
+  return CHAT_ROLL_ROLE_IDS.map((id) => ({
+    id,
+    label: t(`chatRoll.roles.${id}.label`),
+    description: t(`chatRoll.roles.${id}.description`),
+  }))
+}
+
+export function getChatRollRoleChipLabel(
+  t: TFunction,
+  roleId: ChatRollRoleId,
+): string {
+  return t(`chatRoll.roles.${roleId}.chip`)
 }
 
 const DEFAULT_ROLE_SETTINGS: Record<ChatRollRoleId, ChatRollRoleSetting> = {

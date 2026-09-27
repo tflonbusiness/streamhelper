@@ -1,3 +1,4 @@
+import i18n from '@/i18n/init-i18n'
 const jsonHeaders = {
   'Content-Type': 'application/json',
 }
@@ -163,7 +164,7 @@ export async function fetchBonusBuy(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not load bonus buy'),
+      await readErrorMessage(response, i18n.t('errors.api.loadBonusBuy')),
     )
   }
 
@@ -199,7 +200,7 @@ export async function fetchBonusBuys(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not load bonus buy history'),
+      await readErrorMessage(response, i18n.t('errors.api.loadBonusBuyHistory')),
     )
   }
 
@@ -225,7 +226,7 @@ export async function createBonusBuy(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not create bonus buy'),
+      await readErrorMessage(response, i18n.t('errors.api.createBonusBuy')),
     )
   }
 
@@ -249,7 +250,7 @@ export async function patchBonusBuy(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not update bonus buy session'),
+      await readErrorMessage(response, i18n.t('errors.api.updateBonusBuySession')),
     )
   }
 
@@ -270,7 +271,7 @@ export async function archiveBonusBuy(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not archive bonus buy session'),
+      await readErrorMessage(response, i18n.t('errors.api.archiveBonusBuySession')),
     )
   }
 
@@ -288,7 +289,7 @@ export async function fetchBonusBuySlots(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not load bonus buy slots'),
+      await readErrorMessage(response, i18n.t('errors.api.loadBonusBuySlots')),
     )
   }
 
@@ -318,7 +319,7 @@ export async function createBonusBuySlot(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not add slot'),
+      await readErrorMessage(response, i18n.t('errors.api.addSlot')),
     )
   }
 
@@ -343,7 +344,7 @@ export async function patchBonusBuySlot(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not update slot'),
+      await readErrorMessage(response, i18n.t('errors.api.updateSlot')),
     )
   }
 
@@ -365,7 +366,7 @@ export async function archiveBonusBuySlot(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not delete slot'),
+      await readErrorMessage(response, i18n.t('errors.api.deleteSlot')),
     )
   }
 }
@@ -383,7 +384,7 @@ export async function fetchBonusBuyWidget(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not load widget settings'),
+      await readErrorMessage(response, i18n.t('errors.api.loadWidgetSettings')),
     )
   }
 
@@ -407,7 +408,7 @@ export async function patchBonusBuyWidget(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not update widget settings'),
+      await readErrorMessage(response, i18n.t('errors.api.updateWidgetSettings')),
     )
   }
 
@@ -424,7 +425,7 @@ export async function fetchBonusBuyWidgetPresets(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not load widget presets'),
+      await readErrorMessage(response, i18n.t('errors.api.loadWidgetPresets')),
     )
   }
 
@@ -447,7 +448,7 @@ export async function upsertBonusBuyWidgetCustomPreset(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not save custom widget preset'),
+      await readErrorMessage(response, i18n.t('errors.api.saveWidgetPreset')),
     )
   }
 
@@ -467,7 +468,7 @@ export async function deleteBonusBuyWidgetCustomPreset(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not delete custom widget preset'),
+      await readErrorMessage(response, i18n.t('errors.api.deleteWidgetPreset')),
     )
   }
 }
@@ -487,7 +488,7 @@ export async function fetchPublicBonusBuyWidget(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not load widget'),
+      await readErrorMessage(response, i18n.t('errors.api.loadWidget')),
     )
   }
 
@@ -502,13 +503,17 @@ export function isBonusBuySlotPlaying(slot: Pick<BonusBuySlot, 'status'>): boole
   return slot.status === 'playing'
 }
 
-export function formatBonusBuySlotStatus(status: BonusBuySlotStatus): string {
+export function formatBonusBuySlotStatus(
+  status: BonusBuySlotStatus,
+  translate?: (key: string) => string,
+): string {
+  const t = translate ?? ((key: string) => i18n.t(key))
   switch (status) {
     case 'playing':
-      return 'Now Playing'
+      return t('bonusBuy.slotStatusPlaying')
     case 'archived':
-      return 'Archived'
+      return t('bonusBuy.slotStatusArchived')
     case 'pending':
-      return 'Pending'
+      return t('bonusBuy.slotStatusPending')
   }
 }

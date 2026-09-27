@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   Dialog,
@@ -32,6 +33,7 @@ const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
 export const BonusBuyDeleteSlotDialog = (
   props: BonusBuyDeleteSlotDialogProps,
 ) => {
+  const { t } = useTranslation()
   const { showSuccess, showError } = useNotification()
   const archiveSlotMutation = useArchiveBonusBuySlot(
     props.accountId,
@@ -57,13 +59,13 @@ export const BonusBuyDeleteSlotDialog = (
 
     archiveSlotMutation.mutate(props.slot.id, {
       onSuccess: () => {
-        showSuccess('Slot deleted.')
+        showSuccess(t('bonusBuy.slotDeleted'))
         handleClose()
         archiveSlotMutation.reset()
       },
       onError: (error) => {
         showError(
-          error instanceof Error ? error.message : 'Could not delete slot',
+          error instanceof Error ? error.message : t('bonusBuy.couldNotDeleteSlot'),
         )
       },
     })
@@ -76,7 +78,7 @@ export const BonusBuyDeleteSlotDialog = (
       maxWidth="xs"
       fullWidth
     >
-      <DialogTitle>Delete slot?</DialogTitle>
+      <DialogTitle>{t('bonusBuy.deleteSlotTitle')}</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
           Delete the <b>"{props.slot?.name}"</b> slot from this session?

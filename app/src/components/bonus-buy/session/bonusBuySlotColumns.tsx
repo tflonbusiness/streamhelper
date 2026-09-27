@@ -5,6 +5,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import { alpha, type Theme } from '@mui/material/styles'
+import type { TFunction } from 'i18next'
 import type { BonusBuySlot } from '@/api/bonus-buy'
 import { isBonusBuySlotPlaying } from '@/api/bonus-buy'
 import type { AppTableColumn } from '@/components/AppTable'
@@ -27,19 +28,22 @@ type BuildBonusBuySlotColumnsOptions = {
   onDeleteSlot: (slot: BonusBuySlot) => void
 }
 
-export function buildBonusBuySlotColumns({
-  theme,
-  currencyCode,
-  onCopySlotName,
-  onSetPlaying,
-  onEditSlot,
-  onDeleteSlot,
-}: BuildBonusBuySlotColumnsOptions): AppTableColumn<BonusBuySlot>[] {
+export function buildBonusBuySlotColumns(
+  t: TFunction,
+  {
+    theme,
+    currencyCode,
+    onCopySlotName,
+    onSetPlaying,
+    onEditSlot,
+    onDeleteSlot,
+  }: BuildBonusBuySlotColumnsOptions,
+): AppTableColumn<BonusBuySlot>[] {
 
   return [
     {
       id: 'slotName',
-      header: 'Slot Name',
+      header: t('table.slotName'),
       width: '100%',
       sx: {
         fontWeight: 500,
@@ -64,7 +68,7 @@ export function buildBonusBuySlotColumns({
           </Box>
           <IconButton
             size="small"
-            aria-label={`Copy ${slot.name}`}
+            aria-label={t('table.copySlotAria', { name: slot.name })}
             onClick={(event) => {
               event.stopPropagation()
               onCopySlotName(slot)
@@ -84,7 +88,7 @@ export function buildBonusBuySlotColumns({
           </IconButton>
           {isBonusBuySlotPlaying(slot) ? (
             <Chip
-              label="Now Playing"
+              label={t('common.nowPlaying')}
               size="small"
               sx={{
                 flexShrink: 0,
@@ -97,20 +101,20 @@ export function buildBonusBuySlotColumns({
     },
     {
       id: 'purchase',
-      header: 'Purchase',
+      header: t('common.purchase'),
       width: 110,
       render: (slot) =>
         formatBonusBuyMoney(slot.purchaseAmount, currencyCode),
     },
     {
       id: 'win',
-      header: 'Win',
+      header: t('common.win'),
       width: 100,
       render: (slot) => {
         if (slot.winAmount == null) {
           return (
             <Box component="span" sx={{ color: 'text.secondary' }}>
-              Pending
+              {t('common.pending')}
             </Box>
           )
         }
@@ -128,13 +132,13 @@ export function buildBonusBuySlotColumns({
     },
     {
       id: 'multiplier',
-      header: 'Multiplier',
+      header: t('table.multiplier'),
       width: 100,
       render: (slot) => {
         if (!slot.multiplier) {
           return (
             <Box component="span" sx={{ color: 'text.secondary' }}>
-              —
+              {t('common.emDash')}
             </Box>
           )
         }
@@ -152,7 +156,7 @@ export function buildBonusBuySlotColumns({
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('common.actions'),
       width: 112,
       minWidth: 112,
       align: 'right',
@@ -163,8 +167,8 @@ export function buildBonusBuySlotColumns({
             size="small"
             aria-label={
               isBonusBuySlotPlaying(slot)
-                ? `Clear now playing for ${slot.name}`
-                : `Set ${slot.name} as now playing`
+                ? t('table.clearNowPlayingAria', { name: slot.name })
+                : t('table.setNowPlayingAria', { name: slot.name })
             }
             aria-pressed={isBonusBuySlotPlaying(slot)}
             onClick={() => onSetPlaying(slot, !isBonusBuySlotPlaying(slot))}
@@ -181,7 +185,7 @@ export function buildBonusBuySlotColumns({
           </IconButton>
           <IconButton
             size="small"
-            aria-label={`Edit ${slot.name}`}
+            aria-label={t('table.editSlotAria', { name: slot.name })}
             onClick={() => onEditSlot(slot)}
             sx={slotActionIconButtonSx('info', theme)}
           >
@@ -189,7 +193,7 @@ export function buildBonusBuySlotColumns({
           </IconButton>
           <IconButton
             size="small"
-            aria-label={`Delete ${slot.name}`}
+            aria-label={t('table.deleteSlotAria', { name: slot.name })}
             onClick={() => onDeleteSlot(slot)}
             sx={slotActionIconButtonSx('error', theme)}
           >

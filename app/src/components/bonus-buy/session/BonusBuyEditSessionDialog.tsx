@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   Dialog,
@@ -33,6 +34,7 @@ const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
 export const BonusBuyEditSessionDialog = (
   props: BonusBuyEditSessionDialogProps,
 ) => {
+  const { t } = useTranslation()
   const { showSuccess, showError } = useNotification()
   const patchSessionMutation = usePatchBonusBuy(props.accountId, props.bonusBuyId)
   const [isFormValid, setIsFormValid] = useState(false)
@@ -62,13 +64,13 @@ export const BonusBuyEditSessionDialog = (
       },
       {
         onSuccess: () => {
-          showSuccess('Session updated.')
+          showSuccess(t('bonusBuy.sessionUpdated'))
           handleClose()
           patchSessionMutation.reset()
         },
         onError: (error) => {
           showError(
-            error instanceof Error ? error.message : 'Could not update session',
+            error instanceof Error ? error.message : t('bonusBuy.couldNotUpdateSession'),
           )
         },
       },
@@ -77,7 +79,7 @@ export const BonusBuyEditSessionDialog = (
 
   return (
     <Dialog open={props.open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Edit</DialogTitle>
+      <DialogTitle>{t('common.edit')}</DialogTitle>
       <DialogContent>
         <BonusBuyEditSessionForm
           formId={FORM_ID}

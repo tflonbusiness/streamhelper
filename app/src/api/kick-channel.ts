@@ -1,3 +1,4 @@
+import i18n from '@/i18n/init-i18n'
 export type KickChannelDto = {
   slug: string
   streamTitle: string | null
@@ -45,7 +46,7 @@ export async function fetchKickChannel(accountId: number): Promise<KickChannelDt
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not load Kick channel'),
+      await readErrorMessage(response, i18n.t('errors.api.loadKickChannel')),
     )
   }
 

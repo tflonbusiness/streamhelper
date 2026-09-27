@@ -1,4 +1,6 @@
 import { Box, Stack, TextField } from '@mui/material'
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { styled } from '@mui/material/styles'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useEffect } from 'react'
@@ -6,7 +8,7 @@ import { Controller, useForm } from 'react-hook-form'
 import type { BonusBuySlot } from '@/api/bonus-buy'
 import {
   type EditBonusBuySlotFormValues,
-  editBonusBuySlotFormSchema,
+  createEditBonusBuySlotFormSchema,
 } from '@/lib/bonus-buy-validation'
 import { buildBonusBuyMoneyInputSlotProps } from '@/components/bonus-buy/bonus-buy-money-input'
 import { BonusBuySlotNameField } from '@/components/bonus-buy/BonusBuySlotNameField'
@@ -39,6 +41,11 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
 }))
 
 export const BonusBuyEditSlotForm = (props: BonusBuyEditSlotFormProps) => {
+  const { t } = useTranslation()
+  const validationSchema = useMemo(
+    () => createEditBonusBuySlotFormSchema(t),
+    [t],
+  )
   const {
     control,
     handleSubmit,
@@ -46,7 +53,7 @@ export const BonusBuyEditSlotForm = (props: BonusBuyEditSlotFormProps) => {
     formState: { isValid },
   } = useForm({
     defaultValues: emptyValues,
-    resolver: yupResolver(editBonusBuySlotFormSchema),
+    resolver: yupResolver(validationSchema),
     mode: 'onChange',
   })
 
@@ -92,7 +99,7 @@ export const BonusBuyEditSlotForm = (props: BonusBuyEditSlotFormProps) => {
           render={({ field, fieldState }) => (
             <StyledTextField
               {...field}
-              label="Username/Note"
+              label={t('common.usernameNote')}
               error={Boolean(fieldState.error)}
               helperText={fieldState.error?.message}
               fullWidth
@@ -105,7 +112,7 @@ export const BonusBuyEditSlotForm = (props: BonusBuyEditSlotFormProps) => {
           render={({ field, fieldState }) => (
             <StyledTextField
               {...field}
-              label="Purchase"
+              label={t('common.purchase')}
               type="text"
               onChange={(event) =>
                 field.onChange(sanitizeDecimalInput(event.target.value))
@@ -123,9 +130,9 @@ export const BonusBuyEditSlotForm = (props: BonusBuyEditSlotFormProps) => {
           render={({ field, fieldState }) => (
             <StyledTextField
               {...field}
-              label="Win"
+              label={t('common.win')}
               type="text"
-              placeholder="Leave empty if pending"
+              placeholder={t('bonusBuy.winEmptyIfPending')}
               onChange={(event) =>
                 field.onChange(sanitizeDecimalInput(event.target.value))
               }

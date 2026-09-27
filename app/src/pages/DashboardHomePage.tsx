@@ -1,4 +1,5 @@
 import { Stack } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import { DashboardTariffCard } from '@/components/DashboardTariffCard'
 import { DashboardWelcomeBanner } from '@/components/DashboardWelcomeBanner'
@@ -7,14 +8,15 @@ import { PageHeader } from '@/components/PageHeader'
 import { useAuth } from '@/context/AuthContext'
 
 export function DashboardHomePage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const hasAccount = Boolean(user?.accountId)
 
   return (
     <Stack spacing={2.5}>
       <PageHeader
-        title="Home"
-        description="Team overview and activity"
+        title={t('dashboard.title')}
+        description={t('dashboard.description')}
         icon={DashboardIcon}
         iconVariant="primary"
       />

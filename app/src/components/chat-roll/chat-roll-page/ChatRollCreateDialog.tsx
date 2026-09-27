@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Box,
   Button,
@@ -53,6 +55,8 @@ const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
 }))
 
 export const ChatRollCreateDialog = (props: ChatRollCreateDialogProps) => {
+  const { t } = useTranslation()
+  const validationSchema = useMemo(() => createChatRollFormSchema(t), [t])
   const { showSuccess, showError } = useNotification()
   const createMutation = useCreateChatRoll(props.accountId)
 
@@ -63,7 +67,7 @@ export const ChatRollCreateDialog = (props: ChatRollCreateDialogProps) => {
     formState: { isValid },
   } = useForm({
     defaultValues,
-    resolver: yupResolver(createChatRollFormSchema),
+    resolver: yupResolver(validationSchema),
     mode: 'onChange',
   })
 
@@ -79,18 +83,18 @@ export const ChatRollCreateDialog = (props: ChatRollCreateDialogProps) => {
   const onSubmit = handleSubmit((values) => {
     createMutation.mutate(values.title, {
       onSuccess: () => {
-        showSuccess('Chat roll session created.')
+        showSuccess(t('chatRoll.sessionCreated'))
         props.onCreated?.()
         handleClose()
         createMutation.reset()
       },
-      onError: () => showError('Could not create chat roll session.'),
+      onError: () => showError(t('chatRoll.couldNotCreateSession')),
     })
   })
 
   return (
     <Dialog open={props.open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>New Session</DialogTitle>
+      <DialogTitle>{t('chatRoll.createDialogTitle')}</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
           Create a chat roll session with a title for your stream.
@@ -104,7 +108,7 @@ export const ChatRollCreateDialog = (props: ChatRollCreateDialogProps) => {
                 <StyledTitleField
                   {...field}
                   id="chat-roll-title"
-                  label="Title"
+                  label={t('common.title')}
                   error={Boolean(fieldState.error)}
                   helperText={fieldState.error?.message}
                   autoFocus

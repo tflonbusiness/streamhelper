@@ -2,6 +2,7 @@ import { IconButton, Stack } from '@mui/material'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { alpha, styled, type Theme } from '@mui/material/styles'
+import type { TFunction } from 'i18next'
 import type { PrizeSpinWin } from '@/api/prize-spin'
 import type { AppTableColumn } from '@/components/AppTable'
 import { PrizeSpinSessionTruncatedText } from '@/components/prize-spin/session/PrizeSpinSessionTruncatedText'
@@ -40,16 +41,19 @@ type BuildPrizeSpinWinnerColumnsOptions = {
   onDelete: (winId: number) => void
 }
 
-export function buildPrizeSpinWinnerColumns({
-  theme,
-  readOnly,
-  onCopyNick,
-  onDelete,
-}: BuildPrizeSpinWinnerColumnsOptions): AppTableColumn<PrizeSpinWin>[] {
+export function buildPrizeSpinWinnerColumns(
+  t: TFunction,
+  {
+    theme,
+    readOnly,
+    onCopyNick,
+    onDelete,
+  }: BuildPrizeSpinWinnerColumnsOptions,
+): AppTableColumn<PrizeSpinWin>[] {
   return [
     {
       id: 'nick',
-      header: 'Nick',
+      header: t('common.nick'),
       width: '50%',
       sx: nickColumnSx,
       render: (win) => (
@@ -58,7 +62,7 @@ export function buildPrizeSpinWinnerColumns({
     },
     {
       id: 'prize',
-      header: 'Prize',
+      header: t('table.prize'),
       width: '50%',
       sx: truncatedColumnSx,
       render: (win) => (
@@ -76,7 +80,7 @@ export function buildPrizeSpinWinnerColumns({
           <IconButton
             type="button"
             size="small"
-            aria-label={`Copy ${win.participantNick}`}
+            aria-label={t('table.copyNickAria', { nick: win.participantNick })}
             onClick={(event) => {
               event.stopPropagation()
               onCopyNick(win)
@@ -88,7 +92,7 @@ export function buildPrizeSpinWinnerColumns({
           <DeleteButton
             type="button"
             size="small"
-            aria-label={`Remove ${win.participantNick}`}
+            aria-label={t('table.removeNickAria', { nick: win.participantNick })}
             disabled={readOnly}
             onClick={(event) => {
               event.stopPropagation()

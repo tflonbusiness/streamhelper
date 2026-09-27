@@ -1,4 +1,5 @@
 import DownloadIcon from '@mui/icons-material/Download'
+import { useTranslation } from 'react-i18next'
 import Button from '@mui/material/Button'
 import { useTheme } from '@mui/material/styles'
 import { useMemo, useState } from 'react'
@@ -29,6 +30,7 @@ type BonusBuySessionSlotsSectionProps = {
 export const BonusBuySessionSlotsSection = (
   props: BonusBuySessionSlotsSectionProps,
 ) => {
+  const { t } = useTranslation()
   const theme = useTheme()
   const { showSuccess, showError } = useNotification()
   const patchSlotMutation = usePatchBonusBuySlot(props.accountId, props.bonusBuyId)
@@ -53,9 +55,9 @@ export const BonusBuySessionSlotsSection = (
   async function handleCopySlotName(slot: BonusBuySlot) {
     try {
       await navigator.clipboard.writeText(slot.name)
-      showSuccess('Slot name copied.')
+      showSuccess(t('bonusBuy.slotNameCopied'))
     } catch {
-      showError('Could not copy slot name.')
+      showError(t('bonusBuy.couldNotCopySlotName'))
     }
   }
 
@@ -68,12 +70,12 @@ export const BonusBuySessionSlotsSection = (
 
     try {
       downloadBonusBuySlotsXlsx(props.slots, props.bonusBuyId)
-      showSuccess('Bonus list exported.')
+      showSuccess(t('bonusBuy.bonusListExported'))
     } catch (exportError) {
       showError(
         exportError instanceof Error
           ? exportError.message
-          : 'Could not export bonus list',
+          : t('bonusBuy.couldNotExportBonusList'),
       )
     } finally {
       setIsExportingSlots(false)
@@ -86,19 +88,21 @@ export const BonusBuySessionSlotsSection = (
         slotId: slot.id,
         body: { status: playing ? 'playing' : 'pending' },
       })
-      showSuccess(playing ? 'Slot set as now playing.' : 'Now playing cleared.')
+      showSuccess(
+        playing ? t('bonusBuy.nowPlayingSet') : t('bonusBuy.nowPlayingCleared'),
+      )
     } catch (playingError) {
       showError(
         playingError instanceof Error
           ? playingError.message
-          : 'Could not update playing state',
+          : t('bonusBuy.couldNotUpdatePlaying'),
       )
     }
   }
 
   const slotColumns = useMemo(
     () =>
-      buildBonusBuySlotColumns({
+      buildBonusBuySlotColumns(t, {
         theme,
         currencyCode: props.currencyCode,
         onCopySlotName: (slot) => {
@@ -110,7 +114,7 @@ export const BonusBuySessionSlotsSection = (
         onEditSlot: setEditSlot,
         onDeleteSlot: setDeleteSlot,
       }),
-    [theme, props.currencyCode],
+    [t, theme, props.currencyCode],
   )
 
   return (
@@ -118,8 +122,8 @@ export const BonusBuySessionSlotsSection = (
       <StyledSessionCard elevation={0}>
         <StyledSessionCardContent>
           <SectionHeader
-            title={`Bonus list (${props.slots.length})`}
-            description="Track purchases, wins, and which slot is live on the overlay"
+            title={t('bonusBuy.bonusListCount', { count: props.slots.length })}
+            description={t('bonusBuy.slotsDescription')}
             icon={sectionTableIcon}
             iconVariant="secondary"
             action={
@@ -132,7 +136,7 @@ export const BonusBuySessionSlotsSection = (
                   disabled={isExportingSlots}
                   onClick={handleDownloadSlots}
                 >
-                  {isExportingSlots ? 'Downloading…' : 'Download XLSX'}
+                  {isExportingSlots ? t('common.downloading') : t('common.downloadXlsx')}
                 </Button>
               ) : null
             }
@@ -141,7 +145,7 @@ export const BonusBuySessionSlotsSection = (
             columns={slotColumns}
             rows={props.slots}
             getRowKey={(slot) => slot.id}
-            emptyMessage="No bonuses added yet."
+            emptyMessage={t('bonusBuy.noBonusesYet')}
             getRowSx={(slot) =>
               isBonusBuySlotPlaying(slot) ? playingSlotRowSx(theme) : undefined
             }
@@ -150,8 +154,8 @@ export const BonusBuySessionSlotsSection = (
               onToggle: (slot) => toggleSlotExpanded(slot.id),
               ariaLabel: (slot) =>
                 expandedSlotIds.has(slot.id)
-                  ? `Collapse details for ${slot.name}`
-                  : `Expand details for ${slot.name}`,
+                  ? t('common.collapseDetailsAria', { title: slot.name })
+                  : t('common.expandDetailsAria', { title: slot.name }),
               renderDetail: (slot) => <BonusBuySlotExpandedDetails slot={slot} />,
             }}
           />

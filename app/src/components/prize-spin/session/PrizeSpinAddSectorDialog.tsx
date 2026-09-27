@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Box,
   Button,
@@ -49,6 +50,7 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
 }))
 
 export const PrizeSpinAddSectorDialog = (props: PrizeSpinAddSectorDialogProps) => {
+  const { t } = useTranslation()
   const { showSuccess, showError } = useNotification()
   const createMutation = useCreatePrizeSpinSector(
     props.accountId,
@@ -64,11 +66,11 @@ export const PrizeSpinAddSectorDialog = (props: PrizeSpinAddSectorDialogProps) =
   const resolver = useMemo(
     () =>
       yupResolver(
-        createPrizeSpinSectorFormSchema({
+        createPrizeSpinSectorFormSchema(t, {
           existingTotal: props.existingTotalWinPercent,
         }),
       ),
-    [props.existingTotalWinPercent],
+    [props.existingTotalWinPercent, t],
   )
 
   const {
@@ -104,13 +106,13 @@ export const PrizeSpinAddSectorDialog = (props: PrizeSpinAddSectorDialogProps) =
   const onSubmit = handleSubmit((values) => {
     createMutation.mutate(values, {
       onSuccess: () => {
-        showSuccess('Sector added.')
+        showSuccess(t('prizeSpin.sectorAdded'))
         handleClose()
         createMutation.reset()
       },
       onError: (error) => {
         showError(
-          error instanceof Error ? error.message : 'Could not add sector',
+          error instanceof Error ? error.message : t('prizeSpin.couldNotAddSector'),
         )
       },
     })
@@ -118,7 +120,7 @@ export const PrizeSpinAddSectorDialog = (props: PrizeSpinAddSectorDialogProps) =
 
   return (
     <Dialog open={props.open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Add sector</DialogTitle>
+      <DialogTitle>{t('prizeSpin.addSector')}</DialogTitle>
       <DialogContent>
         <Box
           component="form"
@@ -132,8 +134,8 @@ export const PrizeSpinAddSectorDialog = (props: PrizeSpinAddSectorDialogProps) =
               render={({ field, fieldState }) => (
                 <StyledTextField
                   {...field}
-                  label="Label"
-                  placeholder="Prize label"
+                  label={t('common.label')}
+                  placeholder={t('prizeSpin.sectorLabelPlaceholder')}
                   required
                   autoFocus
                   fullWidth
@@ -149,8 +151,8 @@ export const PrizeSpinAddSectorDialog = (props: PrizeSpinAddSectorDialogProps) =
               render={({ field, fieldState }) => (
                 <StyledTextField
                   {...field}
-                  label="Win %"
-                  placeholder="Win chance (%)"
+                  label={t('common.winPercent')}
+                  placeholder={t('prizeSpin.winChancePlaceholder')}
                   required
                   type="number"
                   slotProps={{
@@ -169,7 +171,7 @@ export const PrizeSpinAddSectorDialog = (props: PrizeSpinAddSectorDialogProps) =
               render={({ field }) => (
                 <StyledFormField>
                   <HexColorField
-                    label="Color"
+                    label={t('common.color')}
                     value={field.value}
                     onChange={field.onChange}
                   />

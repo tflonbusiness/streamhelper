@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   Dialog,
@@ -30,6 +31,7 @@ const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
 }))
 
 export const PrizeSpinArchiveDialog = (props: PrizeSpinArchiveDialogProps) => {
+  const { t } = useTranslation()
   const { showSuccess, showError } = useNotification()
   const archiveMutation = useArchivePrizeSpin(props.accountId)
 
@@ -43,18 +45,18 @@ export const PrizeSpinArchiveDialog = (props: PrizeSpinArchiveDialogProps) => {
 
   const handleArchive = () => {
     if (!props.record) {
-      showError('No session to archive.')
+      showError(t('prizeSpin.noSessionToArchive'))
       return
     }
 
     archiveMutation.mutate(props.record.id, {
       onSuccess: () => {
-        showSuccess('Session archived.')
+        showSuccess(t('bonusBuy.sessionArchived'))
         props.onArchived?.()
         handleClose()
         archiveMutation.reset()
       },
-      onError: () => showError('Could not archive session.'),
+      onError: () => showError(t('prizeSpin.couldNotArchiveSession')),
     })
   }
 
@@ -65,16 +67,17 @@ export const PrizeSpinArchiveDialog = (props: PrizeSpinArchiveDialogProps) => {
       maxWidth="xs"
       fullWidth
     >
-      <DialogTitle>Archive Session?</DialogTitle>
+      <DialogTitle>{t('prizeSpin.archiveSessionTitle')}</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
-          <b>{props.record?.title}</b> will be removed from the active list. Archived
-          sessions can be opened for review but not edited.
+          {t('prizeSpin.archiveListIntro', { title: props.record?.title ?? '' })}
+          {' '}
+          {t('prizeSpin.archiveListOutro')}
         </StyledDescription>
       </DialogContent>
       <StyledDialogActions>
         <Button type="button" variant="outlined" onClick={handleClose}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           type="button"
@@ -85,7 +88,7 @@ export const PrizeSpinArchiveDialog = (props: PrizeSpinArchiveDialogProps) => {
           loadingPosition="start"
           disabled={!props.record}
         >
-          Archive
+          {t('common.archive')}
         </Button>
       </StyledDialogActions>
     </Dialog>

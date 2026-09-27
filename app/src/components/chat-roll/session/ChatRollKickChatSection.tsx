@@ -2,6 +2,7 @@ import { Link, Skeleton } from '@mui/material'
 import ChatIcon from '@mui/icons-material/Chat'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import { styled } from '@mui/material/styles'
+import { useTranslation } from 'react-i18next'
 import { KickChannelNotFoundError } from '@/api/kick-channel'
 import { SectionHeader } from '@/components/SectionHeader'
 import {
@@ -51,6 +52,7 @@ function kickPopoutChatUrl(slug: string) {
 export function ChatRollKickChatSection({
   accountId,
 }: ChatRollKickChatSectionProps) {
+  const { t } = useTranslation()
   const { data: channel, isLoading, error } = useKickChannel(accountId)
 
   const notFound = error instanceof KickChannelNotFoundError
@@ -60,7 +62,7 @@ export function ChatRollKickChatSection({
     <ListCard elevation={0} sx={{ height: '100%' }}>
       <ListCardContent>
         <SectionHeader
-          title="Kick chat"
+          title={t('chatRoll.kickChatTitle')}
           icon={ChatIcon}
           iconVariant="info"
           action={
@@ -72,7 +74,7 @@ export function ChatRollKickChatSection({
                 underline="hover"
                 color="primary"
               >
-                Open popout
+                {t('chatRoll.kickChatPopout')}
                 <OpenInNewIcon sx={{ fontSize: 16 }} aria-hidden />
               </PopoutLink>
             ) : null
@@ -86,15 +88,15 @@ export function ChatRollKickChatSection({
             animation="wave"
           />
         ) : notFound || !slug ? (
-          <StatusAlert tone="info" title="Kick channel not connected">
-            Connect your Kick channel on the dashboard to preview chat here.
+          <StatusAlert tone="info" title={t('dashboard.kickNotConnected')}>
+            {t('chatRoll.kickChatNotConnectedBody')}
           </StatusAlert>
         ) : (
           <ChatFrameWrap>
             <ChatFrame
               key={slug}
               src={kickPopoutChatUrl(slug)}
-              title={`Kick chat for ${slug}`}
+              title={t('chatRoll.kickChatFrameTitle', { slug })}
               loading="lazy"
             />
           </ChatFrameWrap>

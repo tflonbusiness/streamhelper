@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Box,
   Button,
@@ -60,8 +62,10 @@ const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
 }))
 
 export const BonusBuyCreateDialog = (props: BonusBuyCreateDialogProps) => {
+  const { t } = useTranslation()
   const { showSuccess, showError } = useNotification()
   const createMutation = useCreateBonusBuy(props.accountId)
+  const schema = useMemo(() => createBonusBuyFormSchema(t), [t])
 
   const {
     control,
@@ -70,7 +74,7 @@ export const BonusBuyCreateDialog = (props: BonusBuyCreateDialogProps) => {
     formState: { isValid },
   } = useForm({
     defaultValues,
-    resolver: yupResolver(createBonusBuyFormSchema),
+    resolver: yupResolver(schema),
     mode: 'onChange',
   })
 
@@ -94,7 +98,7 @@ export const BonusBuyCreateDialog = (props: BonusBuyCreateDialogProps) => {
       },
       {
         onSuccess: () => {
-          showSuccess('Bonus buy session created.')
+          showSuccess(t('bonusBuy.sessionCreated'))
           props.onCreated?.()
           handleClose()
           createMutation.reset()
@@ -103,7 +107,7 @@ export const BonusBuyCreateDialog = (props: BonusBuyCreateDialogProps) => {
           showError(
             error instanceof Error
               ? error.message
-              : 'Could not create bonus buy session.',
+              : t('bonusBuy.couldNotCreateSession'),
           )
         },
       },
@@ -112,7 +116,7 @@ export const BonusBuyCreateDialog = (props: BonusBuyCreateDialogProps) => {
 
   return (
     <Dialog open={props.open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>New Bonus Buy</DialogTitle>
+      <DialogTitle>{t('bonusBuy.createDialogTitle')}</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
           Create a bonus buy session with a name and starting balance.
@@ -126,7 +130,7 @@ export const BonusBuyCreateDialog = (props: BonusBuyCreateDialogProps) => {
                 <StyledField
                   {...field}
                   id="bonus-buy-name"
-                  label="Name"
+                  label={t('common.name')}
                   error={Boolean(fieldState.error)}
                   helperText={fieldState.error?.message}
                   autoFocus
@@ -155,7 +159,7 @@ export const BonusBuyCreateDialog = (props: BonusBuyCreateDialogProps) => {
                 <StyledField
                   {...field}
                   id="bonus-buy-balance"
-                  label="Start balance"
+                  label={t('common.startBalance')}
                   type="text"
                   onChange={(event) =>
                     field.onChange(sanitizeDecimalInput(event.target.value))

@@ -1,4 +1,5 @@
 import { Box, Chip, Stack, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { styled } from '@mui/material/styles'
 import type { BonusBuyWidgetStylePreset } from '@/api/bonus-buy'
 import {
@@ -112,10 +113,12 @@ export function WidgetThemePresetPicker({
   onSelectPreset,
   compact = false,
 }: WidgetThemePresetPickerProps) {
+  const { t } = useTranslation()
+
   return (
     <RootStack compact={compact}>
       <Title variant="subtitle2" compact={compact}>
-        Theme preset
+        {t('common.themePreset')}
       </Title>
       <PresetGrid compact={compact}>
         {presets.map((preset) => {

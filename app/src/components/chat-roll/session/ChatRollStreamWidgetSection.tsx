@@ -4,6 +4,7 @@ import MonitorIcon from '@mui/icons-material/Monitor'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import SettingsIcon from '@mui/icons-material/Settings'
 import { styled, useTheme } from '@mui/material/styles'
+import { useTranslation } from 'react-i18next'
 import { SectionHeader } from '@/components/SectionHeader'
 import { mutedChipSx } from '@/theme/colors'
 
@@ -45,18 +46,19 @@ const HeaderActionStack = styled(Stack)(({ theme }) => ({
 export const ChatRollStreamWidgetSection = (
   _props: ChatRollStreamWidgetSectionProps,
 ) => {
+  const { t } = useTranslation()
   const theme = useTheme()
 
   return (
     <StyledCard elevation={0}>
       <StyledCardContent>
         <SectionHeader
-          title="Stream Widget"
+          title={t('chatRoll.streamWidgetTitle')}
           icon={MonitorIcon}
           iconVariant="info"
           action={
             <HeaderActionStack>
-              <Chip label="Coming soon" size="small" sx={mutedChipSx(theme)} />
+              <Chip label={t('common.comingSoon')} size="small" sx={mutedChipSx(theme)} />
               <Button
                 type="button"
                 variant="outlined"
@@ -64,7 +66,7 @@ export const ChatRollStreamWidgetSection = (
                 disabled
                 startIcon={<SettingsIcon fontSize="small" aria-hidden />}
               >
-                Widget styles
+                {t('chatRoll.widgetStyles')}
               </Button>
             </HeaderActionStack>
           }
@@ -76,7 +78,7 @@ export const ChatRollStreamWidgetSection = (
             disabled
             startIcon={<OpenInNewIcon fontSize="small" aria-hidden />}
           >
-            Open overlay
+            {t('chatRoll.openOverlay')}
           </ActionButton>
           <ActionButton
             type="button"
@@ -84,7 +86,7 @@ export const ChatRollStreamWidgetSection = (
             disabled
             startIcon={<LinkIcon fontSize="small" aria-hidden />}
           >
-            OBS link
+            {t('chatRoll.obsLink')}
           </ActionButton>
         </StyledActionsStack>
       </StyledCardContent>

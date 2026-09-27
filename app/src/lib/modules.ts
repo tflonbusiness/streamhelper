@@ -21,8 +21,6 @@ export type ModuleIconVariant =
 
 export type ModuleDefinition = {
   id: string
-  name: string
-  description: string
   status: ModuleCatalogStatus
   icon: SvgIconComponent
   iconVariant: ModuleIconVariant
@@ -40,9 +38,6 @@ export function getAvailableNavModules(): ModuleDefinition[] {
 export const MODULE_CATALOG: ModuleDefinition[] = [
   {
     id: 'bonus-buy',
-    name: 'Bonus Buy',
-    description:
-      'Slot bonus-buy rounds for stream engagement — viewers trigger bonus features during live play.',
     status: 'available',
     icon: CardGiftcardIcon,
     iconVariant: 'warning',
@@ -51,9 +46,6 @@ export const MODULE_CATALOG: ModuleDefinition[] = [
   },
   {
     id: 'prize-spin',
-    name: 'Prize Spin',
-    description:
-      'Spin a weighted prize wheel for a viewer — enter their chat nick, set prize sectors and odds, show the result on stream.',
     status: 'available',
     icon: AutorenewIcon,
     iconVariant: 'purple',
@@ -62,9 +54,6 @@ export const MODULE_CATALOG: ModuleDefinition[] = [
   },
   {
     id: 'chat-roll',
-    name: 'Chat Roll',
-    description:
-      'Weighted chat giveaway — viewers join with a keyword; pick a random winner with VIP and subscriber boost.',
     status: 'coming_soon',
     icon: CasinoIcon,
     iconVariant: 'info',
@@ -72,6 +61,14 @@ export const MODULE_CATALOG: ModuleDefinition[] = [
     hasToggle: false,
   },
 ]
+
+export function moduleNameKey(moduleId: string): string {
+  return `modules.catalog.${moduleId}.name`
+}
+
+export function moduleDescriptionKey(moduleId: string): string {
+  return `modules.catalog.${moduleId}.description`
+}
 
 function storageKey(accountId: number) {
   return `caz-modules-${accountId}`

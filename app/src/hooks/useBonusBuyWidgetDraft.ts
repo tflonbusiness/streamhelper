@@ -4,6 +4,7 @@ import {
   applyBonusBuyWidgetPresetFromList,
   matchBonusBuyWidgetPresetFromList,
 } from '@/lib/bonus-buy-widget-presets'
+import i18n from '@/i18n/init-i18n'
 import { validateBonusBuyWidgetDraft } from '@/lib/bonus-buy-widget-validation'
 
 type UseBonusBuyWidgetDraftOptions = {
@@ -100,7 +101,7 @@ export function useBonusBuyWidgetDraft({
       onError?.(
         saveError instanceof Error
           ? saveError.message
-          : 'Could not save widget settings',
+          : i18n.t('bonusBuy.couldNotSaveWidgetSettings'),
       )
     } finally {
       setIsSaving(false)

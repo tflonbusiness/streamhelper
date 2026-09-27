@@ -3,6 +3,7 @@ import ArchiveIcon from '@mui/icons-material/Archive'
 import DownloadIcon from '@mui/icons-material/Download'
 import { styled, useTheme } from '@mui/material/styles'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { PrizeSpinRecord, PrizeSpinWin } from '@/api/prize-spin'
 import { isPrizeSpinReadOnly } from '@/api/prize-spin'
 import {
@@ -61,6 +62,7 @@ const ReadOnlyAlert = styled(StatusAlert)(({ theme }) => ({
 export const PrizeSpinSessionHeaderSection = (
   props: PrizeSpinSessionHeaderSectionProps,
 ) => {
+  const { t } = useTranslation()
   const theme = useTheme()
   const { showSuccess, showError } = useNotification()
   const [isExportingWinners, setIsExportingWinners] = useState(false)
@@ -82,12 +84,12 @@ export const PrizeSpinSessionHeaderSection = (
 
     try {
       downloadWinnersXlsx(props.wins, props.prizeSpinId)
-      showSuccess('Winners exported.')
+      showSuccess(t('prizeSpin.winnersExported'))
     } catch (exportError) {
       showError(
         exportError instanceof Error
           ? exportError.message
-          : 'Could not export winners',
+          : t('prizeSpin.couldNotExportWinners'),
       )
     } finally {
       setIsExportingWinners(false)
@@ -103,7 +105,7 @@ export const PrizeSpinSessionHeaderSection = (
               {props.record.title} <SessionId>#{props.record.id}</SessionId>
             </SessionTitle>
             {readOnly ? (
-              <Chip label="Archived" size="small" sx={mutedChipSx(theme)} />
+              <Chip label={t('common.archived')} size="small" sx={mutedChipSx(theme)} />
             ) : null}
           </TitleStack>
           <ActionsStack direction="row">
@@ -115,7 +117,7 @@ export const PrizeSpinSessionHeaderSection = (
               disabled={props.wins.length === 0 || isExportingWinners}
               onClick={handleDownloadWinners}
             >
-              {isExportingWinners ? 'Downloading…' : 'Download History'}
+              {isExportingWinners ? t('common.downloading') : t('common.downloadHistory')}
             </Button>
             {!readOnly ? (
               <Button
@@ -126,14 +128,14 @@ export const PrizeSpinSessionHeaderSection = (
                 disabled={actionsPending}
                 onClick={props.onOpenArchiveDialog}
               >
-                Archive
+                {t('common.archive')}
               </Button>
             ) : null}
           </ActionsStack>
         </HeaderStack>
         {readOnly ? (
           <ReadOnlyAlert tone="info">
-            This session is archived. View only.
+            {t('prizeSpin.sessionArchivedViewOnly')}
           </ReadOnlyAlert>
         ) : null}
       </StyledCompactSessionCardContent>

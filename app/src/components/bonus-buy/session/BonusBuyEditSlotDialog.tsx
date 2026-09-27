@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   Dialog,
@@ -32,6 +33,7 @@ const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
 }))
 
 export const BonusBuyEditSlotDialog = (props: BonusBuyEditSlotDialogProps) => {
+  const { t } = useTranslation()
   const { showSuccess, showError } = useNotification()
   const patchSlotMutation = usePatchBonusBuySlot(props.accountId, props.bonusBuyId)
   const [isFormValid, setIsFormValid] = useState(false)
@@ -70,13 +72,13 @@ export const BonusBuyEditSlotDialog = (props: BonusBuyEditSlotDialogProps) => {
       },
       {
         onSuccess: () => {
-          showSuccess('Slot updated.')
+          showSuccess(t('bonusBuy.slotUpdated'))
           handleClose()
           patchSlotMutation.reset()
         },
         onError: (error) => {
           showError(
-            error instanceof Error ? error.message : 'Could not update slot',
+            error instanceof Error ? error.message : t('bonusBuy.couldNotUpdateSlot'),
           )
         },
       },
@@ -90,7 +92,7 @@ export const BonusBuyEditSlotDialog = (props: BonusBuyEditSlotDialogProps) => {
       maxWidth="sm"
       fullWidth
     >
-      <DialogTitle>Edit Slot</DialogTitle>
+      <DialogTitle>{t('bonusBuy.editSlotTitle')}</DialogTitle>
       <DialogContent>
         <BonusBuyEditSlotForm
           formId={FORM_ID}

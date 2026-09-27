@@ -2,6 +2,7 @@ import { Box, Chip, Stack, Typography } from '@mui/material'
 import BarChartIcon from '@mui/icons-material/BarChart'
 import { alpha, styled, useTheme } from '@mui/material/styles'
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { PrizeSpinSector, PrizeSpinWin } from '@/api/prize-spin'
 import { SectionHeader } from '@/components/SectionHeader'
 import { buildWinnerSectorStats } from '@/components/prize-spin/session/prize-spin-session-utils'
@@ -75,6 +76,7 @@ const StatBarFill = styled(Box, {
 export const PrizeSpinSessionStatsCard = (
   props: PrizeSpinSessionStatsCardProps,
 ) => {
+  const { t } = useTranslation()
   const theme = useTheme()
   const { total, rows } = useMemo(
     () => buildWinnerSectorStats(props.wins, props.sectors),
@@ -85,14 +87,14 @@ export const PrizeSpinSessionStatsCard = (
     <StyledSessionCard elevation={0}>
       <StyledSessionCardContent>
         <SectionHeader
-          title="Stats"
-          description="How often each sector has won compared to its weight"
+          title={t('prizeSpin.statsTitle')}
+          description={t('prizeSpin.statsDescription')}
           icon={BarChartIcon}
           iconVariant="info"
           showDivider
           action={
             <Chip
-              label={`${total} total roll${total === 1 ? '' : 's'}`}
+              label={t('prizeSpin.statsTotalRolls', { count: total })}
               size="small"
               sx={mutedChipSx(theme)}
             />
@@ -130,7 +132,7 @@ export const PrizeSpinSessionStatsCard = (
           </StatRows>
         ) : (
           <StatusAlert tone="info">
-            Add wheel sectors to see drop statistics.
+            {t('prizeSpin.statsEmpty')}
           </StatusAlert>
         )}
       </StyledSessionCardContent>

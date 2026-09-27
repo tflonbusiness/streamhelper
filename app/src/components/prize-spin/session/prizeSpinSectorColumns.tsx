@@ -2,6 +2,7 @@ import { IconButton, Stack } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import { styled } from '@mui/material/styles'
+import type { TFunction } from 'i18next'
 import type { PrizeSpinSector } from '@/api/prize-spin'
 import type { AppTableColumn } from '@/components/AppTable'
 import { PrizeSpinSessionColorSwatch } from '@/components/prize-spin/session/PrizeSpinSessionColorSwatch'
@@ -24,11 +25,14 @@ type BuildPrizeSpinSectorColumnsOptions = {
   onDelete: (sectorId: number) => void
 }
 
-export function buildPrizeSpinSectorColumns({
-  readOnly,
-  onEdit,
-  onDelete,
-}: BuildPrizeSpinSectorColumnsOptions): AppTableColumn<PrizeSpinSector>[] {
+export function buildPrizeSpinSectorColumns(
+  t: TFunction,
+  {
+    readOnly,
+    onEdit,
+    onDelete,
+  }: BuildPrizeSpinSectorColumnsOptions,
+): AppTableColumn<PrizeSpinSector>[] {
   return [
     {
       id: 'color',
@@ -42,14 +46,14 @@ export function buildPrizeSpinSectorColumns({
     },
     {
       id: 'label',
-      header: 'Label',
+      header: t('common.label'),
       width: '100%',
       sx: labelColumnSx,
       render: (sector) => sector.label,
     },
     {
       id: 'winPercent',
-      header: 'Win %',
+      header: t('common.winPercent'),
       width: 88,
       minWidth: 88,
       sx: winPercentColumnSx,
@@ -66,7 +70,7 @@ export function buildPrizeSpinSectorColumns({
           <IconButton
             type="button"
             size="small"
-            aria-label={`Edit ${sector.label}`}
+            aria-label={t('table.editSectorAria', { label: sector.label })}
             disabled={readOnly}
             onClick={() => onEdit(sector)}
           >
@@ -75,7 +79,7 @@ export function buildPrizeSpinSectorColumns({
           <DeleteButton
             type="button"
             size="small"
-            aria-label={`Delete ${sector.label}`}
+            aria-label={t('table.deleteSectorAria', { label: sector.label })}
             disabled={readOnly}
             onClick={() => void onDelete(sector.id)}
           >

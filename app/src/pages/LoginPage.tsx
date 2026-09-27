@@ -4,6 +4,7 @@ import Typography from '@mui/material/Typography'
 import GroupIcon from '@mui/icons-material/Group'
 import LayersIcon from '@mui/icons-material/Layers'
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports'
+import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { DotFieldBackground } from '@/components/backgrounds/DotFieldBackground'
 import { IconTile } from '@/components/IconTile'
@@ -22,31 +23,32 @@ import { KickLoginButton } from '@/components/KickLoginButton'
 import { PageShell } from '@/components/PageShell'
 import { StatusAlert } from '@/components/StatusAlert'
 
-const features = [
-  {
-    icon: SportsEsportsIcon,
-    variant: 'purple' as const,
-    title: 'Chat games',
-    description: 'Run interactive games in Kick chat',
-  },
-  {
-    icon: GroupIcon,
-    variant: 'info' as const,
-    title: 'Team access',
-    description: 'Invite mods and manage permissions',
-  },
-  {
-    icon: LayersIcon,
-    variant: 'primary' as const,
-    title: 'OBS overlays',
-    description: 'Add browser sources to your stream',
-  },
-]
-
 export function LoginPage() {
+  const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const joinError = searchParams.get('join_error')
   const authError = searchParams.get('auth_error')
+
+  const features = [
+    {
+      icon: SportsEsportsIcon,
+      variant: 'purple' as const,
+      title: t('auth.featureChatGames'),
+      description: t('auth.featureChatGamesDesc'),
+    },
+    {
+      icon: GroupIcon,
+      variant: 'info' as const,
+      title: t('auth.featureTeamAccess'),
+      description: t('auth.featureTeamAccessDesc'),
+    },
+    {
+      icon: LayersIcon,
+      variant: 'primary' as const,
+      title: t('auth.featureObsOverlays'),
+      description: t('auth.featureObsOverlaysDesc'),
+    },
+  ]
 
   return (
     <>
@@ -64,32 +66,32 @@ export function LoginPage() {
                     <Box
                       component="img"
                       src="/logo.svg"
-                      alt="Stream Helper"
+                      alt={t('common.appName')}
                       sx={{ width: 64, height: 64, borderRadius: 2 }}
                     />
                   </Box>
 
                   <Stack spacing={0.75}>
                     <Typography variant="h4" component="h1" sx={{ fontWeight: 700, letterSpacing: '-0.02em' }}>
-                      Stream Helper
+                      {t('common.appName')}
                     </Typography>
                     <Typography variant="body2" sx={loginTaglineSx}>
-                      Make your Kick stream interactive
+                      {t('auth.tagline')}
                     </Typography>
                   </Stack>
                 </Stack>
 
                 {joinError ? (
                   <StatusAlert tone="error">
-                    This link is invalid or has been revoked.
+                    {t('auth.joinLinkInvalid')}
                   </StatusAlert>
                 ) : null}
 
                 {authError ? (
                   <StatusAlert tone="error">
                     {authError === 'state'
-                      ? 'Your sign-in session expired. Click "Sign in with Kick" again.'
-                      : 'Could not sign in with Kick. Check your app settings and try again.'}
+                      ? t('auth.signInStateExpired')
+                      : t('auth.signInFailed')}
                   </StatusAlert>
                 ) : null}
 

@@ -1,6 +1,6 @@
 import { Grid, Skeleton, Stack } from '@mui/material'
 import { styled } from '@mui/material/styles'
-import { PageHeader } from '@/components/PageHeader'
+import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { bonusBuyModule } from '@/components/bonus-buy/session/bonus-buy-session-utils'
 
 const PageStack = styled(Stack)(({ theme }) => ({
@@ -18,12 +18,7 @@ const ColumnStack = styled(Stack)(({ theme }) => ({
 export const BonusBuySessionLoadingState = () => {
   return (
     <PageStack>
-      <PageHeader
-        title={bonusBuyModule.name}
-        description={bonusBuyModule.description}
-        icon={bonusBuyModule.icon}
-        iconVariant={bonusBuyModule.iconVariant}
-      />
+      <ModuleSessionPageHeader module={bonusBuyModule} />
       <ContentGrid container spacing={3}>
         <Grid size={{ xs: 12, lg: 9 }}>
           <ColumnStack>

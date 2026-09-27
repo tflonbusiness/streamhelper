@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Box,
   Button,
@@ -62,6 +64,8 @@ const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
 }))
 
 export const PrizeSpinCopyDialog = (props: PrizeSpinCopyDialogProps) => {
+  const { t } = useTranslation()
+  const validationSchema = useMemo(() => createPrizeSpinFormSchema(t), [t])
   const navigate = useNavigate()
   const { showSuccess, showError } = useNotification()
   const copyMutation = useCopyPrizeSpin(props.accountId)
@@ -73,7 +77,7 @@ export const PrizeSpinCopyDialog = (props: PrizeSpinCopyDialogProps) => {
     formState: { isValid },
   } = useForm({
     defaultValues: { title: PRIZE_SPIN_DEFAULT_TITLE },
-    resolver: yupResolver(createPrizeSpinFormSchema),
+    resolver: yupResolver(validationSchema),
     mode: 'onChange',
   })
 
@@ -95,7 +99,7 @@ export const PrizeSpinCopyDialog = (props: PrizeSpinCopyDialogProps) => {
 
   const onSubmit = handleSubmit((values: CreatePrizeSpinFormValues) => {
     if (!props.record) {
-      showError('No session to copy.')
+      showError(t('prizeSpin.noSessionToCopy'))
       return
     }
 
@@ -103,12 +107,12 @@ export const PrizeSpinCopyDialog = (props: PrizeSpinCopyDialogProps) => {
       { sourcePrizeSpinId: props.record.id, title: values.title },
       {
         onSuccess: (created) => {
-          showSuccess('Session copied.')
+          showSuccess(t('prizeSpin.sessionCopied'))
           handleClose()
           copyMutation.reset()
           navigate(prizeSpinSessionRoute(created.id))
         },
-        onError: () => showError('Could not copy prize spin session.'),
+        onError: () => showError(t('prizeSpin.couldNotCopySession')),
       },
     )
   })
@@ -120,15 +124,14 @@ export const PrizeSpinCopyDialog = (props: PrizeSpinCopyDialogProps) => {
       maxWidth="sm"
       fullWidth
     >
-      <DialogTitle>Copy Session</DialogTitle>
+      <DialogTitle>{t('prizeSpin.copySessionTitle')}</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
-          Creates a new session with wheel sectors copied from the source. Spin
-          history and winners are not copied. The source session stays unchanged.
+          {t('prizeSpin.copySessionDescription')}
         </StyledDescription>
         {props.record ? (
           <StyledSourceTitle variant="body2">
-            Source: {props.record.title}
+            {t('prizeSpin.copySessionSource', { title: props.record.title })}
           </StyledSourceTitle>
         ) : null}
         <Box
@@ -144,7 +147,7 @@ export const PrizeSpinCopyDialog = (props: PrizeSpinCopyDialogProps) => {
                 <StyledTitleField
                   {...field}
                   id="prize-spin-copy-title"
-                  label="Title"
+                  label={t('common.title')}
                   error={Boolean(fieldState.error)}
                   helperText={fieldState.error?.message}
                   autoFocus
@@ -158,7 +161,7 @@ export const PrizeSpinCopyDialog = (props: PrizeSpinCopyDialogProps) => {
       </DialogContent>
       <StyledDialogActions>
         <Button type="button" variant="outlined" onClick={handleClose}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           type="submit"
@@ -168,7 +171,7 @@ export const PrizeSpinCopyDialog = (props: PrizeSpinCopyDialogProps) => {
           loadingPosition="start"
           disabled={!isValid || !props.record}
         >
-          Create Copy
+          {t('prizeSpin.createCopy')}
         </Button>
       </StyledDialogActions>
     </Dialog>

@@ -10,6 +10,7 @@ import CreditCardIcon from '@mui/icons-material/CreditCard'
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports'
 import GroupIcon from '@mui/icons-material/Group'
+import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { IconTile } from '@/components/IconTile'
 import { useBreadcrumbDynamicLabel } from '@/context/BreadcrumbContext'
@@ -20,11 +21,13 @@ import { cardSx, colors } from '@/theme/colors'
 const ICON_TILE_HEIGHT = 40
 
 const breadcrumbIcons: Record<string, SvgIconComponent> = {
-  Home: DashboardIcon,
-  Team: GroupIcon,
-  Widgets: SportsEsportsIcon,
-  Subscription: CreditCardIcon,
-  'Bonus Buy': CardGiftcardIcon,
+  'nav.home': DashboardIcon,
+  'nav.team': GroupIcon,
+  'nav.widgets': SportsEsportsIcon,
+  'nav.subscription': CreditCardIcon,
+  'nav.bonusBuy': CardGiftcardIcon,
+  'nav.prizeSpin': DashboardIcon,
+  'nav.chatRoll': DashboardIcon,
 }
 
 type PageHeaderProps = {
@@ -39,9 +42,10 @@ type PageHeaderProps = {
 
 function PageHeaderBreadcrumbs() {
   const theme = useTheme()
+  const { t } = useTranslation()
   const { pathname } = useLocation()
   const { dynamicLabel } = useBreadcrumbDynamicLabel()
-  const ancestors = getBreadcrumbAncestors(pathname, dynamicLabel)
+  const ancestors = getBreadcrumbAncestors(pathname, t, dynamicLabel)
 
   if (ancestors.length === 0) {
     return null
@@ -49,7 +53,7 @@ function PageHeaderBreadcrumbs() {
 
   return (
     <Breadcrumbs
-      aria-label="Breadcrumb"
+      aria-label={t('common.breadcrumb')}
       separator={
         <ChevronRightIcon
           sx={{ fontSize: 13, color: alpha(colors.neutral[400], 0.55) }}
@@ -71,7 +75,8 @@ function PageHeaderBreadcrumbs() {
       }}
     >
       {ancestors.map((item, index) => {
-        const Icon = breadcrumbIcons[item.label]
+        const iconKey = item.labelKey ?? ''
+        const Icon = breadcrumbIcons[iconKey]
         const isFirst = index === 0
 
         if (!item.to) {
@@ -153,10 +158,12 @@ export function PageHeader({
   className,
 }: PageHeaderProps) {
   const theme = useTheme()
+  const { t } = useTranslation()
   const { pathname } = useLocation()
   const { dynamicLabel } = useBreadcrumbDynamicLabel()
   const hasBreadcrumbs =
-    showBreadcrumbs && getBreadcrumbAncestors(pathname, dynamicLabel).length > 0
+    showBreadcrumbs &&
+    getBreadcrumbAncestors(pathname, t, dynamicLabel).length > 0
 
   return (
     <Box

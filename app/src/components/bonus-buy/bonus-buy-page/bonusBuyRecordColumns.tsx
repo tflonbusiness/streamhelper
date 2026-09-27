@@ -1,6 +1,7 @@
 import { Chip, IconButton, type IconButtonProps, Stack } from '@mui/material'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import { alpha, styled } from '@mui/material/styles'
+import type { TFunction } from 'i18next'
 import { Link, type LinkProps } from 'react-router-dom'
 import { isBonusBuyActive, type BonusBuyRecord } from '@/api/bonus-buy'
 import type { AppTableColumn } from '@/components/AppTable'
@@ -68,25 +69,27 @@ const StyledOpenIconButton = styled(IconButton)<IconButtonProps & LinkProps>(
 
 const actionIconSx = { fontSize: 14 } as const
 
-function recordStatusChip(record: BonusBuyRecord) {
+function recordStatusChip(record: BonusBuyRecord, t: TFunction) {
   if (isBonusBuyActive(record)) {
     return (
       <Chip
-        label="Active"
+        label={t('table.active')}
         size="small"
         sx={toneChipSx(colors.success[400])}
       />
     )
   }
 
-  return <MutedStatusChip label="Archived" size="small" />
+  return <MutedStatusChip label={t('table.archived')} size="small" />
 }
 
-export function buildBonusBuyRecordColumns(): AppTableColumn<BonusBuyRecord>[] {
+export function buildBonusBuyRecordColumns(
+  t: TFunction,
+): AppTableColumn<BonusBuyRecord>[] {
   return [
     {
       id: 'name',
-      header: 'Name',
+      header: t('table.name'),
       width: '100%',
       sx: nameColumnSx,
       render: (record) => (
@@ -95,7 +98,7 @@ export function buildBonusBuyRecordColumns(): AppTableColumn<BonusBuyRecord>[] {
     },
     {
       id: 'startBalance',
-      header: 'Start balance',
+      header: t('table.startBalance'),
       width: 120,
       minWidth: 120,
       sx: balanceColumnSx,
@@ -104,11 +107,11 @@ export function buildBonusBuyRecordColumns(): AppTableColumn<BonusBuyRecord>[] {
     },
     {
       id: 'status',
-      header: 'Status',
+      header: t('table.status'),
       width: 108,
       minWidth: 108,
       sx: statusColumnSx,
-      render: (record) => recordStatusChip(record),
+      render: (record) => recordStatusChip(record, t),
     },
     {
       id: 'action',
@@ -122,7 +125,7 @@ export function buildBonusBuyRecordColumns(): AppTableColumn<BonusBuyRecord>[] {
           <StyledOpenIconButton
             component={Link}
             to={bonusBuySessionRoute(record.id)}
-            aria-label={`Open ${record.name}`}
+            aria-label={t('table.openNameAria', { name: record.name })}
             size="small"
           >
             <ArrowForwardIcon sx={actionIconSx} aria-hidden />

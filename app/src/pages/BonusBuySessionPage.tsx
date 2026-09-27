@@ -1,8 +1,9 @@
 import { Grid, Stack } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
-import { PageHeader } from '@/components/PageHeader'
+import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { BonusBuyEditSessionDialog } from '@/components/bonus-buy/session/BonusBuyEditSessionDialog'
 import { BonusBuyArchiveSessionDialog } from '@/components/bonus-buy/session/BonusBuyArchiveSessionDialog'
 import { BonusBuySessionAddSlotSection } from '@/components/bonus-buy/session/BonusBuySessionAddSlotSection'
@@ -32,6 +33,7 @@ const MainColumnStack = styled(Stack)(({ theme }) => ({
 }))
 
 export const BonusBuySessionPage = () => {
+  const { t } = useTranslation()
   const { id } = useParams()
   const bonusBuyId = Number.parseInt(id ?? '', 10)
   const isValidId = Number.isFinite(bonusBuyId)
@@ -58,11 +60,11 @@ export const BonusBuySessionPage = () => {
   const record = session?.record ?? null
   const slots = session?.slots ?? []
   const error = !isValidId
-    ? 'Invalid bonus buy id'
+    ? t('errors.invalidBonusBuyId')
     : sessionError instanceof Error
       ? sessionError.message
       : sessionError
-        ? 'Could not load bonus buy'
+        ? t('bonusBuy.couldNotLoad')
         : null
 
   useSetBreadcrumbLabel(record ? `${record.name} #${record.id}` : null)
@@ -87,7 +89,7 @@ export const BonusBuySessionPage = () => {
   if (error || !record || user?.accountId === undefined) {
     return (
       <BonusBuySessionErrorState
-        message={error ?? 'Session not found'}
+        message={error ?? t('bonusBuy.sessionNotFound')}
       />
     )
   }
@@ -96,12 +98,7 @@ export const BonusBuySessionPage = () => {
 
   return (
     <PageStack>
-      <PageHeader
-        title={bonusBuyModule.name}
-        description={bonusBuyModule.description}
-        icon={bonusBuyModule.icon}
-        iconVariant={bonusBuyModule.iconVariant}
-      />
+      <ModuleSessionPageHeader module={bonusBuyModule} />
       <ContentGrid container spacing={3}>
         <Grid size={{ xs: 12, lg: 9 }}>
           <MainColumnStack>

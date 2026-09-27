@@ -1,3 +1,4 @@
+import i18n from '@/i18n/init-i18n'
 const jsonHeaders = {
   'Content-Type': 'application/json',
 }
@@ -89,7 +90,7 @@ export async function fetchPrizeSpin(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not load prize spin'),
+      await readErrorMessage(response, i18n.t('errors.api.loadPrizeSpin')),
     )
   }
 
@@ -125,7 +126,7 @@ export async function fetchPrizeSpins(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not load prize spin history'),
+      await readErrorMessage(response, i18n.t('errors.api.loadPrizeSpinHistory')),
     )
   }
 
@@ -145,7 +146,7 @@ export async function createPrizeSpin(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not create prize spin'),
+      await readErrorMessage(response, i18n.t('errors.api.createPrizeSpin')),
     )
   }
 
@@ -169,7 +170,7 @@ export async function copyPrizeSpin(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not copy prize spin session'),
+      await readErrorMessage(response, i18n.t('errors.api.copyPrizeSpin')),
     )
   }
 
@@ -190,7 +191,7 @@ export async function archivePrizeSpin(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not archive session'),
+      await readErrorMessage(response, i18n.t('errors.api.archiveSession')),
     )
   }
 }
@@ -206,7 +207,7 @@ export async function fetchPrizeSpinSectors(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not load wheel sectors'),
+      await readErrorMessage(response, i18n.t('errors.api.loadWheelSectors')),
     )
   }
 
@@ -237,7 +238,7 @@ export async function createPrizeSpinSector(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not add sector'),
+      await readErrorMessage(response, i18n.t('errors.api.addSector')),
     )
   }
 
@@ -262,7 +263,7 @@ export async function updatePrizeSpinSector(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not update sector'),
+      await readErrorMessage(response, i18n.t('errors.api.updateSector')),
     )
   }
 
@@ -283,7 +284,7 @@ export async function distributePrizeSpinSectorsEqually(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not distribute sector weights'),
+      await readErrorMessage(response, i18n.t('errors.api.distributeSectorWeights')),
     )
   }
 
@@ -306,7 +307,7 @@ export async function deletePrizeSpinSector(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not delete sector'),
+      await readErrorMessage(response, i18n.t('errors.api.deleteSector')),
     )
   }
 }
@@ -322,7 +323,7 @@ export async function fetchPrizeSpinWins(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not load winners'),
+      await readErrorMessage(response, i18n.t('errors.api.loadWinners')),
     )
   }
 
@@ -345,7 +346,7 @@ export async function deletePrizeSpinWin(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not remove winner'),
+      await readErrorMessage(response, i18n.t('errors.api.removeWinner')),
     )
   }
 }
@@ -364,7 +365,7 @@ export async function deleteAllPrizeSpinWins(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not archive winners'),
+      await readErrorMessage(response, i18n.t('errors.api.archiveWinners')),
     )
   }
 }
@@ -417,7 +418,7 @@ export async function fetchPrizeSpinWidget(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not load widget settings'),
+      await readErrorMessage(response, i18n.t('errors.api.loadWidgetSettings')),
     )
   }
 
@@ -437,7 +438,7 @@ export async function patchPrizeSpinWidget(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not update widget settings'),
+      await readErrorMessage(response, i18n.t('errors.api.updateWidgetSettings')),
     )
   }
 
@@ -446,7 +447,7 @@ export async function patchPrizeSpinWidget(
 
 export class PrizeSpinWidgetNotFoundError extends Error {
   constructor() {
-    super('Session not found.')
+    super(i18n.t('errors.sessionNotFound'))
     this.name = 'PrizeSpinWidgetNotFoundError'
   }
 }
@@ -462,7 +463,7 @@ export async function fetchPublicPrizeSpinWidget(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not load widget'),
+      await readErrorMessage(response, i18n.t('errors.api.loadWidget')),
     )
   }
 
@@ -486,7 +487,7 @@ export async function spinPrizeSpin(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not spin prize wheel'),
+      await readErrorMessage(response, i18n.t('errors.api.spinPrizeWheel')),
     )
   }
 

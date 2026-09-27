@@ -1,4 +1,5 @@
 import { Button, Grid, IconButton, Stack, Switch } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import CasinoIcon from '@mui/icons-material/Casino'
 import DeleteIcon from '@mui/icons-material/Delete'
 import PauseIcon from '@mui/icons-material/Pause'
@@ -7,7 +8,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import GroupIcon from '@mui/icons-material/Group'
 import ReplayIcon from '@mui/icons-material/Replay'
 import SettingsIcon from '@mui/icons-material/Settings'
-import { type ReactNode, useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import type { ChatRollParticipant } from '@/api/chat-roll'
 import { isChatRollReadOnly } from '@/api/chat-roll'
@@ -47,8 +48,8 @@ import { useAuth } from '@/context/AuthContext'
 import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
 import { useNotification } from '@/context/NotificationContext'
 import {
-  CHAT_ROLL_ROLE_CHIP_LABEL,
-  CHAT_ROLL_ROLE_META,
+  getChatRollRoleChipLabel,
+  getChatRollRoleMeta,
   type ChatRollRoleId,
   clampRoleWeight,
   computeParticipantCoefficient,
@@ -137,6 +138,7 @@ function NameListCard({
 }
 
 export function ChatRollSessionPage() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const chatRollId = Number.parseInt(id ?? '', 10)
   const isValidId = Number.isFinite(chatRollId)
@@ -170,12 +172,14 @@ export function ChatRollSessionPage() {
   const deleteWinMutation = useDeleteChatRollWin(accountId, chatRollId)
   const deleteAllWinsMutation = useDeleteAllChatRollWins(accountId, chatRollId)
 
+  const roleMeta = useMemo(() => getChatRollRoleMeta(t), [t])
+
   const error = !isValidId
-    ? 'Session not found'
+    ? t('chatRoll.sessionNotFound')
     : sessionError instanceof Error
       ? sessionError.message
       : sessionError
-        ? 'Could not load chat roll session'
+        ? t('chatRoll.couldNotLoadSession')
         : null
 
   useSetBreadcrumbLabel(record ? `${record.title} #${record.id}` : null)
@@ -191,7 +195,11 @@ export function ChatRollSessionPage() {
   }
 
   if (error || !record || accountId === undefined) {
-    return <ChatRollSessionErrorState message={error ?? 'Session not found'} />
+    return (
+      <ChatRollSessionErrorState
+        message={error ?? t('chatRoll.sessionNotFound')}
+      />
+    )
   }
 
   function patchRecord(body: Parameters<typeof patchMutation.mutate>[0]) {
@@ -204,7 +212,7 @@ export function ChatRollSessionPage() {
         showError(
           patchError instanceof Error
             ? patchError.message
-            : 'Could not save settings',
+            : t('chatRoll.couldNotSaveSettings'),
         )
       },
     })
@@ -213,7 +221,7 @@ export function ChatRollSessionPage() {
   function handleKeywordBlur() {
     const trimmed = keywordDraft.trim()
     if (!trimmed) {
-      setKeywordError('Keyword is required')
+      setKeywordError(t('chatRoll.keywordRequired'))
       setKeywordDraft(record!.keyword)
       return
     }
@@ -249,13 +257,13 @@ export function ChatRollSessionPage() {
   function handleRoll() {
     rollMutation.mutate(undefined, {
       onSuccess: (win) => {
-        showSuccess(`${win.displayName} won the roll.`)
+        showSuccess(t('chatRoll.rollWon', { name: win.displayName }))
       },
       onError: (rollError) => {
         showError(
           rollError instanceof Error
             ? rollError.message
-            : 'No eligible participants to roll.',
+            : t('chatRoll.noEligibleParticipants'),
         )
       },
     })
@@ -277,7 +285,7 @@ export function ChatRollSessionPage() {
         {participant.roleIds.map((roleId) => (
           <RoleTagChip
             key={roleId}
-            label={CHAT_ROLL_ROLE_CHIP_LABEL[roleId]}
+            label={getChatRollRoleChipLabel(t, roleId)}
             size="small"
           />
         ))}
@@ -301,8 +309,8 @@ export function ChatRollSessionPage() {
   return (
     <PageStack>
       <PageHeader
-        title="Chat Roll"
-        description="Weighted chat giveaway for your stream"
+        title={t('chatRoll.title')}
+        description={t('chatRoll.sessionDescription')}
         icon={CasinoIcon}
         iconVariant="info"
       />
@@ -319,7 +327,7 @@ export function ChatRollSessionPage() {
             <SettingsCard elevation={0}>
               <SettingsCardContent>
                 <SectionHeader
-                  title="Settings"
+                  title={t('chatRoll.settingsTitle')}
                   icon={SettingsIcon}
                   iconVariant="info"
                 />
@@ -352,9 +360,11 @@ export function ChatRollSessionPage() {
                     </Grid>
                     <Grid size={{ xs: 12, md: 6, lg: 5 }}>
                       <RolesSection>
-                        <SettingsSectionLabel>Eligible roles</SettingsSectionLabel>
+                        <SettingsSectionLabel>
+                          {t('chatRoll.eligibleRoles')}
+                        </SettingsSectionLabel>
                         <Stack spacing={1}>
-                          {CHAT_ROLL_ROLE_META.map((role) => {
+                          {roleMeta.map((role) => {
                             const setting = record.roleSettings[role.id]
                             return (
                               <RoleRowStack
@@ -424,7 +434,7 @@ export function ChatRollSessionPage() {
                   readOnly || eligibleCount === 0 || rollMutation.isPending
                 }
               >
-                Roll
+                {t('chatRoll.roll')}
               </RollButton>
               <Button
                 variant="outlined"
@@ -443,8 +453,8 @@ export function ChatRollSessionPage() {
                 }
               >
                 {record.isAcceptingParticipants
-                  ? 'Pause entries'
-                  : 'Resume entries'}
+                  ? t('chatRoll.pauseEntries')
+                  : t('chatRoll.resumeEntries')}
               </Button>
             </RollActionBar>
         </Stack>
@@ -452,10 +462,10 @@ export function ChatRollSessionPage() {
         <Grid container spacing={2} sx={{ alignItems: 'stretch' }}>
             <Grid size={{ xs: 12, md: 4, lg: 3 }}>
               <NameListCard
-                title="Participants"
+                title={t('chatRoll.participantsTitle')}
                 icon={GroupIcon}
-                emptyLabel="No participants yet."
-                removeAriaLabel="Remove participant"
+                emptyLabel={t('chatRoll.noParticipants')}
+                removeAriaLabel={t('chatRoll.removeParticipant')}
                 rows={participants}
                 renderRowExtra={(row) =>
                   renderParticipantExtra(
@@ -467,12 +477,12 @@ export function ChatRollSessionPage() {
                 readOnly={readOnly}
                 onClearAll={() =>
                   deleteAllParticipantsMutation.mutate(undefined, {
-                    onError: () => showError('Could not clear participants.'),
+                    onError: () => showError(t('chatRoll.couldNotClearParticipants')),
                   })
                 }
                 onRemove={(participantId) =>
                   deleteParticipantMutation.mutate(participantId, {
-                    onError: () => showError('Could not remove participant.'),
+                    onError: () => showError(t('chatRoll.couldNotRemoveParticipant')),
                   })
                 }
               />
@@ -482,21 +492,21 @@ export function ChatRollSessionPage() {
             </Grid>
             <Grid size={{ xs: 12, md: 4, lg: 3 }}>
               <NameListCard
-                title="Winners"
+                title={t('chatRoll.winnersTitle')}
                 icon={EmojiEventsIcon}
                 iconVariant="primary"
-                emptyLabel="No winners yet."
-                removeAriaLabel="Remove winner"
+                emptyLabel={t('chatRoll.noWinners')}
+                removeAriaLabel={t('chatRoll.removeWinner')}
                 rows={wins}
                 readOnly={readOnly}
                 onClearAll={() =>
                   deleteAllWinsMutation.mutate(undefined, {
-                    onError: () => showError('Could not clear winners.'),
+                    onError: () => showError(t('chatRoll.couldNotClearWinners')),
                   })
                 }
                 onRemove={(winId) =>
                   deleteWinMutation.mutate(winId, {
-                    onError: () => showError('Could not remove winner.'),
+                    onError: () => showError(t('chatRoll.couldNotRemoveWinner')),
                   })
                 }
               />

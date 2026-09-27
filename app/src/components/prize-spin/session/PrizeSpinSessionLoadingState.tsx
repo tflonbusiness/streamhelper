@@ -1,6 +1,6 @@
 import { Grid, Skeleton, Stack } from '@mui/material'
 import { styled } from '@mui/material/styles'
-import { PageHeader } from '@/components/PageHeader'
+import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { prizeSpinModule } from '@/components/prize-spin/session/prize-spin-session-utils'
 
 const PageStack = styled(Stack)(({ theme }) => ({
@@ -18,12 +18,7 @@ const ColumnStack = styled(Stack)(({ theme }) => ({
 export const PrizeSpinSessionLoadingState = () => {
   return (
     <PageStack>
-      <PageHeader
-        title={prizeSpinModule.name}
-        description={prizeSpinModule.description}
-        icon={prizeSpinModule.icon}
-        iconVariant={prizeSpinModule.iconVariant}
-      />
+      <ModuleSessionPageHeader module={prizeSpinModule} />
       <ContentGrid container spacing={3}>
         <Grid size={{ xs: 12, lg: 9 }}>
           <ColumnStack>

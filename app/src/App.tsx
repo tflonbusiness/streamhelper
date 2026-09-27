@@ -8,6 +8,7 @@ import {
   ProtectedRoute,
 } from './components/ProtectedRoute'
 import { AuthProvider } from './context/AuthContext'
+import { LocaleProvider } from './context/LocaleProvider'
 import { NotificationProvider } from './context/NotificationContext'
 import { DashboardHomePage } from './pages/DashboardHomePage'
 import { LoginPage } from './pages/LoginPage'
@@ -28,6 +29,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
     <AuthProvider>
+      <LocaleProvider>
       <NotificationProvider>
         <BrowserRouter>
         <Routes>
@@ -68,6 +70,7 @@ function App() {
         </Routes>
       </BrowserRouter>
       </NotificationProvider>
+      </LocaleProvider>
     </AuthProvider>
     </QueryClientProvider>
   )

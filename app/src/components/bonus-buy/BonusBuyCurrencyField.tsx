@@ -3,6 +3,7 @@ import Box from '@mui/material/Box'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { styled } from '@mui/material/styles'
+import { useTranslation } from 'react-i18next'
 import {
   filterIsoCurrencies,
   ISO_CURRENCIES,
@@ -42,6 +43,7 @@ function formatCurrencyLabel(option: IsoCurrency): string {
 }
 
 export function BonusBuyCurrencyField(props: BonusBuyCurrencyFieldProps) {
+  const { t } = useTranslation()
   const selected = findCurrency(props.value)
 
   return (
@@ -70,7 +72,7 @@ export function BonusBuyCurrencyField(props: BonusBuyCurrencyFieldProps) {
       renderInput={(params) => (
         <StyledTextField
           {...params}
-          label="Currency"
+          label={t('common.currency')}
           size="small"
           error={props.error}
           helperText={props.helperText}

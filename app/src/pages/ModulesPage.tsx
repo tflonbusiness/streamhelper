@@ -11,9 +11,14 @@ import {
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports'
 import { alpha, styled } from '@mui/material/styles'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { IconTile } from '@/components/IconTile'
 import { PageHeader } from '@/components/PageHeader'
-import { MODULE_CATALOG } from '@/lib/modules'
+import {
+  MODULE_CATALOG,
+  moduleDescriptionKey,
+  moduleNameKey,
+} from '@/lib/modules'
 
 const PageStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(4),
@@ -75,11 +80,13 @@ const ModuleFooter = styled(Box)(({ theme }) => ({
 }))
 
 export function ModulesPage() {
+  const { t } = useTranslation()
+
   return (
     <PageStack>
       <PageHeader
-        title="Widgets"
-        description="Tools for your team's streamers"
+        title={t('modules.pageTitle')}
+        description={t('modules.pageDescription')}
         icon={SportsEsportsIcon}
         iconVariant="primary"
       />
@@ -99,15 +106,17 @@ export function ModulesPage() {
                     <ModuleInfo>
                       <ModuleTitleRow direction="row" spacing={1}>
                         <ModuleTitle variant="subtitle1">
-                          {module.name}
+                          {t(moduleNameKey(module.id))}
                         </ModuleTitle>
                         <StatusChip
-                          label={isAvailable ? 'Available' : 'Soon'}
+                          label={
+                            isAvailable ? t('common.available') : t('common.soon')
+                          }
                           size="small"
                         />
                       </ModuleTitleRow>
                       <Typography variant="body2" color="text.secondary">
-                        {module.description}
+                        {t(moduleDescriptionKey(module.id))}
                       </Typography>
                     </ModuleInfo>
                   </ModuleHeaderStack>
@@ -118,11 +127,11 @@ export function ModulesPage() {
                         to={module.widgetRoute}
                         variant="contained"
                       >
-                        Open
+                        {t('common.open')}
                       </Button>
                     ) : (
                       <Button variant="contained" disabled>
-                        Coming soon
+                        {t('common.comingSoon')}
                       </Button>
                     )}
                   </ModuleFooter>

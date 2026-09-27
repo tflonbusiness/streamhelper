@@ -1,6 +1,7 @@
 import { Button, Chip, Stack, Typography } from '@mui/material'
 import ArchiveIcon from '@mui/icons-material/Archive'
 import { styled, useTheme } from '@mui/material/styles'
+import { useTranslation } from 'react-i18next'
 import type { ChatRollRecord } from '@/api/chat-roll'
 import { isChatRollReadOnly } from '@/api/chat-roll'
 import {
@@ -53,6 +54,7 @@ const ReadOnlyAlert = styled(StatusAlert)(({ theme }) => ({
 export const ChatRollSessionHeaderSection = (
   props: ChatRollSessionHeaderSectionProps,
 ) => {
+  const { t } = useTranslation()
   const theme = useTheme()
   const readOnly = isChatRollReadOnly(props.record)
 
@@ -67,14 +69,14 @@ export const ChatRollSessionHeaderSection = (
             </SessionTitle>
             {!props.record.isAcceptingParticipants && !readOnly ? (
               <Chip
-                label="Entries paused"
+                label={t('chatRoll.entriesPaused')}
                 size="small"
                 color="warning"
                 variant="outlined"
               />
             ) : null}
             {readOnly ? (
-              <Chip label="Archived" size="small" sx={mutedChipSx(theme)} />
+              <Chip label={t('common.archived')} size="small" sx={mutedChipSx(theme)} />
             ) : null}
           </TitleStack>
           <ActionsStack direction="row">
@@ -86,14 +88,14 @@ export const ChatRollSessionHeaderSection = (
                 startIcon={<ArchiveIcon fontSize="small" aria-hidden />}
                 onClick={props.onOpenArchiveDialog}
               >
-                Archive
+                {t('common.archive')}
               </Button>
             ) : null}
           </ActionsStack>
         </HeaderStack>
         {readOnly ? (
           <ReadOnlyAlert tone="info">
-            This session is archived. View only.
+            {t('chatRoll.sessionArchivedViewOnly')}
           </ReadOnlyAlert>
         ) : null}
       </StyledCompactSessionCardContent>

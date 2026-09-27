@@ -566,23 +566,42 @@
         }
       }
 
+      #lang-toggle {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 10;
+        padding: 0.4rem 0.75rem;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: var(--card-secondary);
+        color: var(--foreground);
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      #lang-toggle:hover {
+        border-color: rgba(245, 158, 11, 0.4);
+      }
     </style>
   </head>
   <body>
+    <button type="button" id="lang-toggle" aria-label="Switch language">RU</button>
     <div id="dot-field-bg" aria-hidden="true"></div>
     <main>
       <section class="hero" id="hero">
         <div class="page">
           <div class="hero-inner">
-            <span class="brand-name">Stream Helper</span>
-            <h1>Turn your Kick chat into a live game show</h1>
-            <p class="lead">
+            <span class="brand-name" data-i18n="brandName">Stream Helper</span>
+            <h1 data-i18n="heroTitle">Turn your Kick chat into a live game show</h1>
+            <p class="lead" data-i18n="heroLead">
               Stream Helper gives casino streamers ready-to-run engagement modules —
               bonus buys, prize wheels, and weighted giveaways — with OBS
               overlays your viewers see on stream.
             </p>
             <div class="hero-actions">
-              <a class="cta" href="http://localhost:5173/">Sign in with Kick</a>
+              <a class="cta" href="http://localhost:5173/" data-i18n="signInKick">Sign in with Kick</a>
             </div>
           </div>
         </div>
@@ -591,8 +610,8 @@
       <section id="modules">
         <div class="page">
           <div class="section-header">
-            <h2>Everything you need to engage chat</h2>
-            <p class="lead">
+            <h2 data-i18n="modulesTitle">Everything you need to engage chat</h2>
+            <p class="lead" data-i18n="modulesLead">
               Pick a module, configure it in the dashboard, and drop the
               browser-source widget into OBS.
             </p>
@@ -600,8 +619,8 @@
           <div class="card-grid">
             <article class="card">
               <div class="card-icon amber" aria-hidden="true">🎰</div>
-              <h3>Bonus Buy</h3>
-              <p class="card-body">
+              <h3 data-i18n="moduleBonusBuyTitle">Bonus Buy</h3>
+              <p class="card-body" data-i18n="moduleBonusBuyBody">
                 Run slot bonus-buy sessions on stream. Track balance, open
                 rounds, and show live stats on your overlay while viewers
                 follow the action.
@@ -609,16 +628,16 @@
             </article>
             <article class="card">
               <div class="card-icon purple" aria-hidden="true">🎡</div>
-              <h3>Prize Spin</h3>
-              <p class="card-body">
+              <h3 data-i18n="modulePrizeSpinTitle">Prize Spin</h3>
+              <p class="card-body" data-i18n="modulePrizeSpinBody">
                 Spin a weighted prize wheel for any viewer nick. Set sectors,
                 odds, and colors — then reveal the winner on stream in seconds.
               </p>
             </article>
             <article class="card">
               <div class="card-icon blue" aria-hidden="true">🎲</div>
-              <h3>Chat Roll</h3>
-              <p class="card-body">
+              <h3 data-i18n="moduleChatRollTitle">Chat Roll</h3>
+              <p class="card-body" data-i18n="moduleChatRollBody">
                 Weighted chat giveaways with a keyword. Boost odds for VIPs,
                 mods, and subscribers — fair rolls, instant winner on overlay.
               </p>
@@ -630,29 +649,29 @@
       <section id="platform">
         <div class="page">
           <div class="section-header">
-            <h2>Built for stream production</h2>
+            <h2 data-i18n="platformTitle">Built for stream production</h2>
           </div>
           <div class="tile-grid">
             <div class="tile">
               <div class="card-icon purple" aria-hidden="true">📺</div>
-              <h3>OBS-ready widgets</h3>
-              <p class="card-body">
+              <h3 data-i18n="platformObsTitle">OBS-ready widgets</h3>
+              <p class="card-body" data-i18n="platformObsBody">
                 Browser-source URLs for each module. Styled to match your dark
                 stream layout.
               </p>
             </div>
             <div class="tile">
               <div class="card-icon blue" aria-hidden="true">👥</div>
-              <h3>Team access</h3>
-              <p class="card-body">
+              <h3 data-i18n="platformTeamTitle">Team access</h3>
+              <p class="card-body" data-i18n="platformTeamBody">
                 Owners and moderators share one account. Control who runs games
                 during your stream.
               </p>
             </div>
             <div class="tile">
               <div class="card-icon green" aria-hidden="true">⚡</div>
-              <h3>Kick-native</h3>
-              <p class="card-body">
+              <h3 data-i18n="platformKickTitle">Kick-native</h3>
+              <p class="card-body" data-i18n="platformKickBody">
                 Sign in with Kick OAuth. No extra passwords — start from the
                 channel you already stream on.
               </p>
@@ -663,8 +682,8 @@
       <section id="pricing">
         <div class="page">
           <div class="section-header">
-            <h2>Plans for every stream size</h2>
-            <p class="lead">
+            <h2 data-i18n="pricingTitle">Plans for every stream size</h2>
+            <p class="lead" data-i18n="pricingLead">
               Start free, then upgrade when you need more modules, overlays, or
               team seats. All paid plans are activated via Telegram — no
               checkout on this page.
@@ -672,45 +691,45 @@
           </div>
           <div class="card-grid">
             <article class="plan-card">
-              <span class="plan-badge muted">Free</span>
-              <h3>Free</h3>
-              <p class="plan-tagline">Get started at no cost</p>
+              <span class="plan-badge muted" data-i18n="planFreeBadge">Free</span>
+              <h3 data-i18n="planFreeTitle">Free</h3>
+              <p class="plan-tagline" data-i18n="planFreeTagline">Get started at no cost</p>
               <ul class="plan-features">
-                <li>Team dashboard</li>
-                <li>Module catalog</li>
-                <li>Kick channel stats</li>
+                <li data-i18n="planFreeFeature1">Team dashboard</li>
+                <li data-i18n="planFreeFeature2">Module catalog</li>
+                <li data-i18n="planFreeFeature3">Kick channel stats</li>
               </ul>
-              <p class="plan-note">Included when you sign in</p>
-              <a class="cta-outline" href="http://localhost:5173/">Sign in with Kick</a>
+              <p class="plan-note" data-i18n="planFreeNote">Included when you sign in</p>
+              <a class="cta-outline" href="http://localhost:5173/" data-i18n="signInKick">Sign in with Kick</a>
             </article>
             <article class="plan-card featured">
-              <span class="popular-chip">Popular</span>
-              <span class="plan-badge">Pro</span>
-              <h3>Pro</h3>
-              <p class="plan-tagline">Full engagement toolkit for solo streamers</p>
+              <span class="popular-chip" data-i18n="planPopular">Popular</span>
+              <span class="plan-badge" data-i18n="planProBadge">Pro</span>
+              <h3 data-i18n="planProTitle">Pro</h3>
+              <p class="plan-tagline" data-i18n="planProTagline">Full engagement toolkit for solo streamers</p>
               <ul class="plan-features">
-                <li>All modules (Bonus Buy, Prize Spin, Chat Roll)</li>
-                <li>OBS browser-source widgets</li>
-                <li>Extended session limits</li>
+                <li data-i18n="planProFeature1">All modules (Bonus Buy, Prize Spin, Chat Roll)</li>
+                <li data-i18n="planProFeature2">OBS browser-source widgets</li>
+                <li data-i18n="planProFeature3">Extended session limits</li>
               </ul>
-              <p class="plan-note">Contact us to activate</p>
-              <a class="cta" href="#contact">Get Pro access</a>
+              <p class="plan-note" data-i18n="planProNote">Contact us to activate</p>
+              <a class="cta" href="#contact" data-i18n="planProCta">Get Pro access</a>
             </article>
             <article class="plan-card">
-              <span class="plan-badge">Studio</span>
-              <h3>Studio</h3>
-              <p class="plan-tagline">For teams running daily streams</p>
+              <span class="plan-badge" data-i18n="planStudioBadge">Studio</span>
+              <h3 data-i18n="planStudioTitle">Studio</h3>
+              <p class="plan-tagline" data-i18n="planStudioTagline">For teams running daily streams</p>
               <ul class="plan-features">
-                <li>Everything in Pro</li>
-                <li>Multiple moderator seats</li>
-                <li>Priority Telegram support</li>
-                <li>Highest session limits</li>
+                <li data-i18n="planStudioFeature1">Everything in Pro</li>
+                <li data-i18n="planStudioFeature2">Multiple moderator seats</li>
+                <li data-i18n="planStudioFeature3">Priority Telegram support</li>
+                <li data-i18n="planStudioFeature4">Highest session limits</li>
               </ul>
-              <p class="plan-note">Contact us to activate</p>
-              <a class="cta-outline" href="#contact">Get Studio access</a>
+              <p class="plan-note" data-i18n="planStudioNote">Contact us to activate</p>
+              <a class="cta-outline" href="#contact" data-i18n="planStudioCta">Get Studio access</a>
             </article>
           </div>
-          <p class="pricing-footnote">
+          <p class="pricing-footnote" data-i18n="pricingFootnote">
             Prices are quoted individually. Message us to pick the right plan for
             your channel.
           </p>
@@ -720,27 +739,27 @@
       <section id="how-it-works">
         <div class="page">
           <div class="section-header">
-            <h2>Live in three steps</h2>
+            <h2 data-i18n="stepsTitle">Live in three steps</h2>
           </div>
           <div class="steps">
             <div class="step">
               <div class="step-number" aria-hidden="true">1</div>
-              <h3>Sign in</h3>
-              <p class="card-body">
+              <h3 data-i18n="step1Title">Sign in</h3>
+              <p class="card-body" data-i18n="step1Body">
                 Connect with Kick and pick your team.
               </p>
             </div>
             <div class="step">
               <div class="step-number" aria-hidden="true">2</div>
-              <h3>Configure</h3>
-              <p class="card-body">
+              <h3 data-i18n="step2Title">Configure</h3>
+              <p class="card-body" data-i18n="step2Body">
                 Open a module, set prizes, keywords, or sectors in the dashboard.
               </p>
             </div>
             <div class="step">
               <div class="step-number" aria-hidden="true">3</div>
-              <h3>Go live</h3>
-              <p class="card-body">
+              <h3 data-i18n="step3Title">Go live</h3>
+              <p class="card-body" data-i18n="step3Body">
                 Add the widget URL to OBS and run your session while you stream.
               </p>
             </div>
@@ -751,20 +770,20 @@
       <section id="cta">
         <div class="page">
           <div class="cta-band">
-            <h2>Ready to engage your chat?</h2>
-            <p class="lead">
+            <h2 data-i18n="ctaTitle">Ready to engage your chat?</h2>
+            <p class="lead" data-i18n="ctaLead">
               Sign in with Kick to open your dashboard, or message us to
               activate your subscription.
             </p>
-            <a class="cta" href="http://localhost:5173/">Sign in with Kick</a>
+            <a class="cta" href="http://localhost:5173/" data-i18n="signInKick">Sign in with Kick</a>
           </div>
         </div>
       </section>
 
       <section class="contact" id="contact">
         <div class="page">
-          <h2>Activate your plan</h2>
-          <p class="lead">
+          <h2 data-i18n="contactTitle">Activate your plan</h2>
+          <p class="lead" data-i18n="contactLead">
             Sign in with Kick to start on Free. For Pro or Studio, message us on
             Telegram and we'll set up your team.
           </p>
@@ -774,14 +793,16 @@
               href="https://t.me/parsyuk"
               target="_blank"
               rel="noopener noreferrer"
+              data-i18n="contactTelegram"
               >Message @parsyuk on Telegram</a
             >
-            <a class="cta-secondary" href="http://localhost:5173/">Or sign in with Kick</a>
+            <a class="cta-secondary" href="http://localhost:5173/" data-i18n="contactOrSignIn">Or sign in with Kick</a>
           </div>
-          <p class="footer">© 2026 Stream Helper</p>
+          <p class="footer" data-i18n="footer">© 2026 Stream Helper</p>
         </div>
       </section>
     </main>
+    <script src="locale.js"></script>
     <script src="dot-field.js"></script>
   </body>
 </html>

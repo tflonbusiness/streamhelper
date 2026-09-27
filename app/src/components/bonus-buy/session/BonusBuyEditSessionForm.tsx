@@ -1,4 +1,6 @@
 import { Box, Stack, TextField } from '@mui/material'
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { styled } from '@mui/material/styles'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useEffect } from 'react'
@@ -6,7 +8,7 @@ import { Controller, useForm, useWatch } from 'react-hook-form'
 import type { BonusBuyRecord } from '@/api/bonus-buy'
 import {
   type EditBonusBuySessionFormValues,
-  editBonusBuySessionFormSchema,
+  createEditBonusBuySessionFormSchema,
 } from '@/lib/bonus-buy-validation'
 import { BonusBuyCurrencyField } from '@/components/bonus-buy/BonusBuyCurrencyField'
 import { buildBonusBuyMoneyInputSlotProps } from '@/components/bonus-buy/bonus-buy-money-input'
@@ -38,6 +40,11 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
 }))
 
 export const BonusBuyEditSessionForm = (props: BonusBuyEditSessionFormProps) => {
+  const { t } = useTranslation()
+  const validationSchema = useMemo(
+    () => createEditBonusBuySessionFormSchema(t),
+    [t],
+  )
   const {
     control,
     handleSubmit,
@@ -45,7 +52,7 @@ export const BonusBuyEditSessionForm = (props: BonusBuyEditSessionFormProps) => 
     formState: { isValid },
   } = useForm({
     defaultValues: emptyValues,
-    resolver: yupResolver(editBonusBuySessionFormSchema),
+    resolver: yupResolver(validationSchema),
     mode: 'onChange',
   })
 
@@ -79,7 +86,7 @@ export const BonusBuyEditSessionForm = (props: BonusBuyEditSessionFormProps) => 
           render={({ field, fieldState }) => (
             <StyledTextField
               {...field}
-              label="Name"
+              label={t('common.name')}
               error={Boolean(fieldState.error)}
               helperText={fieldState.error?.message}
               autoFocus
@@ -105,7 +112,7 @@ export const BonusBuyEditSessionForm = (props: BonusBuyEditSessionFormProps) => 
           render={({ field, fieldState }) => (
             <StyledTextField
               {...field}
-              label="Start balance"
+              label={t('common.startBalance')}
               type="text"
               onChange={(event) =>
                 field.onChange(sanitizeDecimalInput(event.target.value))

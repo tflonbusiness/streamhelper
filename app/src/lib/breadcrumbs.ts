@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next'
 import {
   BONUS_BUY_ROUTE,
   CHAT_ROLL_ROUTE,
@@ -6,31 +7,49 @@ import {
 } from '@/lib/routes'
 
 export type BreadcrumbItem = {
-  label: string
+  labelKey?: string
+  label?: string
   to?: string
+}
+
+function sessionLabel(t: TFunction, dynamicLabel?: string | null): string {
+  return dynamicLabel?.trim() ? dynamicLabel.trim() : t('common.session')
 }
 
 export function buildBreadcrumbs(
   pathname: string,
+  t: TFunction,
   dynamicLabel?: string | null,
 ): BreadcrumbItem[] {
-  const home: BreadcrumbItem = { label: 'Home', to: '/dashboard' }
+  const home: BreadcrumbItem = { labelKey: 'nav.home', to: '/dashboard' }
 
   switch (pathname) {
     case '/dashboard':
-      return [{ label: 'Home' }]
+      return [{ labelKey: 'nav.home' }]
     case '/team':
-      return [home, { label: 'Team' }]
+      return [home, { labelKey: 'nav.team' }]
     case MODULES_ROUTE:
-      return [home, { label: 'Widgets' }]
+      return [home, { labelKey: 'nav.widgets' }]
     case '/subscription':
-      return [home, { label: 'Subscription' }]
+      return [home, { labelKey: 'nav.subscription' }]
     case BONUS_BUY_ROUTE:
-      return [home, { label: 'Widgets', to: MODULES_ROUTE }, { label: 'Bonus Buy' }]
+      return [
+        home,
+        { labelKey: 'nav.widgets', to: MODULES_ROUTE },
+        { labelKey: 'nav.bonusBuy' },
+      ]
     case PRIZE_SPIN_ROUTE:
-      return [home, { label: 'Widgets', to: MODULES_ROUTE }, { label: 'Prize Spin' }]
+      return [
+        home,
+        { labelKey: 'nav.widgets', to: MODULES_ROUTE },
+        { labelKey: 'nav.prizeSpin' },
+      ]
     case CHAT_ROLL_ROUTE:
-      return [home, { label: 'Widgets', to: MODULES_ROUTE }, { label: 'Chat Roll' }]
+      return [
+        home,
+        { labelKey: 'nav.widgets', to: MODULES_ROUTE },
+        { labelKey: 'nav.chatRoll' },
+      ]
     default:
       break
   }
@@ -38,46 +57,57 @@ export function buildBreadcrumbs(
   if (pathname.startsWith(`${BONUS_BUY_ROUTE}/`)) {
     return [
       home,
-      { label: 'Widgets', to: MODULES_ROUTE },
-      { label: 'Bonus Buy', to: BONUS_BUY_ROUTE },
-      { label: dynamicLabel ?? 'Session' },
+      { labelKey: 'nav.widgets', to: MODULES_ROUTE },
+      { labelKey: 'nav.bonusBuy', to: BONUS_BUY_ROUTE },
+      { label: sessionLabel(t, dynamicLabel) },
     ]
   }
 
   if (pathname.startsWith(`${PRIZE_SPIN_ROUTE}/`)) {
     return [
       home,
-      { label: 'Widgets', to: MODULES_ROUTE },
-      { label: 'Prize Spin', to: PRIZE_SPIN_ROUTE },
-      { label: dynamicLabel ?? 'Session' },
+      { labelKey: 'nav.widgets', to: MODULES_ROUTE },
+      { labelKey: 'nav.prizeSpin', to: PRIZE_SPIN_ROUTE },
+      { label: sessionLabel(t, dynamicLabel) },
     ]
   }
 
   if (pathname.startsWith(`${CHAT_ROLL_ROUTE}/`)) {
     return [
       home,
-      { label: 'Widgets', to: MODULES_ROUTE },
-      { label: 'Chat Roll', to: CHAT_ROLL_ROUTE },
-      { label: dynamicLabel ?? 'Session' },
+      { labelKey: 'nav.widgets', to: MODULES_ROUTE },
+      { labelKey: 'nav.chatRoll', to: CHAT_ROLL_ROUTE },
+      { label: sessionLabel(t, dynamicLabel) },
     ]
   }
 
-  return [{ label: 'Home', to: '/dashboard' }]
+  return [{ labelKey: 'nav.home', to: '/dashboard' }]
+}
+
+export function resolveBreadcrumbLabel(item: BreadcrumbItem, t: TFunction): string {
+  if (item.label) {
+    return item.label
+  }
+  return item.labelKey ? t(item.labelKey) : ''
 }
 
 export function getBreadcrumbAncestors(
   pathname: string,
+  t: TFunction,
   dynamicLabel?: string | null,
-): BreadcrumbItem[] {
+): Array<BreadcrumbItem & { label: string }> {
   if (pathname === '/dashboard') {
     return []
   }
 
-  const items = buildBreadcrumbs(pathname, dynamicLabel)
+  const items = buildBreadcrumbs(pathname, t, dynamicLabel)
 
   if (items.length <= 1) {
     return []
   }
 
-  return items.slice(0, -1)
+  return items.slice(0, -1).map((item) => ({
+    ...item,
+    label: resolveBreadcrumbLabel(item, t),
+  }))
 }

@@ -1,5 +1,6 @@
 import { Card, Grid, Stack, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import { useTranslation } from 'react-i18next'
 import { styled } from '@mui/material/styles'
 import type { BonusBuyRecord } from '@/api/bonus-buy'
 import type { BonusBuySessionStats } from '@/lib/bonus-buy-stats'
@@ -64,6 +65,7 @@ function StatCard(props: StatCardProps) {
 export const BonusBuySessionStatsSection = (
   props: BonusBuySessionStatsSectionProps,
 ) => {
+  const { t } = useTranslation()
   const theme = useTheme()
   const profitValue = Number.parseFloat(props.stats.profit)
   const currentBalanceValue = Number.parseFloat(props.stats.currentBalance)
@@ -78,7 +80,7 @@ export const BonusBuySessionStatsSection = (
     <Grid container spacing={1.5}>
       <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
         <StatCard
-          label="Start balance"
+          label={t('common.startBalance')}
           value={formatBonusBuyMoney(
             props.record.startBalance,
             props.record.currencyCode,
@@ -87,7 +89,7 @@ export const BonusBuySessionStatsSection = (
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
         <StatCard
-          label="Current balance"
+          label={t('common.currentBalance')}
           value={formatBonusBuyMoney(
             props.stats.currentBalance,
             props.record.currencyCode,
@@ -97,20 +99,20 @@ export const BonusBuySessionStatsSection = (
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
         <StatCard
-          label="Spent"
+          label={t('common.spent')}
           value={formatBonusBuyMoney(props.stats.spent, props.record.currencyCode)}
         />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
         <StatCard
-          label="Profit"
+          label={t('common.profit')}
           value={formatBonusBuyMoney(props.stats.profit, props.record.currencyCode)}
           valueColor={signedValueColor(profitValue, theme)}
         />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
         <StatCard
-          label="Average X"
+          label={t('common.averageX')}
           value={props.stats.averageX}
           valueColor={averageXColor}
         />

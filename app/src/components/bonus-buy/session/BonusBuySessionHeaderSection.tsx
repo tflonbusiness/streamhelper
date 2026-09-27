@@ -2,6 +2,7 @@ import { Button, Chip, Stack, Typography } from '@mui/material'
 import ArchiveIcon from '@mui/icons-material/Archive'
 import EditIcon from '@mui/icons-material/Edit'
 import { styled, useTheme } from '@mui/material/styles'
+import { useTranslation } from 'react-i18next'
 import type { BonusBuyRecord } from '@/api/bonus-buy'
 import { isBonusBuyActive } from '@/api/bonus-buy'
 import {
@@ -55,6 +56,7 @@ const ReadOnlyAlert = styled(StatusAlert)(({ theme }) => ({
 export const BonusBuySessionHeaderSection = (
   props: BonusBuySessionHeaderSectionProps,
 ) => {
+  const { t } = useTranslation()
   const theme = useTheme()
   const active = isBonusBuyActive(props.record)
 
@@ -68,7 +70,7 @@ export const BonusBuySessionHeaderSection = (
               <SessionId>#{props.record.id}</SessionId>
             </SessionTitle>
             {!active ? (
-              <Chip label="Archived" size="small" sx={mutedChipSx(theme)} />
+              <Chip label={t('common.archived')} size="small" sx={mutedChipSx(theme)} />
             ) : null}
           </TitleStack>
           <ActionsStack direction="row">
@@ -80,7 +82,7 @@ export const BonusBuySessionHeaderSection = (
                 startIcon={<ArchiveIcon fontSize="small" aria-hidden />}
                 onClick={props.onOpenArchiveDialog}
               >
-                Archive
+                {t('common.archive')}
               </Button>
             ) : null}
             {active ? (
@@ -91,14 +93,14 @@ export const BonusBuySessionHeaderSection = (
                 startIcon={<EditIcon fontSize="small" aria-hidden />}
                 onClick={props.onOpenEditDialog}
               >
-                Edit
+                {t('common.edit')}
               </Button>
             ) : null}
           </ActionsStack>
         </HeaderStack>
         {!active ? (
           <ReadOnlyAlert tone="info">
-            This session is archived. View only.
+            {t('bonusBuy.sessionArchivedViewOnly')}
           </ReadOnlyAlert>
         ) : null}
       </StyledCompactSessionCardContent>

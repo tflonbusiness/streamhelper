@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/material'
 import { useEffect, useMemo, useRef, useState, type TransitionEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { PrizeSpinWidgetLatestWin, PrizeSpinSector } from '@/api/prize-spin'
 import {
   buildWheelSectors,
@@ -39,6 +40,7 @@ export function PrizeSpinWidgetCard({
   height,
   equalSectorSlices,
 }: PrizeSpinWidgetCardProps) {
+  const { t } = useTranslation()
   const theme = useMemo(() => buildPrizeSpinWidgetTheme(width, height), [width, height])
   const scale = theme.scale
   const geometries = useMemo(
@@ -250,7 +252,7 @@ export function PrizeSpinWidgetCard({
         }}
       >
         <Typography sx={{ color: theme.textMuted, fontSize: scaledPx(14, scale) }}>
-          Add sectors in dashboard
+          {t('prizeSpin.widgetAddSectors')}
         </Typography>
       </Box>
     )
@@ -328,7 +330,7 @@ export function PrizeSpinWidgetCard({
               }}
             >
               <Box component="span" sx={{ color: 'rgba(255,255,255,0.45)' }}>
-                Spinning
+                {t('prizeSpin.widgetSpinning')}
               </Box>
               <Box component="span" sx={{ mx: `${scaledPx(8, scale)}px`, color: 'rgba(255,255,255,0.20)' }}>
                 •
@@ -388,7 +390,7 @@ export function PrizeSpinWidgetCard({
                 mb: 0.5,
               }}
             >
-              Prize
+              {t('prizeSpin.widgetPrize')}
             </Typography>
             <Typography
               sx={{

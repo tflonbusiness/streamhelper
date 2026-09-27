@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   Dialog,
@@ -30,6 +31,7 @@ const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
 }))
 
 export const ChatRollArchiveDialog = (props: ChatRollArchiveDialogProps) => {
+  const { t } = useTranslation()
   const { showSuccess, showError } = useNotification()
   const archiveMutation = useArchiveChatRoll(props.accountId)
 
@@ -43,24 +45,24 @@ export const ChatRollArchiveDialog = (props: ChatRollArchiveDialogProps) => {
 
   const handleArchive = () => {
     if (!props.record) {
-      showError('No session to archive.')
+      showError(t('prizeSpin.noSessionToArchive'))
       return
     }
 
     archiveMutation.mutate(props.record.id, {
       onSuccess: () => {
-        showSuccess('Session archived.')
+        showSuccess(t('bonusBuy.sessionArchived'))
         props.onArchived?.()
         handleClose()
         archiveMutation.reset()
       },
-      onError: () => showError('Could not archive session.'),
+      onError: () => showError(t('chatRoll.couldNotArchiveSession')),
     })
   }
 
   return (
     <Dialog open={props.open} onClose={handleClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Archive Session?</DialogTitle>
+      <DialogTitle>{t('chatRoll.archiveSessionTitle')}</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
           <b>{props.record?.title}</b> will be removed from the active list.

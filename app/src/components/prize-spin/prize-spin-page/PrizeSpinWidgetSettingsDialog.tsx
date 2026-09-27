@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Box,
   Button,
@@ -6,7 +8,11 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
   FormControlLabel,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   TextField,
   Typography,
@@ -16,9 +22,11 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useNotification } from '@/context/NotificationContext'
+import { useLocale } from '@/context/LocaleProvider'
+import type { AppLocale } from '@/i18n/app-locale'
 import {
   type PrizeSpinWidgetSettingsFormValues,
-  prizeSpinWidgetSettingsFormSchema,
+  createPrizeSpinWidgetSettingsFormSchema,
 } from '@/lib/prize-spin-validation'
 import { PRIZE_SPIN_WIDGET_DEFAULTS } from '@/lib/prize-spin-widget-defaults'
 import {
@@ -64,6 +72,12 @@ const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
 export const PrizeSpinWidgetSettingsDialog = (
   props: PrizeSpinWidgetSettingsDialogProps,
 ) => {
+  const { t } = useTranslation()
+  const { locale, setLocale } = useLocale()
+  const validationSchema = useMemo(
+    () => createPrizeSpinWidgetSettingsFormSchema(t),
+    [t],
+  )
   const { showSuccess, showError } = useNotification()
 
   const {
@@ -81,7 +95,7 @@ export const PrizeSpinWidgetSettingsDialog = (
     formState: { isValid },
   } = useForm({
     defaultValues,
-    resolver: yupResolver(prizeSpinWidgetSettingsFormSchema),
+    resolver: yupResolver(validationSchema),
     mode: 'onChange',
   })
 
@@ -97,9 +111,9 @@ export const PrizeSpinWidgetSettingsDialog = (
 
   useEffect(() => {
     if (loadError) {
-      showError('Could not load widget settings.')
+      showError(t('prizeSpin.couldNotLoadWidgetSettings'))
     }
-  }, [loadError, showError])
+  }, [loadError, showError, t])
 
   const handleClose = () => {
     props.onClose()
@@ -127,12 +141,12 @@ export const PrizeSpinWidgetSettingsDialog = (
       },
       {
         onSuccess: () => {
-          showSuccess('Widget settings saved.')
+          showSuccess(t('prizeSpin.widgetSettingsSaved'))
           handleClose()
           patchMutation.reset()
         },
         onError: () => {
-          showError('Could not save widget settings.')
+          showError(t('prizeSpin.couldNotSaveWidgetSettings'))
         },
       },
     )
@@ -140,10 +154,10 @@ export const PrizeSpinWidgetSettingsDialog = (
 
   return (
     <Dialog open={props.open} onClose={handleClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Widget settings</DialogTitle>
+      <DialogTitle>{t('prizeSpin.widgetSettingsTitle')}</DialogTitle>
       <DialogContent>
         {isLoading ? (
-          <StyledLoadingText>Loading settings…</StyledLoadingText>
+          <StyledLoadingText>{t('common.loading')}</StyledLoadingText>
         ) : (
           <Box
             component="form"
@@ -157,7 +171,7 @@ export const PrizeSpinWidgetSettingsDialog = (
                 render={({ field, fieldState }) => (
                   <StyledSizeField
                     {...field}
-                    label="Width"
+                    label={t('common.width')}
                     type="number"
                     value={field.value}
                     onChange={(event) => {
@@ -182,7 +196,7 @@ export const PrizeSpinWidgetSettingsDialog = (
                 render={({ field, fieldState }) => (
                   <StyledSizeField
                     {...field}
-                    label="Height"
+                    label={t('common.height')}
                     type="number"
                     value={field.value}
                     onChange={(event) => {
@@ -212,17 +226,33 @@ export const PrizeSpinWidgetSettingsDialog = (
                         onChange={(_, checked) => field.onChange(checked)}
                       />
                     }
-                    label="Equal sector slices"
+                    label={t('prizeSpin.equalSectorSlices')}
                   />
                 )}
               />
+              <FormControl fullWidth size="small">
+                <InputLabel id="prize-spin-overlay-locale-label">
+                  {t('common.overlayLanguage')}
+                </InputLabel>
+                <Select
+                  labelId="prize-spin-overlay-locale-label"
+                  label={t('common.overlayLanguage')}
+                  value={locale}
+                  onChange={(event) =>
+                    setLocale(event.target.value as AppLocale)
+                  }
+                >
+                  <MenuItem value="en">{t('common.languageEn')}</MenuItem>
+                  <MenuItem value="ru">{t('common.languageRu')}</MenuItem>
+                </Select>
+              </FormControl>
             </StyledFormStack>
           </Box>
         )}
       </DialogContent>
       <StyledDialogActions>
         <Button type="button" variant="outlined" onClick={handleClose}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           type="submit"
@@ -232,7 +262,7 @@ export const PrizeSpinWidgetSettingsDialog = (
           loadingPosition="start"
           disabled={isLoading || !isValid}
         >
-          Save
+          {t('common.save')}
         </Button>
       </StyledDialogActions>
     </Dialog>

@@ -2,6 +2,7 @@ import { Chip, IconButton, type IconButtonProps, Stack, Tooltip } from '@mui/mat
 import ArchiveIcon from '@mui/icons-material/Archive'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import { alpha, styled } from '@mui/material/styles'
+import type { TFunction } from 'i18next'
 import { Link, type LinkProps } from 'react-router-dom'
 import { isChatRollArchived, type ChatRollRecord } from '@/api/chat-roll'
 import type { AppTableColumn } from '@/components/AppTable'
@@ -75,13 +76,13 @@ const StyledOpenIconButton = styled(IconButton)<IconButtonProps & LinkProps>(
 
 const actionIconSx = { fontSize: 14 } as const
 
-function recordStatusChip(record: ChatRollRecord) {
+function recordStatusChip(record: ChatRollRecord, t: TFunction) {
   if (isChatRollArchived(record)) {
-    return <MutedStatusChip label="Archived" size="small" />
+    return <MutedStatusChip label={t('table.archived')} size="small" />
   }
 
   return (
-    <Chip label="Active" size="small" sx={toneChipSx(colors.success[400])} />
+    <Chip label={t('table.active')} size="small" sx={toneChipSx(colors.success[400])} />
   )
 }
 
@@ -89,13 +90,14 @@ type BuildChatRollRecordColumnsOptions = {
   onArchive: (record: ChatRollRecord) => void
 }
 
-export function buildChatRollRecordColumns({
-  onArchive,
-}: BuildChatRollRecordColumnsOptions): AppTableColumn<ChatRollRecord>[] {
+export function buildChatRollRecordColumns(
+  t: TFunction,
+  { onArchive }: BuildChatRollRecordColumnsOptions,
+): AppTableColumn<ChatRollRecord>[] {
   return [
     {
       id: 'title',
-      header: 'Title',
+      header: t('table.title'),
       width: '100%',
       sx: titleColumnSx,
       render: (record) => (
@@ -106,11 +108,11 @@ export function buildChatRollRecordColumns({
     },
     {
       id: 'status',
-      header: 'Status',
+      header: t('table.status'),
       width: 108,
       minWidth: 108,
       sx: statusColumnSx,
-      render: (record) => recordStatusChip(record),
+      render: (record) => recordStatusChip(record, t),
     },
     {
       id: 'action',
@@ -124,11 +126,11 @@ export function buildChatRollRecordColumns({
 
         return (
           <ActionsStack direction="row" spacing={0.5}>
-            <Tooltip title="Archive">
+            <Tooltip title={t('table.archive')}>
               <span>
                 <StyledActionIconButton
                   type="button"
-                  aria-label={`Archive ${record.title}`}
+                  aria-label={t('table.archiveAria', { title: record.title })}
                   size="small"
                   disabled={readOnly}
                   onClick={() => onArchive(record)}
@@ -140,7 +142,7 @@ export function buildChatRollRecordColumns({
             <StyledOpenIconButton
               component={Link}
               to={chatRollSessionRoute(record.id)}
-              aria-label={`Open ${record.title}`}
+              aria-label={t('table.openAria', { title: record.title })}
               size="small"
             >
               <ArrowForwardIcon sx={actionIconSx} aria-hidden />

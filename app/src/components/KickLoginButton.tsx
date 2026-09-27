@@ -1,5 +1,6 @@
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import { useTranslation } from 'react-i18next'
 import { kickLoginUrl } from '@/api/auth'
 
 type KickLoginButtonProps = {
@@ -7,6 +8,8 @@ type KickLoginButtonProps = {
 }
 
 export function KickLoginButton({ className }: KickLoginButtonProps) {
+  const { t } = useTranslation()
+
   return (
     <Button
       component="a"
@@ -47,7 +50,7 @@ export function KickLoginButton({ className }: KickLoginButtonProps) {
         aria-hidden
         sx={{ width: 20.55, height: 25, flexShrink: 0 }}
       />
-      <span>Sign in with Kick</span>
+      <span>{t('common.signInWithKick')}</span>
     </Button>
   )
 }

@@ -1,13 +1,15 @@
 import { Box, Chip } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
+import { useTranslation } from 'react-i18next'
 import { toneChipSx } from '@/theme/colors'
 
 export function LiveStatusChip() {
+  const { t } = useTranslation()
   const theme = useTheme()
 
   return (
     <Chip
-      label="Live"
+      label={t('common.live')}
       size="small"
       icon={
         <Box

@@ -1,4 +1,5 @@
 import { Button } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useTheme } from '@mui/material/styles'
 import ArchiveIcon from '@mui/icons-material/Archive'
 import { useState } from 'react'
@@ -26,6 +27,7 @@ type PrizeSpinSessionWinnersSectionProps = {
 export const PrizeSpinSessionWinnersSection = (
   props: PrizeSpinSessionWinnersSectionProps,
 ) => {
+  const { t } = useTranslation()
   const theme = useTheme()
   const { showSuccess, showError } = useNotification()
   const [expandedWinnerIds, setExpandedWinnerIds] = useState<Set<number>>(
@@ -41,18 +43,18 @@ export const PrizeSpinSessionWinnersSection = (
   const handleCopyNick = async (win: PrizeSpinWin) => {
     try {
       await navigator.clipboard.writeText(win.participantNick)
-      showSuccess('Winner nick copied.')
+      showSuccess(t('prizeSpin.winnerNickCopied'))
     } catch {
-      showError('Could not copy winner nick.')
+      showError(t('prizeSpin.couldNotCopyWinnerNick'))
     }
   }
 
   const handleDeleteWin = (winId: number) => {
     deleteWinMutation.mutate(winId, {
-      onSuccess: () => showSuccess('Winner removed.'),
+      onSuccess: () => showSuccess(t('prizeSpin.winnerRemoved')),
       onError: (error) => {
         showError(
-          error instanceof Error ? error.message : 'Could not remove winner',
+          error instanceof Error ? error.message : t('prizeSpin.couldNotRemoveWinner'),
         )
       },
     })
@@ -70,7 +72,7 @@ export const PrizeSpinSessionWinnersSection = (
     })
   }
 
-  const winnerColumns = buildPrizeSpinWinnerColumns({
+  const winnerColumns = buildPrizeSpinWinnerColumns(t, {
     theme,
     readOnly: props.readOnly,
     onCopyNick: (win) => void handleCopyNick(win),
@@ -82,8 +84,8 @@ export const PrizeSpinSessionWinnersSection = (
       <StyledSessionCard elevation={0}>
         <StyledSessionCardContent>
           <SectionHeader
-            title={`History (${props.wins.length})`}
-            description="Recorded spins and prizes"
+            title={t('prizeSpin.winnersHistoryTitle', { count: props.wins.length })}
+            description={t('prizeSpin.winnersHistoryDescription')}
             icon={sectionTableIcon}
             iconVariant="secondary"
             action={
@@ -96,7 +98,7 @@ export const PrizeSpinSessionWinnersSection = (
                   disabled={props.readOnly}
                   onClick={() => setArchiveAllDialogOpen(true)}
                 >
-                  Archive all
+                  {t('prizeSpin.archiveAll')}
                 </Button>
               ) : undefined
             }
@@ -119,7 +121,7 @@ export const PrizeSpinSessionWinnersSection = (
               }}
             />
           ) : (
-            <StatusAlert tone="info">No winners yet.</StatusAlert>
+            <StatusAlert tone="info">{t('prizeSpin.noWinners')}</StatusAlert>
           )}
         </StyledSessionCardContent>
       </StyledSessionCard>

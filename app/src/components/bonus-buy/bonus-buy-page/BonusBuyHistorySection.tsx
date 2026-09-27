@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   Card,
@@ -15,10 +16,7 @@ import { type BonusBuyArchivedFilter } from '@/api/bonus-buy'
 import { AppTable } from '@/components/AppTable'
 import { BonusBuyCreateDialog } from '@/components/bonus-buy/bonus-buy-page/BonusBuyCreateDialog'
 import { BonusBuyRecordExpandedDetails } from '@/components/bonus-buy/bonus-buy-page/BonusBuyRecordExpandedDetails'
-import {
-  BONUS_BUY_HISTORY_PAGE_SIZE,
-  historyEmptyMessage,
-} from '@/components/bonus-buy/bonus-buy-page/bonus-buy-page-utils'
+import { BONUS_BUY_HISTORY_PAGE_SIZE } from '@/components/bonus-buy/bonus-buy-page/bonus-buy-page-utils'
 import { buildBonusBuyRecordColumns } from '@/components/bonus-buy/bonus-buy-page/bonusBuyRecordColumns'
 import { SectionHeader, sectionTableIcon } from '@/components/SectionHeader'
 import { useNotification } from '@/context/NotificationContext'
@@ -60,6 +58,7 @@ const StyledFilterSelect = styled(Select)(({ theme }) => ({
 export const BonusBuyHistorySection = ({
   accountId,
 }: BonusBuyHistorySectionProps) => {
+  const { t } = useTranslation()
   const { showError } = useNotification()
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [expandedRecordIds, setExpandedRecordIds] = useState<Set<number>>(
@@ -91,7 +90,7 @@ export const BonusBuyHistorySection = ({
       return
     }
 
-    showError('Could not load bonus buy history.')
+    showError(t('bonusBuy.couldNotLoadHistory'))
   }, [recordsQueryError, showError])
 
   useEffect(() => {
@@ -117,15 +116,15 @@ export const BonusBuyHistorySection = ({
     })
   }
 
-  const recordColumns = buildBonusBuyRecordColumns()
+  const recordColumns = buildBonusBuyRecordColumns(t)
 
   return (
     <>
       <StyledCard elevation={0}>
         <StyledCardContent>
           <SectionHeader
-            title="History"
-            description="Bonus buy sessions for this account"
+            title={t('bonusBuy.historyTitle')}
+            description={t('bonusBuy.historyDescription')}
             icon={sectionTableIcon}
             iconVariant="secondary"
             action={
@@ -135,7 +134,7 @@ export const BonusBuyHistorySection = ({
                 startIcon={<AddIcon fontSize="small" />}
                 onClick={() => setCreateDialogOpen(true)}
               >
-                New
+                {t('common.newSession')}
               </Button>
             }
           />
@@ -145,15 +144,19 @@ export const BonusBuyHistorySection = ({
               rows={records}
               loading={loadingRecords || fetchingRecords}
               getRowKey={(record) => record.id}
-              emptyMessage={historyEmptyMessage(archivedFilter)}
+              emptyMessage={
+                archivedFilter === 'true'
+                  ? t('bonusBuy.noArchived')
+                  : t('bonusBuy.noSessions')
+              }
               toolbar={
                 <StyledFilterFormControl size="small">
                   <InputLabel id="bonus-buy-archived-filter-label">
-                    Show
+                    {t('common.show')}
                   </InputLabel>
                   <StyledFilterSelect
                     labelId="bonus-buy-archived-filter-label"
-                    label="Show"
+                    label={t('common.show')}
                     value={archivedFilter}
                     onChange={(event) => {
                       setArchivedFilter(
@@ -162,9 +165,9 @@ export const BonusBuyHistorySection = ({
                       setRecordsPage(1)
                     }}
                   >
-                    <MenuItem value="false">Active</MenuItem>
-                    <MenuItem value="true">Archived</MenuItem>
-                    <MenuItem value="all">All</MenuItem>
+                    <MenuItem value="false">{t('common.active')}</MenuItem>
+                    <MenuItem value="true">{t('common.archived')}</MenuItem>
+                    <MenuItem value="all">{t('common.all')}</MenuItem>
                   </StyledFilterSelect>
                 </StyledFilterFormControl>
               }
@@ -179,8 +182,8 @@ export const BonusBuyHistorySection = ({
                 onToggle: (record) => toggleRecordExpanded(record.id),
                 ariaLabel: (record) =>
                   expandedRecordIds.has(record.id)
-                    ? `Collapse details for ${record.name}`
-                    : `Expand details for ${record.name}`,
+                    ? t('table.collapseDetailsAria', { title: record.name })
+                    : t('table.expandDetailsAria', { title: record.name }),
                 renderDetail: (record) => (
                   <BonusBuyRecordExpandedDetails record={record} />
                 ),

@@ -1,6 +1,7 @@
 import { CircularProgress, Stack } from '@mui/material'
 import CasinoIcon from '@mui/icons-material/Casino'
 import { styled } from '@mui/material/styles'
+import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/components/PageHeader'
 
 const PageStack = styled(Stack)(({ theme }) => ({
@@ -10,11 +11,13 @@ const PageStack = styled(Stack)(({ theme }) => ({
 }))
 
 export const ChatRollSessionLoadingState = () => {
+  const { t } = useTranslation()
+
   return (
     <PageStack>
       <PageHeader
-        title="Chat Roll"
-        description="Weighted chat giveaway for your stream"
+        title={t('chatRoll.title')}
+        description={t('chatRoll.sessionDescription')}
         icon={CasinoIcon}
         iconVariant="info"
       />

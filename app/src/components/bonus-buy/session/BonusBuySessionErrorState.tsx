@@ -1,7 +1,8 @@
 import { Button, Stack } from '@mui/material'
 import { styled } from '@mui/material/styles'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { PageHeader } from '@/components/PageHeader'
+import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { bonusBuyModule } from '@/components/bonus-buy/session/bonus-buy-session-utils'
 import { StatusAlert } from '@/components/StatusAlert'
 import { BONUS_BUY_ROUTE } from '@/lib/routes'
@@ -17,17 +18,14 @@ const PageStack = styled(Stack)(({ theme }) => ({
 export const BonusBuySessionErrorState = (
   props: BonusBuySessionErrorStateProps,
 ) => {
+  const { t } = useTranslation()
+
   return (
     <PageStack>
-      <PageHeader
-        title={bonusBuyModule.name}
-        description={bonusBuyModule.description}
-        icon={bonusBuyModule.icon}
-        iconVariant={bonusBuyModule.iconVariant}
-      />
+      <ModuleSessionPageHeader module={bonusBuyModule} />
       <StatusAlert tone="error">{props.message}</StatusAlert>
       <Button component={Link} to={BONUS_BUY_ROUTE} variant="outlined">
-        Back to history
+        {t('common.backToHistory')}
       </Button>
     </PageStack>
   )

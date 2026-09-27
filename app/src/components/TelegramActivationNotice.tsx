@@ -6,12 +6,14 @@ import Typography from '@mui/material/Typography'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import SendIcon from '@mui/icons-material/Send'
 import { alpha, useTheme } from '@mui/material/styles'
+import { useTranslation } from 'react-i18next'
 import {
   getTelegramSupportUrl,
   getTelegramSupportUsername,
 } from '@/lib/subscription-plan'
 
 export function TelegramActivationNotice() {
+  const { t } = useTranslation()
   const theme = useTheme()
   const username = getTelegramSupportUsername()
   const telegramUrl = getTelegramSupportUrl()
@@ -42,18 +44,17 @@ export function TelegramActivationNotice() {
           </Box>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             <Typography variant="subtitle1" component="h3">
-              Subscription activation
+              {t('subscription.activationTitle')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Contact us on Telegram to upgrade to a paid plan
+              {t('subscription.activationSubtitle')}
             </Typography>
           </Box>
         </Box>
       </CardContent>
       <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Typography variant="body2" color="text.secondary">
-          Message our support team — we will help you choose a plan and activate
-          a subscription for your team.
+          {t('subscription.telegramSupportBody')}
         </Typography>
         <Button
           component="a"
@@ -64,7 +65,7 @@ export function TelegramActivationNotice() {
           endIcon={<OpenInNewIcon fontSize="small" aria-hidden />}
           sx={{ alignSelf: 'flex-start', width: 'auto' }}
         >
-          Message @{username}
+          {t('subscription.telegramMessageCta', { username })}
         </Button>
       </CardContent>
     </Card>

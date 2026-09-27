@@ -9,6 +9,7 @@ import GroupIcon from '@mui/icons-material/Group'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import PodcastsIcon from '@mui/icons-material/Podcasts'
 import VisibilityIcon from '@mui/icons-material/Visibility'
+import { useTranslation } from 'react-i18next'
 import { KickChannelNotFoundError } from '@/api/kick-channel'
 import { SectionHeader } from '@/components/PageHeader'
 import { StatCard } from '@/components/StatCard'
@@ -34,6 +35,7 @@ function StatCardSkeleton() {
 export function KickChannelStatsSection({
   accountId,
 }: KickChannelStatsSectionProps) {
+  const { t } = useTranslation()
   const { data: channel, isLoading: loading, error } = useKickChannel(accountId)
 
   const notFound = error instanceof KickChannelNotFoundError
@@ -41,20 +43,20 @@ export function KickChannelStatsSection({
     error && !notFound
       ? error instanceof Error
         ? error.message
-        : 'Could not load Kick channel'
+        : t('errors.api.loadKickChannel')
       : null
 
   const viewerSubtext = channel?.isLive
-    ? [channel.categoryName, channel.isMature ? '18+' : null]
+    ? [channel.categoryName, channel.isMature ? t('dashboard.matureBadge') : null]
         .filter(Boolean)
-        .join(' · ') || 'watching now'
-    : 'off air'
+        .join(' · ') || t('dashboard.watchingNow')
+    : t('dashboard.offAir')
 
   return (
     <Box component="section" sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
       <SectionHeader
-        title="Kick stats"
-        description="Live channel metrics from Kick"
+        title={t('dashboard.kickStatsTitle')}
+        description={t('dashboard.kickStatsDescription')}
       />
 
       {fetchError ? (
@@ -63,7 +65,7 @@ export function KickChannelStatsSection({
 
       {notFound ? (
         <Typography variant="body2" color="text.secondary">
-          Kick channel not connected
+          {t('dashboard.kickNotConnected')}
         </Typography>
       ) : null}
 
@@ -84,8 +86,8 @@ export function KickChannelStatsSection({
         ) : channel ? (
           <>
             <StatCard
-              value={channel.isLive ? 'Live' : 'Offline'}
-              label="Stream status"
+              value={channel.isLive ? t('common.live') : t('common.offline')}
+              label={t('dashboard.streamStatus')}
               subtext={channel.streamTitle ?? channel.slug}
               icon={PodcastsIcon}
               variant={channel.isLive ? 'success' : 'muted'}
@@ -97,7 +99,7 @@ export function KickChannelStatsSection({
                   ? String(channel.viewerCount)
                   : '—'
               }
-              label="Viewers"
+              label={t('dashboard.viewers')}
               subtext={viewerSubtext}
               icon={VisibilityIcon}
               variant="info"
@@ -108,7 +110,7 @@ export function KickChannelStatsSection({
                   ? String(channel.activeSubscribersCount)
                   : '—'
               }
-              label="Subscribers"
+              label={t('dashboard.subscribers')}
               icon={GroupIcon}
               variant="purple"
             />
@@ -118,8 +120,8 @@ export function KickChannelStatsSection({
                   ? String(channel.activeGiftedSubscribersCount)
                   : '—'
               }
-              label="Gifted"
-              subtext="gifted subs"
+              label={t('dashboard.gifted')}
+              subtext={t('dashboard.giftedSubs')}
               icon={CardGiftcardIcon}
               variant="warning"
             />

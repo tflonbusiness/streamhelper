@@ -2,6 +2,7 @@ import Autocomplete from '@mui/material/Autocomplete'
 import TextField from '@mui/material/TextField'
 import { styled } from '@mui/material/styles'
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { searchSlotNames } from '@/lib/slot-name-search'
 import { useSlotNameIndex } from '@/queries/use-slot-name-catalog'
 
@@ -24,6 +25,7 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
 }))
 
 export function BonusBuySlotNameField(props: BonusBuySlotNameFieldProps) {
+  const { t } = useTranslation()
   const { index, isLoading, isError } = useSlotNameIndex()
 
   const options = useMemo(() => {
@@ -35,7 +37,7 @@ export function BonusBuySlotNameField(props: BonusBuySlotNameFieldProps) {
 
   const catalogHelperText =
     isError && !props.helperText
-      ? 'Slot search unavailable — enter the name manually.'
+      ? t('bonusBuy.slotSearchUnavailable')
       : props.helperText
 
   return (
@@ -62,7 +64,7 @@ export function BonusBuySlotNameField(props: BonusBuySlotNameFieldProps) {
       renderInput={(params) => (
         <StyledTextField
           {...params}
-          label={props.label ?? 'Slot Name'}
+          label={props.label ?? t('common.slotName')}
           required={props.required}
           size="small"
           error={props.error}

@@ -1,3 +1,5 @@
+import i18n from '@/i18n/init-i18n'
+
 export type AuthUser = {
   id: number
   name: string
@@ -59,7 +61,7 @@ export async function fetchCurrentUser(): Promise<AuthUser | null> {
   }
 
   if (!response.ok) {
-    throw new Error('Failed to load session')
+    throw new Error(i18n.t('errors.failedToLoadSession'))
   }
 
   const data = await parseJson<{ user: AuthUser }>(response)
@@ -78,7 +80,9 @@ export async function createModerator(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Could not create moderator'))
+    throw new Error(
+      await readErrorMessage(response, i18n.t('errors.api.createModerator')),
+    )
   }
 
   return parseJson<CreateModeratorResult>(response)
@@ -92,7 +96,7 @@ export async function fetchAccountMembers(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Could not load team'))
+    throw new Error(await readErrorMessage(response, i18n.t('errors.api.loadTeam')))
   }
 
   const data = await parseJson<{ members: AccountMember[] }>(response)
@@ -112,7 +116,7 @@ export async function fetchModeratorInviteLink(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not get invite link'),
+      await readErrorMessage(response, i18n.t('errors.api.getInviteLink')),
     )
   }
 
@@ -134,7 +138,7 @@ export async function revokeModerator(
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, 'Could not revoke moderator access'),
+      await readErrorMessage(response, i18n.t('errors.api.revokeModerator')),
     )
   }
 }

@@ -1,36 +1,43 @@
+import type { TFunction } from 'i18next'
 import * as yup from 'yup'
 
 export type CreateChatRollFormValues = {
   title: string
 }
 
-export const createChatRollFormSchema = yup.object({
-  title: yup
-    .string()
-    .trim()
-    .required('Title is required')
-    .min(1, 'Title must be 1-200 characters')
-    .max(200, 'Title must be 1-200 characters'),
-})
+export function createChatRollFormSchema(t: TFunction) {
+  return yup.object({
+    title: yup
+      .string()
+      .trim()
+      .required(t('validation.titleRequired'))
+      .min(1, t('validation.titleRange'))
+      .max(200, t('validation.titleRange')),
+  })
+}
 
 export type ChatRollWidgetSettingsFormValues = {
   width: number
   height: number
 }
 
-export const chatRollWidgetSettingsFormSchema = yup.object({
-  width: yup
-    .number()
-    .typeError('Width must be a number')
-    .required('Width is required')
-    .integer('Width must be an integer')
-    .min(200, 'Width must be 200-2400')
-    .max(2400, 'Width must be 200-2400'),
-  height: yup
-    .number()
-    .typeError('Height must be a number')
-    .required('Height is required')
-    .integer('Height must be an integer')
-    .min(200, 'Height must be 200-2400')
-    .max(2400, 'Height must be 200-2400'),
-})
+export function createChatRollWidgetSettingsFormSchema(t: TFunction) {
+  const widthLabel = t('common.width')
+  const heightLabel = t('common.height')
+  return yup.object({
+    width: yup
+      .number()
+      .typeError(t('validation.dimensionType', { label: widthLabel }))
+      .required(t('validation.dimensionRequired', { label: widthLabel }))
+      .integer(t('validation.widthInteger'))
+      .min(200, t('validation.widthRange'))
+      .max(2400, t('validation.widthRange')),
+    height: yup
+      .number()
+      .typeError(t('validation.dimensionType', { label: heightLabel }))
+      .required(t('validation.dimensionRequired', { label: heightLabel }))
+      .integer(t('validation.heightInteger'))
+      .min(200, t('validation.heightRange'))
+      .max(2400, t('validation.heightRange')),
+  })
+}

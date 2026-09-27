@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Box,
   Button,
@@ -53,6 +55,8 @@ const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
 }))
 
 export const PrizeSpinCreateDialog = (props: PrizeSpinCreateDialogProps) => {
+  const { t } = useTranslation()
+  const validationSchema = useMemo(() => createPrizeSpinFormSchema(t), [t])
   const { showSuccess, showError } = useNotification()
   const createMutation = useCreatePrizeSpin(props.accountId)
 
@@ -63,7 +67,7 @@ export const PrizeSpinCreateDialog = (props: PrizeSpinCreateDialogProps) => {
     formState: { isValid },
   } = useForm({
     defaultValues,
-    resolver: yupResolver(createPrizeSpinFormSchema),
+    resolver: yupResolver(validationSchema),
     mode: 'onChange',
   })
 
@@ -79,12 +83,12 @@ export const PrizeSpinCreateDialog = (props: PrizeSpinCreateDialogProps) => {
   const onSubmit = handleSubmit((values) => {
     createMutation.mutate(values.title, {
       onSuccess: () => {
-        showSuccess('Prize spin session created.')
+        showSuccess(t('prizeSpin.sessionCreated'))
         props.onCreated?.()
         handleClose()
         createMutation.reset()
       },
-      onError: () => showError('Could not create prize spin session.'),
+      onError: () => showError(t('prizeSpin.couldNotCreateSession')),
     })
   })
 
@@ -95,10 +99,10 @@ export const PrizeSpinCreateDialog = (props: PrizeSpinCreateDialogProps) => {
       maxWidth="sm"
       fullWidth
     >
-      <DialogTitle>New Session</DialogTitle>
+      <DialogTitle>{t('prizeSpin.createDialogTitle')}</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
-          Create a prize spin session with a title for your stream.
+          {t('prizeSpin.createDialogIntro')}
         </StyledDescription>
         <Box
           component="form"
@@ -113,7 +117,7 @@ export const PrizeSpinCreateDialog = (props: PrizeSpinCreateDialogProps) => {
                 <StyledTitleField
                   {...field}
                   id="prize-spin-title"
-                  label="Title"
+                  label={t('common.title')}
                   error={Boolean(fieldState.error)}
                   helperText={fieldState.error?.message}
                   autoFocus
@@ -131,7 +135,7 @@ export const PrizeSpinCreateDialog = (props: PrizeSpinCreateDialogProps) => {
           variant="outlined"
           onClick={handleClose}
         >
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           type="submit"
@@ -141,7 +145,7 @@ export const PrizeSpinCreateDialog = (props: PrizeSpinCreateDialogProps) => {
           loadingPosition="start"
           disabled={!isValid}
         >
-          Create
+          {t('common.create')}
         </Button>
       </StyledDialogActions>
     </Dialog>

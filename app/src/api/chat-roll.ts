@@ -1,3 +1,4 @@
+import i18n from '@/i18n/init-i18n'
 import type {
   ChatRollRoleId,
   ChatRollRoleSetting,
@@ -119,7 +120,7 @@ export async function fetchChatRoll(
   )
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Could not load chat roll'))
+    throw new Error(await readErrorMessage(response, i18n.t('errors.api.loadChatRoll')))
   }
 
   return response.json() as Promise<ChatRollRecord>
@@ -151,7 +152,7 @@ export async function fetchChatRolls(
   )
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Could not load chat rolls'))
+    throw new Error(await readErrorMessage(response, i18n.t('errors.api.loadChatRolls')))
   }
 
   return response.json() as Promise<ChatRollListResult>
@@ -169,7 +170,7 @@ export async function createChatRoll(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Could not create chat roll'))
+    throw new Error(await readErrorMessage(response, i18n.t('errors.api.createChatRoll')))
   }
 
   return response.json() as Promise<ChatRollRecord>
@@ -191,7 +192,7 @@ export async function patchChatRoll(
   )
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Could not update chat roll'))
+    throw new Error(await readErrorMessage(response, i18n.t('errors.api.updateChatRoll')))
   }
 
   return response.json() as Promise<ChatRollRecord>
@@ -210,7 +211,7 @@ export async function archiveChatRoll(
   )
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Could not archive session'))
+    throw new Error(await readErrorMessage(response, i18n.t('errors.api.archiveSession')))
   }
 }
 
@@ -224,7 +225,7 @@ export async function fetchChatRollParticipants(
   )
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Could not load participants'))
+    throw new Error(await readErrorMessage(response, i18n.t('errors.api.loadParticipants')))
   }
 
   const data = (await response.json()) as { participants: ChatRollParticipant[] }
@@ -245,7 +246,7 @@ export async function deleteChatRollParticipant(
   )
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Could not remove participant'))
+    throw new Error(await readErrorMessage(response, i18n.t('errors.api.removeParticipant')))
   }
 }
 
@@ -262,7 +263,7 @@ export async function deleteAllChatRollParticipants(
   )
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Could not clear participants'))
+    throw new Error(await readErrorMessage(response, i18n.t('errors.api.clearParticipants')))
   }
 }
 
@@ -276,7 +277,7 @@ export async function fetchChatRollWins(
   )
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Could not load winners'))
+    throw new Error(await readErrorMessage(response, i18n.t('errors.api.loadWinners')))
   }
 
   const data = (await response.json()) as { wins: ChatRollWin[] }
@@ -297,7 +298,7 @@ export async function deleteChatRollWin(
   )
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Could not remove winner'))
+    throw new Error(await readErrorMessage(response, i18n.t('errors.api.removeWinner')))
   }
 }
 
@@ -314,7 +315,7 @@ export async function deleteAllChatRollWins(
   )
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Could not clear winners'))
+    throw new Error(await readErrorMessage(response, i18n.t('errors.api.clearWinners')))
   }
 }
 
@@ -331,7 +332,7 @@ export async function rollChatRoll(
   )
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Could not roll'))
+    throw new Error(await readErrorMessage(response, i18n.t('errors.api.roll')))
   }
 
   return response.json() as Promise<ChatRollWin>
@@ -345,7 +346,7 @@ export async function fetchChatRollWidget(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Could not load widget settings'))
+    throw new Error(await readErrorMessage(response, i18n.t('errors.api.loadWidgetSettings')))
   }
 
   return response.json() as Promise<ChatRollWidget>
@@ -363,7 +364,7 @@ export async function patchChatRollWidget(
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, 'Could not save widget settings'))
+    throw new Error(await readErrorMessage(response, i18n.t('errors.api.saveChatRollWidgetSettings')))
   }
 
   return response.json() as Promise<ChatRollWidget>

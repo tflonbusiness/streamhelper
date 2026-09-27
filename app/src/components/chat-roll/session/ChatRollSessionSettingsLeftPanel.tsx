@@ -8,6 +8,7 @@ import {
 } from '@mui/material'
 import TagIcon from '@mui/icons-material/Tag'
 import TuneIcon from '@mui/icons-material/Tune'
+import { useTranslation } from 'react-i18next'
 import type { ChatRollRecord } from '@/api/chat-roll'
 import type { WeightCombineMode } from '@/lib/chat-roll'
 import {
@@ -35,24 +36,23 @@ type ChatRollSessionSettingsLeftPanelProps = {
 export function ChatRollSessionSettingsLeftPanel(
   props: ChatRollSessionSettingsLeftPanelProps,
 ) {
+  const { t } = useTranslation()
+
   return (
     <SettingsLeftPanel>
       <SettingsGroupPanel>
         <SettingsGroupTitle>
           <TagIcon fontSize="inherit" aria-hidden />
-          Chat keyword
+          {t('chatRoll.chatKeyword')}
         </SettingsGroupTitle>
         <KeywordField
-          label="Keyword"
+          label={t('chatRoll.keywordLabel')}
           size="small"
           value={props.keywordDraft}
           onChange={(event) => props.onKeywordChange(event.target.value)}
           onBlur={props.onKeywordBlur}
           error={Boolean(props.keywordError)}
-          helperText={
-            props.keywordError ??
-            'Viewers must send this exact message in Kick chat to join.'
-          }
+          helperText={props.keywordError ?? t('chatRoll.keywordHelp')}
           fullWidth
           disabled={props.settingsDisabled}
           slotProps={{
@@ -66,7 +66,7 @@ export function ChatRollSessionSettingsLeftPanel(
       <SettingsGroupPanel>
         <SettingsGroupTitle>
           <TuneIcon fontSize="inherit" aria-hidden />
-          Roll options
+          {t('chatRoll.rollOptions')}
         </SettingsGroupTitle>
 
         <Box sx={{ mt: 0.5 }}>
@@ -79,7 +79,7 @@ export function ChatRollSessionSettingsLeftPanel(
               textTransform: 'uppercase',
             }}
           >
-            Weight combine
+            {t('chatRoll.weightCombine')}
           </Typography>
           <ToggleButtonGroup
             exclusive
@@ -94,17 +94,20 @@ export function ChatRollSessionSettingsLeftPanel(
             }}
             sx={{ mt: 1 }}
           >
-            <ToggleButton value="highest" aria-label="Use highest coefficient">
-              Highest
+            <ToggleButton
+              value="highest"
+              aria-label={t('chatRoll.combineHighestAria')}
+            >
+              {t('chatRoll.combineHighestShort')}
             </ToggleButton>
-            <ToggleButton value="sum" aria-label="Sum coefficients">
-              Sum
+            <ToggleButton value="sum" aria-label={t('chatRoll.combineSumAria')}>
+              {t('chatRoll.combineSumShort')}
             </ToggleButton>
           </ToggleButtonGroup>
           <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, display: 'block' }}>
             {props.record.combineMode === 'highest'
-              ? 'Uses the single best role weight for each participant.'
-              : 'Adds weights from every enabled role the viewer has.'}
+              ? t('chatRoll.combineHighest')
+              : t('chatRoll.combineSum')}
           </Typography>
         </Box>
 
@@ -120,10 +123,10 @@ export function ChatRollSessionSettingsLeftPanel(
             />
             <SettingsToggleCopy>
               <ExclusionToggleLabel variant="body2">
-                Exclude winner after roll
+                {t('chatRoll.excludeWinnerAfterRoll')}
               </ExclusionToggleLabel>
               <Typography variant="caption" color="text.secondary">
-                Rolled winners leave the pool until you remove or clear them.
+                {t('chatRoll.excludeWinnerHelp')}
               </Typography>
             </SettingsToggleCopy>
           </SettingsToggleCard>
@@ -139,10 +142,10 @@ export function ChatRollSessionSettingsLeftPanel(
             />
             <SettingsToggleCopy>
               <ExclusionToggleLabel variant="body2">
-                Reply in Kick chat
+                {t('chatRoll.replyInKickChat')}
               </ExclusionToggleLabel>
               <Typography variant="caption" color="text.secondary">
-                Bot posts a short confirmation when someone joins with the keyword.
+                {t('chatRoll.replyInKickChatHelp')}
               </Typography>
             </SettingsToggleCopy>
           </SettingsToggleCard>

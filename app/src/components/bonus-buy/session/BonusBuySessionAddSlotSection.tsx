@@ -1,4 +1,6 @@
 import { Box, Button, Grid, TextField } from '@mui/material'
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import AddIcon from '@mui/icons-material/Add'
 import { alpha, styled } from '@mui/material/styles'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -51,6 +53,8 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
 export const BonusBuySessionAddSlotSection = (
   props: BonusBuySessionAddSlotSectionProps,
 ) => {
+  const { t } = useTranslation()
+  const validationSchema = useMemo(() => createBonusBuySlotFormSchema(t), [t])
   const { showSuccess, showError } = useNotification()
   const createSlotMutation = useCreateBonusBuySlot(
     props.accountId,
@@ -65,7 +69,7 @@ export const BonusBuySessionAddSlotSection = (
     formState: { isValid },
   } = useForm({
     defaultValues,
-    resolver: yupResolver(createBonusBuySlotFormSchema),
+    resolver: yupResolver(validationSchema),
     mode: 'onChange',
   })
 
@@ -83,12 +87,12 @@ export const BonusBuySessionAddSlotSection = (
       {
         onSuccess: () => {
           reset(defaultValues)
-          showSuccess('Slot added.')
+          showSuccess(t('bonusBuy.slotAdded'))
           createSlotMutation.reset()
         },
         onError: (error) => {
           showError(
-            error instanceof Error ? error.message : 'Could not add slot',
+            error instanceof Error ? error.message : t('bonusBuy.couldNotAddSlot'),
           )
         },
       },
@@ -100,8 +104,8 @@ export const BonusBuySessionAddSlotSection = (
       <StyledSessionCardContent>
         <Box component="form" onSubmit={onSubmit} noValidate>
           <SectionHeader
-            title="Quick add slot"
-            description="Enter slot details and purchase amount"
+            title={t('bonusBuy.quickAddSlot')}
+            description={t('bonusBuy.quickAddSlotDescription')}
             icon={AddIcon}
             iconVariant="success"
             action={
@@ -114,7 +118,7 @@ export const BonusBuySessionAddSlotSection = (
                 startIcon={<AddIcon fontSize="small" aria-hidden />}
                 sx={{ flexShrink: 0 }}
               >
-                Add slot
+                {t('bonusBuy.addSlotButton')}
               </Button>
             }
           />
@@ -145,7 +149,7 @@ export const BonusBuySessionAddSlotSection = (
                     <StyledTextField
                       {...field}
                       id="session-nick-provider"
-                      label="Username/Note"
+                      label={t('common.usernameNote')}
                       error={Boolean(fieldState.error)}
                       helperText={fieldState.error?.message}
                       disabled={!active || createSlotMutation.isPending}
@@ -163,7 +167,7 @@ export const BonusBuySessionAddSlotSection = (
                     <StyledTextField
                       {...field}
                       id="session-purchase"
-                      label="Purchase"
+                      label={t('common.purchase')}
                       required
                       type="text"
                       onChange={(event) =>

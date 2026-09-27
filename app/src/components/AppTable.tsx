@@ -13,6 +13,7 @@ import type { SxProps, Theme } from '@mui/material/styles'
 import { alpha, styled } from '@mui/material/styles'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { Fragment } from 'react'
+import { useTranslation } from 'react-i18next'
 import { colors } from '@/theme/colors'
 
 export type AppTableColumn<T> = {
@@ -245,6 +246,7 @@ export function AppTable<T>({
   getRowSx,
   loading = false,
 }: AppTableProps<T>) {
+  const { t } = useTranslation()
   const isEmpty = rows.length === 0
   const showPagination = pagination != null && pagination.count > 0
   const showFooter = Boolean(footer) || showPagination
@@ -308,7 +310,9 @@ export function AppTable<T>({
                           expanded={expanded}
                           aria-label={
                             expandable.ariaLabel?.(row) ??
-                            (expanded ? 'Collapse details' : 'Expand details')
+                            (expanded
+                              ? t('bonusBuy.collapseDetails')
+                              : t('bonusBuy.expandDetails'))
                           }
                           aria-expanded={expanded}
                           onClick={() => expandable.onToggle(row)}

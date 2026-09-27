@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   Dialog,
@@ -31,6 +32,7 @@ const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
 export const PrizeSpinArchiveAllWinnersDialog = (
   props: PrizeSpinArchiveAllWinnersDialogProps,
 ) => {
+  const { t } = useTranslation()
   const { showSuccess, showError } = useNotification()
   const deleteAllMutation = useDeleteAllPrizeSpinWins(
     props.accountId,
@@ -48,7 +50,7 @@ export const PrizeSpinArchiveAllWinnersDialog = (
   const handleArchiveAll = () => {
     deleteAllMutation.mutate(undefined, {
       onSuccess: () => {
-        showSuccess('All winners archived.')
+        showSuccess(t('prizeSpin.allWinnersArchived'))
         handleClose()
         deleteAllMutation.reset()
       },
@@ -56,7 +58,7 @@ export const PrizeSpinArchiveAllWinnersDialog = (
         showError(
           error instanceof Error
             ? error.message
-            : 'Could not archive winners',
+            : t('prizeSpin.couldNotArchiveWinners'),
         )
       },
     })
@@ -64,7 +66,7 @@ export const PrizeSpinArchiveAllWinnersDialog = (
 
   return (
     <Dialog open={props.open} onClose={handleClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Archive all winners?</DialogTitle>
+      <DialogTitle>{t('prizeSpin.archiveAllWinnersTitle')}</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
           This removes all {props.winnerCount} winner

@@ -1,4 +1,5 @@
 import { Grid, Stack, TextField, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import type { BonusBuyWidgetSettings } from '@/api/bonus-buy'
 import { HexColorField } from '@/components/bonus-buy/HexColorField'
 import { inputFieldSx } from '@/theme/colors'
@@ -6,14 +7,14 @@ import { inputFieldSx } from '@/theme/colors'
 const COLOR_FIELDS: ReadonlyArray<
   readonly [keyof BonusBuyWidgetSettings, string]
 > = [
-  ['backgroundColor', 'Background'],
-  ['surfaceColor', 'Surface'],
-  ['borderColor', 'Border'],
-  ['accentColor', 'Accent'],
-  ['positiveColor', 'Positive'],
-  ['negativeColor', 'Negative'],
-  ['liveColor', 'Live'],
-  ['textMutedColor', 'Text muted'],
+  ['backgroundColor', 'common.background'],
+  ['surfaceColor', 'common.surface'],
+  ['borderColor', 'common.border'],
+  ['accentColor', 'common.accent'],
+  ['positiveColor', 'common.positive'],
+  ['negativeColor', 'common.negative'],
+  ['liveColor', 'common.colorLive'],
+  ['textMutedColor', 'common.textMuted'],
 ]
 
 type BonusBuyWidgetStyleFormProps = {
@@ -32,15 +33,17 @@ export function BonusBuyWidgetStyleForm({
   draft,
   onUpdate,
 }: BonusBuyWidgetStyleFormProps) {
+  const { t } = useTranslation()
+
   return (
     <Stack spacing={2}>
       <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-        Size
+        {t('common.size')}
       </Typography>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
-            label="Width (px)"
+            label={t('common.widthPx')}
             type="number"
             value={draft.width}
             onChange={(event) => onUpdate('width', parsePositiveInt(event.target.value))}
@@ -50,7 +53,7 @@ export function BonusBuyWidgetStyleForm({
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
-            label="Height (px)"
+            label={t('common.heightPx')}
             type="number"
             value={draft.height}
             onChange={(event) => onUpdate('height', parsePositiveInt(event.target.value))}
@@ -61,13 +64,13 @@ export function BonusBuyWidgetStyleForm({
       </Grid>
 
       <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-        Colors
+        {t('common.colors')}
       </Typography>
       <Grid container spacing={2}>
-        {COLOR_FIELDS.map(([key, label]) => (
+        {COLOR_FIELDS.map(([key, labelKey]) => (
           <Grid key={key} size={{ xs: 12, sm: 6 }}>
             <HexColorField
-              label={label}
+              label={t(labelKey)}
               value={draft[key] as string}
               onChange={(nextValue) => onUpdate(key, nextValue)}
             />
@@ -76,12 +79,12 @@ export function BonusBuyWidgetStyleForm({
       </Grid>
 
       <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-        Shape
+        {t('common.shape')}
       </Typography>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
-            label="Border radius (px)"
+            label={t('common.borderRadiusPx')}
             type="number"
             value={draft.borderRadius}
             onChange={(event) =>
@@ -93,7 +96,7 @@ export function BonusBuyWidgetStyleForm({
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
-            label="Padding (px)"
+            label={t('common.paddingPx')}
             type="number"
             value={draft.padding}
             onChange={(event) =>
@@ -106,10 +109,10 @@ export function BonusBuyWidgetStyleForm({
       </Grid>
 
       <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-        Typography
+        {t('common.typography')}
       </Typography>
       <TextField
-        label="Font family"
+        label={t('common.fontFamily')}
         value={draft.fontFamily}
         onChange={(event) => onUpdate('fontFamily', event.target.value)}
         fullWidth

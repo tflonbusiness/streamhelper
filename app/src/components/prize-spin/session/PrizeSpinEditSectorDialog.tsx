@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Box,
   Button,
@@ -51,6 +52,7 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
 export const PrizeSpinEditSectorDialog = (
   props: PrizeSpinEditSectorDialogProps,
 ) => {
+  const { t } = useTranslation()
   const { showSuccess, showError } = useNotification()
   const updateMutation = useUpdatePrizeSpinSector(
     props.accountId,
@@ -60,14 +62,14 @@ export const PrizeSpinEditSectorDialog = (
   const resolver = useMemo(
     () =>
       yupResolver(
-        createPrizeSpinSectorFormSchema({
+        createPrizeSpinSectorFormSchema(t, {
           existingTotal: props.existingTotalWinPercent,
           previousPercent: props.sector
             ? Number.parseFloat(props.sector.winPercent)
             : undefined,
         }),
       ),
-    [props.existingTotalWinPercent, props.sector],
+    [props.existingTotalWinPercent, props.sector, t],
   )
 
   const {
@@ -119,13 +121,13 @@ export const PrizeSpinEditSectorDialog = (
       },
       {
         onSuccess: () => {
-          showSuccess('Sector updated.')
+          showSuccess(t('prizeSpin.sectorUpdated'))
           handleClose()
           updateMutation.reset()
         },
         onError: (error) => {
           showError(
-            error instanceof Error ? error.message : 'Could not update sector',
+            error instanceof Error ? error.message : t('prizeSpin.couldNotUpdateSector'),
           )
         },
       },
@@ -139,7 +141,7 @@ export const PrizeSpinEditSectorDialog = (
       maxWidth="sm"
       fullWidth
     >
-      <DialogTitle>Edit sector</DialogTitle>
+      <DialogTitle>{t('prizeSpin.editSectorTitle')}</DialogTitle>
       <DialogContent>
         <Box
           component="form"
@@ -153,7 +155,7 @@ export const PrizeSpinEditSectorDialog = (
             render={({ field, fieldState }) => (
               <StyledTextField
                 {...field}
-                label="Label"
+                label={t('common.label')}
                 required
                 fullWidth
                 size="small"
@@ -168,7 +170,7 @@ export const PrizeSpinEditSectorDialog = (
             render={({ field, fieldState }) => (
               <StyledTextField
                 {...field}
-                label="Win %"
+                label={t('common.winPercent')}
                 required
                 type="number"
                 slotProps={{
@@ -187,7 +189,7 @@ export const PrizeSpinEditSectorDialog = (
             render={({ field }) => (
               <StyledFormField>
                 <HexColorField
-                  label="Color"
+                  label={t('common.color')}
                   value={field.value}
                   onChange={field.onChange}
                 />

@@ -1,4 +1,6 @@
+import type { TFunction } from 'i18next'
 import * as yup from 'yup'
+import i18n from '@/i18n/init-i18n'
 
 const hexColorPattern = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/
 const winPercentPattern = /^\d+(\.\d{1,2})?$/
@@ -16,52 +18,52 @@ export type PrizeSpinSectorValidationContext = {
 
 export function validationErrorMessage(error: unknown): string {
   if (error instanceof yup.ValidationError) {
-    return error.errors[0] ?? 'Validation failed'
+    return error.errors[0] ?? i18n.t('errors.validationFailed')
   }
   if (error instanceof Error) {
     return error.message
   }
-  return 'Validation failed'
+  return i18n.t('errors.validationFailed')
 }
 
 export function createPrizeSpinSectorFormSchema(
+  t: TFunction,
   context?: PrizeSpinSectorValidationContext,
 ) {
-  return yup.object({
-    label: yup
-      .string()
-      .trim()
-      .required('Label is required')
-      .max(100, 'Label must be at most 100 characters'),
-    winPercent: yup
-      .string()
-      .required('Win % is required')
-      .test('format', 'Win % must have at most 2 decimal places', (value) => {
-        if (!value) {
-          return false
-        }
-        return winPercentPattern.test(value.trim())
-      })
-      .test('range', 'Win % must be greater than 0 and at most 100', (value) => {
-        if (!value) {
-          return false
-        }
-        const parsed = Number.parseFloat(value.trim())
-        return Number.isFinite(parsed) && parsed > 0 && parsed <= 100
-      }),
-    color: yup
-      .string()
-      .required('Color is required')
-      .test('hex', 'Color must be a valid hex color', (value) => {
-        if (!value) {
-          return false
-        }
-        return hexColorPattern.test(value.trim())
-      }),
-  }).test(
-    'total-percent',
-    'Total win % for all sectors cannot exceed 100%',
-    (value) => {
+  return yup
+    .object({
+      label: yup
+        .string()
+        .trim()
+        .required(t('validation.labelRequired'))
+        .max(100, t('validation.labelMax100')),
+      winPercent: yup
+        .string()
+        .required(t('validation.winPercentRequired'))
+        .test('format', t('validation.winPercentDecimals'), (value) => {
+          if (!value) {
+            return false
+          }
+          return winPercentPattern.test(value.trim())
+        })
+        .test('range', t('validation.winPercentRange'), (value) => {
+          if (!value) {
+            return false
+          }
+          const parsed = Number.parseFloat(value.trim())
+          return Number.isFinite(parsed) && parsed > 0 && parsed <= 100
+        }),
+      color: yup
+        .string()
+        .required(t('validation.colorRequired'))
+        .test('hex', t('validation.colorHex'), (value) => {
+          if (!value) {
+            return false
+          }
+          return hexColorPattern.test(value.trim())
+        }),
+    })
+    .test('total-percent', t('validation.totalWinPercentMax'), (value) => {
       if (!value || !context) {
         return true
       }
@@ -70,8 +72,7 @@ export function createPrizeSpinSectorFormSchema(
       const previous = context.previousPercent ?? 0
       const newTotal = context.existingTotal - previous + parsed
       return Number(newTotal.toFixed(2)) <= 100
-    },
-  )
+    })
 }
 
 export function validatePrizeSpinSectorDraft(
@@ -79,26 +80,34 @@ export function validatePrizeSpinSectorDraft(
   context?: PrizeSpinSectorValidationContext,
 ): string | null {
   try {
-    createPrizeSpinSectorFormSchema(context).validateSync(draft, {
-      abortEarly: true,
-    })
+    createPrizeSpinSectorFormSchema(i18n.t.bind(i18n), context).validateSync(
+      draft,
+      {
+        abortEarly: true,
+      },
+    )
     return null
   } catch (error) {
     return validationErrorMessage(error)
   }
 }
 
-const participantNickSchema = yup.object({
-  participantNick: yup
-    .string()
-    .trim()
-    .required('Enter a participant nick')
-    .max(100, 'Participant nick must be at most 100 characters'),
-})
+export function createParticipantNickSchema(t: TFunction) {
+  return yup.object({
+    participantNick: yup
+      .string()
+      .trim()
+      .required(t('validation.participantNickRequired'))
+      .max(100, t('validation.participantNickMax100')),
+  })
+}
 
 export function validateParticipantNick(participantNick: string): string | null {
   try {
-    participantNickSchema.validateSync({ participantNick }, { abortEarly: true })
+    createParticipantNickSchema(i18n.t.bind(i18n)).validateSync(
+      { participantNick },
+      { abortEarly: true },
+    )
     return null
   } catch (error) {
     return validationErrorMessage(error)
@@ -109,13 +118,15 @@ export type CreatePrizeSpinFormValues = {
   title: string
 }
 
-export const createPrizeSpinFormSchema = yup.object({
-  title: yup
-    .string()
-    .trim()
-    .required('Title is required')
-    .max(200, 'Title must be at most 200 characters'),
-})
+export function createPrizeSpinFormSchema(t: TFunction) {
+  return yup.object({
+    title: yup
+      .string()
+      .trim()
+      .required(t('validation.titleRequired'))
+      .max(200, t('validation.titleMax200')),
+  })
+}
 
 export type PrizeSpinWidgetSettingsFormValues = {
   width: number
@@ -123,17 +134,22 @@ export type PrizeSpinWidgetSettingsFormValues = {
   equalSectorSlices: boolean
 }
 
-const widgetDimensionSchema = (label: string) =>
-  yup
+function widgetDimensionSchema(t: TFunction, label: string) {
+  return yup
     .number()
-    .typeError(`${label} must be a number`)
-    .required(`${label} is required`)
-    .integer(`${label} must be a whole number`)
-    .min(200, `${label} must be between 200 and 2400 px.`)
-    .max(2400, `${label} must be between 200 and 2400 px.`)
+    .typeError(t('validation.dimensionType', { label }))
+    .required(t('validation.dimensionRequired', { label }))
+    .integer(t('validation.dimensionInteger', { label }))
+    .min(200, t('validation.dimensionRange', { label }))
+    .max(2400, t('validation.dimensionRange', { label }))
+}
 
-export const prizeSpinWidgetSettingsFormSchema = yup.object({
-  width: widgetDimensionSchema('Width'),
-  height: widgetDimensionSchema('Height'),
-  equalSectorSlices: yup.boolean().required(),
-})
+export function createPrizeSpinWidgetSettingsFormSchema(t: TFunction) {
+  const widthLabel = t('common.width')
+  const heightLabel = t('common.height')
+  return yup.object({
+    width: widgetDimensionSchema(t, widthLabel),
+    height: widgetDimensionSchema(t, heightLabel),
+    equalSectorSlices: yup.boolean().required(),
+  })
+}

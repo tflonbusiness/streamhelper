@@ -7,6 +7,7 @@ import { alpha, useTheme } from '@mui/material/styles'
 import CheckIcon from '@mui/icons-material/Check'
 import CreditCardIcon from '@mui/icons-material/CreditCard'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { PlanBadge } from '@/components/PlanBadge'
 import { getPlanFeatures, isFreePlan } from '@/lib/subscription-plan'
 
@@ -23,9 +24,10 @@ export function SubscriptionPlanCard({
   footer,
   className,
 }: SubscriptionPlanCardProps) {
+  const { t } = useTranslation()
   const theme = useTheme()
   const free = isFreePlan(subscriptionPlan)
-  const features = getPlanFeatures(subscriptionPlan)
+  const features = getPlanFeatures(subscriptionPlan, t)
   const compact = variant === 'compact'
 
   return (
@@ -62,14 +64,14 @@ export function SubscriptionPlanCard({
           <Box sx={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
               <Typography variant="subtitle1" component="h3">
-                {compact ? 'Plan' : 'Current plan'}
+                {compact ? t('dashboard.planTitle') : t('dashboard.currentPlan')}
               </Typography>
               <PlanBadge subscriptionPlan={subscriptionPlan} />
             </Box>
             <Typography variant="body2" color="text.secondary">
               {compact
-                ? "Your team's current subscription plan"
-                : "Your team's subscription plan"}
+                ? t('dashboard.planBlurbCompact')
+                : t('dashboard.planBlurbFull')}
             </Typography>
           </Box>
         </Box>

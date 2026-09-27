@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   Card,
@@ -20,10 +21,7 @@ import { PrizeSpinArchiveDialog } from '@/components/prize-spin/prize-spin-page/
 import { PrizeSpinCopyDialog } from '@/components/prize-spin/prize-spin-page/PrizeSpinCopyDialog'
 import { PrizeSpinCreateDialog } from '@/components/prize-spin/prize-spin-page/PrizeSpinCreateDialog'
 import { PrizeSpinRecordExpandedDetails } from '@/components/prize-spin/prize-spin-page/PrizeSpinRecordExpandedDetails'
-import {
-  historyEmptyMessage,
-  PRIZE_SPIN_HISTORY_PAGE_SIZE,
-} from '@/components/prize-spin/prize-spin-page/prize-spin-page-utils'
+import { PRIZE_SPIN_HISTORY_PAGE_SIZE } from '@/components/prize-spin/prize-spin-page/prize-spin-page-utils'
 import { buildPrizeSpinRecordColumns } from '@/components/prize-spin/prize-spin-page/prizeSpinRecordColumns'
 import { SectionHeader, sectionTableIcon } from '@/components/SectionHeader'
 import { useNotification } from '@/context/NotificationContext'
@@ -65,6 +63,7 @@ const StyledFilterSelect = styled(Select)(({ theme }) => ({
 export const PrizeSpinHistorySection = ({
   accountId,
 }: PrizeSpinHistorySectionProps) => {
+  const { t } = useTranslation()
   const { showError } = useNotification()
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [expandedRecordIds, setExpandedRecordIds] = useState<Set<number>>(
@@ -100,7 +99,7 @@ export const PrizeSpinHistorySection = ({
       return
     }
 
-    showError('Could not load prize spin history.')
+    showError(t('prizeSpin.couldNotLoadHistory'))
   }, [recordsQueryError, showError])
 
   useEffect(() => {
@@ -131,7 +130,7 @@ export const PrizeSpinHistorySection = ({
     })
   }
 
-  const recordColumns = buildPrizeSpinRecordColumns({
+  const recordColumns = buildPrizeSpinRecordColumns(t, {
     onArchive: openArchiveDialog,
     onCopy: openCopyDialog,
   })
@@ -142,8 +141,8 @@ export const PrizeSpinHistorySection = ({
         <StyledCardContent>
           <StyledContentStack>
             <SectionHeader
-              title="History"
-              description="Past and active prize spin sessions"
+              title={t('prizeSpin.historyTitle')}
+              description={t('prizeSpin.historyDescriptionPast')}
               icon={sectionTableIcon}
               iconVariant="purple"
               action={
@@ -153,7 +152,7 @@ export const PrizeSpinHistorySection = ({
                   startIcon={<AddIcon fontSize="small" aria-hidden />}
                   onClick={() => setCreateDialogOpen(true)}
                 >
-                  New
+                  {t('common.newSession')}
                 </Button>
               }
             />
@@ -162,15 +161,19 @@ export const PrizeSpinHistorySection = ({
               rows={records}
               loading={loadingRecords || fetchingRecords}
               getRowKey={(record) => record.id}
-              emptyMessage={historyEmptyMessage(archivedFilter)}
+              emptyMessage={
+                archivedFilter === 'true'
+                  ? t('prizeSpin.noArchivedSessions')
+                  : t('prizeSpin.noSessions')
+              }
               toolbar={
                 <StyledFilterFormControl size="small">
                   <InputLabel id="prize-spin-archived-filter-label">
-                    Show
+                    {t('common.show')}
                   </InputLabel>
                   <StyledFilterSelect
                     labelId="prize-spin-archived-filter-label"
-                    label="Show"
+                    label={t('common.show')}
                     value={archivedFilter}
                     onChange={(event) => {
                       setArchivedFilter(
@@ -179,9 +182,9 @@ export const PrizeSpinHistorySection = ({
                       setRecordsPage(1)
                     }}
                   >
-                    <MenuItem value="false">Active</MenuItem>
-                    <MenuItem value="true">Archived</MenuItem>
-                    <MenuItem value="all">All</MenuItem>
+                    <MenuItem value="false">{t('common.active')}</MenuItem>
+                    <MenuItem value="true">{t('common.archived')}</MenuItem>
+                    <MenuItem value="all">{t('common.all')}</MenuItem>
                   </StyledFilterSelect>
                 </StyledFilterFormControl>
               }
@@ -196,8 +199,8 @@ export const PrizeSpinHistorySection = ({
                 onToggle: (record) => toggleRecordExpanded(record.id),
                 ariaLabel: (record) =>
                   expandedRecordIds.has(record.id)
-                    ? `Collapse details for ${record.title}`
-                    : `Expand details for ${record.title}`,
+                    ? t('table.collapseDetailsAria', { title: record.title })
+                    : t('table.expandDetailsAria', { title: record.title }),
                 renderDetail: (record) => (
                   <PrizeSpinRecordExpandedDetails record={record} />
                 ),

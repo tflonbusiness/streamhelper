@@ -1,8 +1,10 @@
+import type { TFunction } from 'i18next'
+
 const DEFAULT_TELEGRAM_USERNAME = 'jirni_otec'
 
-export function getPlanLabel(subscriptionPlan?: string): string {
+export function getPlanLabel(subscriptionPlan?: string, t?: TFunction): string {
   if (!subscriptionPlan || subscriptionPlan === 'free') {
-    return 'Free'
+    return t ? t('common.free') : 'Free'
   }
   return subscriptionPlan
 }
@@ -11,26 +13,43 @@ export function isFreePlan(subscriptionPlan?: string): boolean {
   return !subscriptionPlan || subscriptionPlan === 'free'
 }
 
-export function getPlanBlurb(subscriptionPlan?: string): string {
+export function getPlanBlurb(subscriptionPlan?: string, t?: TFunction): string {
   if (isFreePlan(subscriptionPlan)) {
-    return 'Basic access to the dashboard and modules.'
+    return t
+      ? t('subscription.blurbFree')
+      : 'Basic access to the dashboard and modules.'
   }
-  return 'Extended team capabilities.'
+  return t ? t('subscription.blurbPaid') : 'Extended team capabilities.'
 }
 
-export function getPlanFeatures(subscriptionPlan?: string): string[] {
+export function getPlanFeatures(
+  subscriptionPlan?: string,
+  t?: TFunction,
+): string[] {
   if (isFreePlan(subscriptionPlan)) {
-    return [
-      'Team management dashboard',
-      'Streamer module connections',
-      'Kick channel statistics',
-    ]
+    return t
+      ? [
+          t('subscription.featureTeamDashboard'),
+          t('subscription.featureModuleConnections'),
+          t('subscription.featureKickStats'),
+        ]
+      : [
+          'Team management dashboard',
+          'Streamer module connections',
+          'Kick channel statistics',
+        ]
   }
-  return [
-    'Everything in the free plan',
-    'Extended limits and modules',
-    'Priority support',
-  ]
+  return t
+    ? [
+        t('subscription.featureAllFree'),
+        t('subscription.featureExtended'),
+        t('subscription.featurePrioritySupport'),
+      ]
+    : [
+        'Everything in the free plan',
+        'Extended limits and modules',
+        'Priority support',
+      ]
 }
 
 export function getTelegramSupportUsername(): string {

@@ -1,7 +1,8 @@
 import { Button, Stack } from '@mui/material'
 import { styled } from '@mui/material/styles'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { PageHeader } from '@/components/PageHeader'
+import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { prizeSpinModule } from '@/components/prize-spin/session/prize-spin-session-utils'
 import { StatusAlert } from '@/components/StatusAlert'
 import { PRIZE_SPIN_ROUTE } from '@/lib/routes'
@@ -17,17 +18,14 @@ const PageStack = styled(Stack)(({ theme }) => ({
 export const PrizeSpinSessionErrorState = (
   props: PrizeSpinSessionErrorStateProps,
 ) => {
+  const { t } = useTranslation()
+
   return (
     <PageStack>
-      <PageHeader
-        title={prizeSpinModule.name}
-        description={prizeSpinModule.description}
-        icon={prizeSpinModule.icon}
-        iconVariant={prizeSpinModule.iconVariant}
-      />
+      <ModuleSessionPageHeader module={prizeSpinModule} />
       <StatusAlert tone="error">{props.message}</StatusAlert>
       <Button component={Link} to={PRIZE_SPIN_ROUTE} variant="outlined">
-        Back to history
+        {t('common.backToHistory')}
       </Button>
     </PageStack>
   )

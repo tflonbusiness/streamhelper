@@ -3,6 +3,7 @@ import PersonIcon from '@mui/icons-material/Person'
 import { styled } from '@mui/material/styles'
 import { SectionHeader } from '@/components/SectionHeader'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { PrizeSpinSector } from '@/api/prize-spin'
 import {
   isCompleteWinPercentTotal,
@@ -54,6 +55,7 @@ const SpinFormStack = styled(Stack)(({ theme }) => ({
 export const PrizeSpinSessionSpinSection = (
   props: PrizeSpinSessionSpinSectionProps,
 ) => {
+  const { t } = useTranslation()
   const { showSuccess, showError } = useNotification()
   const [participantNick, setParticipantNick] = useState('')
   const [spinError, setSpinError] = useState<string | null>(null)
@@ -78,22 +80,22 @@ export const PrizeSpinSessionSpinSection = (
     const messages: string[] = []
 
     if (isSpinning) {
-      messages.push('Spin in progress…')
+      messages.push(t('prizeSpin.spinInProgress'))
     }
     if (participantNick.trim().length === 0) {
-      messages.push('Enter a participant nick to enable spin.')
+      messages.push(t('prizeSpin.enterNickToSpin'))
     }
     if (props.sectors.length < 2) {
-      messages.push('Add at least 2 wheel sectors before spinning.')
+      messages.push(t('prizeSpin.needTwoSectors'))
     }
     if (!isCompleteWinPercentTotal(totalWinPercent)) {
-      messages.push('Sector win percentages must total 100% before spinning.')
+      messages.push(t('prizeSpin.percentMustTotal100'))
     }
 
     if (messages.length === 0) {
       return {
         tone: 'success' as const,
-        messages: ['Ready to spin for this viewer.'],
+        messages: [t('prizeSpin.readyToSpin')],
       }
     }
 
@@ -104,7 +106,7 @@ export const PrizeSpinSessionSpinSection = (
     const tone: StatusAlertTone = hasValidationIssue ? 'warning' : 'info'
 
     return { tone, messages }
-  }, [isSpinning, participantNick, props.sectors.length, totalWinPercent])
+  }, [isSpinning, participantNick, props.sectors.length, totalWinPercent, t])
 
   const handleSpin = async () => {
     if (isSpinning) {
@@ -125,12 +127,17 @@ export const PrizeSpinSessionSpinSection = (
     try {
       const win = await spinMutation.mutateAsync(participantNick.trim())
       setParticipantNick('')
-      showSuccess(`Winner: ${win.participantNick} — ${win.sectorLabel}`)
+      showSuccess(
+        t('prizeSpin.spinResult', {
+          nick: win.participantNick,
+          label: win.sectorLabel,
+        }),
+      )
     } catch (spinFailure) {
       const message =
         spinFailure instanceof Error
           ? spinFailure.message
-          : 'Could not spin prize wheel'
+          : t('prizeSpin.couldNotSpin')
       setSpinError(message)
       showError(message)
     }
@@ -140,8 +147,8 @@ export const PrizeSpinSessionSpinSection = (
     <StyledSessionCard elevation={0}>
       <StyledSessionCardContent>
         <SectionHeader
-          title="Spin for viewer"
-          description="Enter a viewer nick and run the wheel"
+          title={t('prizeSpin.spinForViewer')}
+          description={t('prizeSpin.spinForViewerDescription')}
           icon={PersonIcon}
           iconVariant="purple"
           showDivider
@@ -149,8 +156,8 @@ export const PrizeSpinSessionSpinSection = (
         <SpinFormStack>
           <SpinControls direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <ParticipantField
-              label="Participant nick"
-              placeholder="Viewer chat nick"
+              label={t('common.participantNick')}
+              placeholder={t('prizeSpin.viewerNickPlaceholder')}
               value={participantNick}
               onChange={(event) => setParticipantNick(event.target.value)}
               disabled={props.readOnly}
@@ -163,7 +170,7 @@ export const PrizeSpinSessionSpinSection = (
               disabled={!canSpin}
               onClick={() => void handleSpin()}
             >
-              {isSpinning ? 'Spinning…' : 'Spin'}
+              {isSpinning ? t('common.spinning') : t('common.spin')}
             </SpinButton>
           </SpinControls>
           <StatusAlert tone={spinReadiness.tone}>

@@ -10,6 +10,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import ShieldIcon from '@mui/icons-material/Shield'
 import TvIcon from '@mui/icons-material/Tv'
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium'
+import { useTranslation } from 'react-i18next'
 import { KickChannelNotFoundError } from '@/api/kick-channel'
 import { IconTile } from '@/components/IconTile'
 import { useKickChannel } from '@/queries/use-kick-channel'
@@ -18,10 +19,6 @@ type DashboardWelcomeBannerProps = {
   accountId: number
   accountName?: string
   role?: 'owner' | 'moderator'
-}
-
-function roleLabel(role: 'owner' | 'moderator' | undefined) {
-  return role === 'owner' ? 'Owner' : 'Moderator'
 }
 
 function channelDisplayName(accountName?: string, slug?: string | null) {
@@ -40,6 +37,7 @@ export function DashboardWelcomeBanner({
   accountName,
   role,
 }: DashboardWelcomeBannerProps) {
+  const { t } = useTranslation()
   const { data: channel, isLoading: loading, error } = useKickChannel(accountId)
 
   const slug = channel?.slug ?? null
@@ -47,6 +45,8 @@ export function DashboardWelcomeBanner({
   const fetchError = error !== undefined && error !== null && !notFound
 
   const channelName = channelDisplayName(accountName, slug)
+  const roleLabel =
+    role === 'owner' ? t('auth.owner') : t('team.roleModerator')
 
   return (
     <Card
@@ -70,7 +70,7 @@ export function DashboardWelcomeBanner({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <IconTile icon={TvIcon} variant="primary" size="sm" />
               <Typography variant="body2" color="text.secondary">
-                Channel
+                {t('dashboard.channel')}
               </Typography>
             </Box>
             {loading ? (
@@ -127,17 +127,17 @@ export function DashboardWelcomeBanner({
                   size="sm"
                 />
                 <Typography variant="body2" color="text.secondary">
-                  Role
+                  {t('dashboard.role')}
                 </Typography>
               </Box>
-              <Chip label={roleLabel(role)} size="small" sx={{ alignSelf: 'flex-start' }} />
+              <Chip label={roleLabel} size="small" sx={{ alignSelf: 'flex-start' }} />
             </Box>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <IconTile icon={OpenInNewIcon} variant="muted" size="sm" />
                 <Typography variant="body2" color="text.secondary">
-                  Link
+                  {t('common.link')}
                 </Typography>
               </Box>
               {loading ? (
@@ -163,9 +163,9 @@ export function DashboardWelcomeBanner({
               ) : (
                 <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1 }}>
                   {fetchError
-                    ? 'Could not load channel'
+                    ? t('dashboard.couldNotLoadChannel')
                     : notFound || !channelName
-                      ? 'Kick channel not connected'
+                      ? t('dashboard.kickNotConnected')
                       : '—'}
                 </Typography>
               )}

@@ -3,6 +3,7 @@ import ArchiveIcon from '@mui/icons-material/Archive'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import { styled } from '@mui/material/styles'
+import type { TFunction } from 'i18next'
 import { Link, type LinkProps } from 'react-router-dom'
 import { isPrizeSpinArchived, type PrizeSpinRecord } from '@/api/prize-spin'
 import type { AppTableColumn } from '@/components/AppTable'
@@ -80,13 +81,13 @@ const StyledOpenIconButton = styled(IconButton)<IconButtonProps & LinkProps>(
 
 const actionIconSx = { fontSize: 14 } as const
 
-function recordStatusChip(record: PrizeSpinRecord) {
+function recordStatusChip(record: PrizeSpinRecord, t: TFunction) {
   if (isPrizeSpinArchived(record)) {
-    return <MutedStatusChip label="Archived" size="small" />
+    return <MutedStatusChip label={t('table.archived')} size="small" />
   }
 
   return (
-    <Chip label="Active" size="small" sx={toneChipSx(colors.success[400])} />
+    <Chip label={t('table.active')} size="small" sx={toneChipSx(colors.success[400])} />
   )
 }
 
@@ -95,14 +96,14 @@ type BuildPrizeSpinRecordColumnsOptions = {
   onCopy: (record: PrizeSpinRecord) => void
 }
 
-export function buildPrizeSpinRecordColumns({
-  onArchive,
-  onCopy,
-}: BuildPrizeSpinRecordColumnsOptions): AppTableColumn<PrizeSpinRecord>[] {
+export function buildPrizeSpinRecordColumns(
+  t: TFunction,
+  { onArchive, onCopy }: BuildPrizeSpinRecordColumnsOptions,
+): AppTableColumn<PrizeSpinRecord>[] {
   return [
     {
       id: 'title',
-      header: 'Title',
+      header: t('table.title'),
       width: '100%',
       sx: titleColumnSx,
       render: (record) => (
@@ -113,11 +114,11 @@ export function buildPrizeSpinRecordColumns({
     },
     {
       id: 'status',
-      header: 'Status',
+      header: t('table.status'),
       width: 108,
       minWidth: 108,
       sx: statusColumnSx,
-      render: (record) => recordStatusChip(record),
+      render: (record) => recordStatusChip(record, t),
     },
     {
       id: 'action',
@@ -131,11 +132,11 @@ export function buildPrizeSpinRecordColumns({
 
         return (
           <ActionsStack direction="row" spacing={0.5}>
-            <Tooltip title="Archive">
+            <Tooltip title={t('table.archive')}>
               <span>
                 <StyledActionIconButton
                   type="button"
-                  aria-label={`Archive ${record.title}`}
+                  aria-label={t('table.archiveAria', { title: record.title })}
                   size="small"
                   disabled={readOnly}
                   onClick={() => onArchive(record)}
@@ -144,21 +145,21 @@ export function buildPrizeSpinRecordColumns({
                 </StyledActionIconButton>
               </span>
             </Tooltip>
-            <Tooltip title="Copy session">
+            <Tooltip title={t('table.copySession')}>
               <StyledActionIconButton
                 type="button"
-                aria-label={`Copy session ${record.title}`}
+                aria-label={t('table.copySessionAria', { title: record.title })}
                 size="small"
                 onClick={() => onCopy(record)}
               >
                 <ContentCopyIcon sx={actionIconSx} aria-hidden />
               </StyledActionIconButton>
             </Tooltip>
-            <Tooltip title="Open">
+            <Tooltip title={t('table.open')}>
               <StyledOpenIconButton
                 component={Link}
                 to={prizeSpinSessionRoute(record.id)}
-                aria-label={`Open ${record.title}`}
+                aria-label={t('table.openAria', { title: record.title })}
                 size="small"
               >
                 <ArrowForwardIcon sx={actionIconSx} aria-hidden />

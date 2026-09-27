@@ -1,5 +1,6 @@
 import Chip from '@mui/material/Chip'
 import { alpha, useTheme } from '@mui/material/styles'
+import { useTranslation } from 'react-i18next'
 import { getPlanLabel, isFreePlan } from '@/lib/subscription-plan'
 
 type PlanBadgeProps = {
@@ -8,12 +9,13 @@ type PlanBadgeProps = {
 }
 
 export function PlanBadge({ subscriptionPlan, className }: PlanBadgeProps) {
+  const { t } = useTranslation()
   const theme = useTheme()
   const free = isFreePlan(subscriptionPlan)
 
   return (
     <Chip
-      label={getPlanLabel(subscriptionPlan)}
+      label={getPlanLabel(subscriptionPlan, t)}
       size="small"
       className={className}
       sx={

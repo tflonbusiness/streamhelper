@@ -1,4 +1,5 @@
 import { Button, Card, CardContent, Stack } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import LinkIcon from '@mui/icons-material/Link'
 import MonitorIcon from '@mui/icons-material/Monitor'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
@@ -52,6 +53,7 @@ const FullWidthActionButton = styled(ActionButton)({
 export const PrizeSpinStreamWidgetSection = (
   props: PrizeSpinStreamWidgetSectionProps,
 ) => {
+  const { t } = useTranslation()
   const { showSuccess } = useNotification()
   const [widgetDialogOpen, setWidgetDialogOpen] = useState(false)
   const overlayHref = buildPrizeSpinOverlayPath(props.prizeSpinId)
@@ -59,7 +61,7 @@ export const PrizeSpinStreamWidgetSection = (
 
   const handleCopyObsLink = async () => {
     await navigator.clipboard.writeText(obsOverlayUrl)
-    showSuccess('OBS link copied.')
+    showSuccess(t('bonusBuy.obsLinkCopied'))
   }
 
   return (
@@ -67,8 +69,8 @@ export const PrizeSpinStreamWidgetSection = (
       <StyledCard elevation={0}>
         <StyledCardContent>
           <SectionHeader
-            title="Stream Widget"
-            description="OBS overlay settings and links for this prize spin session"
+            title={t('prizeSpin.streamWidgetTitle')}
+            description={t('prizeSpin.streamWidgetDescription')}
             icon={MonitorIcon}
             iconVariant="info"
           />
@@ -79,7 +81,7 @@ export const PrizeSpinStreamWidgetSection = (
               startIcon={<SettingsIcon fontSize="small" aria-hidden />}
               onClick={() => setWidgetDialogOpen(true)}
             >
-              Widget settings
+              {t('prizeSpin.widgetSettingsTitle')}
             </FullWidthActionButton>
             <FullWidthActionButton
               variant="outlined"
@@ -94,7 +96,7 @@ export const PrizeSpinStreamWidgetSection = (
                   }
                 : { type: 'button' })}
             >
-              Open overlay
+              {t('chatRoll.openOverlay')}
             </FullWidthActionButton>
             <FullWidthActionButton
               type="button"
@@ -103,7 +105,7 @@ export const PrizeSpinStreamWidgetSection = (
               disabled={!obsOverlayUrl}
               onClick={() => void handleCopyObsLink()}
             >
-              OBS link
+              {t('chatRoll.obsLink')}
             </FullWidthActionButton>
           </StyledActionsStack>
         </StyledCardContent>

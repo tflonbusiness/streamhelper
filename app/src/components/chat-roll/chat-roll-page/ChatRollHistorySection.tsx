@@ -1,4 +1,5 @@
 import { Button, Card, CardContent, Stack } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import AddIcon from '@mui/icons-material/Add'
 import { styled } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
@@ -7,10 +8,7 @@ import { AppTable } from '@/components/AppTable'
 import { ChatRollArchiveDialog } from '@/components/chat-roll/chat-roll-page/ChatRollArchiveDialog'
 import { ChatRollCreateDialog } from '@/components/chat-roll/chat-roll-page/ChatRollCreateDialog'
 import { ChatRollRecordExpandedDetails } from '@/components/chat-roll/chat-roll-page/ChatRollRecordExpandedDetails'
-import {
-  CHAT_ROLL_HISTORY_EMPTY_MESSAGE,
-  CHAT_ROLL_HISTORY_PAGE_SIZE,
-} from '@/components/chat-roll/chat-roll-page/chat-roll-page-utils'
+import { CHAT_ROLL_HISTORY_PAGE_SIZE } from '@/components/chat-roll/chat-roll-page/chat-roll-page-utils'
 import { buildChatRollRecordColumns } from '@/components/chat-roll/chat-roll-page/chatRollRecordColumns'
 import { SectionHeader, sectionTableIcon } from '@/components/SectionHeader'
 import { useNotification } from '@/context/NotificationContext'
@@ -42,6 +40,7 @@ const StyledContentStack = styled(Stack)(({ theme }) => ({
 export const ChatRollHistorySection = ({
   accountId,
 }: ChatRollHistorySectionProps) => {
+  const { t } = useTranslation()
   const { showError } = useNotification()
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [expandedRecordIds, setExpandedRecordIds] = useState<Set<number>>(
@@ -73,7 +72,7 @@ export const ChatRollHistorySection = ({
       return
     }
 
-    showError('Could not load chat roll history.')
+    showError(t('chatRoll.couldNotLoadHistory'))
   }, [recordsQueryError, showError])
 
   useEffect(() => {
@@ -87,7 +86,7 @@ export const ChatRollHistorySection = ({
     }
   }, [recordsResult, recordsPage])
 
-  const recordColumns = buildChatRollRecordColumns({
+  const recordColumns = buildChatRollRecordColumns(t, {
     onArchive: setArchiveDialogRecord,
   })
 
@@ -96,8 +95,8 @@ export const ChatRollHistorySection = ({
       <StyledCard elevation={0}>
         <StyledCardContent>
           <SectionHeader
-            title="History"
-            description="Chat roll sessions for this account"
+            title={t('chatRoll.historyTitle')}
+            description={t('chatRoll.historyDescription')}
             icon={sectionTableIcon}
             iconVariant="secondary"
             action={
@@ -107,7 +106,7 @@ export const ChatRollHistorySection = ({
                 startIcon={<AddIcon fontSize="small" />}
                 onClick={() => setCreateDialogOpen(true)}
               >
-                New
+                {t('common.newSession')}
               </Button>
             }
           />
@@ -117,7 +116,7 @@ export const ChatRollHistorySection = ({
               rows={records}
               loading={loadingRecords || fetchingRecords}
               getRowKey={(record) => record.id}
-              emptyMessage={CHAT_ROLL_HISTORY_EMPTY_MESSAGE}
+              emptyMessage={t('chatRoll.noSessions')}
               pagination={{
                 count: recordsTotal,
                 page: recordsPage,
@@ -139,8 +138,8 @@ export const ChatRollHistorySection = ({
                 },
                 ariaLabel: (record) =>
                   expandedRecordIds.has(record.id)
-                    ? `Collapse details for ${record.title}`
-                    : `Expand details for ${record.title}`,
+                    ? t('table.collapseDetailsAria', { title: record.title })
+                    : t('table.expandDetailsAria', { title: record.title }),
                 renderDetail: (record) => (
                   <ChatRollRecordExpandedDetails record={record} />
                 ),

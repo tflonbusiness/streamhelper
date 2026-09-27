@@ -14,17 +14,23 @@ import GroupIcon from '@mui/icons-material/Group'
 import LogoutIcon from '@mui/icons-material/Logout'
 import { alpha, styled } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { IconTile } from '@/components/IconTile'
 import { BreadcrumbProvider } from '@/context/BreadcrumbContext'
 import { useAuth } from '@/context/AuthContext'
-import { getAvailableNavModules, type ModuleIconVariant } from '@/lib/modules'
+import {
+  getAvailableNavModules,
+  moduleNameKey,
+  type ModuleIconVariant,
+} from '@/lib/modules'
 import { MODULES_ROUTE } from '@/lib/routes'
 import { colors } from '@/theme/colors'
 
 type NavItem = {
   to: string
-  label: string
+  labelKey: string
   icon: SvgIconComponent
   end: boolean
   requiresAccount: boolean
@@ -51,21 +57,21 @@ function loadNavExpanded(): boolean {
 const navItems: NavItem[] = [
   {
     to: '/dashboard',
-    label: 'Home',
+    labelKey: 'nav.home',
     icon: DashboardIcon,
     end: true,
     requiresAccount: false,
   },
   {
     to: MODULES_ROUTE,
-    label: 'Widgets',
+    labelKey: 'nav.widgets',
     icon: SportsEsportsIcon,
     end: false,
     requiresAccount: true,
   },
   {
     to: '/team',
-    label: 'Team',
+    labelKey: 'nav.team',
     icon: GroupIcon,
     end: true,
     requiresAccount: true,
@@ -73,7 +79,7 @@ const navItems: NavItem[] = [
   },
   {
     to: '/subscription',
-    label: 'Subscription',
+    labelKey: 'nav.subscription',
     icon: CreditCardIcon,
     end: true,
     requiresAccount: true,
@@ -252,7 +258,7 @@ const SidebarModulesGroup = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(0.5),
 }))
 
-const SidebarSubmoduleList = styled(Box)(({ theme }) => ({
+const SidebarSubmoduleList = styled('ul')(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   gap: theme.spacing(0.25),
@@ -407,6 +413,7 @@ function SidebarModulesNav({
   icon: SvgIconComponent
   label: string
 }) {
+  const { t } = useTranslation()
   const submodules = getAvailableNavModules()
 
   if (disabled) {
@@ -452,12 +459,12 @@ function SidebarModulesNav({
         collapsed={false}
       />
       {submodules.length > 0 ? (
-        <SidebarSubmoduleList component="ul" aria-label="Widget shortcuts">
+        <SidebarSubmoduleList aria-label={t('common.widgetShortcuts')}>
           {submodules.map((module) => (
             <SidebarSubmoduleLink
               key={module.id}
               to={module.widgetRoute!}
-              label={module.name}
+              label={t(moduleNameKey(module.id))}
               icon={module.icon}
               iconVariant={module.iconVariant}
             />
@@ -506,9 +513,14 @@ function MobileNavLink({
 }
 
 export function AppShell() {
+  const { t } = useTranslation()
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+
+  function navLabel(item: NavItem) {
+    return t(item.labelKey)
+  }
   const wideMainContent =
     /^\/modules\/(?:bonus-buy|chat-roll|prize-spin)\/\d+(?:\/|$)/.test(
       location.pathname,
@@ -534,10 +546,20 @@ export function AppShell() {
     <ShellRoot>
       <MobileHeader>
         <MobileHeaderInner>
-          <Tooltip title={isNavExpanded ? 'Collapse navigation' : 'Expand navigation'}>
+          <Tooltip
+            title={
+              isNavExpanded
+                ? t('common.collapseNavigation')
+                : t('common.expandNavigation')
+            }
+          >
             <NavToggleButton
               size="small"
-              aria-label={isNavExpanded ? 'Collapse navigation' : 'Expand navigation'}
+              aria-label={
+                isNavExpanded
+                  ? t('common.collapseNavigation')
+                  : t('common.expandNavigation')
+              }
               onClick={() => setIsNavExpanded((expanded) => !expanded)}
             >
               {isNavExpanded ? (
@@ -547,7 +569,7 @@ export function AppShell() {
               )}
             </NavToggleButton>
           </Tooltip>
-          <SidebarLogo src="/logo.svg" alt="Stream Helper" expanded />
+          <SidebarLogo src="/logo.svg" alt={t('common.appName')} expanded />
           <MobileLogoutButton
             type="button"
             variant="text"
@@ -571,7 +593,7 @@ export function AppShell() {
                 </NavIconSlot>
                 {!isNavCollapsed ? (
                   <Typography variant="body2" noWrap>
-                    {item.label}
+                    {navLabel(item)}
                   </Typography>
                 ) : null}
               </DisabledMobileNavButton>
@@ -579,7 +601,7 @@ export function AppShell() {
 
             if (isNavCollapsed) {
               return (
-                <Tooltip key={item.to} title={item.label}>
+                <Tooltip key={item.to} title={navLabel(item)}>
                   <span>{disabledButton}</span>
                 </Tooltip>
               )
@@ -592,7 +614,7 @@ export function AppShell() {
             <MobileNavLink
               key={item.to}
               to={item.to}
-              label={item.label}
+              label={navLabel(item)}
               icon={item.icon}
               end={item.end}
               collapsed={isNavCollapsed}
@@ -603,11 +625,25 @@ export function AppShell() {
 
       <Sidebar expanded={isNavExpanded}>
         <SidebarHeaderRow expanded={isNavExpanded}>
-          <SidebarLogo src="/logo.svg" alt="Stream Helper" expanded={isNavExpanded} />
-          <Tooltip title={isNavExpanded ? 'Collapse navigation' : 'Expand navigation'}>
+          <SidebarLogo
+            src="/logo.svg"
+            alt={t('common.appName')}
+            expanded={isNavExpanded}
+          />
+          <Tooltip
+            title={
+              isNavExpanded
+                ? t('common.collapseNavigation')
+                : t('common.expandNavigation')
+            }
+          >
             <NavToggleButton
               size="small"
-              aria-label={isNavExpanded ? 'Collapse navigation' : 'Expand navigation'}
+              aria-label={
+                isNavExpanded
+                  ? t('common.collapseNavigation')
+                  : t('common.expandNavigation')
+              }
               onClick={() => setIsNavExpanded((expanded) => !expanded)}
             >
               {isNavExpanded ? (
@@ -629,14 +665,14 @@ export function AppShell() {
                     <item.icon aria-hidden />
                   </NavIconSlot>
                   {!isNavCollapsed ? (
-                    <Typography variant="body2">{item.label}</Typography>
+                    <Typography variant="body2">{navLabel(item)}</Typography>
                   ) : null}
                 </DisabledSidebarNavButton>
               )
 
               if (isNavCollapsed) {
                 return (
-                  <Tooltip key={item.to} title={item.label} placement="right">
+                  <Tooltip key={item.to} title={navLabel(item)} placement="right">
                     <span>{disabledButton}</span>
                   </Tooltip>
                 )
@@ -652,7 +688,7 @@ export function AppShell() {
                   collapsed={isNavCollapsed}
                   disabled={false}
                   icon={item.icon}
-                  label={item.label}
+                  label={navLabel(item)}
                 />
               )
             }
@@ -661,7 +697,7 @@ export function AppShell() {
               <SidebarNavLink
                 key={item.to}
                 to={item.to}
-                label={item.label}
+                label={navLabel(item)}
                 icon={item.icon}
                 end={item.end}
                 collapsed={isNavCollapsed}
@@ -670,27 +706,38 @@ export function AppShell() {
           })}
         </SidebarNavList>
         <SidebarFooter>
-          {isNavExpanded ? (
-            <SidebarLogoutButton
-              type="button"
-              variant="text"
-              fullWidth
-              onClick={() => void handleLogout()}
-              startIcon={<StyledLogoutIcon aria-hidden />}
-            >
-              Sign out
-            </SidebarLogoutButton>
-          ) : (
-            <Tooltip title="Sign out" placement="right">
-              <NavToggleButton
-                size="small"
-                aria-label="Sign out"
+          <Box
+            sx={{
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1,
+              px: isNavExpanded ? 0 : 0.5,
+            }}
+          >
+            {isNavExpanded ? <LanguageSwitcher /> : null}
+            {isNavExpanded ? (
+              <SidebarLogoutButton
+                type="button"
+                variant="text"
+                fullWidth
                 onClick={() => void handleLogout()}
+                startIcon={<StyledLogoutIcon aria-hidden />}
               >
-                <StyledLogoutIcon aria-hidden />
-              </NavToggleButton>
-            </Tooltip>
-          )}
+                {t('common.signOut')}
+              </SidebarLogoutButton>
+            ) : (
+              <Tooltip title={t('common.signOut')} placement="right">
+                <NavToggleButton
+                  size="small"
+                  aria-label={t('common.signOut')}
+                  onClick={() => void handleLogout()}
+                >
+                  <StyledLogoutIcon aria-hidden />
+                </NavToggleButton>
+              </Tooltip>
+            )}
+          </Box>
         </SidebarFooter>
       </Sidebar>
 

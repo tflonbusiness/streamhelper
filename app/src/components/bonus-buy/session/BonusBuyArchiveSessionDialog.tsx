@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   Dialog,
@@ -33,6 +34,7 @@ const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
 export const BonusBuyArchiveSessionDialog = (
   props: BonusBuyArchiveSessionDialogProps,
 ) => {
+  const { t } = useTranslation()
   const { showSuccess, showError } = useNotification()
   const archiveMutation = useArchiveBonusBuySession(
     props.accountId,
@@ -58,13 +60,13 @@ export const BonusBuyArchiveSessionDialog = (
 
     archiveMutation.mutate(undefined, {
       onSuccess: () => {
-        showSuccess('Session archived.')
+        showSuccess(t('bonusBuy.sessionArchived'))
         handleClose()
         archiveMutation.reset()
       },
       onError: (error) => {
         showError(
-          error instanceof Error ? error.message : 'Could not archive session',
+          error instanceof Error ? error.message : t('bonusBuy.couldNotArchiveSession'),
         )
       },
     })
@@ -72,7 +74,7 @@ export const BonusBuyArchiveSessionDialog = (
 
   return (
     <Dialog open={props.open} onClose={handleClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Archive session?</DialogTitle>
+      <DialogTitle>{t('bonusBuy.archiveSessionTitle')}</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
           The <b>"{props.record?.name}"</b> session will be removed from the active list. Archived

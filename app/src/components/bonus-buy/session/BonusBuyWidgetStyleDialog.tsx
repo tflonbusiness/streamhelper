@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   Dialog,
@@ -82,6 +83,7 @@ const StyledMobilePreviewButton = styled(Button)(({ theme }) => ({
 export const BonusBuyWidgetStyleDialog = (
   props: BonusBuyWidgetStyleDialogProps,
 ) => {
+  const { t } = useTranslation()
   const { showSuccess, showError } = useNotification()
   const patchWidgetMutation = usePatchBonusBuyWidget(
     props.accountId,
@@ -117,9 +119,9 @@ export const BonusBuyWidgetStyleDialog = (
     showError(
       widgetLoadError instanceof Error
         ? widgetLoadError.message
-        : 'Could not load widget settings',
+        : t('bonusBuy.couldNotLoadWidgetSettings'),
     )
-  }, [props.open, showError, widgetLoadError])
+  }, [props.open, showError, widgetLoadError, t])
 
   async function handleSave(
     widgetDraft: BonusBuyWidgetSettings,
@@ -147,7 +149,7 @@ export const BonusBuyWidgetStyleDialog = (
       preset_id: presetId,
     })
     props.onClose()
-    showSuccess('Widget style saved')
+    showSuccess(t('bonusBuy.widgetStyleSaved'))
   }
 
   const {
@@ -180,11 +182,11 @@ export const BonusBuyWidgetStyleDialog = (
         maxWidth="lg"
         fullWidth
       >
-        <DialogTitle>Widget Style</DialogTitle>
+        <DialogTitle>{t('bonusBuy.widgetStyle')}</DialogTitle>
         <DialogContent>
           {isLoadingWidget ? (
             <StyledStatusAlert tone="info">
-              Loading settings…
+              {t('common.loadingSettings')}
             </StyledStatusAlert>
           ) : widgetLoadError ? null : widgetDraft ? (
             <StyledContentGrid container spacing={3}>
@@ -247,7 +249,7 @@ export const BonusBuyWidgetStyleDialog = (
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Widget preview</DialogTitle>
+        <DialogTitle>{t('common.widgetPreview')}</DialogTitle>
         <DialogContent>
           <WidgetStylePreview
             record={props.record}
@@ -258,7 +260,7 @@ export const BonusBuyWidgetStyleDialog = (
           />
         </DialogContent>
         <StyledPreviewDialogActions>
-          <Button onClick={() => setWidgetPreviewDialogOpen(false)}>Close</Button>
+          <Button onClick={() => setWidgetPreviewDialogOpen(false)}>{t('common.close')}</Button>
         </StyledPreviewDialogActions>
       </Dialog>
     </>

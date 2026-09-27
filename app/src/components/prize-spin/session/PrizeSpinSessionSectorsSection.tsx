@@ -1,4 +1,5 @@
 import { Button, Stack, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import AddIcon from '@mui/icons-material/Add'
 import BalanceIcon from '@mui/icons-material/Balance'
 import PieChartIcon from '@mui/icons-material/PieChart'
@@ -58,6 +59,7 @@ const WinPercentTotal = styled(Typography, {
 export const PrizeSpinSessionSectorsSection = (
   props: PrizeSpinSessionSectorsSectionProps,
 ) => {
+  const { t } = useTranslation()
   const { showSuccess, showError } = useNotification()
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [editSector, setEditSector] = useState<PrizeSpinSector | null>(null)
@@ -85,10 +87,10 @@ export const PrizeSpinSessionSectorsSection = (
 
   const handleDeleteSector = (sectorId: number) => {
     deleteSectorMutation.mutate(sectorId, {
-      onSuccess: () => showSuccess('Sector removed.'),
+      onSuccess: () => showSuccess(t('prizeSpin.sectorRemoved')),
       onError: (error) => {
         showError(
-          error instanceof Error ? error.message : 'Could not delete sector',
+          error instanceof Error ? error.message : t('prizeSpin.couldNotDeleteSector'),
         )
       },
     })
@@ -100,18 +102,18 @@ export const PrizeSpinSessionSectorsSection = (
     }
 
     distributeSectorsMutation.mutate(undefined, {
-      onSuccess: () => showSuccess('Sector weights split evenly to 100%.'),
+      onSuccess: () => showSuccess(t('prizeSpin.sectorWeightsSplit')),
       onError: (error) => {
         showError(
           error instanceof Error
             ? error.message
-            : 'Could not distribute sector weights',
+            : t('prizeSpin.couldNotDistributeWeights'),
         )
       },
     })
   }
 
-  const sectorColumns = buildPrizeSpinSectorColumns({
+  const sectorColumns = buildPrizeSpinSectorColumns(t, {
     readOnly: props.readOnly,
     onEdit: setEditSector,
     onDelete: handleDeleteSector,
@@ -122,8 +124,8 @@ export const PrizeSpinSessionSectorsSection = (
       <StyledSessionCard elevation={0}>
         <StyledSessionCardContent>
           <SectionHeader
-            title={`Wheel sectors (${props.sectors.length})`}
-            description="Labels, colors, and win weights — total must equal 100%"
+            title={t('prizeSpin.sectorsTitle', { count: props.sectors.length })}
+            description={t('prizeSpin.sectorsDescription')}
             icon={PieChartIcon}
             iconVariant="purple"
             showDivider={false}
@@ -142,8 +144,8 @@ export const PrizeSpinSessionSectorsSection = (
                   onClick={() => void handleDistributeSectorsEqually()}
                 >
                   {distributeSectorsMutation.isPending
-                    ? 'Splitting…'
-                    : 'Split 100%'}
+                    ? t('prizeSpin.splitting')
+                    : t('prizeSpin.split100')}
                 </Button>
                 <Button
                   type="button"
@@ -172,7 +174,7 @@ export const PrizeSpinSessionSectorsSection = (
             />
           ) : (
             <StatusAlert tone="info">
-              No sectors yet. Use Add sector to create at least two.
+              {t('prizeSpin.sectorsEmptyHint')}
             </StatusAlert>
           )}
         </StyledSessionCardContent>
