@@ -3,6 +3,7 @@ import {
   BonusBuyWidgetBasketIcon,
   BonusBuyWidgetGiftIcon,
   BonusBuyWidgetLivePulseIcon,
+  BonusBuyWidgetTitleIcon,
 } from '@/components/bonus-buy/widget/bonus-buy-widget-icons'
 import { colors } from '@/theme/colors'
 import type { TypographyProps } from '@mui/material/Typography'
@@ -88,21 +89,24 @@ export const StyledHeaderLeft = styled(Box)({
   display: 'flex',
   alignItems: 'center',
   gap: '10px',
+  minWidth: 0,
+  flex: 1,
+  overflow: 'hidden',
 })
 
-export const StyledHeaderIconWrap = styled(Box, textColorProps)<TextColorProp>(
-  ({ textColor }) => ({
-    width: 42,
-    height: 42,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: textColor,
-  }),
-)
+export const StyledHeaderIconWrap = styled(Box)({
+  width: 32,
+  height: 28,
+  flexShrink: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+})
 
-export const StyledHeaderGiftIcon = styled(BonusBuyWidgetGiftIcon)({
-  fontSize: 28,
+export const StyledHeaderTitleIcon = styled(BonusBuyWidgetTitleIcon)({
+  fontSize: 32,
+  width: 32,
+  height: 28,
 })
 
 export const StyledHeaderTitle = styled(Typography)({
@@ -112,6 +116,11 @@ export const StyledHeaderTitle = styled(Typography)({
   color: '#FFFFFF',
   letterSpacing: '1px',
   textTransform: 'capitalize',
+  minWidth: 0,
+  flex: 1,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
 })
 
 export const StyledSlotCountPill = styled(Box, widgetThemeProps)<WidgetThemeProp>(
@@ -119,6 +128,7 @@ export const StyledSlotCountPill = styled(Box, widgetThemeProps)<WidgetThemeProp
     display: 'flex',
     alignItems: 'center',
     gap: '6px',
+    flexShrink: 0,
     backgroundColor: widgetTheme.surfaceColor,
     border: `1px solid ${widgetTheme.borderColor}`,
     borderRadius: '8px',
@@ -160,11 +170,40 @@ export const StyledAccentIcon = styled(BonusBuyWidgetBasketIcon, textColorProps)
   color: textColor,
 }))
 
-export const StyledStatValue = styled(Typography)({
+export const StyledStatValuesGroup = styled(Box)({
+  display: 'flex',
+  alignItems: 'center',
   marginLeft: '10px',
+  minWidth: 0,
+  flex: 1,
+  gap: '8px',
+  overflow: 'hidden',
+})
+
+export const StyledStatValue = styled(Typography)({
   fontWeight: 600,
   fontSize: '26px',
   color: '#FFFFFF',
+  whiteSpace: 'nowrap',
+  flexShrink: 0,
+})
+
+export const StyledStatValueProfit = styled(StyledStatValue, textColorProps)<
+  TextColorProp
+>(({ textColor }) => ({
+  color: textColor,
+  flexShrink: 1,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+}))
+
+export const StyledStatDivider = styled('span')({
+  fontWeight: 500,
+  fontSize: '30px',
+  lineHeight: 1,
+  color: 'rgba(255, 255, 255, 0.28)',
+  flexShrink: 0,
+  userSelect: 'none',
 })
 
 export const StyledAverageXIcon = styled('span', textColorProps)<TextColorProp>(
@@ -347,8 +386,8 @@ export const StyledLiveBadge = styled(Box, {
   borderRadius: '10px',
   paddingLeft: '10px',
   paddingRight: '10px',
-  paddingTop: '4px',
-  paddingBottom: '4px',
+  paddingTop: '8px',
+  paddingBottom: '8px',
   flexShrink: 0,
   marginLeft: 18,
 }))
@@ -441,8 +480,8 @@ export const StyledMultiplierBadge = styled(Box, {
   borderRadius: '8px',
   paddingLeft: '12px',
   paddingRight: '12px',
-  paddingTop: '8px',
-  paddingBottom: '8px',
+  paddingTop: '4px',
+  paddingBottom: '4px',
   flexShrink: 0,
 }))
 
@@ -452,7 +491,7 @@ export const StyledMultiplierValue = styled(Typography, textColorProps)<
   fontWeight: 600,
   fontSize: '16px',
   color: textColor,
-  lineHeight: '28px',
+  lineHeight: 1.2,
 }))
 
 export const StyledSlotListSection = styled(Box, widgetThemeProps)<WidgetThemeProp>(

@@ -46,7 +46,7 @@ sources: []
 
 - **CAP-6**
   - **intent:** The system persists account-level widget dimensions shared by all prize spin sessions.
-  - **success:** `prize_spin_widget` row per `account_id` with `width`/`height` per `prize-spin-widget.md`; bootstrap on account provision and first `POST .../prize-spins`; lazy insert on widget GET; authenticated `GET`/`PATCH /accounts/:accountId/prize-spin-widget`; public overlay resolves settings via session account.
+  - **success:** `prize_spin_widget` row per `account_id` with `width`/`height` per `prize-spin-widget.md`; **standard default 800×800 px** on insert/bootstrap (account provision, first `POST .../prize-spins`, lazy widget GET); authenticated `GET`/`PATCH /accounts/:accountId/prize-spin-widget`; public overlay resolves settings via session account; client and server constants in `prize-spin-widget-defaults.ts` match DB defaults.
 
 - **CAP-7**
   - **intent:** An operator adjusts overlay width and height and accesses overlay links from the session workspace, not the history page.
@@ -64,7 +64,7 @@ sources: []
 - **Module routes** — history `/modules/prize-spin`, session `/modules/prize-spin/:id`, overlay `/modules/prize-spin/:id/widget`; use `app/src/lib/routes.ts` helpers (`prizeSpinSessionRoute`, `prizeSpinWidgetRoute`).
 - **Session status** — public widget serves `prize_spin.status = 'active'` only per adopted `session-status.md`; no go-live/deactivate or `is_active` singleton.
 - **Poll interval** — 5000 ms refetch on overlay page (match Bonus Buy stream widget).
-- **Widget dimensions** — width and height each 200–2400 px; defaults 800×800 per `prize-spin-widget.md`; overlay reads from DB only — no URL size query params.
+- **Widget dimensions** — width and height each 200–2400 px; **standard size 800×800 px** (account default on bootstrap and Widget settings form fallback) per `prize-spin-widget.md`; overlay reads from DB only — no URL size query params.
 - **Sector visuals** — wheel segment fill from `prize_spin_sector.color`; wheel pointer, rim, hub, and gloss per `stream-helper-wheel-reference.md`; card chrome from `prize-spin-widget-theme.ts`; no theme columns on `prize_spin_widget` in this slice.
 - **Overlay card** — dark glass `#0A0A0CE6` with 20px radius and shadow; viewport outside card stays transparent for OBS chroma-key.
 - **Wheel implementation** — SVG in `PrizeSpinWheel.tsx` / `prize-spin-wheel-visual.ts`; reproduce stream-helper canvas look without switching to HTML canvas.
@@ -93,7 +93,7 @@ An operator opens `/modules/prize-spin/12`, opens **Widget settings** on the sam
 ## Assumptions
 
 - Wheel segment arc angles are proportional to `winPercent` values (stream-helper reference uses equal slices only for visuals, not math).
-- Fixed overlay tokens in `prize-spin-widget-theme.ts` scale linearly from a 500×500 base via `scaleForSize`.
+- Fixed overlay tokens in `prize-spin-widget-theme.ts` scale linearly from the 800×800 standard canvas via `scaleForSize` (`baseSize: 800`).
 - On initial overlay load with an existing `latestWin`, wheel rests on that sector and banner shows without replay animation.
 - `latestWin` in the public API is the newest non-archived win (`created_at DESC`).
 - Hub center uses module `RotateCw` icon until a future slice adds configurable center assets.

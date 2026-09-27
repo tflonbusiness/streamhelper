@@ -12,7 +12,10 @@ import {
   StyledAverageXIcon,
   StyledAverageXValue,
   StyledStatCellFlex,
+  StyledStatDivider,
   StyledStatValue,
+  StyledStatValueProfit,
+  StyledStatValuesGroup,
   StyledStatsRow,
   StyledWidgetCell,
 } from '@/components/bonus-buy/widget/bonus-buy-widget-styles'
@@ -42,14 +45,26 @@ export function BonusBuyWidgetStatsRow({
   averageXSentiment,
 }: BonusBuyWidgetStatsRowProps) {
   const AverageXIcon = AVERAGE_X_ICONS[averageXSentiment]
+  const profitValue = Number.parseFloat(stats.profit)
+  const showProfit = profitValue !== 0
 
   return (
     <StyledStatsRow>
       <StyledStatCellFlex widgetTheme={theme} cellHeight={54}>
         <StyledAccentIcon textColor={theme.accentColor} aria-hidden />
-        <StyledStatValue>
-          {formatBonusBuyMoney(stats.totalWin, currencyCode)}
-        </StyledStatValue>
+        <StyledStatValuesGroup>
+          <StyledStatValue>
+            {formatBonusBuyMoney(stats.spent, currencyCode)}
+          </StyledStatValue>
+          {showProfit ? (
+            <>
+              <StyledStatDivider aria-hidden>/</StyledStatDivider>
+              <StyledStatValueProfit textColor={averageXColor}>
+                {formatBonusBuyMoney(stats.profit, currencyCode)}
+              </StyledStatValueProfit>
+            </>
+          ) : null}
+        </StyledStatValuesGroup>
       </StyledStatCellFlex>
       <StyledWidgetCell widgetTheme={theme} cellHeight={54}>
         <StyledAverageXIcon textColor={averageXColor} aria-hidden>

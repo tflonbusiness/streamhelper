@@ -2,6 +2,8 @@
 
 Account-level size configuration for stream overlays at `/modules/prize-spin/:prizeSpinId/widget`. **One row per account** — shared across every prize spin session. Sector colors come from `prize_spin_sector.color`; this table controls overlay canvas size only.
 
+**Standard dimensions:** **800×800 px** width and height — the default for new `prize_spin_widget` rows, DB column defaults, bootstrap inserts, and the Widget settings dialog when no saved settings exist (`PRIZE_SPIN_WIDGET_DEFAULTS` in app and server).
+
 Public overlay serves sessions with `prize_spin.status = 'active'` — see [../spec-prize-spin-history-archive/session-status.md](../spec-prize-spin-history-archive/session-status.md).
 
 ## Database

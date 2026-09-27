@@ -41,7 +41,7 @@ Proportions scale linearly when `settings.width` / `height` change. Base math at
 │            ▼ pointer                 │  pointer overhangs 12px above wheel
 │         ╭─────────╮                  │
 │        │  wheel    │                 │  wheel diameter = min(w,h) - 16 - 44 - 80 - 32
-│        │  544px    │                 │  ≈ 340px × (800/500) at 800×800 default
+│        │  wheel    │                 │  diameter from min(w,h) minus header/banner reserves; tokens scale via baseSize 800 × (min/800)
 │         ╰─────────╯                  │
 │                                      │
 │  ┌────────────────────────────────┐  │  winner banner 72px (when visible)

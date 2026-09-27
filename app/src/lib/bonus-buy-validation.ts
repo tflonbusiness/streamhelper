@@ -48,13 +48,13 @@ export const editBonusBuySessionFormSchema = yup.object({
       /^\d+(\.\d{1,2})?$/,
       'Start balance must have at most 2 decimal places',
     )
-    .test('min', 'Start balance must be greater than zero', (value) => {
+    .test('min', 'Start balance must be zero or greater', (value) => {
       if (!value) {
         return false
       }
 
       const parsed = Number.parseFloat(value)
-      return Number.isFinite(parsed) && parsed > 0
+      return Number.isFinite(parsed) && parsed >= 0
     }),
 })
 

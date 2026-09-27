@@ -12,7 +12,7 @@ export const PRIZE_SPIN_WIDGET_THEME = {
   textMuted: '#9CA3AF',
   divider: 'rgba(255,255,255,0.12)',
   fontFamily: 'Inter, system-ui, sans-serif',
-  baseSize: 500,
+  baseSize: 800,
 } as const
 
 export type PrizeSpinWidgetTheme = typeof PRIZE_SPIN_WIDGET_THEME & {

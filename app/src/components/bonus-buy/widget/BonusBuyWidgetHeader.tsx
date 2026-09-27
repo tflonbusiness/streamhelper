@@ -1,10 +1,10 @@
 import type { BonusBuyWidgetCardRecord } from '@/lib/bonus-buy-widget-presentation'
 import type { BonusBuyWidgetTheme } from '@/lib/bonus-buy-widget-presentation'
 import {
-  StyledHeaderGiftIcon,
   StyledHeaderIconWrap,
   StyledHeaderLeft,
   StyledHeaderTitle,
+  StyledHeaderTitleIcon,
   StyledSlotCountIcon,
   StyledSlotCountPill,
   StyledSlotCountValue,
@@ -25,7 +25,10 @@ export function BonusBuyWidgetHeader({
   return (
     <StyledWidgetHeader>
       <StyledHeaderLeft>
-        <StyledHeaderTitle>{record.name}</StyledHeaderTitle>
+        <StyledHeaderIconWrap aria-hidden>
+          <StyledHeaderTitleIcon />
+        </StyledHeaderIconWrap>
+        <StyledHeaderTitle title={record.name}>{record.name}</StyledHeaderTitle>
       </StyledHeaderLeft>
       <StyledSlotCountPill widgetTheme={theme}>
         <StyledSlotCountIcon textColor={theme.accentColor} aria-hidden />
