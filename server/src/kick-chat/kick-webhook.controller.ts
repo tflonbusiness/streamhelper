@@ -21,6 +21,13 @@ export class KickWebhookController {
     private readonly router: KickCommandRouter,
   ) {}
 
+  private logKickPayload(payload: unknown): void {
+    if (process.env.KICK_WEBHOOK_DEBUG === 'false') {
+      return;
+    }
+    console.log(`[kick]\n${JSON.stringify(payload, null, 2)}`);
+  }
+
   @Post('webhooks/kick')
   @HttpCode(200)
   async handleWebhook(
@@ -40,18 +47,40 @@ export class KickWebhookController {
       throw new BadRequestException('Missing raw request body');
     }
 
+    const rawBodyForVerify =
+      rawBody ?? Buffer.from(JSON.stringify(body ?? {}));
+
     this.verifier.verifySignature({
       messageId,
       timestamp,
       signature,
-      rawBody: rawBody ?? Buffer.from(JSON.stringify(body ?? {})),
+      rawBody: rawBodyForVerify,
+    });
+
+    let parsedBody: unknown = body;
+    if (rawBody) {
+      try {
+        parsedBody = JSON.parse(rawBody.toString('utf8')) as unknown;
+      } catch {
+        parsedBody = rawBody.toString('utf8');
+      }
+    }
+
+    this.logKickPayload({
+      headers: {
+        'kick-event-type': eventType,
+        'kick-event-message-id': messageId,
+        'kick-event-message-timestamp': timestamp,
+        'kick-event-signature': signature,
+      },
+      body: parsedBody,
     });
 
     if (eventType !== 'chat.message.sent') {
       return { ok: true };
     }
 
-    const event = this.parseChatMessageEvent(body, messageId);
+    const event = this.parseChatMessageEvent(parsedBody, messageId);
     if (!event) {
       throw new BadRequestException('Invalid chat.message.sent payload');
     }

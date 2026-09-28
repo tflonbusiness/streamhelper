@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service.js';
-import { mapKickBadgesToRoleIds } from '../kick-badge.mapper.js';
+import { resolveKickChatRollRoleIds } from '../kick-badge.mapper.js';
 import { KickChatReplyService } from '../kick-chat-reply.service.js';
 import type {
   ChatRollIntakeResult,
@@ -56,7 +56,7 @@ export class ChatRollIntakeHandler {
 
     const providerUserId = String(event.sender.user_id);
     const displayName = event.sender.username.trim();
-    const roleIds = mapKickBadgesToRoleIds(event.sender.identity?.badges);
+    const roleIds = resolveKickChatRollRoleIds(event.sender.identity?.badges);
 
     const insertResult = await this.database.insertChatRollParticipantFromChat({
       chatRollId: session.id,

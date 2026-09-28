@@ -37,3 +37,14 @@ export function mapKickBadgesToRoleIds(
 
   return [...roleIds];
 }
+
+/** Kick chat roles from badges; plain chatters (no mapped badges) are viewers. */
+export function resolveKickChatRollRoleIds(
+  badges: { type?: string; text?: string }[] | undefined,
+): string[] {
+  const fromBadges = mapKickBadgesToRoleIds(badges);
+  if (fromBadges.length > 0) {
+    return fromBadges;
+  }
+  return ['viewer'];
+}

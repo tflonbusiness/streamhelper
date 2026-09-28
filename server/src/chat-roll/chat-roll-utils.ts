@@ -2,7 +2,7 @@ export type ChatRollRoleId =
   | 'moderator'
   | 'vip'
   | 'og'
-  | 'channel_follower'
+  | 'viewer'
   | 'paid_subscriber';
 
 export type WeightCombineMode = 'highest' | 'sum';
@@ -18,7 +18,7 @@ export const CHAT_ROLL_ROLE_IDS: ChatRollRoleId[] = [
   'moderator',
   'vip',
   'og',
-  'channel_follower',
+  'viewer',
   'paid_subscriber',
 ];
 
@@ -26,7 +26,7 @@ export const DEFAULT_CHAT_ROLL_ROLE_SETTINGS: ChatRollRoleSettings = {
   moderator: { enabled: false, weight: 1 },
   vip: { enabled: true, weight: 2 },
   og: { enabled: false, weight: 1.5 },
-  channel_follower: { enabled: false, weight: 1 },
+  viewer: { enabled: true, weight: 1 },
   paid_subscriber: { enabled: true, weight: 2 },
 };
 
@@ -44,7 +44,17 @@ export function normalizeRoleSettings(
     return null;
   }
 
-  const record = input as Record<string, unknown>;
+  const raw = input as Record<string, unknown>;
+  const record = { ...raw };
+  if (
+    record.channel_follower &&
+    typeof record.channel_follower === 'object' &&
+    record.viewer === undefined
+  ) {
+    record.viewer = record.channel_follower;
+  }
+  delete record.channel_follower;
+
   const result = {} as ChatRollRoleSettings;
 
   for (const roleId of CHAT_ROLL_ROLE_IDS) {

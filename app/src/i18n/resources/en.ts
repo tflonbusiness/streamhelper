@@ -513,10 +513,10 @@ export const en = {
         description: "OG badge in chat",
         chip: "OG"
       },
-      'channel_follower': {
-        label: "Channel follower",
-        description: "Follows the channel",
-        chip: "Follower"
+      viewer: {
+        label: "Viewer",
+        description: "Chat viewers without a Kick badge role",
+        chip: "Viewer"
       },
       'paid_subscriber': {
         label: "Paid subscriber",

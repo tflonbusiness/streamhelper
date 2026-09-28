@@ -521,10 +521,10 @@ export const ru = {
         description: "OG-бейдж в чате",
         chip: "OG"
       },
-      'channel_follower': {
-        label: "Подписчик канала",
-        description: "Подписан на канал",
-        chip: "Follower"
+      viewer: {
+        label: "Зритель",
+        description: "Зрители в чате без бейджа Kick",
+        chip: "Зритель"
       },
       'paid_subscriber': {
         label: "Платный подписчик",

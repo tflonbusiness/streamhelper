@@ -4,7 +4,7 @@ export type ChatRollRoleId =
   | 'moderator'
   | 'vip'
   | 'og'
-  | 'channel_follower'
+  | 'viewer'
   | 'paid_subscriber'
 
 export type WeightCombineMode = 'highest' | 'sum'
@@ -56,9 +56,9 @@ export const CHAT_ROLL_ROLE_META: {
     description: 'OG badge in chat',
   },
   {
-    id: 'channel_follower',
-    label: 'Channel follower',
-    description: 'Follows the channel',
+    id: 'viewer',
+    label: 'Viewer',
+    description: 'Chat viewers without a Kick badge role',
   },
   {
     id: 'paid_subscriber',
@@ -71,7 +71,7 @@ export const CHAT_ROLL_ROLE_CHIP_LABEL: Record<ChatRollRoleId, string> = {
   moderator: 'Mod',
   vip: 'VIP',
   og: 'OG',
-  channel_follower: 'Follower',
+  viewer: 'Viewer',
   paid_subscriber: 'Sub',
 }
 
@@ -79,7 +79,7 @@ const CHAT_ROLL_ROLE_IDS: ChatRollRoleId[] = [
   'moderator',
   'vip',
   'og',
-  'channel_follower',
+  'viewer',
   'paid_subscriber',
 ]
 
@@ -102,7 +102,7 @@ const DEFAULT_ROLE_SETTINGS: Record<ChatRollRoleId, ChatRollRoleSetting> = {
   moderator: { enabled: false, weight: 1 },
   vip: { enabled: true, weight: 2 },
   og: { enabled: false, weight: 1.5 },
-  channel_follower: { enabled: false, weight: 1 },
+  viewer: { enabled: true, weight: 1 },
   paid_subscriber: { enabled: true, weight: 2 },
 }
 
@@ -110,9 +110,9 @@ export const CHAT_ROLL_MOCK_PARTICIPANTS: ChatRollParticipant[] = [
   { id: 'p1', displayName: 'nightowl_42', roleIds: ['vip'] },
   { id: 'p2', displayName: 'slotking', roleIds: ['paid_subscriber'] },
   { id: 'p3', displayName: 'mod_alex', roleIds: ['moderator'] },
-  { id: 'p4', displayName: 'luckyviewer', roleIds: [] },
+  { id: 'p4', displayName: 'luckyviewer', roleIds: ['viewer'] },
   { id: 'p5', displayName: 'og_wolf', roleIds: ['og', 'vip'] },
-  { id: 'p6', displayName: 'newfan99', roleIds: ['channel_follower'] },
+  { id: 'p6', displayName: 'newfan99', roleIds: ['viewer'] },
 ]
 
 export const CHAT_ROLL_MOCK_WINNERS: ChatRollWinner[] = [

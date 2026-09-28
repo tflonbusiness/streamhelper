@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { mapKickBadgesToRoleIds } from './kick-badge.mapper.js';
+import {
+  mapKickBadgesToRoleIds,
+  resolveKickChatRollRoleIds,
+} from './kick-badge.mapper.js';
 
 describe('mapKickBadgesToRoleIds', () => {
   it('maps known badge types', () => {
@@ -20,5 +23,18 @@ describe('mapKickBadgesToRoleIds', () => {
 
   it('returns empty array when no badges', () => {
     expect(mapKickBadgesToRoleIds(undefined)).toEqual([]);
+  });
+});
+
+describe('resolveKickChatRollRoleIds', () => {
+  it('assigns viewer when no mapped badges', () => {
+    expect(resolveKickChatRollRoleIds([])).toEqual(['viewer']);
+    expect(resolveKickChatRollRoleIds(undefined)).toEqual(['viewer']);
+  });
+
+  it('keeps badge roles without viewer', () => {
+    expect(
+      resolveKickChatRollRoleIds([{ type: 'moderator', text: 'Moderator' }]),
+    ).toEqual(['moderator']);
   });
 });
