@@ -54,7 +54,7 @@ export const MODULE_CATALOG: ModuleDefinition[] = [
   },
   {
     id: 'chat-roll',
-    status: 'coming_soon',
+    status: 'available',
     icon: CasinoIcon,
     iconVariant: 'info',
     widgetRoute: CHAT_ROLL_ROUTE,

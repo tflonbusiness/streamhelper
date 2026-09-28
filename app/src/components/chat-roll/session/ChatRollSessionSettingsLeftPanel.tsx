@@ -7,20 +7,30 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material'
+import GroupIcon from '@mui/icons-material/Group'
 import TagIcon from '@mui/icons-material/Tag'
 import TuneIcon from '@mui/icons-material/Tune'
 import { useTranslation } from 'react-i18next'
 import type { ChatRollRecord } from '@/api/chat-roll'
-import type { WeightCombineMode } from '@/lib/chat-roll'
+import type { ChatRollRoleId, WeightCombineMode } from '@/lib/chat-roll'
 import {
   ExclusionToggleLabel,
   KeywordField,
+  RoleLabel,
+  RoleRowStack,
+  RoleWeightField,
   SettingsGroupPanel,
   SettingsGroupTitle,
   SettingsLeftPanel,
   SettingsToggleCard,
   SettingsToggleCopy,
 } from '@/components/chat-roll/chatRollPageStyles'
+
+type ChatRollRoleMeta = {
+  id: ChatRollRoleId
+  label: string
+  description: string
+}
 
 type ChatRollSessionSettingsLeftPanelProps = {
   record: ChatRollRecord
@@ -34,6 +44,9 @@ type ChatRollSessionSettingsLeftPanelProps = {
   onReplyInChatChange: (checked: boolean) => void
   onWinnerResponseEnabledChange: (checked: boolean) => void
   onWinnerResponseSecondsChange: (seconds: number) => void
+  roleMeta: ChatRollRoleMeta[]
+  onRoleToggle: (roleId: ChatRollRoleId, enabled: boolean) => void
+  onRoleWeightChange: (roleId: ChatRollRoleId, raw: string) => void
 }
 
 export function ChatRollSessionSettingsLeftPanel(
@@ -64,6 +77,50 @@ export function ChatRollSessionSettingsLeftPanel(
             },
           }}
         />
+      </SettingsGroupPanel>
+
+      <SettingsGroupPanel>
+        <SettingsGroupTitle>
+          <GroupIcon fontSize="inherit" aria-hidden />
+          {t('chatRoll.eligibleRoles')}
+        </SettingsGroupTitle>
+        <Stack spacing={1}>
+          {props.roleMeta.map((role) => {
+            const setting = props.record.roleSettings[role.id]
+            return (
+              <RoleRowStack key={role.id} enabled={setting.enabled}>
+                <Switch
+                  size="small"
+                  checked={setting.enabled}
+                  disabled={props.settingsDisabled}
+                  onChange={(event) =>
+                    props.onRoleToggle(role.id, event.target.checked)
+                  }
+                />
+                <RoleLabel variant="body2" noWrap>
+                  {role.label}
+                </RoleLabel>
+                <RoleWeightField
+                  size="small"
+                  type="number"
+                  label="×"
+                  value={setting.weight}
+                  disabled={!setting.enabled || props.settingsDisabled}
+                  onChange={(event) =>
+                    props.onRoleWeightChange(role.id, event.target.value)
+                  }
+                  slotProps={{
+                    htmlInput: {
+                      min: 0.1,
+                      max: 100,
+                      step: 0.1,
+                    },
+                  }}
+                />
+              </RoleRowStack>
+            )
+          })}
+        </Stack>
       </SettingsGroupPanel>
 
       <SettingsGroupPanel>

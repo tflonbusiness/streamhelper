@@ -1,4 +1,5 @@
 import { Button, Chip, Stack, Typography } from '@mui/material'
+import type { ReactNode } from 'react'
 import ArchiveIcon from '@mui/icons-material/Archive'
 import { styled, useTheme } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
@@ -14,6 +15,7 @@ import { mutedChipSx } from '@/theme/colors'
 type ChatRollSessionHeaderSectionProps = {
   record: ChatRollRecord
   onOpenArchiveDialog: () => void
+  primaryActions?: ReactNode
 }
 
 const HeaderStack = styled(Stack)(({ theme }) => ({
@@ -44,6 +46,7 @@ const SessionId = styled('span')(({ theme }) => ({
 
 const ActionsStack = styled(Stack)(({ theme }) => ({
   flexWrap: 'wrap',
+  alignItems: 'center',
   gap: theme.spacing(1),
 }))
 
@@ -80,6 +83,7 @@ export const ChatRollSessionHeaderSection = (
             ) : null}
           </TitleStack>
           <ActionsStack direction="row">
+            {props.primaryActions}
             {!readOnly ? (
               <Button
                 type="button"

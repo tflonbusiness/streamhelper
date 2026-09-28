@@ -1,6 +1,6 @@
-import { Button, Grid, IconButton, Stack, Switch } from '@mui/material'
+import { Button, Grid, IconButton, Stack } from '@mui/material'
+import { styled } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
-import CasinoIcon from '@mui/icons-material/Casino'
 import DeleteIcon from '@mui/icons-material/Delete'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
@@ -21,17 +21,10 @@ import {
   ListRowName,
   ListRowStack,
   ListRowsStack,
-  PageStack,
   ParticipantExtraStack,
-  RoleLabel,
-  RoleRowStack,
-  RolesSection,
   RoleTagChip,
-  RoleWeightField,
   SettingsCard,
   SettingsCardContent,
-  SettingsSectionLabel,
-  RollActionBar,
   RollButton,
   SettingsStack,
 } from '@/components/chat-roll/chatRollPageStyles'
@@ -42,7 +35,8 @@ import { ChatRollKickChatSection } from '@/components/chat-roll/session/ChatRoll
 import { ChatRollWinResponseChip } from '@/components/chat-roll/session/ChatRollWinResponseChip'
 import { ChatRollSessionSettingsLeftPanel } from '@/components/chat-roll/session/ChatRollSessionSettingsLeftPanel'
 import { ChatRollSessionLoadingState } from '@/components/chat-roll/session/ChatRollSessionLoadingState'
-import { PageHeader } from '@/components/PageHeader'
+import { chatRollModule } from '@/components/chat-roll/session/chat-roll-session-utils'
+import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { SectionHeader } from '@/components/SectionHeader'
 import { useAuth } from '@/context/AuthContext'
 import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
@@ -65,6 +59,25 @@ import {
   usePatchChatRollSession,
   useRollChatRoll,
 } from '@/queries/use-chat-roll-session'
+
+const PageStack = styled(Stack)(({ theme }) => ({
+  gap: theme.spacing(4),
+}))
+
+const WORKSPACE_MIN_HEIGHT = 680
+
+const WorkspaceGrid = styled(Grid)(({ theme }) => ({
+  alignItems: 'stretch',
+  [theme.breakpoints.up('lg')]: {
+    minHeight: WORKSPACE_MIN_HEIGHT,
+  },
+}))
+
+const workspaceColumnSx = {
+  display: 'flex',
+  minWidth: 0,
+  minHeight: 0,
+}
 
 function NameListCard({
   title,
@@ -306,62 +319,53 @@ export function ChatRollSessionPage() {
 
   const settingsDisabled = readOnly || patchMutation.isPending
 
+  const sessionPrimaryActions = (
+    <>
+      <RollButton
+        variant="contained"
+        size="small"
+        startIcon={<ReplayIcon />}
+        onClick={handleRoll}
+        disabled={readOnly || eligibleCount === 0 || rollMutation.isPending}
+      >
+        {t('chatRoll.roll')}
+      </RollButton>
+      <Button
+        variant="outlined"
+        size="small"
+        startIcon={
+          record.isAcceptingParticipants ? (
+            <PauseIcon fontSize="small" />
+          ) : (
+            <PlayArrowIcon fontSize="small" />
+          )
+        }
+        disabled={readOnly || patchMutation.isPending}
+        onClick={() =>
+          patchRecord({
+            is_accepting_participants: !record.isAcceptingParticipants,
+          })
+        }
+      >
+        {record.isAcceptingParticipants
+          ? t('chatRoll.pauseEntries')
+          : t('chatRoll.resumeEntries')}
+      </Button>
+    </>
+  )
+
   return (
     <PageStack>
-      <PageHeader
-        title={t('chatRoll.title')}
-        description={t('chatRoll.sessionDescription')}
-        icon={CasinoIcon}
-        iconVariant="info"
-      />
+      <ModuleSessionPageHeader module={chatRollModule} />
 
       <ChatRollSessionHeaderSection
         record={record}
         onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
+        primaryActions={sessionPrimaryActions}
       />
 
-      <RollActionBar
-        sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 1,
-          justifyContent: 'flex-start',
-        }}
-      >
-        <RollButton
-          variant="contained"
-          startIcon={<ReplayIcon />}
-          onClick={handleRoll}
-          disabled={
-            readOnly || eligibleCount === 0 || rollMutation.isPending
-          }
-        >
-          {t('chatRoll.roll')}
-        </RollButton>
-        <Button
-          variant="outlined"
-          startIcon={
-            record.isAcceptingParticipants ? (
-              <PauseIcon fontSize="small" />
-            ) : (
-              <PlayArrowIcon fontSize="small" />
-            )
-          }
-          disabled={readOnly || patchMutation.isPending}
-          onClick={() =>
-            patchRecord({
-              is_accepting_participants: !record.isAcceptingParticipants,
-            })
-          }
-        >
-          {record.isAcceptingParticipants
-            ? t('chatRoll.pauseEntries')
-            : t('chatRoll.resumeEntries')}
-        </Button>
-      </RollActionBar>
-
-      <Grid container spacing={2} sx={{ alignItems: 'stretch' }}>
-        <Grid size={{ xs: 12, lg: 3 }}>
+      <WorkspaceGrid container spacing={3}>
+        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceColumnSx}>
           <SettingsCard elevation={0}>
             <SettingsCardContent>
               <SectionHeader
@@ -397,66 +401,21 @@ export function ChatRollSessionPage() {
                   }
                   onWinnerResponseSecondsChange={(seconds) =>
                     patchRecord({
-                      winner_response_seconds: Math.min(
-                        300,
-                        Math.max(5, seconds),
-                      ),
+                      winner_response_seconds: Math.min(300, Math.max(5, seconds)),
                     })
                   }
+                  roleMeta={roleMeta}
+                  onRoleToggle={handleRoleToggle}
+                  onRoleWeightChange={handleRoleWeightChange}
                 />
-                <RolesSection>
-                  <SettingsSectionLabel>
-                    {t('chatRoll.eligibleRoles')}
-                  </SettingsSectionLabel>
-                  <Stack spacing={1}>
-                    {roleMeta.map((role) => {
-                      const setting = record.roleSettings[role.id]
-                      return (
-                        <RoleRowStack key={role.id} enabled={setting.enabled}>
-                          <Switch
-                            size="small"
-                            checked={setting.enabled}
-                            disabled={settingsDisabled}
-                            onChange={(event) =>
-                              handleRoleToggle(role.id, event.target.checked)
-                            }
-                          />
-                          <RoleLabel variant="body2" noWrap>
-                            {role.label}
-                          </RoleLabel>
-                          <RoleWeightField
-                            size="small"
-                            type="number"
-                            label="×"
-                            value={setting.weight}
-                            disabled={!setting.enabled || settingsDisabled}
-                            onChange={(event) =>
-                              handleRoleWeightChange(
-                                role.id,
-                                event.target.value,
-                              )
-                            }
-                            slotProps={{
-                              htmlInput: {
-                                min: 0.1,
-                                max: 100,
-                                step: 0.1,
-                              },
-                            }}
-                          />
-                        </RoleRowStack>
-                      )
-                    })}
-                  </Stack>
-                </RolesSection>
               </SettingsStack>
             </SettingsCardContent>
           </SettingsCard>
         </Grid>
-        <Grid size={{ xs: 12, lg: 4 }} sx={{ display: 'flex' }}>
+        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceColumnSx}>
           <ChatRollKickChatSection accountId={accountId} />
         </Grid>
-        <Grid size={{ xs: 12, lg: 3 }}>
+        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceColumnSx}>
           <NameListCard
             title={t('chatRoll.participantsTitle')}
             icon={GroupIcon}
@@ -481,7 +440,7 @@ export function ChatRollSessionPage() {
             }
           />
         </Grid>
-        <Grid size={{ xs: 12, lg: 2 }}>
+        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceColumnSx}>
           <NameListCard
             title={t('chatRoll.winnersTitle')}
             icon={EmojiEventsIcon}
@@ -506,7 +465,7 @@ export function ChatRollSessionPage() {
             }
           />
         </Grid>
-      </Grid>
+      </WorkspaceGrid>
 
       <ChatRollSessionArchiveDialog
         accountId={accountId}

@@ -454,7 +454,7 @@ export const en = {
     noEligibleParticipants: "No eligible participants to roll.",
     combineHighest: "Uses the single best role weight for each participant.",
     combineSum: "Adds weights from every enabled role the viewer has.",
-    eligibleRoles: "Eligible roles",
+    eligibleRoles: "Participating roles",
     rollWon: "{{name}} won the roll.",
     backToList: "Back to Chat Roll",
     entriesPaused: "Entries paused",

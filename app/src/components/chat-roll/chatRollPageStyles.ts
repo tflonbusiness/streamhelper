@@ -25,9 +25,9 @@ export const RollActionBar = styled(Box)(({ theme }) => ({
 }))
 
 export const RollButton = styled(Button)(({ theme }) => ({
-  minWidth: 160,
-  paddingLeft: theme.spacing(3),
-  paddingRight: theme.spacing(3),
+  minWidth: 120,
+  paddingLeft: theme.spacing(2),
+  paddingRight: theme.spacing(2),
 }))
 
 export const ListCard = styled(Card)(({ theme }) => ({
@@ -36,11 +36,21 @@ export const ListCard = styled(Card)(({ theme }) => ({
   borderColor: theme.palette.divider,
   borderRadius: theme.spacing(1),
   boxShadow: 'none',
-  height: '100%',
+  flex: 1,
+  width: '100%',
+  minWidth: 0,
+  minHeight: 0,
+  display: 'flex',
+  flexDirection: 'column',
 }))
 
 export const ListCardContent = styled(CardContent)(({ theme }) => ({
   padding: theme.spacing(2),
+  flex: 1,
+  minHeight: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden',
   '&:last-child': {
     paddingBottom: theme.spacing(2),
   },
@@ -65,6 +75,9 @@ export const EmptyListText = styled(Typography)(({ theme }) => ({
 
 export const ListRowsStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(1),
+  flex: 1,
+  minHeight: 0,
+  overflow: 'auto',
 }))
 
 export const ListRowStack = styled(Stack)(({ theme }) => ({
@@ -119,11 +132,20 @@ export const SettingsCard = styled(Card)(({ theme }) => ({
   borderColor: theme.palette.divider,
   borderRadius: theme.spacing(1),
   boxShadow: 'none',
+  flex: 1,
+  width: '100%',
+  minWidth: 0,
+  minHeight: 0,
   height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
 }))
 
 export const SettingsCardContent = styled(CardContent)(({ theme }) => ({
   padding: theme.spacing(2),
+  flex: 1,
+  display: 'flex',
+  flexDirection: 'column',
   '&:last-child': {
     paddingBottom: theme.spacing(2),
   },

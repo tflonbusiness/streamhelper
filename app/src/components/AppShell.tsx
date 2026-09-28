@@ -317,10 +317,15 @@ const MainColumn = styled(Box)({
   flexDirection: 'column',
 })
 
-const MainContent = styled('main')(({ theme }) => ({
+const DEFAULT_MAIN_MAX_WIDTH = 1024
+const WIDE_MAIN_MAX_WIDTH = 1800
+
+const MainContent = styled('main', {
+  shouldForwardProp: (prop) => prop !== 'wide',
+})<{ wide?: boolean }>(({ theme, wide }) => ({
   flex: 1,
   overflow: 'auto',
-  padding: theme.spacing(3),
+  padding: theme.spacing(wide ? 2 : 3),
 }))
 
 const MainInner = styled(Box, {
@@ -329,7 +334,7 @@ const MainInner = styled(Box, {
   marginLeft: 'auto',
   marginRight: 'auto',
   width: '100%',
-  maxWidth: wide ? 1440 : 1024,
+  maxWidth: wide ? WIDE_MAIN_MAX_WIDTH : DEFAULT_MAIN_MAX_WIDTH,
 }))
 
 function SidebarNavLink({
@@ -746,7 +751,7 @@ export function AppShell() {
       </Sidebar>
 
       <MainColumn>
-        <MainContent>
+        <MainContent wide={wideMainContent}>
           <BreadcrumbProvider>
             <MainInner wide={wideMainContent}>
               <Outlet />

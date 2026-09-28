@@ -16,7 +16,7 @@ type ChatRollKickChatSectionProps = {
   accountId: number
 }
 
-const CHAT_FRAME_MIN_HEIGHT = 560
+const CHAT_FRAME_MIN_HEIGHT = 680
 
 const ChatListCard = styled(ListCard)({
   flex: 1,

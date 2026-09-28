@@ -205,7 +205,7 @@ export const ru = {
   },
   modules: {
     pageTitle: "Виджеты",
-    pageDescription: "Инструменты для стримеров вашей команды",
+    pageDescription: "Инструменты для стримеров",
     catalog: {
       'bonus-buy': {
         name: "Bonus Buy",
@@ -220,7 +220,7 @@ export const ru = {
       'chat-roll': {
         name: "Chat Roll",
         description:
-          "Розыгрыш в чате по ключевому слову — у VIP, модов и подписчиков выше шанс выиграть."
+          "Розыгрыш в чате по ключевому слову"
       }
     }
   },
@@ -460,11 +460,11 @@ export const ru = {
     noEligibleParticipants: "Нет подходящих участников для розыгрыша.",
     combineHighest: "Используется максимальный вес роли для каждого участника.",
     combineSum: "Суммируются веса всех включённых ролей зрителя.",
-    eligibleRoles: "Подходящие роли",
+    eligibleRoles: "Участвующие роли",
     rollWon: "{{name}} выиграл(а) розыгрыш.",
     backToList: "Назад к Chat Roll",
     couldNotLoadWidgetSettings: "Не удалось загрузить настройки виджета.",
-    entriesPaused: "Запись приостановлена",
+    entriesPaused: "Добавление приостановлено",
     sessionArchivedViewOnly: "Сессия в архиве. Только просмотр.",
     chatKeyword: "Ключевое слово в чате",
     rollOptions: "Параметры розыгрыша",
