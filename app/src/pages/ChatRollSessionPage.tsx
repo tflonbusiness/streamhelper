@@ -39,8 +39,8 @@ import { ChatRollSessionArchiveDialog } from '@/components/chat-roll/session/Cha
 import { ChatRollSessionErrorState } from '@/components/chat-roll/session/ChatRollSessionErrorState'
 import { ChatRollSessionHeaderSection } from '@/components/chat-roll/session/ChatRollSessionHeaderSection'
 import { ChatRollKickChatSection } from '@/components/chat-roll/session/ChatRollKickChatSection'
+import { ChatRollWinResponseChip } from '@/components/chat-roll/session/ChatRollWinResponseChip'
 import { ChatRollSessionSettingsLeftPanel } from '@/components/chat-roll/session/ChatRollSessionSettingsLeftPanel'
-import { ChatRollStreamWidgetSection } from '@/components/chat-roll/session/ChatRollStreamWidgetSection'
 import { ChatRollSessionLoadingState } from '@/components/chat-roll/session/ChatRollSessionLoadingState'
 import { PageHeader } from '@/components/PageHeader'
 import { SectionHeader } from '@/components/SectionHeader'
@@ -320,199 +320,193 @@ export function ChatRollSessionPage() {
         onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
       />
 
-      <ChatRollStreamWidgetSection chatRollId={chatRollId} />
+      <RollActionBar
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 1,
+          justifyContent: 'flex-start',
+        }}
+      >
+        <RollButton
+          variant="contained"
+          startIcon={<ReplayIcon />}
+          onClick={handleRoll}
+          disabled={
+            readOnly || eligibleCount === 0 || rollMutation.isPending
+          }
+        >
+          {t('chatRoll.roll')}
+        </RollButton>
+        <Button
+          variant="outlined"
+          startIcon={
+            record.isAcceptingParticipants ? (
+              <PauseIcon fontSize="small" />
+            ) : (
+              <PlayArrowIcon fontSize="small" />
+            )
+          }
+          disabled={readOnly || patchMutation.isPending}
+          onClick={() =>
+            patchRecord({
+              is_accepting_participants: !record.isAcceptingParticipants,
+            })
+          }
+        >
+          {record.isAcceptingParticipants
+            ? t('chatRoll.pauseEntries')
+            : t('chatRoll.resumeEntries')}
+        </Button>
+      </RollActionBar>
 
-      <Stack spacing={3}>
-        <Stack spacing={3}>
-            <SettingsCard elevation={0}>
-              <SettingsCardContent>
-                <SectionHeader
-                  title={t('chatRoll.settingsTitle')}
-                  icon={SettingsIcon}
-                  iconVariant="info"
+      <Grid container spacing={2} sx={{ alignItems: 'stretch' }}>
+        <Grid size={{ xs: 12, lg: 3 }}>
+          <SettingsCard elevation={0}>
+            <SettingsCardContent>
+              <SectionHeader
+                title={t('chatRoll.settingsTitle')}
+                icon={SettingsIcon}
+                iconVariant="info"
+              />
+
+              <SettingsStack>
+                <ChatRollSessionSettingsLeftPanel
+                  record={record}
+                  keywordDraft={keywordDraft}
+                  keywordError={keywordError}
+                  settingsDisabled={settingsDisabled}
+                  onKeywordChange={(value) => {
+                    setKeywordDraft(value)
+                    if (value.trim()) {
+                      setKeywordError(null)
+                    }
+                  }}
+                  onKeywordBlur={handleKeywordBlur}
+                  onCombineModeChange={(mode) =>
+                    patchRecord({ combine_mode: mode })
+                  }
+                  onExcludeWinnerChange={(checked) =>
+                    patchRecord({ exclude_winner_after_roll: checked })
+                  }
+                  onReplyInChatChange={(checked) =>
+                    patchRecord({ reply_in_chat: checked })
+                  }
+                  onWinnerResponseEnabledChange={(checked) =>
+                    patchRecord({ winner_response_enabled: checked })
+                  }
+                  onWinnerResponseSecondsChange={(seconds) =>
+                    patchRecord({
+                      winner_response_seconds: Math.min(
+                        300,
+                        Math.max(5, seconds),
+                      ),
+                    })
+                  }
                 />
-
-                <SettingsStack>
-                  <Grid container spacing={3} sx={{ alignItems: 'flex-start' }}>
-                    <Grid size={{ xs: 12, md: 6, lg: 7 }}>
-                      <ChatRollSessionSettingsLeftPanel
-                        record={record}
-                        keywordDraft={keywordDraft}
-                        keywordError={keywordError}
-                        settingsDisabled={settingsDisabled}
-                        onKeywordChange={(value) => {
-                          setKeywordDraft(value)
-                          if (value.trim()) {
-                            setKeywordError(null)
-                          }
-                        }}
-                        onKeywordBlur={handleKeywordBlur}
-                        onCombineModeChange={(mode) =>
-                          patchRecord({ combine_mode: mode })
-                        }
-                        onExcludeWinnerChange={(checked) =>
-                          patchRecord({ exclude_winner_after_roll: checked })
-                        }
-                        onReplyInChatChange={(checked) =>
-                          patchRecord({ reply_in_chat: checked })
-                        }
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6, lg: 5 }}>
-                      <RolesSection>
-                        <SettingsSectionLabel>
-                          {t('chatRoll.eligibleRoles')}
-                        </SettingsSectionLabel>
-                        <Stack spacing={1}>
-                          {roleMeta.map((role) => {
-                            const setting = record.roleSettings[role.id]
-                            return (
-                              <RoleRowStack
-                                key={role.id}
-                                enabled={setting.enabled}
-                              >
-                                <Switch
-                                  size="small"
-                                  checked={setting.enabled}
-                                  disabled={settingsDisabled}
-                                  onChange={(event) =>
-                                    handleRoleToggle(
-                                      role.id,
-                                      event.target.checked,
-                                    )
-                                  }
-                                />
-                                <RoleLabel variant="body2" noWrap>
-                                  {role.label}
-                                </RoleLabel>
-                                <RoleWeightField
-                                  size="small"
-                                  type="number"
-                                  label="×"
-                                  value={setting.weight}
-                                  disabled={
-                                    !setting.enabled || settingsDisabled
-                                  }
-                                  onChange={(event) =>
-                                    handleRoleWeightChange(
-                                      role.id,
-                                      event.target.value,
-                                    )
-                                  }
-                                  slotProps={{
-                                    htmlInput: {
-                                      min: 0.1,
-                                      max: 100,
-                                      step: 0.1,
-                                    },
-                                  }}
-                                />
-                              </RoleRowStack>
-                            )
-                          })}
-                        </Stack>
-                      </RolesSection>
-                    </Grid>
-                  </Grid>
-                </SettingsStack>
-              </SettingsCardContent>
-            </SettingsCard>
-
-            <RollActionBar
-              sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 1,
-                justifyContent: 'flex-start',
-              }}
-            >
-              <RollButton
-                variant="contained"
-                startIcon={<ReplayIcon />}
-                onClick={handleRoll}
-                disabled={
-                  readOnly || eligibleCount === 0 || rollMutation.isPending
-                }
-              >
-                {t('chatRoll.roll')}
-              </RollButton>
-              <Button
-                variant="outlined"
-                startIcon={
-                  record.isAcceptingParticipants ? (
-                    <PauseIcon fontSize="small" />
-                  ) : (
-                    <PlayArrowIcon fontSize="small" />
-                  )
-                }
-                disabled={readOnly || patchMutation.isPending}
-                onClick={() =>
-                  patchRecord({
-                    is_accepting_participants: !record.isAcceptingParticipants,
-                  })
-                }
-              >
-                {record.isAcceptingParticipants
-                  ? t('chatRoll.pauseEntries')
-                  : t('chatRoll.resumeEntries')}
-              </Button>
-            </RollActionBar>
-        </Stack>
-
-        <Grid container spacing={2} sx={{ alignItems: 'stretch' }}>
-            <Grid size={{ xs: 12, md: 4, lg: 3 }}>
-              <NameListCard
-                title={t('chatRoll.participantsTitle')}
-                icon={GroupIcon}
-                emptyLabel={t('chatRoll.noParticipants')}
-                removeAriaLabel={t('chatRoll.removeParticipant')}
-                rows={participants}
-                renderRowExtra={(row) =>
-                  renderParticipantExtra(
-                    participants.find(
-                      (participant) => participant.id === row.id,
-                    )!,
-                  )
-                }
-                readOnly={readOnly}
-                onClearAll={() =>
-                  deleteAllParticipantsMutation.mutate(undefined, {
-                    onError: () => showError(t('chatRoll.couldNotClearParticipants')),
-                  })
-                }
-                onRemove={(participantId) =>
-                  deleteParticipantMutation.mutate(participantId, {
-                    onError: () => showError(t('chatRoll.couldNotRemoveParticipant')),
-                  })
-                }
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 4, lg: 6 }}>
-              <ChatRollKickChatSection accountId={accountId} />
-            </Grid>
-            <Grid size={{ xs: 12, md: 4, lg: 3 }}>
-              <NameListCard
-                title={t('chatRoll.winnersTitle')}
-                icon={EmojiEventsIcon}
-                iconVariant="primary"
-                emptyLabel={t('chatRoll.noWinners')}
-                removeAriaLabel={t('chatRoll.removeWinner')}
-                rows={wins}
-                readOnly={readOnly}
-                onClearAll={() =>
-                  deleteAllWinsMutation.mutate(undefined, {
-                    onError: () => showError(t('chatRoll.couldNotClearWinners')),
-                  })
-                }
-                onRemove={(winId) =>
-                  deleteWinMutation.mutate(winId, {
-                    onError: () => showError(t('chatRoll.couldNotRemoveWinner')),
-                  })
-                }
-              />
-            </Grid>
+                <RolesSection>
+                  <SettingsSectionLabel>
+                    {t('chatRoll.eligibleRoles')}
+                  </SettingsSectionLabel>
+                  <Stack spacing={1}>
+                    {roleMeta.map((role) => {
+                      const setting = record.roleSettings[role.id]
+                      return (
+                        <RoleRowStack key={role.id} enabled={setting.enabled}>
+                          <Switch
+                            size="small"
+                            checked={setting.enabled}
+                            disabled={settingsDisabled}
+                            onChange={(event) =>
+                              handleRoleToggle(role.id, event.target.checked)
+                            }
+                          />
+                          <RoleLabel variant="body2" noWrap>
+                            {role.label}
+                          </RoleLabel>
+                          <RoleWeightField
+                            size="small"
+                            type="number"
+                            label="×"
+                            value={setting.weight}
+                            disabled={!setting.enabled || settingsDisabled}
+                            onChange={(event) =>
+                              handleRoleWeightChange(
+                                role.id,
+                                event.target.value,
+                              )
+                            }
+                            slotProps={{
+                              htmlInput: {
+                                min: 0.1,
+                                max: 100,
+                                step: 0.1,
+                              },
+                            }}
+                          />
+                        </RoleRowStack>
+                      )
+                    })}
+                  </Stack>
+                </RolesSection>
+              </SettingsStack>
+            </SettingsCardContent>
+          </SettingsCard>
         </Grid>
-      </Stack>
+        <Grid size={{ xs: 12, lg: 4 }} sx={{ display: 'flex' }}>
+          <ChatRollKickChatSection accountId={accountId} />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 3 }}>
+          <NameListCard
+            title={t('chatRoll.participantsTitle')}
+            icon={GroupIcon}
+            emptyLabel={t('chatRoll.noParticipants')}
+            removeAriaLabel={t('chatRoll.removeParticipant')}
+            rows={participants}
+            renderRowExtra={(row) =>
+              renderParticipantExtra(
+                participants.find((participant) => participant.id === row.id)!,
+              )
+            }
+            readOnly={readOnly}
+            onClearAll={() =>
+              deleteAllParticipantsMutation.mutate(undefined, {
+                onError: () => showError(t('chatRoll.couldNotClearParticipants')),
+              })
+            }
+            onRemove={(participantId) =>
+              deleteParticipantMutation.mutate(participantId, {
+                onError: () => showError(t('chatRoll.couldNotRemoveParticipant')),
+              })
+            }
+          />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 2 }}>
+          <NameListCard
+            title={t('chatRoll.winnersTitle')}
+            icon={EmojiEventsIcon}
+            iconVariant="primary"
+            emptyLabel={t('chatRoll.noWinners')}
+            removeAriaLabel={t('chatRoll.removeWinner')}
+            rows={wins}
+            renderRowExtra={(row) => {
+              const win = wins.find((entry) => entry.id === row.id)
+              return win ? <ChatRollWinResponseChip win={win} /> : null
+            }}
+            readOnly={readOnly}
+            onClearAll={() =>
+              deleteAllWinsMutation.mutate(undefined, {
+                onError: () => showError(t('chatRoll.couldNotClearWinners')),
+              })
+            }
+            onRemove={(winId) =>
+              deleteWinMutation.mutate(winId, {
+                onError: () => showError(t('chatRoll.couldNotRemoveWinner')),
+              })
+            }
+          />
+        </Grid>
+      </Grid>
 
       <ChatRollSessionArchiveDialog
         accountId={accountId}

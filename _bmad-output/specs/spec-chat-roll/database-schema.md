@@ -25,6 +25,8 @@ erDiagram
     boolean exclude_winner_after_roll
     boolean is_accepting_participants
     boolean reply_in_chat
+    boolean winner_response_enabled
+    int winner_response_seconds
     jsonb role_settings
     timestamptz created_at
   }
@@ -49,6 +51,9 @@ erDiagram
     bigint rolled_by_user_id FK
     int roll_index
     boolean is_archived
+    text response_status
+    timestamptz response_deadline_at
+    timestamptz responded_at
     timestamptz created_at
   }
 
@@ -78,6 +83,8 @@ Session record — mirrors `prize_spin`.
 | `exclude_winner_after_roll` | `BOOLEAN NOT NULL` | `true` | When true, picked participant is soft-removed from pool |
 | `is_accepting_participants` | `BOOLEAN NOT NULL` | `true` | When false, reject all new participant inserts; Roll and existing pool unchanged |
 | `reply_in_chat` | `BOOLEAN NOT NULL` | `false` | When true, Kick bot posts a join confirmation in chat after a successful keyword match |
+| `winner_response_enabled` | `BOOLEAN NOT NULL` | `true` | When true, each new win starts in `response_status = pending` until chat claim or deadline |
+| `winner_response_seconds` | `INTEGER NOT NULL` | `60` | Claim window length; validated e.g. 5–300 when enabled |
 | `role_settings` | `JSONB NOT NULL` | see below | Session snapshot of five role toggles + weights |
 | `created_at` | `TIMESTAMPTZ NOT NULL` | `now()` | |
 
@@ -107,7 +114,7 @@ CREATE UNIQUE INDEX idx_chat_roll_account_live
 
 Validation: all five keys required; `weight` ∈ [0.1, 100] one decimal; at least one `enabled: true`.
 
-**Settings copy on create:** new session copies `keyword`, `combine_mode`, `exclude_winner_after_roll`, `role_settings`, `is_accepting_participants`, and `reply_in_chat` from the account's most recent non-archived session; falls back to app defaults when none exists (`is_accepting_participants` defaults to `true`, `reply_in_chat` defaults to `false`).
+**Settings copy on create:** new session copies `keyword`, `combine_mode`, `exclude_winner_after_roll`, `role_settings`, `is_accepting_participants`, `reply_in_chat`, `winner_response_enabled`, and `winner_response_seconds` from the account's most recent non-archived session; falls back to app defaults when none exists (`is_accepting_participants` defaults to `true`, `reply_in_chat` defaults to `false`, `winner_response_enabled` defaults to `true`, `winner_response_seconds` defaults to `60`).
 
 **Participant intake gate:** before inserting into `chat_roll_participant`, server checks `is_accepting_participants`. When `false`, return `409` with `{ message: 'ENTRIES_PAUSED' }` — applies to chat webhook intake and operator manual add alike. Existing participants, coefficient recompute, and Roll remain available.
 
@@ -163,6 +170,9 @@ Pick history per session — mirrors `prize_spin_win` with soft-delete.
 | `rolled_by_user_id` | `BIGINT NOT NULL REFERENCES users(id)` | | Caz Agent operator who triggered roll |
 | `roll_index` | `INTEGER NOT NULL` | `1` | Monotonic per session (`MAX + 1` on each roll) |
 | `is_archived` | `BOOLEAN NOT NULL` | `false` | Archive: operator removed from winners list |
+| `response_status` | `TEXT NOT NULL` | `'not_required'` | `pending` \| `confirmed` \| `no_response` \| `not_required` |
+| `response_deadline_at` | `TIMESTAMPTZ` | | Set at pick when `winner_response_enabled`; null when `not_required` |
+| `responded_at` | `TIMESTAMPTZ` | | Set when status becomes `confirmed` |
 | `created_at` | `TIMESTAMPTZ NOT NULL` | `now()` | |
 
 ### What `participant_id` references

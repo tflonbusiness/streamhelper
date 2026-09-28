@@ -38,6 +38,16 @@ export class ChatRollIntakeHandler {
       return { action: 'ignored', reason: 'keyword_mismatch' };
     }
 
+    const isNew = await this.database.recordKickChatEvent({
+      messageId: event.message_id,
+      broadcasterId,
+      senderId: String(event.sender.user_id),
+      content: event.content,
+    });
+    if (!isNew) {
+      return { action: 'ignored', reason: 'duplicate_event' };
+    }
+
     if (!session.isAcceptingParticipants) {
       return { action: 'entries_paused' };
     }

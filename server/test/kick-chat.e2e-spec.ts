@@ -81,9 +81,15 @@ describe('Kick chat webhook (e2e)', () => {
     expect(response.body).toEqual({
       ok: true,
       result: {
-        action: 'participant_added',
-        displayName: 'luckyviewer',
-        replyInChat: false,
+        winnerResponse: {
+          action: 'ignored',
+          reason: 'response_disabled',
+        },
+        intake: {
+          action: 'participant_added',
+          displayName: 'luckyviewer',
+          replyInChat: false,
+        },
       },
     });
   });
@@ -99,7 +105,7 @@ describe('Kick chat webhook (e2e)', () => {
       })
       .expect(200);
 
-    expect(response.body.result).toEqual({
+    expect(response.body.result.intake).toEqual({
       action: 'ignored',
       reason: 'keyword_mismatch',
     });

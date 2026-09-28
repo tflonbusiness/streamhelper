@@ -119,6 +119,7 @@ export const SettingsCard = styled(Card)(({ theme }) => ({
   borderColor: theme.palette.divider,
   borderRadius: theme.spacing(1),
   boxShadow: 'none',
+  height: '100%',
 }))
 
 export const SettingsCardContent = styled(CardContent)(({ theme }) => ({

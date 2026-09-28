@@ -2,6 +2,7 @@ import {
   Box,
   Stack,
   Switch,
+  TextField,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
@@ -31,6 +32,8 @@ type ChatRollSessionSettingsLeftPanelProps = {
   onCombineModeChange: (mode: WeightCombineMode) => void
   onExcludeWinnerChange: (checked: boolean) => void
   onReplyInChatChange: (checked: boolean) => void
+  onWinnerResponseEnabledChange: (checked: boolean) => void
+  onWinnerResponseSecondsChange: (seconds: number) => void
 }
 
 export function ChatRollSessionSettingsLeftPanel(
@@ -149,6 +152,46 @@ export function ChatRollSessionSettingsLeftPanel(
               </Typography>
             </SettingsToggleCopy>
           </SettingsToggleCard>
+
+          <SettingsToggleCard>
+            <Switch
+              size="small"
+              checked={props.record.winnerResponseEnabled}
+              disabled={props.settingsDisabled}
+              onChange={(event) =>
+                props.onWinnerResponseEnabledChange(event.target.checked)
+              }
+            />
+            <SettingsToggleCopy>
+              <ExclusionToggleLabel variant="body2">
+                {t('chatRoll.requireWinnerChatResponse')}
+              </ExclusionToggleLabel>
+              <Typography variant="caption" color="text.secondary">
+                {t('chatRoll.requireWinnerChatResponseHelp')}
+              </Typography>
+            </SettingsToggleCopy>
+          </SettingsToggleCard>
+
+          {props.record.winnerResponseEnabled ? (
+            <TextField
+              label={t('chatRoll.winnerResponseSecondsLabel')}
+              type="number"
+              size="small"
+              fullWidth
+              disabled={props.settingsDisabled}
+              value={props.record.winnerResponseSeconds}
+              slotProps={{
+                htmlInput: { min: 5, max: 300, step: 5 },
+              }}
+              onBlur={(event) => {
+                const parsed = Number.parseInt(event.target.value, 10)
+                if (Number.isFinite(parsed)) {
+                  props.onWinnerResponseSecondsChange(parsed)
+                }
+              }}
+              helperText={t('chatRoll.winnerResponseSecondsHelp')}
+            />
+          ) : null}
         </Stack>
       </SettingsGroupPanel>
     </SettingsLeftPanel>

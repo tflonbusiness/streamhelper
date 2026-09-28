@@ -220,7 +220,7 @@ export const ru = {
       'chat-roll': {
         name: "Chat Roll",
         description:
-          "Взвешенный розыгрыш в чате по ключевому слову — буст для VIP, модов и подписчиков."
+          "Розыгрыш в чате по ключевому слову — у VIP, модов и подписчиков выше шанс выиграть."
       }
     }
   },
@@ -416,8 +416,10 @@ export const ru = {
   },
   chatRoll: {
     title: "Chat Roll",
-    description: "Взвешенный розыгрыш в чате для вашего стрима",
-    sessionDescription: "Взвешенный розыгрыш в чате для вашего стрима",
+    description:
+      "Случайный победитель из чата — вход по ключевому слову, шансы настраиваются по ролям зрителей",
+    sessionDescription:
+      "Случайный победитель из чата — вход по ключевому слову, шансы настраиваются по ролям зрителей",
     historyTitle: "История",
     historyDescription: "Сессии chat roll для этого аккаунта",
     noSessions: "Сессий chat roll пока нет",
@@ -477,6 +479,14 @@ export const ru = {
     replyInKickChat: "Отвечать в чате Kick",
     replyInKickChatHelp:
       "Бот отправляет короткое подтверждение, когда кто-то вводит ключевое слово.",
+    requireWinnerChatResponse: "Требовать ответ победителя в чате",
+    requireWinnerChatResponseHelp:
+      "Победитель должен написать любое сообщение в чат за отведённое время.",
+    winnerResponseSecondsLabel: "Время на ответ (сек.)",
+    winnerResponseSecondsHelp: "От 5 до 300 секунд.",
+    winnerAwaitingResponse: "{{seconds}} с на ответ",
+    winnerConfirmed: "Подтверждён",
+    winnerNoResponse: "Нет ответа",
     kickChatTitle: "Чат Kick",
     kickChatPopout: "Открыть popout",
     kickChatFrameTitle: "Чат Kick: {{slug}}",

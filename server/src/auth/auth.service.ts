@@ -1449,6 +1449,8 @@ export class AuthService {
       excludeWinnerAfterRoll: row.excludeWinnerAfterRoll,
       isAcceptingParticipants: row.isAcceptingParticipants,
       replyInChat: row.replyInChat,
+      winnerResponseEnabled: row.winnerResponseEnabled,
+      winnerResponseSeconds: row.winnerResponseSeconds,
       roleSettings: row.roleSettings,
       createdAt: row.createdAt.toISOString(),
       createdByUserId: row.createdByUserId,
@@ -1477,6 +1479,9 @@ export class AuthService {
       coefficientAtPick: row.coefficientAtPick,
       rolledByName: row.rolledByName,
       rollIndex: row.rollIndex,
+      responseStatus: row.responseStatus,
+      responseDeadlineAt: row.responseDeadlineAt?.toISOString() ?? null,
+      respondedAt: row.respondedAt?.toISOString() ?? null,
       createdAt: row.createdAt.toISOString(),
     };
   }
@@ -1505,6 +1510,10 @@ export class AuthService {
           throw new BadRequestException('Invalid combine mode');
         case 'INVALID_ROLE_SETTINGS':
           throw new BadRequestException('Invalid role settings');
+        case 'INVALID_WINNER_RESPONSE_SECONDS':
+          throw new BadRequestException(
+            'Response time must be between 5 and 300 seconds',
+          );
         case 'NO_ELIGIBLE_PARTICIPANTS':
           throw new BadRequestException('No eligible participants to roll');
         default:
@@ -1620,6 +1629,8 @@ export class AuthService {
       exclude_winner_after_roll?: boolean;
       is_accepting_participants?: boolean;
       reply_in_chat?: boolean;
+      winner_response_enabled?: boolean;
+      winner_response_seconds?: number;
       role_settings?: unknown;
     },
   ) {
@@ -1646,6 +1657,12 @@ export class AuthService {
     }
     if (body.reply_in_chat !== undefined) {
       input.replyInChat = body.reply_in_chat;
+    }
+    if (body.winner_response_enabled !== undefined) {
+      input.winnerResponseEnabled = body.winner_response_enabled;
+    }
+    if (body.winner_response_seconds !== undefined) {
+      input.winnerResponseSeconds = body.winner_response_seconds;
     }
     if (body.role_settings !== undefined) {
       input.roleSettings = body.role_settings as PatchChatRollInput['roleSettings'];

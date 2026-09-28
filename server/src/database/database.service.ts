@@ -154,6 +154,12 @@ export type ChatRollStatus = 'live' | 'off_air' | 'archived';
 
 export type ChatRollArchivedFilter = 'false' | 'true' | 'all';
 
+export type ChatRollWinResponseStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'no_response'
+  | 'not_required';
+
 export type DbChatRoll = {
   id: number;
   accountId: number;
@@ -164,6 +170,8 @@ export type DbChatRoll = {
   excludeWinnerAfterRoll: boolean;
   isAcceptingParticipants: boolean;
   replyInChat: boolean;
+  winnerResponseEnabled: boolean;
+  winnerResponseSeconds: number;
   roleSettings: ChatRollRoleSettings;
   createdAt: Date;
   createdByUserId: number;
@@ -191,6 +199,9 @@ export type DbChatRollWin = {
   rolledByName: string;
   rollIndex: number;
   isArchived: boolean;
+  responseStatus: ChatRollWinResponseStatus;
+  responseDeadlineAt: Date | null;
+  respondedAt: Date | null;
   createdAt: Date;
 };
 
@@ -210,6 +221,8 @@ export type PatchChatRollInput = {
   excludeWinnerAfterRoll?: boolean;
   isAcceptingParticipants?: boolean;
   replyInChat?: boolean;
+  winnerResponseEnabled?: boolean;
+  winnerResponseSeconds?: number;
   roleSettings?: ChatRollRoleSettings;
 };
 
@@ -3186,6 +3199,96 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
+  async getLiveChatRollByAccountId(
+    accountId: number,
+  ): Promise<DbChatRoll | null> {
+    const result = await this.pool.query(
+      `
+        SELECT
+          cr.id,
+          cr.account_id,
+          cr.title,
+          cr.status,
+          cr.keyword,
+          cr.combine_mode,
+          cr.exclude_winner_after_roll,
+          cr.is_accepting_participants,
+          cr.reply_in_chat,
+          cr.winner_response_enabled,
+          cr.winner_response_seconds,
+          cr.role_settings,
+          cr.created_at,
+          cr.created_by_user_id,
+          u.name AS created_by_name
+        FROM chat_roll cr
+        JOIN users u ON u.id = cr.created_by_user_id
+        WHERE cr.account_id = $1
+          AND cr.status = 'live'
+        LIMIT 1
+      `,
+      [accountId],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      return null;
+    }
+
+    return this.mapChatRollRow(row);
+  }
+
+  async expirePendingChatRollWinResponses(chatRollId: number): Promise<void> {
+    await this.pool.query(
+      `
+        UPDATE chat_roll_win
+        SET response_status = 'no_response'
+        WHERE chat_roll_id = $1
+          AND response_status = 'pending'
+          AND response_deadline_at IS NOT NULL
+          AND response_deadline_at < now()
+      `,
+      [chatRollId],
+    );
+  }
+
+  async confirmChatRollWinResponse(input: {
+    chatRollId: number;
+    providerUserId: string;
+  }): Promise<number | null> {
+    const result = await this.pool.query<{ id: string | number }>(
+      `
+        UPDATE chat_roll_win w
+        SET
+          response_status = 'confirmed',
+          responded_at = now()
+        FROM chat_roll_participant p
+        WHERE w.participant_id = p.id
+          AND w.chat_roll_id = $1
+          AND w.response_status = 'pending'
+          AND w.response_deadline_at > now()
+          AND p.provider = 'kick'
+          AND p.provider_user_id = $2
+          AND w.id = (
+            SELECT w2.id
+            FROM chat_roll_win w2
+            JOIN chat_roll_participant p2 ON p2.id = w2.participant_id
+            WHERE w2.chat_roll_id = $1
+              AND w2.response_status = 'pending'
+              AND w2.response_deadline_at > now()
+              AND p2.provider = 'kick'
+              AND p2.provider_user_id = $2
+            ORDER BY w2.created_at ASC, w2.id ASC
+            LIMIT 1
+          )
+        RETURNING w.id
+      `,
+      [input.chatRollId, input.providerUserId],
+    );
+
+    const row = result.rows[0];
+    return row ? toInt(row.id) : null;
+  }
+
   async getAccountIdByKickChannelId(
     channelId: string,
   ): Promise<number | null> {
@@ -3212,6 +3315,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     exclude_winner_after_roll: boolean;
     is_accepting_participants: boolean;
     reply_in_chat: boolean;
+    winner_response_enabled?: boolean;
+    winner_response_seconds?: string | number;
     role_settings: unknown;
     created_at: Date;
     created_by_user_id: string | number;
@@ -3230,6 +3335,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       excludeWinnerAfterRoll: row.exclude_winner_after_roll,
       isAcceptingParticipants: row.is_accepting_participants,
       replyInChat: row.reply_in_chat,
+      winnerResponseEnabled: row.winner_response_enabled ?? true,
+      winnerResponseSeconds: toInt(row.winner_response_seconds ?? 60),
       roleSettings,
       createdAt: row.created_at,
       createdByUserId: toInt(row.created_by_user_id),
@@ -3269,6 +3376,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     rolled_by_name: string;
     roll_index: string | number;
     is_archived: boolean;
+    response_status?: string;
+    response_deadline_at?: Date | null;
+    responded_at?: Date | null;
     created_at: Date;
   }): DbChatRollWin {
     return {
@@ -3281,6 +3391,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       rolledByName: row.rolled_by_name,
       rollIndex: toInt(row.roll_index),
       isArchived: row.is_archived,
+      responseStatus: (row.response_status ??
+        'not_required') as ChatRollWinResponseStatus,
+      responseDeadlineAt: row.response_deadline_at ?? null,
+      respondedAt: row.responded_at ?? null,
       createdAt: row.created_at,
     };
   }
@@ -3333,6 +3447,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           cr.exclude_winner_after_roll,
           cr.is_accepting_participants,
           cr.reply_in_chat,
+          cr.winner_response_enabled,
+          cr.winner_response_seconds,
           cr.role_settings,
           cr.created_at,
           cr.created_by_user_id,
@@ -3396,6 +3512,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           cr.exclude_winner_after_roll,
           cr.is_accepting_participants,
           cr.reply_in_chat,
+          cr.winner_response_enabled,
+          cr.winner_response_seconds,
           cr.role_settings,
           cr.created_at,
           cr.created_by_user_id,
@@ -3433,10 +3551,19 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       combine_mode: string;
       exclude_winner_after_roll: boolean;
       reply_in_chat: boolean;
+      winner_response_enabled: boolean;
+      winner_response_seconds: number;
       role_settings: unknown;
     }>(
       `
-        SELECT keyword, combine_mode, exclude_winner_after_roll, reply_in_chat, role_settings
+        SELECT
+          keyword,
+          combine_mode,
+          exclude_winner_after_roll,
+          reply_in_chat,
+          winner_response_enabled,
+          winner_response_seconds,
+          role_settings
         FROM chat_roll
         WHERE account_id = $1
           AND status != 'archived'
@@ -3451,6 +3578,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     const combineMode = previous?.combine_mode ?? 'highest';
     const excludeWinnerAfterRoll = previous?.exclude_winner_after_roll ?? true;
     const replyInChat = previous?.reply_in_chat ?? false;
+    const winnerResponseEnabled = previous?.winner_response_enabled ?? true;
+    const winnerResponseSeconds = previous?.winner_response_seconds ?? 60;
     const roleSettings =
       normalizeRoleSettings(previous?.role_settings) ??
       DEFAULT_CHAT_ROLL_ROLE_SETTINGS;
@@ -3469,9 +3598,11 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             combine_mode,
             exclude_winner_after_roll,
             reply_in_chat,
+            winner_response_enabled,
+            winner_response_seconds,
             role_settings
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
           RETURNING
             id,
             account_id,
@@ -3482,6 +3613,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             exclude_winner_after_roll,
             is_accepting_participants,
             reply_in_chat,
+            winner_response_enabled,
+            winner_response_seconds,
             role_settings,
             created_at,
             created_by_user_id,
@@ -3495,6 +3628,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           combineMode,
           excludeWinnerAfterRoll,
           replyInChat,
+          winnerResponseEnabled,
+          winnerResponseSeconds,
           JSON.stringify(roleSettings),
         ],
       );
@@ -3565,6 +3700,18 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       throw new Error('INVALID_ROLE_SETTINGS');
     }
 
+    const nextWinnerResponseEnabled =
+      input.winnerResponseEnabled ?? existing.winnerResponseEnabled;
+    const nextWinnerResponseSeconds =
+      input.winnerResponseSeconds ?? existing.winnerResponseSeconds;
+    if (
+      !Number.isFinite(nextWinnerResponseSeconds) ||
+      nextWinnerResponseSeconds < 5 ||
+      nextWinnerResponseSeconds > 300
+    ) {
+      throw new Error('INVALID_WINNER_RESPONSE_SECONDS');
+    }
+
     const result = await this.pool.query(
       `
         UPDATE chat_roll cr
@@ -3575,7 +3722,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           exclude_winner_after_roll = $6,
           is_accepting_participants = $7,
           reply_in_chat = $8,
-          role_settings = $9
+          winner_response_enabled = $9,
+          winner_response_seconds = $10,
+          role_settings = $11
         FROM users u
         WHERE cr.created_by_user_id = u.id
           AND cr.account_id = $1
@@ -3591,6 +3740,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           cr.exclude_winner_after_roll,
           cr.is_accepting_participants,
           cr.reply_in_chat,
+          cr.winner_response_enabled,
+          cr.winner_response_seconds,
           cr.role_settings,
           cr.created_at,
           cr.created_by_user_id,
@@ -3605,6 +3756,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         input.excludeWinnerAfterRoll ?? existing.excludeWinnerAfterRoll,
         input.isAcceptingParticipants ?? existing.isAcceptingParticipants,
         input.replyInChat ?? existing.replyInChat,
+        nextWinnerResponseEnabled,
+        nextWinnerResponseSeconds,
         JSON.stringify(nextRoleSettings),
       ],
     );
@@ -3625,6 +3778,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     if (!session) {
       throw new Error('NOT_FOUND');
     }
+
+    await this.expirePendingChatRollWinResponses(chatRollId);
 
     const result = await this.pool.query(
       `
@@ -3705,6 +3860,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       throw new Error('NOT_FOUND');
     }
 
+    await this.expirePendingChatRollWinResponses(chatRollId);
+
     const result = await this.pool.query(
       `
         SELECT
@@ -3717,6 +3874,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           u.name AS rolled_by_name,
           w.roll_index,
           w.is_archived,
+          w.response_status,
+          w.response_deadline_at,
+          w.responded_at,
           w.created_at
         FROM chat_roll_win w
         JOIN users u ON u.id = w.rolled_by_user_id
@@ -3827,6 +3987,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       );
       const rollIndex = toInt(rollIndexResult.rows[0]?.next_index ?? 1);
 
+      const responseStatus: ChatRollWinResponseStatus =
+        session.winnerResponseEnabled ? 'pending' : 'not_required';
+
       const insertResult = await client.query(
         `
           INSERT INTO chat_roll_win (
@@ -3835,9 +3998,23 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             display_name,
             coefficient_at_pick,
             rolled_by_user_id,
-            roll_index
+            roll_index,
+            response_status,
+            response_deadline_at
           )
-          VALUES ($1, $2, $3, $4, $5, $6)
+          VALUES (
+            $1,
+            $2,
+            $3,
+            $4,
+            $5,
+            $6,
+            $7,
+            CASE
+              WHEN $7 = 'pending' THEN now() + ($8::double precision * interval '1 second')
+              ELSE NULL
+            END
+          )
           RETURNING
             id,
             chat_roll_id,
@@ -3847,6 +4024,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             rolled_by_user_id,
             roll_index,
             is_archived,
+            response_status,
+            response_deadline_at,
+            responded_at,
             created_at
         `,
         [
@@ -3856,6 +4036,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           coefficient.toFixed(1),
           rolledByUserId,
           rollIndex,
+          responseStatus,
+          session.winnerResponseSeconds,
         ],
       );
 

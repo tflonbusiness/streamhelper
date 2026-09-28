@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 import type { RawBodyRequest } from '@nestjs/common';
 import type { Request } from 'express';
-import { DatabaseService } from '../database/database.service.js';
 import { KickCommandRouter } from './kick-command.router.js';
 import { KickWebhookVerifierService } from './kick-webhook-verifier.service.js';
 import type { KickChatMessageEvent } from './kick-chat.types.js';
@@ -20,7 +19,6 @@ export class KickWebhookController {
   constructor(
     private readonly verifier: KickWebhookVerifierService,
     private readonly router: KickCommandRouter,
-    private readonly database: DatabaseService,
   ) {}
 
   @Post('webhooks/kick')
@@ -53,21 +51,7 @@ export class KickWebhookController {
       return { ok: true };
     }
 
-    const isNew = await this.database.recordKickChatEvent({
-      messageId,
-      broadcasterId: String(
-        (body as KickChatMessageEvent)?.broadcaster?.user_id ?? '',
-      ),
-      senderId: String(
-        (body as KickChatMessageEvent)?.sender?.user_id ?? '',
-      ),
-      content: String((body as KickChatMessageEvent)?.content ?? ''),
-    });
-    if (!isNew) {
-      return { ok: true };
-    }
-
-    const event = this.parseChatMessageEvent(body);
+    const event = this.parseChatMessageEvent(body, messageId);
     if (!event) {
       throw new BadRequestException('Invalid chat.message.sent payload');
     }
@@ -91,26 +75,22 @@ export class KickWebhookController {
       throw new BadRequestException('Invalid mock chat payload');
     }
 
-    const isNew = await this.database.recordKickChatEvent({
-      messageId: body.message_id,
-      broadcasterId: String(body.broadcaster.user_id),
-      senderId: String(body.sender.user_id),
-      content: body.content ?? '',
-    });
-    if (!isNew) {
-      return { ok: true, result: { action: 'duplicate_event' } };
-    }
-
     const result = await this.router.routeChatMessage(body);
     return { ok: true, result };
   }
 
-  private parseChatMessageEvent(body: unknown): KickChatMessageEvent | null {
+  private parseChatMessageEvent(
+    body: unknown,
+    messageIdFromHeader?: string,
+  ): KickChatMessageEvent | null {
     if (!body || typeof body !== 'object') {
       return null;
     }
 
     const event = body as KickChatMessageEvent;
+    if (!event.message_id && messageIdFromHeader) {
+      event.message_id = messageIdFromHeader;
+    }
     if (
       !event.message_id ||
       !event.broadcaster?.user_id ||

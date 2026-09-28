@@ -18,8 +18,25 @@ type ChatRollKickChatSectionProps = {
 
 const CHAT_FRAME_MIN_HEIGHT = 560
 
+const ChatListCard = styled(ListCard)({
+  flex: 1,
+  width: '100%',
+  minWidth: 0,
+  minHeight: 0,
+  display: 'flex',
+  flexDirection: 'column',
+})
+
+const ChatListCardContent = styled(ListCardContent)({
+  flex: 1,
+  display: 'flex',
+  flexDirection: 'column',
+  minHeight: 0,
+})
+
 const ChatFrameWrap = styled('div')(({ theme }) => ({
   position: 'relative',
+  flex: 1,
   width: '100%',
   minHeight: CHAT_FRAME_MIN_HEIGHT,
   maxWidth: '100%',
@@ -59,8 +76,8 @@ export function ChatRollKickChatSection({
   const slug = channel?.slug?.trim() ?? ''
 
   return (
-    <ListCard elevation={0} sx={{ height: '100%' }}>
-      <ListCardContent>
+    <ChatListCard elevation={0}>
+      <ChatListCardContent>
         <SectionHeader
           title={t('chatRoll.kickChatTitle')}
           icon={ChatIcon}
@@ -84,8 +101,8 @@ export function ChatRollKickChatSection({
         {isLoading ? (
           <Skeleton
             variant="rounded"
-            height={CHAT_FRAME_MIN_HEIGHT}
             animation="wave"
+            sx={{ flex: 1, minHeight: CHAT_FRAME_MIN_HEIGHT }}
           />
         ) : notFound || !slug ? (
           <StatusAlert tone="info" title={t('dashboard.kickNotConnected')}>
@@ -101,7 +118,7 @@ export function ChatRollKickChatSection({
             />
           </ChatFrameWrap>
         )}
-      </ListCardContent>
-    </ListCard>
+      </ChatListCardContent>
+    </ChatListCard>
   )
 }

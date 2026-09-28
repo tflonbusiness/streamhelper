@@ -1,11 +1,13 @@
 ---
 id: SPEC-chat-roll
 companions:
+  - ARCHITECTURE-SPINE.md
   - chat-roll-module.md
   - roll-session.md
   - role-weights.md
   - mock-data.md
   - database-schema.md
+  - ../spec-kick-chat-bot/SPEC.md
   - ../spec-app-english-only/SPEC.md
   - ../spec-caz-agent-ui-improvement/design-tokens.md
   - ../spec-caz-agent-ui-improvement/components.md
@@ -64,7 +66,7 @@ sources: []
 
 - **CAP-9**
   - **intent:** Roll settings persist on the **chat_roll** session row and survive refresh.
-  - **success:** `keyword`, `combine_mode`, `exclude_winner_after_roll`, and `role_settings` JSONB match operator edits after reload; new session copies from most recent non-archived session.
+  - **success:** `keyword`, `combine_mode`, `exclude_winner_after_roll`, `winner_response_enabled`, `winner_response_seconds`, and `role_settings` JSONB match operator edits after reload; new session copies from most recent non-archived session.
 
 - **CAP-10**
   - **intent:** Participants and winners persist in child tables per session.
@@ -76,7 +78,23 @@ sources: []
 
 - **CAP-12**
   - **intent:** An operator pauses or resumes accepting new participants without ending the session.
-  - **success:** **Pause entries** / **Resume entries** control toggles `is_accepting_participants` on `chat_roll`; when paused, no new participants are added (chat intake or manual); existing pool and **Roll** stay available; state persists and survives refresh.
+  - **success:** **Pause entries** / **Resume entries** control toggles `is_accepting_participants` on `chat_roll`; when paused, no new participants are added (chat intake only); existing pool and **Roll** stay available; state persists and survives refresh.
+
+- **CAP-14**
+  - **intent:** While a session is **live**, the operator sees chat keyword intake reflected in **Participants** without manually refreshing the page.
+  - **success:** Session data refetches on a fixed interval (~5s) when `status = 'live'`; polling stops for `off_air` and `archived`; new Kick keyword joins appear in the list within one poll cycle after server insert.
+
+- **CAP-15**
+  - **intent:** A viewer removed from **Participants** may re-enter the pool by sending the session keyword again.
+  - **success:** Archiving a participant clears active dedup; a subsequent successful keyword intake creates a new non-archived `chat_roll_participant` row; repeat keyword while still active remains deduped with no duplicate bot join reply.
+
+- **CAP-16**
+  - **intent:** After each **Roll**, the platform optionally requires the picked winner to send a chat message within a configured time window to mark the win as confirmed.
+  - **success:** When `winner_response_enabled` is true, each new `chat_roll_win` starts in `response_status = pending` with `response_deadline_at = created_at + winner_response_seconds`; any non-empty Kick chat message from the winner’s `provider_user_id` before the deadline sets `confirmed` and `responded_at`; after deadline, lazy expiry sets `no_response`; when disabled, new wins use `not_required` with null deadlines.
+
+- **CAP-17**
+  - **intent:** An operator may run multiple **Roll** actions without waiting for prior winners to confirm in chat.
+  - **success:** **Roll** is not blocked by wins in `pending`; multiple pending wins may coexist; one qualifying chat message confirms only the oldest pending win for that sender (FIFO); UI shows per-win status chip and remaining time for `pending` rows.
 
 ## Constraints
 
@@ -85,7 +103,10 @@ sources: []
 - **Session snapshot settings** — `role_settings` JSONB on `chat_roll` holds all five role keys; validated server-side.
 - **Live coefficient** — participant coefficient is derived at read/pick from `role_ids` + session `role_settings` + `combine_mode`; not stored on `chat_roll_participant`. Win rows store `coefficient_at_pick` only.
 - **Platform identity** — `chat_roll_participant.provider_user_id` is the external platform viewer id (not `users.id`); `provider` is `kick` \| `twitch` \| `youtube`.
-- **Dedup** — one active participant per `(provider, provider_user_id)` per session when both are present.
+- **Dedup** — one active participant per `(provider, provider_user_id)` per session when both are present; re-entry after operator archive is allowed per CAP-15.
+- **Live dashboard sync** — HTTP polling only while session is `live`; no Pusher/SSE in this slice (`ARCHITECTURE-SPINE.md` AD-5).
+- **Chat persistence** — no full chat log and no operator add-from-chat; intake and winner-response matching use webhooks in process, not stored message history (`ARCHITECTURE-SPINE.md` AD-6).
+- **Winner response** — per-win status lifecycle; Roll never blocked by pending responses (`ARCHITECTURE-SPINE.md` AD-8).
 - **Archive pattern** — `is_archived` on `chat_roll_participant` and `chat_roll_win` (same as `prize_spin_win`, `bonus_buy_slot`).
 - **Entry gate** — when `is_accepting_participants` is `false`, server rejects all new `chat_roll_participant` inserts with `ENTRIES_PAUSED`.
 - **Fixed role catalog** — exactly five categories in `role-weights.md`.
@@ -98,7 +119,10 @@ sources: []
 
 ## Non-goals
 
-- Kick chat intake, OAuth channel binding, or real-time message processing (schema reserves `provider` + `provider_user_id`).
+- Operator manual add-from-chat or recent-chat picker UI.
+- Pusher, SSE, or WebSocket transport for the operator dashboard.
+- Storing full Kick chat history for browsing.
+- Auto re-roll when a winner is marked `no_response`.
 - Collection timer (auto-pause after N minutes).
 - OBS overlay public read endpoint (widget table only in this slice).
 - Bot winner announcement in Kick chat.

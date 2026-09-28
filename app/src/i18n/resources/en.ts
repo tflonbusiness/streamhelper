@@ -472,6 +472,14 @@ export const en = {
     replyInKickChat: "Reply in Kick chat",
     replyInKickChatHelp:
       "Bot posts a short confirmation when someone joins with the keyword.",
+    requireWinnerChatResponse: "Require winner chat response",
+    requireWinnerChatResponseHelp:
+      "Winners must send any chat message within the time window to be marked confirmed.",
+    winnerResponseSecondsLabel: "Response time (seconds)",
+    winnerResponseSecondsHelp: "Between 5 and 300 seconds.",
+    winnerAwaitingResponse: "{{seconds}}s to respond",
+    winnerConfirmed: "Confirmed",
+    winnerNoResponse: "No response",
     kickChatTitle: "Kick chat",
     kickChatPopout: "Open popout",
     kickChatFrameTitle: "Kick chat for {{slug}}",

@@ -34,3 +34,12 @@ export type ChatRollIntakeResult =
   | { action: 'participant_added'; displayName: string; replyInChat: boolean }
   | { action: 'duplicate' }
   | { action: 'entries_paused' };
+
+export type WinnerResponseResult =
+  | { action: 'ignored'; reason: string }
+  | { action: 'confirmed'; winId: number };
+
+export type KickChatRouteResult = {
+  winnerResponse: WinnerResponseResult;
+  intake: ChatRollIntakeResult;
+};

@@ -25,6 +25,8 @@ export type ChatRollRecord = {
   excludeWinnerAfterRoll: boolean
   isAcceptingParticipants: boolean
   replyInChat: boolean
+  winnerResponseEnabled: boolean
+  winnerResponseSeconds: number
   roleSettings: ChatRollRoleSettings
   createdAt: string
   createdByUserId: number
@@ -48,6 +50,12 @@ export type ChatRollParticipant = {
   joinedAt: string
 }
 
+export type ChatRollWinResponseStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'no_response'
+  | 'not_required'
+
 export type ChatRollWin = {
   id: number
   chatRollId: number
@@ -56,6 +64,9 @@ export type ChatRollWin = {
   coefficientAtPick: string
   rolledByName: string
   rollIndex: number
+  responseStatus: ChatRollWinResponseStatus
+  responseDeadlineAt: string | null
+  respondedAt: string | null
   createdAt: string
 }
 
@@ -75,6 +86,8 @@ export type PatchChatRollInput = {
   exclude_winner_after_roll?: boolean
   is_accepting_participants?: boolean
   reply_in_chat?: boolean
+  winner_response_enabled?: boolean
+  winner_response_seconds?: number
   role_settings?: ChatRollRoleSettings
 }
 

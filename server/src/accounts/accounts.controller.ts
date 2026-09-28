@@ -93,6 +93,8 @@ type PatchChatRollBody = {
   exclude_winner_after_roll?: boolean;
   is_accepting_participants?: boolean;
   reply_in_chat?: boolean;
+  winner_response_enabled?: boolean;
+  winner_response_seconds?: number;
   role_settings?: unknown;
 };
 

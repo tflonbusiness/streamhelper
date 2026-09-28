@@ -1,17 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { ChatRollIntakeHandler } from './handlers/chat-roll-intake.handler.js';
+import { WinnerResponseHandler } from './handlers/winner-response.handler.js';
 import type {
-  ChatRollIntakeResult,
   KickChatMessageEvent,
+  KickChatRouteResult,
 } from './kick-chat.types.js';
 
 @Injectable()
 export class KickCommandRouter {
-  constructor(private readonly chatRollIntake: ChatRollIntakeHandler) {}
+  constructor(
+    private readonly winnerResponse: WinnerResponseHandler,
+    private readonly chatRollIntake: ChatRollIntakeHandler,
+  ) {}
 
   async routeChatMessage(
     event: KickChatMessageEvent,
-  ): Promise<ChatRollIntakeResult> {
-    return this.chatRollIntake.handle(event);
+  ): Promise<KickChatRouteResult> {
+    const winnerResponse = await this.winnerResponse.handle(event);
+    const intake = await this.chatRollIntake.handle(event);
+    return { winnerResponse, intake };
   }
 }

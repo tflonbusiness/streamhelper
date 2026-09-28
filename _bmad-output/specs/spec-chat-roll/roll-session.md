@@ -65,7 +65,7 @@ Helper text: **Viewers must send this exact message to join.**
 | `highest` | Use highest coefficient |
 | `sum` | Sum coefficients |
 
-**Exclude winner from pool after roll** and **Reply in Kick chat when someone joins** toggles in the same block.
+**Exclude winner from pool after roll**, **Reply in Kick chat when someone joins**, **Require winner chat response** (enables claim window), and **Response time (seconds)** (shown when enabled) toggles/fields in the same block.
 
 ### Role weights block
 
@@ -77,10 +77,10 @@ Footer hint: **Only viewers matching an enabled role can join. Weight affects pi
 
 | Control | Label | Behavior |
 |---------|-------|----------|
-| Roll | **Roll** | Weighted random pick from eligible participants |
+| Roll | **Roll** | Weighted random pick from eligible participants; not blocked by wins awaiting chat response |
 | Pause / Resume | **Pause entries** / **Resume entries** | Toggles `is_accepting_participants` |
 
-When **Entries paused**: chat intake and manual add blocked per CAP-12.
+When **Entries paused**: chat keyword intake blocked per CAP-12; winner claim handling still runs.
 
 ## List cards (right column)
 
@@ -98,7 +98,9 @@ Row: display name + role chips + coefficient chip; delete `IconButton`. Empty: *
 |------|-------|
 | **Winners** | **Clear all** |
 
-Row: display name + delete. Empty: **No winners yet.**
+Row: display name + response status chip (`Awaiting response` with countdown, `Confirmed`, `No response`, or none when feature off) + delete. Empty: **No winners yet.**
+
+While session is **live**, participant and winner lists auto-refresh on a ~5s poll (CAP-14).
 
 ## Responsive
 
