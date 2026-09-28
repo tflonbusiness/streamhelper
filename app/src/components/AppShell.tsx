@@ -201,6 +201,10 @@ const Sidebar = styled('aside', {
 })<{ expanded?: boolean }>(({ theme, expanded = true }) => ({
   display: 'none',
   width: expanded ? SIDEBAR_WIDTH_EXPANDED : SIDEBAR_WIDTH_COLLAPSED,
+  height: '100svh',
+  position: 'sticky',
+  top: 0,
+  alignSelf: 'flex-start',
   flexShrink: 0,
   flexDirection: 'column',
   borderRight: '1px solid',
@@ -244,11 +248,14 @@ const SidebarNavList = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'expanded',
 })<{ expanded?: boolean }>(({ theme, expanded }) => ({
   marginTop: expanded ? theme.spacing(3) : theme.spacing(2),
-  marginBottom: theme.spacing(2),
+  marginBottom: theme.spacing(1),
   display: 'flex',
   flex: 1,
+  minHeight: 0,
   flexDirection: 'column',
   gap: theme.spacing(0.5),
+  overflowY: 'auto',
+  overflowX: 'hidden',
 }))
 
 const SidebarModulesGroup = styled(Box)(({ theme }) => ({
@@ -300,10 +307,39 @@ const DisabledSidebarNavButton = styled(ListItemButton, {
 }))
 
 const SidebarFooter = styled(Box)(({ theme }) => ({
+  flexShrink: 0,
   marginTop: 'auto',
-  paddingTop: theme.spacing(2),
+  paddingTop: theme.spacing(1.5),
+  borderTop: '1px solid',
+  borderColor: theme.palette.divider,
   display: 'flex',
   justifyContent: 'center',
+}))
+
+const SidebarUserRow = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'expanded',
+})<{ expanded?: boolean }>(({ theme, expanded }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+  justifyContent: expanded ? 'flex-start' : 'center',
+  padding: expanded ? theme.spacing(0, 0.5, 1) : theme.spacing(0, 0, 1),
+  minWidth: 0,
+}))
+
+const SidebarUserAvatar = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+  width: 32,
+  height: 32,
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: alpha(colors.purple[500], 0.12),
+  color: colors.purple[400],
+  fontSize: '0.75rem',
+  fontWeight: 700,
+  lineHeight: 1,
 }))
 
 const SidebarLogoutButton = styled(Button)({
@@ -717,13 +753,41 @@ export function AppShell() {
               display: 'flex',
               flexDirection: 'column',
               gap: 1,
-              px: isNavExpanded ? 0 : 0.5,
+              px: isNavExpanded ? 0 : 0,
+              alignItems: isNavExpanded ? 'stretch' : 'center',
             }}
           >
+            {user?.name ? (
+              isNavExpanded ? (
+                <Tooltip title={user.name} placement="right" enterDelay={400}>
+                  <SidebarUserRow expanded>
+                    <SidebarUserAvatar aria-hidden>
+                      {user.name.trim().charAt(0).toUpperCase()}
+                    </SidebarUserAvatar>
+                    <Typography
+                      variant="body2"
+                      fontWeight={600}
+                      noWrap
+                      sx={{ flex: 1, minWidth: 0 }}
+                    >
+                      {user.name}
+                    </Typography>
+                  </SidebarUserRow>
+                </Tooltip>
+              ) : (
+                <Tooltip title={user.name} placement="right">
+                  <SidebarUserRow expanded={false}>
+                    <SidebarUserAvatar aria-hidden>
+                      {user.name.trim().charAt(0).toUpperCase()}
+                    </SidebarUserAvatar>
+                  </SidebarUserRow>
+                </Tooltip>
+              )
+            ) : null}
             {isNavExpanded ? (
               <LanguageSwitcher />
             ) : (
-              <LanguageSwitcher compact />
+              <LanguageSwitcher iconOnly />
             )}
             {isNavExpanded ? (
               <SidebarLogoutButton

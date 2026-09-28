@@ -196,7 +196,7 @@ export const en = {
     onlyOwnerSoFar: "Only the owner so far",
     manageModeratorAccess: "Manage moderator access",
     createDialogBody1:
-      "The moderator will get access to the team dashboard: view the home page, manage streamer modules, and revoke access for other moderators. Only the owner can add new members.",
+      "The moderator will get access to the team dashboard: view the home page and manage streamer modules. Only the owner can add members or revoke moderator access.",
     createDialogBody2:
       "Enter a name and share the link — they will join the team through it.",
     linkCopied: "Link for {{name}} copied.",

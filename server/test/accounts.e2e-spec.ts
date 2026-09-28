@@ -140,13 +140,18 @@ describe('AccountsController (e2e)', () => {
         }),
         revokeModeratorPermanently: async (
           _accountId: number,
-          _ownerUserId: number,
+          ownerUserId: number,
           moderatorUserId: number,
         ) => {
+          if (ownerUserId !== 1) {
+            throw new Error('FORBIDDEN');
+          }
           members = members.map((m) =>
             m.userId === moderatorUserId ? { ...m, isActive: false } : m,
           );
         },
+        findAccessLinkUserIdByToken: async (token: string) =>
+          token === 'valid-moderator-token' ? 3 : null,
         provisionOwnerFromKick: async () => ({
           userId: 1,
           membership: {
@@ -395,6 +400,10 @@ describe('AccountsController (e2e)', () => {
 
   async function loginOwner(agent: request.SuperAgentTest) {
     await agent.get('/auth/oauth/kick/callback?code=mock-kick-code');
+  }
+
+  async function loginModerator(agent: request.SuperAgentTest) {
+    await agent.get('/join/valid-moderator-token');
   }
 
   it('returns kick channel for owner', async () => {
@@ -651,6 +660,13 @@ describe('AccountsController (e2e)', () => {
         expect(body.width).toBe(600);
         expect(body.accentColor).toBe('#FFFFFF');
       });
+  });
+
+  it('moderator cannot revoke another moderator', async () => {
+    const agent = request.agent(app.getHttpServer());
+    await loginModerator(agent);
+
+    await agent.delete('/accounts/10/members/3').expect(403);
   });
 
   it('owner permanently revokes moderator', async () => {

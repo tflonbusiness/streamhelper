@@ -14,7 +14,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { useTheme, alpha, type Theme } from '@mui/material/styles'
+import { useTheme, type Theme } from '@mui/material/styles'
 import GroupIcon from '@mui/icons-material/Group'
 import LinkIcon from '@mui/icons-material/Link'
 import PersonAddIcon from '@mui/icons-material/PersonAdd'
@@ -24,6 +24,7 @@ import { type FormEvent, useState } from 'react'
 import { type AccountMember } from '@/api/auth'
 import { AppTable, type AppTableColumn } from '@/components/AppTable'
 import { PageHeader } from '@/components/PageHeader'
+import { SectionHeader } from '@/components/SectionHeader'
 import { RowActionsMenu } from '@/components/RowActionsMenu'
 import { StatusAlert } from '@/components/StatusAlert'
 import { useAuth } from '@/context/AuthContext'
@@ -155,7 +156,12 @@ export function TeamPage() {
   }
 
   async function handleRevokeModerator(member: AccountMember) {
-    if (!user?.accountId || member.role !== 'moderator' || !member.isActive) {
+    if (
+      !user?.accountId ||
+      user.role !== 'owner' ||
+      member.role !== 'moderator' ||
+      !member.isActive
+    ) {
       return
     }
 
@@ -189,13 +195,15 @@ export function TeamPage() {
       })
     }
 
-    actions.push({
-      id: 'revoke',
-      label: t('team.revoke'),
-      icon: <PersonRemoveIcon fontSize="small" aria-hidden />,
-      destructive: true,
-      onClick: () => void handleRevokeModerator(member),
-    })
+    if (user?.role === 'owner') {
+      actions.push({
+        id: 'revoke',
+        label: t('team.revoke'),
+        icon: <PersonRemoveIcon fontSize="small" aria-hidden />,
+        destructive: true,
+        onClick: () => void handleRevokeModerator(member),
+      })
+    }
 
     return actions
   }
@@ -217,8 +225,8 @@ export function TeamPage() {
     {
       id: 'role',
       header: t('common.role'),
-      width: 100,
-      minWidth: 100,
+      width: 140,
+      minWidth: 140,
       sx: { px: 1.5, whiteSpace: 'nowrap' },
       render: (member) => memberRoleChip(member.role, theme.palette, t),
     },
@@ -233,7 +241,7 @@ export function TeamPage() {
     },
     {
       id: 'action',
-      header: t('common.actions'),
+      header: '',
       align: 'right',
       width: 80,
       minWidth: 80,
@@ -263,47 +271,24 @@ export function TeamPage() {
       />
       <Card elevation={0} sx={cardSx}>
         <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
-          <Stack
-            direction="row"
-            spacing={2}
-            sx={{ mb: 3, alignItems: 'flex-start', justifyContent: 'space-between' }}
-          >
-            <Stack direction="row" spacing={1.5}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  flexShrink: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: 1,
-                  bgcolor: alpha(theme.palette.info.main, 0.14),
-                  color: theme.palette.info.light,
-                }}
-              >
-                <GroupIcon sx={{ fontSize: 20 }} aria-hidden />
-              </Box>
-              <Stack spacing={0.5}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  {t('team.membersTitle')}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {t('team.manageModeratorAccess')}
-                </Typography>
-              </Stack>
-            </Stack>
-            {user?.role === 'owner' && user.accountId ? (
-              <Button
-                type="button"
-                variant="contained"
-                startIcon={<PersonAddIcon fontSize="small" aria-hidden />}
-                onClick={() => setCreateDialogOpen(true)}
-              >
-                {t('common.add')}
-              </Button>
-            ) : null}
-          </Stack>
+          <SectionHeader
+            title={t('team.membersTitle')}
+            description={t('team.manageModeratorAccess')}
+            icon={GroupIcon}
+            iconVariant="info"
+            action={
+              user?.role === 'owner' && user.accountId ? (
+                <Button
+                  type="button"
+                  variant="contained"
+                  startIcon={<PersonAddIcon fontSize="small" aria-hidden />}
+                  onClick={() => setCreateDialogOpen(true)}
+                >
+                  {t('common.add')}
+                </Button>
+              ) : undefined
+            }
+          />
 
           <Stack spacing={2}>
             {loadingMembers ? (

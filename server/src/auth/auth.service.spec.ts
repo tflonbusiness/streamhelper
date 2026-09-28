@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { vi } from 'vitest';
 import { AuthService } from './auth.service.js';
 import { DatabaseService } from '../database/database.service.js';
@@ -12,11 +12,13 @@ describe('AuthService', () => {
   let hasActiveCredentials: ReturnType<typeof vi.fn>;
   let findUserById: ReturnType<typeof vi.fn>;
   let getPrimaryMembership: ReturnType<typeof vi.fn>;
+  let revokeModeratorPermanently: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     hasActiveCredentials = vi.fn();
     findUserById = vi.fn();
     getPrimaryMembership = vi.fn();
+    revokeModeratorPermanently = vi.fn();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -31,7 +33,7 @@ describe('AuthService', () => {
             findCredentialByProvider: vi.fn(),
             findAccessLinkUserIdByToken: vi.fn(),
             createModeratorWithAccessLink: vi.fn(),
-            revokeModeratorPermanently: vi.fn(),
+            revokeModeratorPermanently,
             listAccountMembers: vi.fn(),
             hasActiveMembership: vi.fn(),
           },
@@ -86,6 +88,14 @@ describe('AuthService', () => {
 
     await expect(service.establishSessionForUserId(1)).rejects.toBeInstanceOf(
       UnauthorizedException,
+    );
+  });
+
+  it('revokeModerator rejects non-owner callers', async () => {
+    revokeModeratorPermanently.mockRejectedValue(new Error('FORBIDDEN'));
+
+    await expect(service.revokeModerator(10, 3, 99)).rejects.toBeInstanceOf(
+      ForbiddenException,
     );
   });
 });
