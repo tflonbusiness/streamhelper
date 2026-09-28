@@ -4152,8 +4152,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     return this.mapChatRollWidgetRow(row);
   }
 
-  async getLiveChatRollForIntake(
+  async getChatRollForIntake(
     accountId: number,
+    keyword: string,
   ): Promise<DbChatRollIntakeSession | null> {
     const result = await this.pool.query<{
       id: number;
@@ -4165,10 +4166,13 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       `
         SELECT id, account_id, keyword, is_accepting_participants, reply_in_chat
         FROM chat_roll
-        WHERE account_id = $1 AND status = 'live'
+        WHERE account_id = $1
+          AND status != 'archived'
+          AND lower(trim(keyword)) = lower(trim($2))
+        ORDER BY created_at DESC
         LIMIT 1
       `,
-      [accountId],
+      [accountId, keyword],
     );
     const row = result.rows[0];
     if (!row) {

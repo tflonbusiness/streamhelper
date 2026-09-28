@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service.js';
 import { mapKickBadgesToRoleIds } from '../kick-badge.mapper.js';
 import { KickChatReplyService } from '../kick-chat-reply.service.js';
@@ -9,33 +9,35 @@ import type {
 
 @Injectable()
 export class ChatRollIntakeHandler {
+  private readonly logger = new Logger(ChatRollIntakeHandler.name);
+
   constructor(
     private readonly database: DatabaseService,
     private readonly chatReply: KickChatReplyService,
   ) {}
 
   async handle(event: KickChatMessageEvent): Promise<ChatRollIntakeResult> {
-    console.log('chat-roll-intake-handler', event);
-    console.log('chat-roll-intake-handler', event.sender?.identity?.badges);
-
     const broadcasterId = String(event.broadcaster.user_id);
     const accountId = await this.database.getAccountIdByKickChannelId(
       broadcasterId,
     );
     if (!accountId) {
-      return { action: 'ignored', reason: 'unknown_channel' };
-    }
-
-    const session = await this.database.getLiveChatRollForIntake(accountId);
-    if (!session) {
-      return { action: 'ignored', reason: 'no_live_session' };
+      const result = { action: 'ignored' as const, reason: 'unknown_channel' };
+      this.logger.debug(`intake ${result.reason} broadcaster=${broadcasterId}`);
+      return result;
     }
 
     const message = event.content.trim();
-    if (
-      message.toLowerCase() !== session.keyword.trim().toLowerCase()
-    ) {
-      return { action: 'ignored', reason: 'keyword_mismatch' };
+    const session = await this.database.getChatRollForIntake(
+      accountId,
+      message,
+    );
+    if (!session) {
+      const result = { action: 'ignored' as const, reason: 'keyword_mismatch' };
+      this.logger.debug(
+        `intake ${result.reason} account=${accountId} message="${message}"`,
+      );
+      return result;
     }
 
     const isNew = await this.database.recordKickChatEvent({
@@ -80,10 +82,14 @@ export class ChatRollIntakeHandler {
       });
     }
 
-    return {
-      action: 'participant_added',
+    const result = {
+      action: 'participant_added' as const,
       displayName,
       replyInChat: session.replyInChat,
     };
+    this.logger.log(
+      `intake participant_added session=${session.id} name=${displayName}`,
+    );
+    return result;
   }
 }

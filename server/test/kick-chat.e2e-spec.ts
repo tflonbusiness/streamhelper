@@ -33,8 +33,11 @@ describe('Kick chat webhook (e2e)', () => {
           input.messageId !== 'dup-001',
         getAccountIdByKickChannelId: async (channelId: string) =>
           channelId === 'channel-mock' ? 10 : null,
-        getLiveChatRollForIntake: async (accountId: number) =>
-          accountId === 10 ? liveSession : null,
+        getChatRollForIntake: async (accountId: number, keyword: string) =>
+          accountId === 10 &&
+          keyword.trim().toLowerCase() === liveSession.keyword.trim().toLowerCase()
+            ? liveSession
+            : null,
         insertChatRollParticipantFromChat: async () => ({
           status: 'created' as const,
           participantId: 42,

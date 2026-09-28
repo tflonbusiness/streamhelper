@@ -14,7 +14,7 @@ import {
 } from '@/api/chat-roll'
 import { chatRollKeys } from '@/queries/keys'
 
-const LIVE_SESSION_POLL_MS = 5000
+const SESSION_POLL_MS = 5000
 
 export type ChatRollSessionData = {
   record: Awaited<ReturnType<typeof fetchChatRoll>>
@@ -46,8 +46,13 @@ export function useChatRollSession(
     queryKey: sessionQueryKey(accountId ?? 0, chatRollId),
     queryFn: () => fetchChatRollSession(accountId!, chatRollId),
     enabled: accountId !== undefined && Number.isFinite(chatRollId),
-    refetchInterval: (query) =>
-      query.state.data?.record.status === 'live' ? LIVE_SESSION_POLL_MS : false,
+    refetchInterval: (query) => {
+      const status = query.state.data?.record.status
+      if (!status || status === 'archived') {
+        return false
+      }
+      return SESSION_POLL_MS
+    },
   })
 }
 

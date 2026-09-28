@@ -52,7 +52,6 @@ import {
   getChatRollRoleMeta,
   computeParticipantCoefficient,
   formatCoefficient,
-  getEligibleParticipants,
 } from '@/lib/chat-roll'
 import {
   buildChatRollSettingsPatch,
@@ -350,16 +349,6 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
     )
   }
 
-  const eligibleCount = getEligibleParticipants(
-    participants.map((participant) => ({
-      id: String(participant.id),
-      displayName: participant.displayName,
-      roleIds: participant.roleIds,
-    })),
-    record.roleSettings,
-    record.combineMode,
-  ).length
-
   const settingsDisabled = readOnly || settingsSaveMutation.isPending
   const canSaveSettings =
     isDirty &&
@@ -374,7 +363,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
         size="small"
         startIcon={<ReplayIcon />}
         onClick={handleRoll}
-        disabled={readOnly || eligibleCount === 0 || rollMutation.isPending}
+        disabled={readOnly || participants.length <= 1 || rollMutation.isPending}
       >
         {t('chatRoll.roll')}
       </RollButton>
