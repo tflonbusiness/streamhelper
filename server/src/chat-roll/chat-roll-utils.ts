@@ -82,6 +82,18 @@ export function normalizeRoleSettings(
   return result;
 }
 
+/** True when the user has at least one role that is enabled for this session. */
+export function canJoinChatRollWithRoles(
+  roleIds: string[],
+  roles: ChatRollRoleSettings,
+): boolean {
+  return roleIds
+    .filter((roleId): roleId is ChatRollRoleId =>
+      CHAT_ROLL_ROLE_IDS.includes(roleId as ChatRollRoleId),
+    )
+    .some((roleId) => roles[roleId]?.enabled);
+}
+
 export function computeParticipantCoefficient(
   roleIds: string[],
   roles: ChatRollRoleSettings,

@@ -4162,9 +4162,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       keyword: string;
       is_accepting_participants: boolean;
       reply_in_chat: boolean;
+      role_settings: unknown;
     }>(
       `
-        SELECT id, account_id, keyword, is_accepting_participants, reply_in_chat
+        SELECT id, account_id, keyword, is_accepting_participants, reply_in_chat, role_settings
         FROM chat_roll
         WHERE account_id = $1
           AND status != 'archived'
@@ -4178,12 +4179,17 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     if (!row) {
       return null;
     }
+    const roleSettings =
+      normalizeRoleSettings(row.role_settings) ??
+      DEFAULT_CHAT_ROLL_ROLE_SETTINGS;
+
     return {
       id: toInt(row.id),
       accountId: toInt(row.account_id),
       keyword: row.keyword,
       isAcceptingParticipants: row.is_accepting_participants,
       replyInChat: row.reply_in_chat,
+      roleSettings,
     };
   }
 
@@ -4285,4 +4291,5 @@ export type DbChatRollIntakeSession = {
   keyword: string;
   isAcceptingParticipants: boolean;
   replyInChat: boolean;
+  roleSettings: ChatRollRoleSettings;
 };

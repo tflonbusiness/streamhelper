@@ -16,6 +16,13 @@ describe('Kick chat webhook (e2e)', () => {
     keyword: '!join',
     isAcceptingParticipants: true,
     replyInChat: false,
+    roleSettings: {
+      moderator: { enabled: false, weight: 1 },
+      vip: { enabled: true, weight: 2 },
+      og: { enabled: false, weight: 1.5 },
+      viewer: { enabled: true, weight: 1 },
+      paid_subscriber: { enabled: true, weight: 2 },
+    },
   };
 
   beforeEach(async () => {

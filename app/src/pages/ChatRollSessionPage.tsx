@@ -39,6 +39,7 @@ import { ChatRollWinResponseChip } from '@/components/chat-roll/session/ChatRoll
 import { ChatRollSessionSettingsChrome } from '@/components/chat-roll/session/ChatRollSessionSettingsChrome'
 import { ChatRollSessionSettingsLeftPanel } from '@/components/chat-roll/session/ChatRollSessionSettingsLeftPanel'
 import { ChatRollSessionLoadingState } from '@/components/chat-roll/session/ChatRollSessionLoadingState'
+import { ChatRollRollRevealOverlay } from '@/components/chat-roll/session/ChatRollRollRevealOverlay'
 import { ChatRollSessionUnsavedLeaveDialog } from '@/components/chat-roll/session/ChatRollSessionUnsavedLeaveDialog'
 import { chatRollModule } from '@/components/chat-roll/session/chat-roll-session-utils'
 import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
@@ -221,6 +222,8 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
   const [keywordError, setKeywordError] = useState<string | null>(null)
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false)
   const [archiveSessionDialogOpen, setArchiveSessionDialogOpen] = useState(false)
+  const [rollRevealOpen, setRollRevealOpen] = useState(false)
+  const [rollRevealWin, setRollRevealWin] = useState<ChatRollWin | null>(null)
 
   const { record, participants, wins, accountId, chatRollId } = props
   const readOnly = isChatRollReadOnly(record)
@@ -310,11 +313,20 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
   }
 
   function handleRoll() {
+    if (rollRevealOpen) {
+      return
+    }
+
+    setRollRevealWin(null)
+    setRollRevealOpen(true)
+
     rollMutation.mutate(undefined, {
       onSuccess: (win) => {
-        showSuccess(t('chatRoll.rollWon', { name: win.displayName }))
+        setRollRevealWin(win)
       },
       onError: (rollError) => {
+        setRollRevealOpen(false)
+        setRollRevealWin(null)
         showError(
           rollError instanceof Error
             ? rollError.message
@@ -322,6 +334,15 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
         )
       },
     })
+  }
+
+  function handleRollRevealClose() {
+    const name = rollRevealWin?.displayName
+    setRollRevealOpen(false)
+    setRollRevealWin(null)
+    if (name) {
+      showSuccess(t('chatRoll.rollWon', { name }))
+    }
   }
 
   function renderParticipantExtra(participant: ChatRollParticipant) {
@@ -363,7 +384,12 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
         size="small"
         startIcon={<ReplayIcon />}
         onClick={handleRoll}
-        disabled={readOnly || participants.length <= 1 || rollMutation.isPending}
+        disabled={
+          readOnly ||
+          participants.length <= 1 ||
+          rollMutation.isPending ||
+          rollRevealOpen
+        }
       >
         {t('chatRoll.roll')}
       </RollButton>
@@ -535,6 +561,12 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
         open={leaveDialogOpen}
         onStay={handleStayOnPage}
         onLeave={handleLeavePage}
+      />
+
+      <ChatRollRollRevealOverlay
+        open={rollRevealOpen}
+        win={rollRevealWin}
+        onClose={handleRollRevealClose}
       />
     </PageStack>
   )

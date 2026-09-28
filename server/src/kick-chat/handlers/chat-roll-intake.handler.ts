@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { canJoinChatRollWithRoles } from '../../chat-roll/chat-roll-utils.js';
 import { DatabaseService } from '../../database/database.service.js';
 import { resolveKickChatRollRoleIds } from '../kick-badge.mapper.js';
 import { KickChatReplyService } from '../kick-chat-reply.service.js';
@@ -57,6 +58,17 @@ export class ChatRollIntakeHandler {
     const providerUserId = String(event.sender.user_id);
     const displayName = event.sender.username.trim();
     const roleIds = resolveKickChatRollRoleIds(event.sender.identity?.badges);
+
+    if (!canJoinChatRollWithRoles(roleIds, session.roleSettings)) {
+      const result = {
+        action: 'ignored' as const,
+        reason: 'role_not_allowed',
+      };
+      this.logger.debug(
+        `intake ${result.reason} session=${session.id} name=${displayName} roles=${roleIds.join(',')}`,
+      );
+      return result;
+    }
 
     const insertResult = await this.database.insertChatRollParticipantFromChat({
       chatRollId: session.id,
