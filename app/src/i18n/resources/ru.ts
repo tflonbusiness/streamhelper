@@ -436,6 +436,15 @@ export const ru = {
     sessionArchived: "Сессия отправлена в архив.",
     couldNotArchiveSession: "Не удалось архивировать сессию",
     couldNotSaveSettings: "Не удалось сохранить настройки",
+    settingsSaved: "Настройки сохранены.",
+    settingsUnsaved: "Есть несохранённые изменения",
+    settingsUnsavedBanner:
+      "Изменения ещё не сохранены. Нажмите «Сохранить», когда закончите.",
+    leaveUnsavedTitle: "Уйти без сохранения?",
+    leaveUnsavedBody:
+      "В настройках есть несохранённые изменения. Уйти со страницы и сбросить их?",
+    leaveUnsavedStay: "Остаться",
+    leaveUnsavedLeave: "Уйти",
     settingsTitle: "Настройки",
     participantsTitle: "Участники",
     noParticipants: "Участников пока нет.",

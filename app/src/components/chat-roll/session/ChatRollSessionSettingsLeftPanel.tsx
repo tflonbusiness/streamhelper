@@ -11,8 +11,8 @@ import GroupIcon from '@mui/icons-material/Group'
 import TagIcon from '@mui/icons-material/Tag'
 import TuneIcon from '@mui/icons-material/Tune'
 import { useTranslation } from 'react-i18next'
-import type { ChatRollRecord } from '@/api/chat-roll'
 import type { ChatRollRoleId, WeightCombineMode } from '@/lib/chat-roll'
+import type { ChatRollSessionSettingsDraft } from '@/lib/chat-roll-session-settings'
 import {
   ExclusionToggleLabel,
   KeywordField,
@@ -23,7 +23,10 @@ import {
   SettingsGroupTitle,
   SettingsLeftPanel,
   SettingsToggleCard,
+  SettingsToggleCardColumn,
+  SettingsToggleCardRow,
   SettingsToggleCopy,
+  SettingsToggleNestedField,
 } from '@/components/chat-roll/chatRollPageStyles'
 
 type ChatRollRoleMeta = {
@@ -33,12 +36,10 @@ type ChatRollRoleMeta = {
 }
 
 type ChatRollSessionSettingsLeftPanelProps = {
-  record: ChatRollRecord
-  keywordDraft: string
+  draft: ChatRollSessionSettingsDraft
   keywordError: string | null
   settingsDisabled: boolean
   onKeywordChange: (value: string) => void
-  onKeywordBlur: () => void
   onCombineModeChange: (mode: WeightCombineMode) => void
   onExcludeWinnerChange: (checked: boolean) => void
   onReplyInChatChange: (checked: boolean) => void
@@ -64,9 +65,8 @@ export function ChatRollSessionSettingsLeftPanel(
         <KeywordField
           label={t('chatRoll.keywordLabel')}
           size="small"
-          value={props.keywordDraft}
+          value={props.draft.keyword}
           onChange={(event) => props.onKeywordChange(event.target.value)}
-          onBlur={props.onKeywordBlur}
           error={Boolean(props.keywordError)}
           helperText={props.keywordError ?? t('chatRoll.keywordHelp')}
           fullWidth
@@ -86,7 +86,7 @@ export function ChatRollSessionSettingsLeftPanel(
         </SettingsGroupTitle>
         <Stack spacing={1}>
           {props.roleMeta.map((role) => {
-            const setting = props.record.roleSettings[role.id]
+            const setting = props.draft.roleSettings[role.id]
             return (
               <RoleRowStack key={role.id} enabled={setting.enabled}>
                 <Switch
@@ -145,7 +145,7 @@ export function ChatRollSessionSettingsLeftPanel(
             exclusive
             fullWidth
             size="small"
-            value={props.record.combineMode}
+            value={props.draft.combineMode}
             disabled={props.settingsDisabled}
             onChange={(_, value) => {
               if (value) {
@@ -165,7 +165,7 @@ export function ChatRollSessionSettingsLeftPanel(
             </ToggleButton>
           </ToggleButtonGroup>
           <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, display: 'block' }}>
-            {props.record.combineMode === 'highest'
+            {props.draft.combineMode === 'highest'
               ? t('chatRoll.combineHighest')
               : t('chatRoll.combineSum')}
           </Typography>
@@ -175,7 +175,7 @@ export function ChatRollSessionSettingsLeftPanel(
           <SettingsToggleCard>
             <Switch
               size="small"
-              checked={props.record.excludeWinnerAfterRoll}
+              checked={props.draft.excludeWinnerAfterRoll}
               disabled={props.settingsDisabled}
               onChange={(event) =>
                 props.onExcludeWinnerChange(event.target.checked)
@@ -194,7 +194,7 @@ export function ChatRollSessionSettingsLeftPanel(
           <SettingsToggleCard>
             <Switch
               size="small"
-              checked={props.record.replyInChat}
+              checked={props.draft.replyInChat}
               disabled={props.settingsDisabled}
               onChange={(event) =>
                 props.onReplyInChatChange(event.target.checked)
@@ -210,45 +210,49 @@ export function ChatRollSessionSettingsLeftPanel(
             </SettingsToggleCopy>
           </SettingsToggleCard>
 
-          <SettingsToggleCard>
-            <Switch
-              size="small"
-              checked={props.record.winnerResponseEnabled}
-              disabled={props.settingsDisabled}
-              onChange={(event) =>
-                props.onWinnerResponseEnabledChange(event.target.checked)
-              }
-            />
-            <SettingsToggleCopy>
-              <ExclusionToggleLabel variant="body2">
-                {t('chatRoll.requireWinnerChatResponse')}
-              </ExclusionToggleLabel>
-              <Typography variant="caption" color="text.secondary">
-                {t('chatRoll.requireWinnerChatResponseHelp')}
-              </Typography>
-            </SettingsToggleCopy>
-          </SettingsToggleCard>
-
-          {props.record.winnerResponseEnabled ? (
-            <TextField
-              label={t('chatRoll.winnerResponseSecondsLabel')}
-              type="number"
-              size="small"
-              fullWidth
-              disabled={props.settingsDisabled}
-              value={props.record.winnerResponseSeconds}
-              slotProps={{
-                htmlInput: { min: 5, max: 300, step: 5 },
-              }}
-              onBlur={(event) => {
-                const parsed = Number.parseInt(event.target.value, 10)
-                if (Number.isFinite(parsed)) {
-                  props.onWinnerResponseSecondsChange(parsed)
+          <SettingsToggleCardColumn>
+            <SettingsToggleCardRow>
+              <Switch
+                size="small"
+                checked={props.draft.winnerResponseEnabled}
+                disabled={props.settingsDisabled}
+                onChange={(event) =>
+                  props.onWinnerResponseEnabledChange(event.target.checked)
                 }
-              }}
-              helperText={t('chatRoll.winnerResponseSecondsHelp')}
-            />
-          ) : null}
+              />
+              <SettingsToggleCopy>
+                <ExclusionToggleLabel variant="body2">
+                  {t('chatRoll.requireWinnerChatResponse')}
+                </ExclusionToggleLabel>
+                <Typography variant="caption" color="text.secondary">
+                  {t('chatRoll.requireWinnerChatResponseHelp')}
+                </Typography>
+              </SettingsToggleCopy>
+            </SettingsToggleCardRow>
+
+            {props.draft.winnerResponseEnabled ? (
+              <SettingsToggleNestedField>
+                <TextField
+                  label={t('chatRoll.winnerResponseSecondsLabel')}
+                  type="number"
+                  size="small"
+                  fullWidth
+                  disabled={props.settingsDisabled}
+                  value={props.draft.winnerResponseSeconds}
+                  slotProps={{
+                    htmlInput: { min: 5, max: 300, step: 5 },
+                  }}
+                  onChange={(event) => {
+                    const parsed = Number.parseInt(event.target.value, 10)
+                    if (Number.isFinite(parsed)) {
+                      props.onWinnerResponseSecondsChange(parsed)
+                    }
+                  }}
+                  helperText={t('chatRoll.winnerResponseSecondsHelp')}
+                />
+              </SettingsToggleNestedField>
+            ) : null}
+          </SettingsToggleCardColumn>
         </Stack>
       </SettingsGroupPanel>
     </SettingsLeftPanel>

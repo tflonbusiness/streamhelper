@@ -766,9 +766,8 @@ export function AppShell() {
                     </SidebarUserAvatar>
                     <Typography
                       variant="body2"
-                      fontWeight={600}
                       noWrap
-                      sx={{ flex: 1, minWidth: 0 }}
+                      sx={{ flex: 1, minWidth: 0, fontWeight: 600 }}
                     >
                       {user.name}
                     </Typography>

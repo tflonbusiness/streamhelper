@@ -32,7 +32,7 @@ Compact session card (`ChatRollSessionHeaderSection`): title `#id`, **Live** / *
 
 Stack `spacing={3}`:
 
-1. **Settings** card (full width of column) — keyword, weight combine, exclusion toggles, **Eligible roles** per `role-weights.md`. Persists on blur/change; no **Save** button.
+1. **Settings** card (full width of column) — keyword, weight combine, exclusion toggles, **Eligible roles** per `role-weights.md`. Edits stay local until **Save**; unsaved indicator and leave confirmation per `../spec-chat-roll-session-settings-save/SPEC.md`.
 2. **Roll action bar** — **Roll**, **Pause entries** / **Resume entries** directly under settings (not between settings and lists globally).
 
 ### Right column — participants and winners

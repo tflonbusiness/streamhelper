@@ -7,10 +7,13 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import GroupIcon from '@mui/icons-material/Group'
 import ReplayIcon from '@mui/icons-material/Replay'
-import SettingsIcon from '@mui/icons-material/Settings'
 import { type ReactNode, useEffect, useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import type { ChatRollParticipant } from '@/api/chat-roll'
+import { useBlocker, useParams } from 'react-router-dom'
+import type {
+  ChatRollParticipant,
+  ChatRollRecord,
+  ChatRollWin,
+} from '@/api/chat-roll'
 import { isChatRollReadOnly } from '@/api/chat-roll'
 import type { IconTileVariant, TileIcon } from '@/components/IconTile'
 import {
@@ -33,23 +36,30 @@ import { ChatRollSessionErrorState } from '@/components/chat-roll/session/ChatRo
 import { ChatRollSessionHeaderSection } from '@/components/chat-roll/session/ChatRollSessionHeaderSection'
 import { ChatRollKickChatSection } from '@/components/chat-roll/session/ChatRollKickChatSection'
 import { ChatRollWinResponseChip } from '@/components/chat-roll/session/ChatRollWinResponseChip'
+import { ChatRollSessionSettingsChrome } from '@/components/chat-roll/session/ChatRollSessionSettingsChrome'
 import { ChatRollSessionSettingsLeftPanel } from '@/components/chat-roll/session/ChatRollSessionSettingsLeftPanel'
 import { ChatRollSessionLoadingState } from '@/components/chat-roll/session/ChatRollSessionLoadingState'
+import { ChatRollSessionUnsavedLeaveDialog } from '@/components/chat-roll/session/ChatRollSessionUnsavedLeaveDialog'
 import { chatRollModule } from '@/components/chat-roll/session/chat-roll-session-utils'
 import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { SectionHeader } from '@/components/SectionHeader'
 import { useAuth } from '@/context/AuthContext'
 import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
 import { useNotification } from '@/context/NotificationContext'
+import { useChatRollSessionSettingsDraft } from '@/hooks/useChatRollSessionSettingsDraft'
 import {
   getChatRollRoleChipLabel,
   getChatRollRoleMeta,
-  type ChatRollRoleId,
-  clampRoleWeight,
   computeParticipantCoefficient,
   formatCoefficient,
   getEligibleParticipants,
 } from '@/lib/chat-roll'
+import {
+  buildChatRollSettingsPatch,
+  clampRoleWeightInDraft,
+  clampWinnerResponseSeconds,
+  validateChatRollSettingsDraftKeyword,
+} from '@/lib/chat-roll-session-settings'
 import {
   useChatRollSession,
   useDeleteAllChatRollParticipants,
@@ -156,10 +166,6 @@ export function ChatRollSessionPage() {
   const chatRollId = Number.parseInt(id ?? '', 10)
   const isValidId = Number.isFinite(chatRollId)
   const { user } = useAuth()
-  const { showError, showSuccess } = useNotification()
-  const [keywordError, setKeywordError] = useState<string | null>(null)
-  const [keywordDraft, setKeywordDraft] = useState('')
-  const [archiveSessionDialogOpen, setArchiveSessionDialogOpen] = useState(false)
   const {
     data: session,
     isLoading,
@@ -167,12 +173,61 @@ export function ChatRollSessionPage() {
   } = useChatRollSession(user?.accountId, isValidId ? chatRollId : Number.NaN)
 
   const record = session?.record ?? null
-  const participants = session?.participants ?? []
-  const wins = session?.wins ?? []
-  const readOnly = record ? isChatRollReadOnly(record) : false
   const accountId = user?.accountId
 
-  const patchMutation = usePatchChatRollSession(accountId, chatRollId)
+  const error = !isValidId
+    ? t('chatRoll.sessionNotFound')
+    : sessionError instanceof Error
+      ? sessionError.message
+      : sessionError
+        ? t('chatRoll.couldNotLoadSession')
+        : null
+
+  useSetBreadcrumbLabel(record ? `${record.title} #${record.id}` : null)
+
+  if (isLoading) {
+    return <ChatRollSessionLoadingState />
+  }
+
+  if (error || !record || !session || accountId === undefined) {
+    return (
+      <ChatRollSessionErrorState
+        message={error ?? t('chatRoll.sessionNotFound')}
+      />
+    )
+  }
+
+  return (
+    <ChatRollSessionWorkspace
+      accountId={accountId}
+      chatRollId={chatRollId}
+      record={record}
+      participants={session.participants}
+      wins={session.wins}
+    />
+  )
+}
+
+type ChatRollSessionWorkspaceProps = {
+  accountId: number
+  chatRollId: number
+  record: ChatRollRecord
+  participants: ChatRollParticipant[]
+  wins: ChatRollWin[]
+}
+
+function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
+  const { t } = useTranslation()
+  const { showError, showSuccess } = useNotification()
+  const [keywordError, setKeywordError] = useState<string | null>(null)
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false)
+  const [archiveSessionDialogOpen, setArchiveSessionDialogOpen] = useState(false)
+
+  const { record, participants, wins, accountId, chatRollId } = props
+  const readOnly = isChatRollReadOnly(record)
+
+  const settingsSaveMutation = usePatchChatRollSession(accountId, chatRollId)
+  const sessionPatchMutation = usePatchChatRollSession(accountId, chatRollId)
   const rollMutation = useRollChatRoll(accountId, chatRollId)
   const deleteParticipantMutation = useDeleteChatRollParticipant(
     accountId,
@@ -186,41 +241,24 @@ export function ChatRollSessionPage() {
   const deleteAllWinsMutation = useDeleteAllChatRollWins(accountId, chatRollId)
 
   const roleMeta = useMemo(() => getChatRollRoleMeta(t), [t])
+  const { draft, isDirty, resetDraft, updateDraft } =
+    useChatRollSessionSettingsDraft(record)
 
-  const error = !isValidId
-    ? t('chatRoll.sessionNotFound')
-    : sessionError instanceof Error
-      ? sessionError.message
-      : sessionError
-        ? t('chatRoll.couldNotLoadSession')
-        : null
-
-  useSetBreadcrumbLabel(record ? `${record.title} #${record.id}` : null)
+  const shouldBlockNavigation = isDirty && !readOnly
+  const blocker = useBlocker(shouldBlockNavigation)
 
   useEffect(() => {
-    if (record) {
-      setKeywordDraft(record.keyword)
+    if (blocker.state === 'blocked') {
+      setLeaveDialogOpen(true)
     }
-  }, [record?.keyword])
+  }, [blocker.state])
 
-  if (isLoading) {
-    return <ChatRollSessionLoadingState />
-  }
-
-  if (error || !record || accountId === undefined) {
-    return (
-      <ChatRollSessionErrorState
-        message={error ?? t('chatRoll.sessionNotFound')}
-      />
-    )
-  }
-
-  function patchRecord(body: Parameters<typeof patchMutation.mutate>[0]) {
+  function patchSession(body: Parameters<typeof sessionPatchMutation.mutate>[0]) {
     if (readOnly) {
       return
     }
 
-    patchMutation.mutate(body, {
+    sessionPatchMutation.mutate(body, {
       onError: (patchError) => {
         showError(
           patchError instanceof Error
@@ -231,40 +269,45 @@ export function ChatRollSessionPage() {
     })
   }
 
-  function handleKeywordBlur() {
-    const trimmed = keywordDraft.trim()
-    if (!trimmed) {
+  function handleSaveSettings() {
+    if (!validateChatRollSettingsDraftKeyword(draft)) {
       setKeywordError(t('chatRoll.keywordRequired'))
-      setKeywordDraft(record!.keyword)
       return
     }
 
     setKeywordError(null)
-    if (trimmed !== record!.keyword) {
-      patchRecord({ keyword: trimmed })
+    const body = buildChatRollSettingsPatch(record, draft)
+    if (Object.keys(body).length === 0) {
+      return
+    }
+
+    settingsSaveMutation.mutate(body, {
+      onSuccess: () => {
+        showSuccess(t('chatRoll.settingsSaved'))
+      },
+      onError: (patchError) => {
+        showError(
+          patchError instanceof Error
+            ? patchError.message
+            : t('chatRoll.couldNotSaveSettings'),
+        )
+      },
+    })
+  }
+
+  function handleStayOnPage() {
+    setLeaveDialogOpen(false)
+    if (blocker.state === 'blocked') {
+      blocker.reset()
     }
   }
 
-  function handleRoleToggle(roleId: ChatRollRoleId, enabled: boolean) {
-    patchRecord({
-      role_settings: {
-        ...record!.roleSettings,
-        [roleId]: { ...record!.roleSettings[roleId], enabled },
-      },
-    })
-  }
-
-  function handleRoleWeightChange(roleId: ChatRollRoleId, raw: string) {
-    const parsed = Number.parseFloat(raw)
-    patchRecord({
-      role_settings: {
-        ...record!.roleSettings,
-        [roleId]: {
-          ...record!.roleSettings[roleId],
-          weight: clampRoleWeight(parsed),
-        },
-      },
-    })
+  function handleLeavePage() {
+    setLeaveDialogOpen(false)
+    resetDraft()
+    if (blocker.state === 'blocked') {
+      blocker.proceed()
+    }
   }
 
   function handleRoll() {
@@ -289,8 +332,8 @@ export function ChatRollSessionPage() {
         displayName: participant.displayName,
         roleIds: participant.roleIds,
       },
-      record!.roleSettings,
-      record!.combineMode,
+      record.roleSettings,
+      record.combineMode,
     )
 
     return (
@@ -317,7 +360,12 @@ export function ChatRollSessionPage() {
     record.combineMode,
   ).length
 
-  const settingsDisabled = readOnly || patchMutation.isPending
+  const settingsDisabled = readOnly || settingsSaveMutation.isPending
+  const canSaveSettings =
+    isDirty &&
+    validateChatRollSettingsDraftKeyword(draft) &&
+    !settingsSaveMutation.isPending &&
+    !readOnly
 
   const sessionPrimaryActions = (
     <>
@@ -340,9 +388,9 @@ export function ChatRollSessionPage() {
             <PlayArrowIcon fontSize="small" />
           )
         }
-        disabled={readOnly || patchMutation.isPending}
+        disabled={readOnly || sessionPatchMutation.isPending}
         onClick={() =>
-          patchRecord({
+          patchSession({
             is_accepting_participants: !record.isAcceptingParticipants,
           })
         }
@@ -368,45 +416,64 @@ export function ChatRollSessionPage() {
         <Grid size={{ xs: 12, lg: 3 }} sx={workspaceColumnSx}>
           <SettingsCard elevation={0}>
             <SettingsCardContent>
-              <SectionHeader
-                title={t('chatRoll.settingsTitle')}
-                icon={SettingsIcon}
-                iconVariant="info"
+              <ChatRollSessionSettingsChrome
+                readOnly={readOnly}
+                isDirty={isDirty}
+                canSave={canSaveSettings}
+                isSaving={settingsSaveMutation.isPending}
+                onSave={handleSaveSettings}
               />
 
               <SettingsStack>
                 <ChatRollSessionSettingsLeftPanel
-                  record={record}
-                  keywordDraft={keywordDraft}
+                  draft={draft}
                   keywordError={keywordError}
                   settingsDisabled={settingsDisabled}
                   onKeywordChange={(value) => {
-                    setKeywordDraft(value)
+                    updateDraft((current) => ({ ...current, keyword: value }))
                     if (value.trim()) {
                       setKeywordError(null)
                     }
                   }}
-                  onKeywordBlur={handleKeywordBlur}
                   onCombineModeChange={(mode) =>
-                    patchRecord({ combine_mode: mode })
+                    updateDraft((current) => ({ ...current, combineMode: mode }))
                   }
                   onExcludeWinnerChange={(checked) =>
-                    patchRecord({ exclude_winner_after_roll: checked })
+                    updateDraft((current) => ({
+                      ...current,
+                      excludeWinnerAfterRoll: checked,
+                    }))
                   }
                   onReplyInChatChange={(checked) =>
-                    patchRecord({ reply_in_chat: checked })
+                    updateDraft((current) => ({ ...current, replyInChat: checked }))
                   }
                   onWinnerResponseEnabledChange={(checked) =>
-                    patchRecord({ winner_response_enabled: checked })
+                    updateDraft((current) => ({
+                      ...current,
+                      winnerResponseEnabled: checked,
+                    }))
                   }
                   onWinnerResponseSecondsChange={(seconds) =>
-                    patchRecord({
-                      winner_response_seconds: Math.min(300, Math.max(5, seconds)),
-                    })
+                    updateDraft((current) => ({
+                      ...current,
+                      winnerResponseSeconds: clampWinnerResponseSeconds(seconds),
+                    }))
                   }
                   roleMeta={roleMeta}
-                  onRoleToggle={handleRoleToggle}
-                  onRoleWeightChange={handleRoleWeightChange}
+                  onRoleToggle={(roleId, enabled) =>
+                    updateDraft((current) => ({
+                      ...current,
+                      roleSettings: {
+                        ...current.roleSettings,
+                        [roleId]: { ...current.roleSettings[roleId], enabled },
+                      },
+                    }))
+                  }
+                  onRoleWeightChange={(roleId, raw) =>
+                    updateDraft((current) =>
+                      clampRoleWeightInDraft(current, roleId, raw),
+                    )
+                  }
                 />
               </SettingsStack>
             </SettingsCardContent>
@@ -473,6 +540,12 @@ export function ChatRollSessionPage() {
         record={record}
         open={archiveSessionDialogOpen}
         onClose={() => setArchiveSessionDialogOpen(false)}
+      />
+
+      <ChatRollSessionUnsavedLeaveDialog
+        open={leaveDialogOpen}
+        onStay={handleStayOnPage}
+        onLeave={handleLeavePage}
       />
     </PageStack>
   )

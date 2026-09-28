@@ -1,4 +1,5 @@
 import {
+  Alert,
   Box,
   Button,
   Card,
@@ -200,6 +201,17 @@ export const SettingsToggleCard = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
 }))
 
+export const SettingsToggleCardColumn = styled(SettingsToggleCard)({
+  flexDirection: 'column',
+  alignItems: 'stretch',
+})
+
+export const SettingsToggleCardRow = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'flex-start',
+  gap: theme.spacing(1),
+}))
+
 export const SettingsToggleCopy = styled(Box)({
   flex: 1,
   minWidth: 0,
@@ -207,6 +219,12 @@ export const SettingsToggleCopy = styled(Box)({
   flexDirection: 'column',
   gap: 2,
 })
+
+/** Dependent control in the same card, below the toggle row. */
+export const SettingsToggleNestedField = styled(Box)(({ theme }) => ({
+  paddingTop: theme.spacing(2),
+  width: '100%',
+}))
 
 export const SettingsSectionLabel = styled(Typography)(({ theme }) => ({
   display: 'block',
@@ -288,5 +306,39 @@ export const RoleWeightField = styled(TextField)(({ theme }) => ({
   '& .MuiOutlinedInput-root': {
     backgroundColor: theme.palette.background.default,
     fontSize: '0.8125rem',
+  },
+}))
+
+export const SettingsUnsavedAlert = styled(Alert)(({ theme }) => ({
+  marginTop: theme.spacing(-1),
+  marginBottom: theme.spacing(2),
+  paddingTop: theme.spacing(0.5),
+  paddingBottom: theme.spacing(0.5),
+  alignItems: 'center',
+  fontSize: theme.typography.pxToRem(13),
+  lineHeight: 1.45,
+  backgroundColor: alpha(theme.palette.warning.main, 0.08),
+  borderColor: alpha(theme.palette.warning.main, 0.35),
+  '& .MuiAlert-icon': {
+    paddingTop: 0,
+    paddingBottom: 0,
+    marginRight: theme.spacing(1),
+    opacity: 0.9,
+  },
+  '& .MuiAlert-message': {
+    paddingTop: theme.spacing(0.25),
+    paddingBottom: theme.spacing(0.25),
+  },
+}))
+
+export const SettingsSaveButton = styled(Button)(({ theme }) => ({
+  flexShrink: 0,
+  minWidth: 0,
+  paddingLeft: theme.spacing(1.5),
+  paddingRight: theme.spacing(1.75),
+  whiteSpace: 'nowrap',
+  boxShadow: 'none',
+  '&:hover': {
+    boxShadow: 'none',
   },
 }))

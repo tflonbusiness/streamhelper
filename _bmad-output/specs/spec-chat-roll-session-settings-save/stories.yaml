@@ -1,0 +1,10 @@
+- id: "1"
+  title: Settings draft state and Save PATCH
+  description: >-
+    Local draft for all Settings fields on ChatRollSessionPage; Save sends one
+    PATCH; CAP-1, CAP-2, CAP-3, CAP-4 in SPEC.md.
+- id: "2"
+  title: Unsaved indicator and navigation guard
+  description: >-
+    Warning chip in Settings header and leave confirmation via useBlocker;
+    CAP-5 and CAP-6 in SPEC.md.
