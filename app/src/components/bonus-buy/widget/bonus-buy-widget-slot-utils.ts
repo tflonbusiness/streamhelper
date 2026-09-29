@@ -14,3 +14,28 @@ export function isWinPositive(slot: BonusBuySlot): boolean {
   }
   return Number.parseFloat(slot.winAmount) >= Number.parseFloat(slot.purchaseAmount)
 }
+
+export type BonusBuySlotResultColorTheme = {
+  positiveColor: string
+  negativeColor: string
+  textMutedColor: string
+}
+
+export function getBonusBuySlotResultColors(
+  slot: BonusBuySlot,
+  colorTheme: BonusBuySlotResultColorTheme,
+): { winColor: string; multiplierColor: string } {
+  const positive = isWinPositive(slot)
+
+  return {
+    winColor:
+      slot.winAmount === null
+        ? colorTheme.textMutedColor
+        : positive
+          ? colorTheme.positiveColor
+          : colorTheme.negativeColor,
+    multiplierColor: positive
+      ? colorTheme.positiveColor
+      : colorTheme.negativeColor,
+  }
+}

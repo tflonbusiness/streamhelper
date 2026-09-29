@@ -146,6 +146,8 @@ export const BonusBuySessionPage = () => {
               bonusBuyId={bonusBuyId}
               currencyCode={record.currencyCode}
               slots={slots}
+              widgetPositiveColor={widgetSettings?.positiveColor}
+              widgetNegativeColor={widgetSettings?.negativeColor}
             />
           </MainColumnStack>
         </Grid>

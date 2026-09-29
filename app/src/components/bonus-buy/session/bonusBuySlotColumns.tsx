@@ -1,4 +1,4 @@
-import { Box, Chip, IconButton, Stack } from '@mui/material'
+import { Box, Chip, IconButton, Stack, TableSortLabel } from '@mui/material'
 import AdjustIcon from '@mui/icons-material/Adjust'
 import CircleOutlinedIcon from '@mui/icons-material/CircleOutlined'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
@@ -12,20 +12,59 @@ import type { AppTableColumn } from '@/components/AppTable'
 import {
   formatMultiplierDisplay,
 } from '@/lib/bonus-buy-stats'
-import {
-  formatBonusBuyMoney,
-  signedValueColor,
-} from '@/components/bonus-buy/session/bonus-buy-session-utils'
+import { formatBonusBuyMoney } from '@/components/bonus-buy/session/bonus-buy-session-utils'
+import { getBonusBuySlotResultColors } from '@/components/bonus-buy/widget/bonus-buy-widget-slot-utils'
+import { DEFAULT_AVERAGE_X_COLOR_THEME } from '@/lib/bonus-buy-widget-presentation'
 import { slotActionIconButtonSx } from '@/components/bonus-buy/session/bonusBuySessionStyles'
 import { toneChipSx } from '@/theme/colors'
+import type {
+  BonusBuySlotSortField,
+  BonusBuySlotSortState,
+} from '@/components/bonus-buy/session/bonusBuySlotSort'
 
 type BuildBonusBuySlotColumnsOptions = {
   theme: Theme
   currencyCode: string
+  widgetPositiveColor?: string | null
+  widgetNegativeColor?: string | null
+  sort: BonusBuySlotSortState | null
+  onSortField: (field: BonusBuySlotSortField) => void
   onCopySlotName: (slot: BonusBuySlot) => void
   onSetPlaying: (slot: BonusBuySlot, playing: boolean) => void
   onEditSlot: (slot: BonusBuySlot) => void
   onDeleteSlot: (slot: BonusBuySlot) => void
+}
+
+const sortableHeaderIconSx = (theme: Theme, active: boolean) => ({
+  color: 'inherit',
+  '& .MuiTableSortLabel-icon': {
+    opacity: active ? 1 : 0.45,
+    color: theme.palette.text.secondary,
+  },
+  '&:hover .MuiTableSortLabel-icon': {
+    opacity: active ? 1 : 0.7,
+  },
+})
+
+function sortableHeader(
+  label: string,
+  field: BonusBuySlotSortField,
+  sort: BonusBuySlotSortState | null,
+  onSortField: (field: BonusBuySlotSortField) => void,
+  theme: Theme,
+) {
+  const active = sort?.field === field
+
+  return (
+    <TableSortLabel
+      active={active}
+      direction={active ? sort.direction : 'asc'}
+      onClick={() => onSortField(field)}
+      sx={sortableHeaderIconSx(theme, active)}
+    >
+      {label}
+    </TableSortLabel>
+  )
 }
 
 export function buildBonusBuySlotColumns(
@@ -33,12 +72,25 @@ export function buildBonusBuySlotColumns(
   {
     theme,
     currencyCode,
+    widgetPositiveColor,
+    widgetNegativeColor,
+    sort,
+    onSortField,
     onCopySlotName,
     onSetPlaying,
     onEditSlot,
     onDeleteSlot,
   }: BuildBonusBuySlotColumnsOptions,
 ): AppTableColumn<BonusBuySlot>[] {
+  const slotResultColorTheme = {
+    positiveColor:
+      widgetPositiveColor?.trim() ||
+      DEFAULT_AVERAGE_X_COLOR_THEME.positiveColor,
+    negativeColor:
+      widgetNegativeColor?.trim() ||
+      DEFAULT_AVERAGE_X_COLOR_THEME.negativeColor,
+    textMutedColor: theme.palette.text.secondary,
+  }
 
   return [
     {
@@ -101,30 +153,37 @@ export function buildBonusBuySlotColumns(
     },
     {
       id: 'purchase',
-      header: t('common.purchase'),
+      header: sortableHeader(
+        t('common.purchase'),
+        'purchase',
+        sort,
+        onSortField,
+        theme,
+      ),
       width: 110,
       render: (slot) =>
         formatBonusBuyMoney(slot.purchaseAmount, currencyCode),
     },
     {
       id: 'win',
-      header: t('common.win'),
+      header: sortableHeader(t('common.win'), 'win', sort, onSortField, theme),
       width: 100,
       render: (slot) => {
+        const { winColor } = getBonusBuySlotResultColors(
+          slot,
+          slotResultColorTheme,
+        )
+
         if (slot.winAmount == null) {
           return (
-            <Box component="span" sx={{ color: 'text.secondary' }}>
+            <Box component="span" sx={{ color: winColor }}>
               {t('common.pending')}
             </Box>
           )
         }
 
-        const value = Number.parseFloat(slot.winAmount)
         return (
-          <Box
-            component="span"
-            sx={{ color: signedValueColor(value, theme) ?? 'inherit' }}
-          >
+          <Box component="span" sx={{ color: winColor }}>
             {formatBonusBuyMoney(slot.winAmount, currencyCode)}
           </Box>
         )
@@ -132,7 +191,13 @@ export function buildBonusBuySlotColumns(
     },
     {
       id: 'multiplier',
-      header: t('table.multiplier'),
+      header: sortableHeader(
+        t('table.multiplier'),
+        'multiplier',
+        sort,
+        onSortField,
+        theme,
+      ),
       width: 100,
       render: (slot) => {
         if (!slot.multiplier) {
@@ -143,12 +208,13 @@ export function buildBonusBuySlotColumns(
           )
         }
 
-        const value = Number.parseFloat(slot.multiplier)
+        const { multiplierColor } = getBonusBuySlotResultColors(
+          slot,
+          slotResultColorTheme,
+        )
+
         return (
-          <Box
-            component="span"
-            sx={{ color: signedValueColor(value, theme) ?? 'inherit' }}
-          >
+          <Box component="span" sx={{ color: multiplierColor }}>
             {formatMultiplierDisplay(slot.multiplier)}
           </Box>
         )
@@ -156,7 +222,7 @@ export function buildBonusBuySlotColumns(
     },
     {
       id: 'actions',
-      header: t('common.actions'),
+      header: '',
       width: 112,
       minWidth: 112,
       align: 'right',

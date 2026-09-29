@@ -13,8 +13,8 @@ import {
   StyledWinAmount,
 } from '@/components/bonus-buy/widget/bonus-buy-widget-styles'
 import {
+  getBonusBuySlotResultColors,
   getWidgetProviderLabel,
-  isWinPositive,
 } from '@/components/bonus-buy/widget/bonus-buy-widget-slot-utils'
 
 type BonusBuyWidgetSlotRowProps = {
@@ -30,14 +30,12 @@ export function BonusBuyWidgetSlotRow({
   theme,
   currencyCode,
 }: BonusBuyWidgetSlotRowProps) {
-  const positive = isWinPositive(slot)
-  const resultColor =
-    slot.winAmount === null
-      ? theme.textMutedColor
-      : positive
-        ? theme.positiveColor
-        : theme.negativeColor
-  const badgeColor = positive ? theme.positiveColor : theme.negativeColor
+  const { winColor: resultColor, multiplierColor: badgeColor } =
+    getBonusBuySlotResultColors(slot, {
+      positiveColor: theme.positiveColor,
+      negativeColor: theme.negativeColor,
+      textMutedColor: theme.textMutedColor,
+    })
   const providerLabel = getWidgetProviderLabel(slot.providerName)
 
   return (

@@ -11,6 +11,11 @@ import { BonusBuyDeleteSlotDialog } from '@/components/bonus-buy/session/BonusBu
 import { BonusBuyEditSlotDialog } from '@/components/bonus-buy/session/BonusBuyEditSlotDialog'
 import { BonusBuySlotExpandedDetails } from '@/components/bonus-buy/session/BonusBuySlotExpandedDetails'
 import { buildBonusBuySlotColumns } from '@/components/bonus-buy/session/bonusBuySlotColumns'
+import {
+  sortBonusBuySlots,
+  type BonusBuySlotSortField,
+  type BonusBuySlotSortState,
+} from '@/components/bonus-buy/session/bonusBuySlotSort'
 import { playingSlotRowSx } from '@/components/bonus-buy/session/bonusBuySessionStyles'
 import {
   StyledSessionCard,
@@ -25,6 +30,8 @@ type BonusBuySessionSlotsSectionProps = {
   bonusBuyId: number
   currencyCode: string
   slots: BonusBuySlot[]
+  widgetPositiveColor?: string | null
+  widgetNegativeColor?: string | null
 }
 
 export const BonusBuySessionSlotsSection = (
@@ -39,6 +46,25 @@ export const BonusBuySessionSlotsSection = (
   const [editSlot, setEditSlot] = useState<BonusBuySlot | null>(null)
   const [deleteSlot, setDeleteSlot] = useState<BonusBuySlot | null>(null)
   const [expandedSlotIds, setExpandedSlotIds] = useState<Set<number>>(new Set())
+  const [slotSort, setSlotSort] = useState<BonusBuySlotSortState | null>(null)
+
+  function handleSortField(field: BonusBuySlotSortField) {
+    setSlotSort((previous) => {
+      if (previous?.field === field) {
+        return {
+          field,
+          direction: previous.direction === 'asc' ? 'desc' : 'asc',
+        }
+      }
+
+      return { field, direction: 'asc' }
+    })
+  }
+
+  const sortedSlots = useMemo(
+    () => sortBonusBuySlots(props.slots, slotSort),
+    [props.slots, slotSort],
+  )
 
   function toggleSlotExpanded(slotId: number) {
     setExpandedSlotIds((previous) => {
@@ -105,6 +131,10 @@ export const BonusBuySessionSlotsSection = (
       buildBonusBuySlotColumns(t, {
         theme,
         currencyCode: props.currencyCode,
+        widgetPositiveColor: props.widgetPositiveColor,
+        widgetNegativeColor: props.widgetNegativeColor,
+        sort: slotSort,
+        onSortField: handleSortField,
         onCopySlotName: (slot) => {
           void handleCopySlotName(slot)
         },
@@ -114,7 +144,7 @@ export const BonusBuySessionSlotsSection = (
         onEditSlot: setEditSlot,
         onDeleteSlot: setDeleteSlot,
       }),
-    [t, theme, props.currencyCode],
+    [t, theme, props.currencyCode, props.widgetPositiveColor, props.widgetNegativeColor, slotSort],
   )
 
   return (
@@ -143,7 +173,7 @@ export const BonusBuySessionSlotsSection = (
           />
           <AppTable
             columns={slotColumns}
-            rows={props.slots}
+            rows={sortedSlots}
             getRowKey={(slot) => slot.id}
             emptyMessage={t('bonusBuy.noBonusesYet')}
             getRowSx={(slot) =>
