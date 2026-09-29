@@ -1,10 +1,13 @@
 import { Box, Chip, Skeleton, Stack, Typography } from '@mui/material'
 import { alpha, styled } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import type { ChatRollRecord } from '@/api/chat-roll'
+import { chatRollHistoryStatusChip } from '@/components/chat-roll/chat-roll-page/chatRollHistoryStatusChip'
 import { OpenSessionButton } from '@/components/OpenSessionButton'
+import { formatPrizeSpinDateTime } from '@/components/prize-spin/prize-spin-utils'
 import { chatRollSessionRoute } from '@/lib/routes'
-import { colors, toneChipSx } from '@/theme/colors'
+import { colors } from '@/theme/colors'
 
 type ChatRollHistoryLiveHeroProps = {
   record: ChatRollRecord | null
@@ -26,28 +29,121 @@ const StyledSectionLabel = styled(Typography)(({ theme }) => ({
 const StyledHeroCard = styled(Stack, {
   shouldForwardProp: (prop) => prop !== 'empty',
 })<{ empty?: boolean }>(({ theme, empty }) => ({
+  position: 'relative',
+  overflow: 'hidden',
   border: '1px solid',
   borderColor: empty
     ? theme.palette.divider
-    : alpha(colors.warning[500], 0.45),
-  borderRadius: theme.spacing(1),
-  padding: theme.spacing(2.5),
-  gap: theme.spacing(1.5),
+    : alpha(colors.warning[500], 0.35),
+  borderRadius: theme.shape.borderRadius,
+  padding: theme.spacing(2),
+  paddingLeft: empty ? theme.spacing(2) : theme.spacing(2.5),
+  gap: theme.spacing(1),
   backgroundColor: empty
     ? alpha(colors.neutral[100], 0.02)
-    : alpha(colors.warning[500], 0.06),
+    : alpha(colors.warning[500], 0.05),
+  '&::before': empty
+    ? undefined
+    : {
+        content: '""',
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: 4,
+        backgroundColor: colors.warning[500],
+      },
+}))
+
+const StyledTitleRow = styled(Stack)(({ theme }) => ({
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: theme.spacing(1.5),
+}))
+
+const StyledTitleMain = styled(Box)({
+  flex: 1,
+  minWidth: 0,
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+})
+
+const StyledTitleLink = styled(Link)(({ theme }) => ({
+  flex: 1,
+  minWidth: 0,
+  textDecoration: 'none',
+  color: 'inherit',
+  borderRadius: theme.shape.borderRadius,
+  '&:focus-visible': {
+    outline: `2px solid ${theme.palette.primary.main}`,
+    outlineOffset: 2,
+  },
 }))
 
 const StyledHeroTitle = styled(Typography)({
   fontWeight: 600,
-  fontSize: '1.0625rem',
-  lineHeight: 1.3,
+  fontSize: '1rem',
+  lineHeight: 1.35,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
 })
 
-const StyledKeyword = styled(Typography)(({ theme }) => ({
+const SessionIdBadge = styled('span')(({ theme }) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minWidth: 28,
+  height: 24,
+  paddingLeft: theme.spacing(0.75),
+  paddingRight: theme.spacing(0.75),
+  borderRadius: theme.shape.borderRadius,
+  fontSize: '0.75rem',
+  fontWeight: 600,
+  fontVariantNumeric: 'tabular-nums',
+  lineHeight: 1,
+  color: theme.palette.text.secondary,
+  backgroundColor: alpha(theme.palette.text.primary, 0.06),
+  border: '1px solid',
+  borderColor: alpha(theme.palette.text.primary, 0.1),
+  flexShrink: 0,
+}))
+
+const StyledKeywordRow = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  flexWrap: 'wrap',
+  gap: theme.spacing(1),
+}))
+
+const StyledKeywordLabel = styled(Typography)(({ theme }) => ({
+  fontSize: '0.8125rem',
   fontWeight: 500,
+  color: theme.palette.text.secondary,
+}))
+
+const StyledKeywordValue = styled('span')(({ theme }) => ({
+  display: 'inline-block',
+  maxWidth: '100%',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
   fontSize: '0.9375rem',
+  fontWeight: 600,
+  lineHeight: 1.35,
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
   color: theme.palette.text.primary,
+  padding: theme.spacing(0.375, 1),
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: alpha(theme.palette.primary.main, 0.12),
+}))
+
+const StyledMeta = styled(Typography)(({ theme }) => ({
+  fontSize: '0.75rem',
+  color: theme.palette.text.secondary,
+  lineHeight: 1.4,
 }))
 
 const StyledHint = styled(Typography)(({ theme }) => ({
@@ -56,22 +152,34 @@ const StyledHint = styled(Typography)(({ theme }) => ({
   lineHeight: 1.5,
 }))
 
-const StyledHeroActions = styled(Stack)(({ theme }) => ({
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: theme.spacing(2),
-  flexWrap: 'wrap',
-  [theme.breakpoints.up('sm')]: {
-    flexWrap: 'nowrap',
+const StyledCardActions = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'flex-end',
+  marginTop: theme.spacing(0.5),
+  paddingTop: theme.spacing(1.5),
+  borderTop: '1px solid',
+  borderColor: alpha(colors.neutral[100], 0.08),
+  '& .MuiButton-root': {
+    width: 'auto',
+    flex: 'none',
   },
 }))
+
+const pausedChipSx = {
+  height: 24,
+  fontSize: '0.75rem',
+  fontWeight: 500,
+  mt: 0.75,
+} as const
 
 export function ChatRollHistoryLiveHero({
   record,
   loading = false,
 }: ChatRollHistoryLiveHeroProps) {
   const { t } = useTranslation()
+  const sessionIdLabel = record
+    ? t('chatRoll.historyCardIndex', { index: record.id })
+    : ''
 
   return (
     <StyledHeroSection>
@@ -79,37 +187,54 @@ export function ChatRollHistoryLiveHero({
         <StyledSectionLabel>{t('chatRoll.historyLiveNowTitle')}</StyledSectionLabel>
       </Box>
       {loading ? (
-        <Skeleton variant="rounded" height={140} />
+        <Skeleton variant="rounded" height={160} />
       ) : record ? (
         <StyledHeroCard>
-          <Box
-            sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              gap: 1,
-            }}
-          >
+          <StyledTitleRow>
+            <StyledTitleMain>
+              <SessionIdBadge aria-hidden>{sessionIdLabel}</SessionIdBadge>
+              <StyledTitleLink
+                to={chatRollSessionRoute(record.id)}
+                aria-label={t('table.openAria', { title: record.title })}
+              >
+                <StyledHeroTitle>{record.title}</StyledHeroTitle>
+              </StyledTitleLink>
+            </StyledTitleMain>
+            {chatRollHistoryStatusChip(record, t)}
+          </StyledTitleRow>
+          <StyledKeywordRow>
+            <StyledKeywordLabel>
+              {t('chatRoll.historyLiveKeywordLabel')}
+            </StyledKeywordLabel>
+            <StyledKeywordValue title={record.keyword}>
+              {record.keyword}
+            </StyledKeywordValue>
+          </StyledKeywordRow>
+          <StyledMeta>
+            {t('chatRoll.historyCardMeta', {
+              author: record.createdByName,
+              created: formatPrizeSpinDateTime(record.createdAt),
+            })}
+          </StyledMeta>
+          <StyledHint>{t('chatRoll.sessionNowLive')}</StyledHint>
+          {!record.isAcceptingParticipants ? (
             <Chip
-              label={t('common.live')}
+              label={t('chatRoll.entriesPaused')}
               size="small"
-              sx={toneChipSx(colors.warning[500])}
+              color="warning"
+              variant="outlined"
+              sx={pausedChipSx}
             />
-            <StyledHeroTitle>{record.title}</StyledHeroTitle>
-          </Box>
-          <StyledKeyword>
-            {t('chatRoll.historyLiveKeyword', { keyword: record.keyword })}
-          </StyledKeyword>
-          <StyledHeroActions>
-            <StyledHint sx={{ flex: 1, minWidth: 0 }}>
-              {t('chatRoll.sessionNowLive')}
-            </StyledHint>
+          ) : null}
+          <StyledCardActions>
             <OpenSessionButton
               to={chatRollSessionRoute(record.id)}
-              size="medium"
+              variant="outlined"
+              size="small"
+              fullWidth={false}
               aria-label={t('table.openAria', { title: record.title })}
             />
-          </StyledHeroActions>
+          </StyledCardActions>
         </StyledHeroCard>
       ) : (
         <StyledHeroCard empty>

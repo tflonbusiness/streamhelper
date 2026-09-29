@@ -433,6 +433,7 @@ export const en = {
       "{{index}}. {{title}}, {{status}}, keyword {{keyword}}. Open session.",
     historyLiveNowTitle: "On air now",
     historyLiveKeyword: "Keyword: {{keyword}}",
+    historyLiveKeywordLabel: "Keyword",
     historyLiveHint: "Kick chat intake is active for this session.",
     historyNoLiveSession: "No session on air",
     historyNoLiveHint:
@@ -441,6 +442,8 @@ export const en = {
     historyOtherSessionsTitle: "Other sessions",
     historyNoOtherSessions: "No other sessions in this view.",
     createDialogTitle: "New Session",
+    createDialogDescription:
+      "Create a chat roll session with a title for your stream.",
     archiveSessionTitle: "Archive session?",
     noSessionToArchive: "No session to archive.",
     archiveListIntro: "{{title}} will be removed from the active list.",

@@ -97,7 +97,7 @@ export const ChatRollCreateDialog = (props: ChatRollCreateDialogProps) => {
       <DialogTitle>{t('chatRoll.createDialogTitle')}</DialogTitle>
       <DialogContent>
         <StyledDescription variant="body2">
-          Create a chat roll session with a title for your stream.
+          {t('chatRoll.createDialogDescription')}
         </StyledDescription>
         <Box component="form" id="chat-roll-create-form" onSubmit={onSubmit}>
           <StyledFormStack>

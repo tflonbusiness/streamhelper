@@ -82,6 +82,13 @@ export function normalizeRoleSettings(
   return result;
 }
 
+/** Status for a newly created session when at most one live session is allowed per account. */
+export function initialChatRollStatusOnCreate(
+  accountHasLiveSession: boolean,
+): 'live' | 'off_air' {
+  return accountHasLiveSession ? 'off_air' : 'live';
+}
+
 /** True when the user has at least one role that is enabled for this session. */
 export function canJoinChatRollWithRoles(
   roleIds: string[],

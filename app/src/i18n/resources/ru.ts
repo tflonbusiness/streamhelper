@@ -440,6 +440,7 @@ export const ru = {
       "{{index}}. {{title}}, {{status}}, ключевое слово {{keyword}}. Открыть сессию.",
     historyLiveNowTitle: "Сейчас в эфире",
     historyLiveKeyword: "Ключ: {{keyword}}",
+    historyLiveKeywordLabel: "Ключ",
     historyLiveHint: "Для этой сессии включён приём сообщений из чата Kick.",
     historyNoLiveSession: "Нет сессии в эфире",
     historyNoLiveHint:
@@ -448,6 +449,8 @@ export const ru = {
     historyOtherSessionsTitle: "Остальные сессии",
     historyNoOtherSessions: "Других сессий в этом списке нет.",
     createDialogTitle: "Новая сессия",
+    createDialogDescription:
+      "Создайте сессию chat roll с названием для вашего стрима.",
     archiveSessionTitle: "Архивировать сессию?",
     noSessionToArchive: "Нет сессии для архивации.",
     archiveListIntro: "«{{title}}» будет убрана из списка активных.",

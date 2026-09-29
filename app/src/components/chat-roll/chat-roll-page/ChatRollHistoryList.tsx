@@ -194,24 +194,17 @@ export function ChatRollHistoryList({
         </StyledCardGrid>
       ) : !isEmpty ? (
         <StyledCardGrid>
-          {records.map((record, index) => {
-            const displayNumber = pagination
-              ? (pagination.page - 1) * pagination.rowsPerPage + index + 1
-              : index + 1
-
-            return (
+          {records.map((record) => (
               <ChatRollHistorySessionCard
                 key={record.id}
                 record={record}
-                displayNumber={displayNumber}
                 showArchiveAction={showArchiveAction}
                 showGoLiveAction={showGoLiveAction}
                 goLivePending={goLivePendingId === record.id}
                 onArchive={onArchive}
                 onGoLive={onGoLive}
               />
-            )
-          })}
+          ))}
         </StyledCardGrid>
       ) : null}
       {showPagination ? (

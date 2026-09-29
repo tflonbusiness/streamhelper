@@ -16,7 +16,6 @@ import { colors } from '@/theme/colors'
 
 type ChatRollHistorySessionCardProps = {
   record: ChatRollRecord
-  displayNumber: number
   showArchiveAction?: boolean
   showGoLiveAction?: boolean
   goLivePending?: boolean
@@ -139,13 +138,9 @@ const StyledPrimaryActions = styled(Stack)(({ theme }) => ({
   flex: 1,
   minWidth: 0,
   flexWrap: 'wrap',
-  [theme.breakpoints.down('md')]: {
-    width: '100%',
-    justifyContent: 'stretch',
-    '& .MuiButton-root': {
-      flex: 1,
-      minWidth: 0,
-    },
+  '& .MuiButton-root': {
+    width: 'auto',
+    flex: 'none',
   },
 }))
 
@@ -167,7 +162,6 @@ const actionIconSx = { fontSize: 16 } as const
 
 export function ChatRollHistorySessionCard({
   record,
-  displayNumber,
   showArchiveAction = true,
   showGoLiveAction = true,
   goLivePending = false,
@@ -185,7 +179,7 @@ export function ChatRollHistorySessionCard({
     created: formatPrizeSpinDateTime(record.createdAt),
   })
   const showSecondaryArchive = showArchiveAction && !archived
-  const indexLabel = t('chatRoll.historyCardIndex', { index: displayNumber })
+  const indexLabel = t('chatRoll.historyCardIndex', { index: record.id })
 
   return (
     <StyledCard>
@@ -211,7 +205,16 @@ export function ChatRollHistorySessionCard({
         {chatRollHistoryStatusChip(record, t)}
       </StyledTitleRow>
       <RecordKeyword>
-        {t('chatRoll.historyLiveKeyword', { keyword: record.keyword })}
+        {t('chatRoll.historyLiveKeywordLabel')}:{' '}
+        <Box
+          component="span"
+          sx={{
+            fontWeight: 600,
+            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+          }}
+        >
+          {record.keyword}
+        </Box>
       </RecordKeyword>
       <RecordMeta>{meta}</RecordMeta>
       <StyledCardActions>
@@ -246,9 +249,9 @@ export function ChatRollHistorySessionCard({
           ) : null}
           <OpenSessionButton
             to={sessionPath}
-            variant={canGoLive ? 'outlined' : 'contained'}
+            variant="outlined"
             aria-label={t('table.openAria', { title: record.title })}
-            fullWidth={!showSecondaryArchive && !canGoLive}
+            fullWidth={false}
           />
         </StyledPrimaryActions>
       </StyledCardActions>

@@ -19,6 +19,7 @@ import {
 import {
   computeParticipantCoefficient,
   DEFAULT_CHAT_ROLL_ROLE_SETTINGS,
+  initialChatRollStatusOnCreate,
   normalizeKeyword,
   normalizeRoleSettings,
   pickWeightedParticipant,
@@ -3558,12 +3559,28 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     try {
       await client.query('BEGIN');
 
+      const liveCheck = await client.query<{ has_live: boolean }>(
+        `
+          SELECT EXISTS (
+            SELECT 1
+            FROM chat_roll
+            WHERE account_id = $1
+              AND status = 'live'
+          ) AS has_live
+        `,
+        [accountId],
+      );
+      const initialStatus = initialChatRollStatusOnCreate(
+        liveCheck.rows[0]?.has_live ?? false,
+      );
+
       const result = await client.query(
         `
           INSERT INTO chat_roll (
             account_id,
             created_by_user_id,
             title,
+            status,
             keyword,
             combine_mode,
             exclude_winner_after_roll,
@@ -3572,7 +3589,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             winner_response_seconds,
             role_settings
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
           RETURNING
             id,
             account_id,
@@ -3594,6 +3611,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           accountId,
           createdByUserId,
           trimmedTitle,
+          initialStatus,
           keyword,
           combineMode,
           excludeWinnerAfterRoll,

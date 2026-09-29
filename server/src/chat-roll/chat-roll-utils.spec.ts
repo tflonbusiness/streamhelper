@@ -2,7 +2,18 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_CHAT_ROLL_ROLE_SETTINGS,
   canJoinChatRollWithRoles,
+  initialChatRollStatusOnCreate,
 } from './chat-roll-utils.js';
+
+describe('initialChatRollStatusOnCreate', () => {
+  it('starts live when no other live session exists', () => {
+    expect(initialChatRollStatusOnCreate(false)).toBe('live');
+  });
+
+  it('starts off air when another session is already live', () => {
+    expect(initialChatRollStatusOnCreate(true)).toBe('off_air');
+  });
+});
 
 describe('canJoinChatRollWithRoles', () => {
   it('allows when user has an enabled role', () => {
