@@ -3,6 +3,7 @@ import { styled } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import type { BonusBuySlot } from '@/api/bonus-buy'
 import { formatBonusBuySlotStatus } from '@/api/bonus-buy'
+import { BonusBuySlotProviderCell } from '@/components/bonus-buy/session/BonusBuySlotInlineEdit'
 import { formatDateTime } from '@/components/bonus-buy/session/bonus-buy-session-utils'
 
 type BonusBuySlotExpandedDetailsProps = {
@@ -27,7 +28,7 @@ export const BonusBuySlotExpandedDetails = ({
     <Grid container spacing={2}>
       <Grid size={{ xs: 12, sm: 6, md: 3 }}>
         <DetailLabel variant="caption">{t('common.usernameNote')}</DetailLabel>
-        <Typography variant="body2">{slot.providerName || '—'}</Typography>
+        <BonusBuySlotProviderCell slot={slot} />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, md: 3 }}>
         <DetailLabel variant="caption">{t('common.status')}</DetailLabel>

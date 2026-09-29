@@ -13,12 +13,13 @@ import {
 import { useTranslation } from 'react-i18next'
 import type { BonusBuySlot } from '@/api/bonus-buy'
 import { isBonusBuySlotPlaying } from '@/api/bonus-buy'
+import { BonusBuySlotNameField } from '@/components/bonus-buy/BonusBuySlotNameField'
 import { buildBonusBuyMoneyInputSlotProps } from '@/components/bonus-buy/bonus-buy-money-input'
 import { useNotification } from '@/context/NotificationContext'
 import { sanitizeDecimalInput } from '@/lib/bonus-buy-format'
 import {
   type BonusBuySlotDraft,
-  validateEditBonusBuySlotMoneyDraft,
+  validateEditBonusBuySlotDraft,
 } from '@/lib/bonus-buy-validation'
 import { usePatchBonusBuySlot } from '@/queries/use-bonus-buy'
 
@@ -83,6 +84,8 @@ function draftsMatchSlot(slot: BonusBuySlot, draft: BonusBuySlotDraft): boolean 
   const base = slotDraft(slot)
   const normalized = normalizeDraft(draft)
   return (
+    base.name === normalized.name &&
+    base.providerName === normalized.providerName &&
     base.purchaseAmount === normalized.purchaseAmount &&
     base.winAmount === normalized.winAmount
   )
@@ -166,10 +169,7 @@ export function BonusBuySlotInlineEditProvider(
         return
       }
 
-      const validationError = validateEditBonusBuySlotMoneyDraft({
-        purchaseAmount: draft.purchaseAmount,
-        winAmount: draft.winAmount,
-      })
+      const validationError = validateEditBonusBuySlotDraft(draft)
       if (validationError) {
         showError(validationError)
         return
@@ -181,6 +181,8 @@ export function BonusBuySlotInlineEditProvider(
         await patchSlotMutation.mutateAsync({
           slotId: slot.id,
           body: {
+            name: draft.name,
+            provider_name: draft.providerName || null,
             purchase_amount: Number.parseFloat(draft.purchaseAmount).toFixed(2),
             win_amount: trimmedWin
               ? Number.parseFloat(trimmedWin).toFixed(2)
@@ -253,6 +255,48 @@ function useSlotFieldKeyHandlers(slot: BonusBuySlot) {
       }
     },
   }
+}
+
+export function BonusBuySlotNameCell({ slot }: SlotCellProps) {
+  const { t } = useTranslation()
+  const { getDraft, updateDraft } = useBonusBuySlotInlineEdit()
+  const disabled = useSlotFieldDisabled(slot)
+  const keyHandlers = useSlotFieldKeyHandlers(slot)
+  const value = getDraft(slot).name
+
+  return (
+    <BonusBuySlotNameField
+      value={value}
+      onChange={(name) => updateDraft(slot, { name })}
+      disabled={disabled}
+      hideLabel
+      compact
+      inputAriaLabel={t('table.editSlotAria', { name: slot.name })}
+      onKeyDown={keyHandlers.onKeyDown}
+    />
+  )
+}
+
+export function BonusBuySlotProviderCell({ slot }: SlotCellProps) {
+  const { t } = useTranslation()
+  const { getDraft, updateDraft } = useBonusBuySlotInlineEdit()
+  const disabled = useSlotFieldDisabled(slot)
+  const keyHandlers = useSlotFieldKeyHandlers(slot)
+  const value = getDraft(slot).providerName
+
+  return (
+    <InlineField
+      value={value}
+      onChange={(event) =>
+        updateDraft(slot, { providerName: event.target.value })
+      }
+      onKeyDown={keyHandlers.onKeyDown}
+      size="small"
+      fullWidth
+      disabled={disabled}
+      aria-label={t('common.usernameNote')}
+    />
+  )
 }
 
 export function BonusBuySlotPurchaseCell({ slot }: SlotCellProps) {

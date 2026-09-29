@@ -12,6 +12,7 @@ import type { AppTableColumn } from '@/components/AppTable'
 import { formatMultiplierDisplay } from '@/lib/bonus-buy-stats'
 import { getBonusBuySlotResultColors } from '@/components/bonus-buy/widget/bonus-buy-widget-slot-utils'
 import {
+  BonusBuySlotNameCell,
   BonusBuySlotPurchaseCell,
   BonusBuySlotSaveButton,
   BonusBuySlotWinCell,
@@ -41,8 +42,8 @@ const COL_INDEX_WIDTH = 40
 const COL_MONEY_WIDTH = 152
 const COL_MULTIPLIER_WIDTH = 120
 const COL_ACTIONS_WIDTH = 112
-const SLOT_NAME_FIELD_MAX_WIDTH = 160
-const SLOT_NAME_COLUMN_MIN_WIDTH = 168
+const SLOT_NAME_FIELD_WIDTH = 280
+const SLOT_NAME_COLUMN_MIN_WIDTH = 360
 
 const metricCellSx = {
   verticalAlign: 'middle',
@@ -158,55 +159,40 @@ export function buildBonusBuySlotColumns(
         <Stack
           direction="row"
           spacing={0.75}
-          sx={{
-            alignItems: 'center',
-            minWidth: 0,
-            maxWidth: SLOT_NAME_FIELD_MAX_WIDTH + 120,
-          }}
+          sx={{ alignItems: 'center', minWidth: 0, width: '100%' }}
         >
           <Box
             sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              minWidth: 0,
-              maxWidth: '100%',
+              width: SLOT_NAME_FIELD_WIDTH,
+              minWidth: SLOT_NAME_FIELD_WIDTH,
+              maxWidth: SLOT_NAME_FIELD_WIDTH,
+              flexShrink: 0,
             }}
           >
-            <Box
-              component="span"
-              title={slot.name}
-              sx={{
-                minWidth: 0,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {slot.name}
-            </Box>
-            <IconButton
-              size="small"
-              aria-label={t('table.copySlotAria', { name: slot.name })}
-              onClick={(event) => {
-                event.stopPropagation()
-                onCopySlotName(slot)
-              }}
-              sx={{
-                width: 20,
-                height: 20,
-                flexShrink: 0,
-                ml: 0.5,
-                p: 0.25,
-                color: theme.palette.warning.main,
-                '&:hover': {
-                  color: theme.palette.warning.dark,
-                  bgcolor: alpha(theme.palette.warning.main, 0.12),
-                },
-              }}
-            >
-              <ContentCopyIcon sx={{ fontSize: 12 }} aria-hidden />
-            </IconButton>
+            <BonusBuySlotNameCell slot={slot} />
           </Box>
+          <IconButton
+            size="small"
+            aria-label={t('table.copySlotAria', { name: slot.name })}
+            onClick={(event) => {
+              event.stopPropagation()
+              onCopySlotName(slot)
+            }}
+            sx={{
+              width: 20,
+              height: 20,
+              flexShrink: 0,
+              ml: 0.5,
+              p: 0.25,
+              color: theme.palette.warning.main,
+              '&:hover': {
+                color: theme.palette.warning.dark,
+                bgcolor: alpha(theme.palette.warning.main, 0.12),
+              },
+            }}
+          >
+            <ContentCopyIcon sx={{ fontSize: 12 }} aria-hidden />
+          </IconButton>
           {isBonusBuySlotPlaying(slot) ? (
             <Chip
               label={t('common.nowPlaying')}

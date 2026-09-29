@@ -77,7 +77,7 @@ export function BonusBuySlotNameField(props: BonusBuySlotNameFieldProps) {
     <Autocomplete
       sx={
         props.compact
-          ? { width: '100%', minWidth: 0, maxWidth: '100%' }
+          ? { display: 'block', width: '100%', minWidth: '100%' }
           : undefined
       }
       id={props.id}
