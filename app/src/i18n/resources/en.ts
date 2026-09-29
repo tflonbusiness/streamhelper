@@ -261,6 +261,20 @@ export const en = {
     historyDescription: "Bonus buy sessions for this account",
     noSessions: "No bonus buy sessions yet",
     noArchived: "No archived sessions",
+    historyCardMeta: "{{author}} · {{created}}",
+    historyCardIndex: "#{{index}}",
+    historyListItemAria:
+      "{{index}}. {{title}}, {{status}}. Open session.",
+    historyLiveNowTitle: "On air now",
+    historyStartBalanceLabel: "Start balance",
+    historyLiveHint:
+      "OBS overlay is active for this session while it is on air.",
+    historyNoLiveSession: "No session on air",
+    historyNoLiveHint:
+      "Go live from a session below or create a new one to show the bonus buy widget on stream.",
+    historyNoOtherSessions: "No other sessions in this view.",
+    goLive: "Go live",
+    couldNotGoLive: "Could not go live.",
     createSession: "Create session",
     createDialogTitle: "New bonus buy session",
     createDialogDescription: "Set currency, name, and starting balance for this session.",
@@ -636,6 +650,7 @@ export const en = {
       updateChatRoll: "Could not update chat roll",
       goLiveChatRoll: "Could not go live",
       goLivePrizeSpin: "Could not go live",
+      goLiveBonusBuy: "Could not go live",
       deactivateChatRoll: "Could not take session off air",
       loadParticipants: "Could not load participants",
       removeParticipant: "Could not remove participant",

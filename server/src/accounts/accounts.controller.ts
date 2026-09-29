@@ -370,6 +370,18 @@ export class AccountsController {
     );
   }
 
+  @Post(':accountId/bonus-buys/:bonusBuyId/go-live')
+  async goLiveBonusBuy(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('bonusBuyId', ParseIntPipe) bonusBuyId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.goLiveBonusBuy(accountId, user.id, bonusBuyId);
+  }
+
   @Post(':accountId/bonus-buys/:bonusBuyId/end')
   async endBonusBuy(
     @Param('accountId', ParseIntPipe) accountId: number,

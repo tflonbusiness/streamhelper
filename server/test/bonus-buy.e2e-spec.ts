@@ -58,7 +58,7 @@ describe('BonusBuyController (e2e)', () => {
               id: 1,
               name: 'Friday stream',
               startBalance: '50.00',
-              status: 'active' as const,
+              status: 'live' as const,
             },
             slots: [],
             settings: DEFAULT_WIDGET,

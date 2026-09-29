@@ -315,6 +315,30 @@ export class AuthService {
     }
   }
 
+  async goLiveBonusBuy(
+    accountId: number,
+    callerUserId: number,
+    bonusBuyId: number,
+  ) {
+    const isMember = await this.database.hasActiveMembership(
+      accountId,
+      callerUserId,
+    );
+    if (!isMember) {
+      throw new ForbiddenException('Not a member of this account');
+    }
+
+    try {
+      const row = await this.database.goLiveBonusBuy(accountId, bonusBuyId);
+      return this.formatBonusBuy(row);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'NOT_FOUND') {
+        throw new NotFoundException('Bonus buy not found');
+      }
+      throw error;
+    }
+  }
+
   async endBonusBuy(
     accountId: number,
     callerUserId: number,

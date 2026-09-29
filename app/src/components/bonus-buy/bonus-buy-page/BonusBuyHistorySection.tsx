@@ -10,21 +10,28 @@ import {
   Stack,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
+import SensorsIcon from '@mui/icons-material/Sensors'
 import { styled } from '@mui/material/styles'
-import { useEffect, useState } from 'react'
-import { type BonusBuyArchivedFilter } from '@/api/bonus-buy'
-import { AppTable } from '@/components/AppTable'
+import { useEffect, useMemo, useState } from 'react'
+import { type BonusBuyArchivedFilter, type BonusBuyRecord } from '@/api/bonus-buy'
 import { BonusBuyCreateDialog } from '@/components/bonus-buy/bonus-buy-page/BonusBuyCreateDialog'
-import { BonusBuyRecordExpandedDetails } from '@/components/bonus-buy/bonus-buy-page/BonusBuyRecordExpandedDetails'
-import { BONUS_BUY_HISTORY_PAGE_SIZE } from '@/components/bonus-buy/bonus-buy-page/bonus-buy-page-utils'
-import { buildBonusBuyRecordColumns } from '@/components/bonus-buy/bonus-buy-page/bonusBuyRecordColumns'
-import { SectionHeader, sectionTableIcon } from '@/components/SectionHeader'
+import { BonusBuyHistoryList } from '@/components/bonus-buy/bonus-buy-page/BonusBuyHistoryList'
+import { BonusBuyHistoryLiveHero } from '@/components/bonus-buy/bonus-buy-page/BonusBuyHistoryLiveHero'
+import {
+  BONUS_BUY_HISTORY_PAGE_SIZE,
+  findLiveBonusBuyRecord,
+  formatBonusBuyLiveSessionHint,
+} from '@/components/bonus-buy/bonus-buy-page/bonus-buy-page-utils'
+import { BonusBuyArchiveSessionDialog } from '@/components/bonus-buy/session/BonusBuyArchiveSessionDialog'
+import { SectionHeader } from '@/components/SectionHeader'
 import { useNotification } from '@/context/NotificationContext'
-import { useBonusBuys } from '@/queries/use-bonus-buy'
+import { useBonusBuys, useGoLiveBonusBuy } from '@/queries/use-bonus-buy'
 
 type BonusBuyHistorySectionProps = {
   accountId: number
 }
+
+const LIVE_PEEK_LIMIT = 50
 
 const StyledCard = styled(Card)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
@@ -42,7 +49,7 @@ const StyledCardContent = styled(CardContent)(({ theme }) => ({
 }))
 
 const StyledContentStack = styled(Stack)(({ theme }) => ({
-  gap: theme.spacing(2),
+  gap: theme.spacing(3),
 }))
 
 const StyledFilterFormControl = styled(FormControl)({
@@ -59,14 +66,16 @@ export const BonusBuyHistorySection = ({
   accountId,
 }: BonusBuyHistorySectionProps) => {
   const { t } = useTranslation()
-  const { showError } = useNotification()
+  const { showError, showSuccess } = useNotification()
+  const goLiveMutation = useGoLiveBonusBuy(accountId)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
-  const [expandedRecordIds, setExpandedRecordIds] = useState<Set<number>>(
-    new Set(),
-  )
+  const [archiveDialogRecord, setArchiveDialogRecord] =
+    useState<BonusBuyRecord | null>(null)
   const [archivedFilter, setArchivedFilter] =
     useState<BonusBuyArchivedFilter>('false')
   const [recordsPage, setRecordsPage] = useState(1)
+
+  const showLiveHero = archivedFilter !== 'true'
 
   const {
     data: recordsResult,
@@ -79,11 +88,42 @@ export const BonusBuyHistorySection = ({
     limit: BONUS_BUY_HISTORY_PAGE_SIZE,
   })
 
+  const {
+    data: activePeekResult,
+    isLoading: loadingActivePeek,
+    isFetching: fetchingActivePeek,
+  } = useBonusBuys(showLiveHero ? accountId : undefined, {
+    archived: 'false',
+    page: 1,
+    limit: LIVE_PEEK_LIMIT,
+  })
+
   const records = recordsResult?.records ?? []
   const recordsTotal =
     typeof recordsResult?.total === 'number'
       ? recordsResult.total
       : records.length
+
+  const liveRecord = useMemo(
+    () =>
+      showLiveHero ? findLiveBonusBuyRecord(activePeekResult?.records ?? []) : null,
+    [activePeekResult?.records, showLiveHero],
+  )
+
+  const listRecords = useMemo(() => {
+    if (!liveRecord) {
+      return records
+    }
+
+    return records.filter((record) => record.id !== liveRecord.id)
+  }, [liveRecord, records])
+
+  const listEmptyMessage =
+    archivedFilter === 'true'
+      ? t('bonusBuy.noArchived')
+      : liveRecord && records.length <= 1 && listRecords.length === 0
+        ? t('bonusBuy.historyNoOtherSessions')
+        : t('bonusBuy.noSessions')
 
   useEffect(() => {
     if (!recordsQueryError) {
@@ -91,7 +131,7 @@ export const BonusBuyHistorySection = ({
     }
 
     showError(t('bonusBuy.couldNotLoadHistory'))
-  }, [recordsQueryError, showError])
+  }, [recordsQueryError, showError, t])
 
   useEffect(() => {
     if (
@@ -104,51 +144,59 @@ export const BonusBuyHistorySection = ({
     }
   }, [recordsResult, recordsPage])
 
-  const toggleRecordExpanded = (recordId: number) => {
-    setExpandedRecordIds((previous) => {
-      const next = new Set(previous)
-      if (next.has(recordId)) {
-        next.delete(recordId)
-      } else {
-        next.add(recordId)
-      }
-      return next
-    })
-  }
-
-  const recordColumns = buildBonusBuyRecordColumns(t)
+  const listLoading = loadingRecords || fetchingRecords
+  const heroLoading = showLiveHero && (loadingActivePeek || fetchingActivePeek)
 
   return (
     <>
       <StyledCard elevation={0}>
         <StyledCardContent>
-          <SectionHeader
-            title={t('common.sessionsTitle')}
-            description={t('common.sessionsSectionDescription')}
-            icon={sectionTableIcon}
-            iconVariant="secondary"
-            action={
-              <Button
-                type="button"
-                variant="contained"
-                startIcon={<AddIcon fontSize="small" />}
-                onClick={() => setCreateDialogOpen(true)}
-              >
-                {t('common.newSession')}
-              </Button>
-            }
-          />
           <StyledContentStack>
-            <AppTable
-              columns={recordColumns}
-              rows={records}
-              loading={loadingRecords || fetchingRecords}
-              getRowKey={(record) => record.id}
-              emptyMessage={
-                archivedFilter === 'true'
-                  ? t('bonusBuy.noArchived')
-                  : t('bonusBuy.noSessions')
+            <SectionHeader
+              title={t('common.sessionsTitle')}
+              description={t('common.sessionsSectionDescription')}
+              icon={SensorsIcon}
+              iconVariant="warning"
+              action={
+                <Button
+                  type="button"
+                  variant="contained"
+                  startIcon={<AddIcon fontSize="small" aria-hidden />}
+                  onClick={() => setCreateDialogOpen(true)}
+                >
+                  {t('common.newSession')}
+                </Button>
               }
+            />
+            {showLiveHero ? (
+              <BonusBuyHistoryLiveHero
+                record={liveRecord}
+                loading={heroLoading && !liveRecord}
+              />
+            ) : null}
+            <BonusBuyHistoryList
+              records={listRecords}
+              loading={listLoading}
+              emptyMessage={listEmptyMessage}
+              showArchiveAction={archivedFilter !== 'true'}
+              showGoLiveAction={archivedFilter !== 'true'}
+              showSectionTitle={showLiveHero}
+              goLivePendingId={
+                goLiveMutation.isPending ? goLiveMutation.variables : undefined
+              }
+              onArchive={setArchiveDialogRecord}
+              onGoLive={(record) => {
+                goLiveMutation.mutate(record.id, {
+                  onSuccess: () =>
+                    showSuccess(formatBonusBuyLiveSessionHint(t)),
+                  onError: (error) =>
+                    showError(
+                      error instanceof Error
+                        ? error.message
+                        : t('bonusBuy.couldNotGoLive'),
+                    ),
+                })
+              }}
               toolbar={
                 <StyledFilterFormControl size="small">
                   <InputLabel id="bonus-buy-archived-filter-label">
@@ -177,21 +225,17 @@ export const BonusBuyHistorySection = ({
                 onPageChange: setRecordsPage,
                 rowsPerPage: BONUS_BUY_HISTORY_PAGE_SIZE,
               }}
-              expandable={{
-                isExpanded: (record) => expandedRecordIds.has(record.id),
-                onToggle: (record) => toggleRecordExpanded(record.id),
-                ariaLabel: (record) =>
-                  expandedRecordIds.has(record.id)
-                    ? t('table.collapseDetailsAria', { title: record.name })
-                    : t('table.expandDetailsAria', { title: record.name }),
-                renderDetail: (record) => (
-                  <BonusBuyRecordExpandedDetails record={record} />
-                ),
-              }}
             />
           </StyledContentStack>
         </StyledCardContent>
       </StyledCard>
+      <BonusBuyArchiveSessionDialog
+        accountId={accountId}
+        bonusBuyId={archiveDialogRecord?.id ?? 0}
+        open={!!archiveDialogRecord}
+        record={archiveDialogRecord}
+        onClose={() => setArchiveDialogRecord(null)}
+      />
       <BonusBuyCreateDialog
         accountId={accountId}
         open={createDialogOpen}

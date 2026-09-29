@@ -13,9 +13,9 @@ export function BonusBuyPage() {
     <Stack spacing={4}>
       <PageHeader
         title={t('bonusBuy.title')}
-        description={t('bonusBuy.pageDescription')}
+        description={t('bonusBuy.description')}
         icon={CardGiftcardIcon}
-        iconVariant="warning"
+        iconVariant="info"
       />
       {user?.accountId !== undefined ? (
         <BonusBuyHistorySection accountId={user.accountId} />

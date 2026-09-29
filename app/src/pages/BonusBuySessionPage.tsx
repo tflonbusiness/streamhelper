@@ -2,6 +2,8 @@ import { Grid, Stack } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { formatBonusBuyLiveSessionHint } from '@/components/bonus-buy/bonus-buy-page/bonus-buy-page-utils'
+import { useNotification } from '@/context/NotificationContext'
 import { useParams } from 'react-router-dom'
 import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { BonusBuyEditSessionDialog } from '@/components/bonus-buy/session/BonusBuyEditSessionDialog'
@@ -18,7 +20,11 @@ import { bonusBuyModule } from '@/components/bonus-buy/session/bonus-buy-session
 import { useAuth } from '@/context/AuthContext'
 import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
 import { computeSessionStats } from '@/lib/bonus-buy-stats'
-import { useBonusBuySession, useBonusBuyWidget } from '@/queries/use-bonus-buy'
+import {
+  useBonusBuySession,
+  useBonusBuyWidget,
+  useGoLiveBonusBuySession,
+} from '@/queries/use-bonus-buy'
 
 const PageStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(4),
@@ -34,6 +40,7 @@ const MainColumnStack = styled(Stack)(({ theme }) => ({
 
 export const BonusBuySessionPage = () => {
   const { t } = useTranslation()
+  const { showSuccess, showError } = useNotification()
   const { id } = useParams()
   const bonusBuyId = Number.parseInt(id ?? '', 10)
   const isValidId = Number.isFinite(bonusBuyId)
@@ -55,6 +62,10 @@ export const BonusBuySessionPage = () => {
     user?.accountId,
     isValidId ? bonusBuyId : null,
     isValidId,
+  )
+  const goLiveMutation = useGoLiveBonusBuySession(
+    user?.accountId,
+    isValidId ? bonusBuyId : null,
   )
 
   const record = session?.record ?? null
@@ -104,6 +115,19 @@ export const BonusBuySessionPage = () => {
           <MainColumnStack>
             <BonusBuySessionHeaderSection
               record={record}
+              liveActionPending={goLiveMutation.isPending}
+              onGoLive={() => {
+                goLiveMutation.mutate(undefined, {
+                  onSuccess: () =>
+                    showSuccess(formatBonusBuyLiveSessionHint(t)),
+                  onError: (error) =>
+                    showError(
+                      error instanceof Error
+                        ? error.message
+                        : t('bonusBuy.couldNotGoLive'),
+                    ),
+                })
+              }}
               onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
               onOpenEditDialog={() => setEditSessionDialogOpen(true)}
             />

@@ -4,7 +4,9 @@ import EditIcon from '@mui/icons-material/Edit'
 import { styled, useTheme } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import type { BonusBuyRecord } from '@/api/bonus-buy'
-import { isBonusBuyActive } from '@/api/bonus-buy'
+import { isBonusBuyReadOnly } from '@/api/bonus-buy'
+import { ChatRollLiveStatusChip } from '@/components/chat-roll/ChatRollLiveStatusChip'
+import { ChatRollSessionIdBadge } from '@/components/chat-roll/session/ChatRollSessionIdBadge'
 import {
   StyledCompactSessionCardContent,
   StyledSessionCard,
@@ -16,6 +18,8 @@ type BonusBuySessionHeaderSectionProps = {
   record: BonusBuyRecord
   onOpenArchiveDialog: () => void
   onOpenEditDialog: () => void
+  onGoLive?: () => void
+  liveActionPending?: boolean
 }
 
 const HeaderStack = styled(Stack)(({ theme }) => ({
@@ -36,16 +40,12 @@ const TitleStack = styled(Stack)({
 
 const SessionTitle = styled(Typography)({
   fontWeight: 600,
+  minWidth: 0,
 })
-
-const SessionId = styled('span')(({ theme }) => ({
-  ...theme.typography.h6,
-  fontWeight: 600,
-  color: theme.palette.text.secondary,
-}))
 
 const ActionsStack = styled(Stack)(({ theme }) => ({
   flexWrap: 'wrap',
+  alignItems: 'center',
   gap: theme.spacing(1),
 }))
 
@@ -58,23 +58,38 @@ export const BonusBuySessionHeaderSection = (
 ) => {
   const { t } = useTranslation()
   const theme = useTheme()
-  const active = isBonusBuyActive(props.record)
+  const readOnly = isBonusBuyReadOnly(props.record)
 
   return (
     <StyledSessionCard elevation={0}>
       <StyledCompactSessionCardContent>
         <HeaderStack direction={{ xs: 'column', lg: 'row' }} spacing={2}>
           <TitleStack direction="row" spacing={1}>
+            <ChatRollSessionIdBadge sessionId={props.record.id} />
             <SessionTitle variant="h6" noWrap>
-              {props.record.name}{' '}
-              <SessionId>#{props.record.id}</SessionId>
+              {props.record.name}
             </SessionTitle>
-            {!active ? (
+            {!readOnly && props.record.status === 'live' ? (
+              <ChatRollLiveStatusChip />
+            ) : null}
+            {readOnly ? (
               <Chip label={t('common.archived')} size="small" sx={mutedChipSx(theme)} />
             ) : null}
           </TitleStack>
           <ActionsStack direction="row">
-            {active ? (
+            {!readOnly && props.record.status === 'off_air' ? (
+              <Button
+                type="button"
+                variant="contained"
+                size="small"
+                color="primary"
+                disabled={props.liveActionPending}
+                onClick={props.onGoLive}
+              >
+                {t('bonusBuy.goLive')}
+              </Button>
+            ) : null}
+            {!readOnly ? (
               <Button
                 type="button"
                 variant="outlined"
@@ -85,7 +100,7 @@ export const BonusBuySessionHeaderSection = (
                 {t('common.archive')}
               </Button>
             ) : null}
-            {active ? (
+            {!readOnly ? (
               <Button
                 type="button"
                 variant="outlined"
@@ -98,7 +113,7 @@ export const BonusBuySessionHeaderSection = (
             ) : null}
           </ActionsStack>
         </HeaderStack>
-        {!active ? (
+        {readOnly ? (
           <ReadOnlyAlert tone="info">
             {t('bonusBuy.sessionArchivedViewOnly')}
           </ReadOnlyAlert>

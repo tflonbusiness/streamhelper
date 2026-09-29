@@ -6,7 +6,7 @@ import { alpha, styled } from '@mui/material/styles'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Controller, useForm } from 'react-hook-form'
 import type { BonusBuyRecord } from '@/api/bonus-buy'
-import { isBonusBuyActive } from '@/api/bonus-buy'
+import { isBonusBuyReadOnly } from '@/api/bonus-buy'
 import { SectionHeader } from '@/components/SectionHeader'
 import {
   StyledSessionCard,
@@ -60,7 +60,7 @@ export const BonusBuySessionAddSlotSection = (
     props.accountId,
     props.bonusBuyId,
   )
-  const active = isBonusBuyActive(props.record)
+  const active = !isBonusBuyReadOnly(props.record)
 
   const {
     control,

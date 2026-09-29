@@ -5,7 +5,7 @@ const jsonHeaders = {
 
 export type BonusBuyArchivedFilter = 'false' | 'true' | 'all'
 
-export type BonusBuyStatus = 'active' | 'archived'
+export type BonusBuyStatus = 'live' | 'off_air' | 'archived'
 
 export type BonusBuySlotStatus = 'pending' | 'playing' | 'archived'
 
@@ -278,6 +278,27 @@ export async function archiveBonusBuy(
   return response.json() as Promise<BonusBuyRecord>
 }
 
+export async function goLiveBonusBuy(
+  accountId: number,
+  bonusBuyId: number,
+): Promise<BonusBuyRecord> {
+  const response = await fetch(
+    `/accounts/${accountId}/bonus-buys/${bonusBuyId}/go-live`,
+    {
+      method: 'POST',
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, i18n.t('errors.api.goLiveBonusBuy')),
+    )
+  }
+
+  return response.json() as Promise<BonusBuyRecord>
+}
+
 export async function fetchBonusBuySlots(
   accountId: number,
   bonusBuyId: number,
@@ -495,8 +516,21 @@ export async function fetchPublicBonusBuyWidget(
   return response.json() as Promise<BonusBuyWidgetView>
 }
 
+export function isBonusBuyArchived(
+  record: Pick<BonusBuyRecord, 'status'>,
+): boolean {
+  return record.status === 'archived'
+}
+
+export function isBonusBuyReadOnly(
+  record: Pick<BonusBuyRecord, 'status'>,
+): boolean {
+  return record.status === 'archived'
+}
+
+/** @deprecated Use {@link isBonusBuyReadOnly} or check `status === 'live'`. */
 export function isBonusBuyActive(record: Pick<BonusBuyRecord, 'status'>): boolean {
-  return record.status === 'active'
+  return record.status !== 'archived'
 }
 
 export function isBonusBuySlotPlaying(slot: Pick<BonusBuySlot, 'status'>): boolean {

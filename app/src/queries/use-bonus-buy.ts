@@ -11,6 +11,7 @@ import {
   createBonusBuySlot,
   upsertBonusBuyWidgetCustomPreset,
   archiveBonusBuy,
+  goLiveBonusBuy,
   fetchBonusBuy,
   fetchBonusBuySlots,
   fetchBonusBuys,
@@ -214,6 +215,40 @@ export function useArchiveBonusBuySlot(
       if (bonusBuyId !== null) {
         invalidateSession(bonusBuyId)
       }
+    },
+  })
+}
+
+export function useGoLiveBonusBuy(accountId: number | undefined) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (bonusBuyId: number) => goLiveBonusBuy(accountId!, bonusBuyId),
+    onSuccess: (_data, bonusBuyId) => {
+      void queryClient.invalidateQueries({ queryKey: bonusBuyKeys.lists() })
+      if (accountId !== undefined) {
+        void queryClient.invalidateQueries({
+          queryKey: bonusBuyKeys.session(accountId, bonusBuyId),
+        })
+      }
+    },
+  })
+}
+
+export function useGoLiveBonusBuySession(
+  accountId: number | undefined,
+  bonusBuyId: number | null,
+) {
+  const queryClient = useQueryClient()
+  const invalidateSession = useInvalidateBonusBuySession(accountId)
+
+  return useMutation({
+    mutationFn: () => goLiveBonusBuy(accountId!, bonusBuyId!),
+    onSuccess: () => {
+      if (bonusBuyId !== null) {
+        invalidateSession(bonusBuyId)
+      }
+      void queryClient.invalidateQueries({ queryKey: bonusBuyKeys.lists() })
     },
   })
 }

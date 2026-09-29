@@ -265,6 +265,20 @@ export const ru = {
     historyDescription: "Сессии bonus buy для этого аккаунта",
     noSessions: "Сессий bonus buy пока нет",
     noArchived: "Нет сессий в архиве",
+    historyCardMeta: "{{author}} · {{created}}",
+    historyCardIndex: "#{{index}}",
+    historyListItemAria:
+      "{{index}}. {{title}}, {{status}}. Открыть сессию.",
+    historyLiveNowTitle: "Сейчас в эфире",
+    historyStartBalanceLabel: "Стартовый баланс",
+    historyLiveHint:
+      "Пока сессия в эфире, OBS-оверлей для неё активен.",
+    historyNoLiveSession: "Нет сессии в эфире",
+    historyNoLiveHint:
+      "Выведите сессию в эфир из списка ниже или создайте новую, чтобы показать виджет bonus buy на стриме.",
+    historyNoOtherSessions: "Других сессий в этом списке нет.",
+    goLive: "В эфир",
+    couldNotGoLive: "Не удалось вывести сессию в эфир.",
     createSession: "Создать сессию",
     createDialogTitle: "Новая сессия bonus buy",
     createDialogDescription: "Укажите валюту, название и стартовый баланс.",
@@ -645,6 +659,7 @@ export const ru = {
       updateChatRoll: "Не удалось обновить chat roll",
       goLiveChatRoll: "Не удалось вывести сессию в эфир",
       goLivePrizeSpin: "Не удалось вывести сессию в эфир",
+      goLiveBonusBuy: "Не удалось вывести сессию в эфир",
       deactivateChatRoll: "Не удалось снять сессию с эфира",
       loadParticipants: "Не удалось загрузить участников",
       removeParticipant: "Не удалось удалить участника",

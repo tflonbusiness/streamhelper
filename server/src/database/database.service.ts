@@ -73,7 +73,7 @@ export type DbAccountMember = {
 
 export type BonusBuyArchivedFilter = 'false' | 'true' | 'all';
 
-export type BonusBuyStatus = 'active' | 'archived';
+export type BonusBuyStatus = 'live' | 'off_air' | 'archived';
 
 export type BonusBuySlotStatus = 'pending' | 'playing' | 'archived';
 
@@ -787,7 +787,21 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
     return archived === 'true'
       ? "AND bb.status = 'archived'"
-      : "AND bb.status = 'active'";
+      : "AND bb.status IN ('live', 'off_air')";
+  }
+
+  private async requireMutableBonusBuy(
+    accountId: number,
+    bonusBuyId: number,
+  ): Promise<DbBonusBuy> {
+    const session = await this.getBonusBuyById(accountId, bonusBuyId);
+    if (!session) {
+      throw new Error('NOT_FOUND');
+    }
+    if (session.status === 'archived') {
+      throw new Error('NOT_FOUND');
+    }
+    return session;
   }
 
   async getBonusBuyById(
@@ -972,6 +986,21 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     try {
       await client.query('BEGIN');
 
+      const liveCheck = await client.query<{ has_live: boolean }>(
+        `
+          SELECT EXISTS (
+            SELECT 1
+            FROM bonus_buy
+            WHERE account_id = $1
+              AND status = 'live'
+          ) AS has_live
+        `,
+        [accountId],
+      );
+      const initialStatus = initialChatRollStatusOnCreate(
+        liveCheck.rows[0]?.has_live ?? false,
+      );
+
       const result = await client.query<{
         id: string | number;
         account_id: string | number;
@@ -985,9 +1014,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       }>(
         `
           INSERT INTO bonus_buy (
-            account_id, created_by_user_id, name, start_balance, currency_code
+            account_id, created_by_user_id, name, start_balance, currency_code, status
           )
-          VALUES ($1, $2, $3, $4, $5)
+          VALUES ($1, $2, $3, $4, $5, $6)
           RETURNING
             id,
             account_id,
@@ -1005,6 +1034,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           trimmedName,
           normalizedBalance,
           normalizedCurrency,
+          initialStatus,
         ],
       );
 
@@ -1066,7 +1096,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         WHERE bb.created_by_user_id = u.id
           AND bb.account_id = $1
           AND bb.id = $2
-          AND bb.status = 'active'
+          AND bb.status IN ('live', 'off_air')
         RETURNING
           bb.id,
           bb.account_id,
@@ -1097,6 +1127,95 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     throw new Error('NOT_FOUND');
   }
 
+  async goLiveBonusBuy(
+    accountId: number,
+    bonusBuyId: number,
+  ): Promise<DbBonusBuy> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const targetResult = await client.query<{ status: string }>(
+        `
+          SELECT status
+          FROM bonus_buy
+          WHERE account_id = $1
+            AND id = $2
+          LIMIT 1
+        `,
+        [accountId, bonusBuyId],
+      );
+      const target = targetResult.rows[0];
+      if (!target || target.status === 'archived') {
+        throw new Error('NOT_FOUND');
+      }
+
+      if (target.status === 'live') {
+        await client.query('COMMIT');
+        const row = await this.getBonusBuyById(accountId, bonusBuyId);
+        if (!row) {
+          throw new Error('NOT_FOUND');
+        }
+        return row;
+      }
+
+      await client.query(
+        `
+          UPDATE bonus_buy
+          SET status = 'off_air'
+          WHERE account_id = $1
+            AND status = 'live'
+        `,
+        [accountId],
+      );
+
+      const promoteResult = await client.query<{
+        id: string | number;
+        account_id: string | number;
+        name: string;
+        start_balance: string;
+        currency_code: string;
+        status: string;
+        created_at: Date;
+        created_by_user_id: string | number;
+        created_by_name: string;
+      }>(
+        `
+          UPDATE bonus_buy bb
+          SET status = 'live'
+          FROM users u
+          WHERE bb.created_by_user_id = u.id
+            AND bb.account_id = $1
+            AND bb.id = $2
+            AND bb.status = 'off_air'
+          RETURNING
+            bb.id,
+            bb.account_id,
+            bb.name,
+            bb.start_balance::text AS start_balance,
+            bb.currency_code,
+            bb.status,
+            bb.created_at,
+            bb.created_by_user_id,
+            u.name AS created_by_name
+        `,
+        [accountId, bonusBuyId],
+      );
+
+      if (promoteResult.rowCount === 0) {
+        throw new Error('NOT_FOUND');
+      }
+
+      await client.query('COMMIT');
+      return this.mapBonusBuyRow(promoteResult.rows[0]);
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
   async updateBonusBuy(
     accountId: number,
     bonusBuyId: number,
@@ -1106,10 +1225,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       currencyCode?: string;
     },
   ): Promise<DbBonusBuy> {
-    const existing = await this.getBonusBuyById(accountId, bonusBuyId);
-    if (!existing) {
-      throw new Error('NOT_FOUND');
-    }
+    const existing = await this.requireMutableBonusBuy(accountId, bonusBuyId);
 
     const nextName =
       updates.name !== undefined ? updates.name.trim() : existing.name;
@@ -1245,10 +1361,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     providerName: string | null,
     purchaseAmount: string,
   ): Promise<DbBonusBuySlot> {
-    const session = await this.getBonusBuyById(accountId, bonusBuyId);
-    if (!session) {
-      throw new Error('NOT_FOUND');
-    }
+    await this.requireMutableBonusBuy(accountId, bonusBuyId);
 
     const trimmedName = name.trim();
     if (trimmedName.length === 0 || trimmedName.length > 200) {
@@ -1335,6 +1448,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           WHERE bb.account_id = $1
             AND s.bonus_buy_id = $2
             AND s.id = $3
+            AND bb.status != 'archived'
         `,
         [accountId, bonusBuyId, slotId],
       );

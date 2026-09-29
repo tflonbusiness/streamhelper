@@ -1,14 +1,14 @@
-import { Chip, Stack } from '@mui/material'
-import { alpha, styled } from '@mui/material/styles'
+import { Stack } from '@mui/material'
+import { styled } from '@mui/material/styles'
 import type { TFunction } from 'i18next'
-import { isBonusBuyActive, type BonusBuyRecord } from '@/api/bonus-buy'
+import { isBonusBuyArchived, type BonusBuyRecord } from '@/api/bonus-buy'
+import { bonusBuyHistoryStatusChip } from '@/components/bonus-buy/bonus-buy-page/bonusBuyHistoryStatusChip'
 import type { AppTableColumn } from '@/components/AppTable'
 import { OpenSessionButton } from '@/components/OpenSessionButton'
 import {
   formatBonusBuyUsd,
 } from '@/components/bonus-buy/bonus-buy-page/bonus-buy-page-utils'
 import { bonusBuySessionRoute } from '@/lib/routes'
-import { colors, toneChipSx } from '@/theme/colors'
 
 const nameColumnSx = {
   minWidth: 0,
@@ -39,32 +39,12 @@ const RecordName = styled('span', {
   color: ended ? theme.palette.text.secondary : theme.palette.text.primary,
 }))
 
-const MutedStatusChip = styled(Chip)(({ theme }) => ({
-  height: 24,
-  fontSize: '0.75rem',
-  fontWeight: 500,
-  bgcolor: alpha(theme.palette.text.primary, 0.06),
-  color: theme.palette.text.secondary,
-  border: '1px solid',
-  borderColor: alpha(theme.palette.text.primary, 0.1),
-}))
-
 const ActionsStack = styled(Stack)({
   justifyContent: 'flex-end',
 })
 
 function recordStatusChip(record: BonusBuyRecord, t: TFunction) {
-  if (isBonusBuyActive(record)) {
-    return (
-      <Chip
-        label={t('table.active')}
-        size="small"
-        sx={toneChipSx(colors.success[400])}
-      />
-    )
-  }
-
-  return <MutedStatusChip label={t('table.archived')} size="small" />
+  return bonusBuyHistoryStatusChip(record, t)
 }
 
 export function buildBonusBuyRecordColumns(
@@ -77,7 +57,7 @@ export function buildBonusBuyRecordColumns(
       width: '100%',
       sx: nameColumnSx,
       render: (record) => (
-        <RecordName ended={!isBonusBuyActive(record)}>{record.name}</RecordName>
+        <RecordName ended={isBonusBuyArchived(record)}>{record.name}</RecordName>
       ),
     },
     {
