@@ -134,6 +134,7 @@ export const ru = {
     deleteSectorAria: "Удалить {{label}}",
     copySlotAria: "Скопировать {{name}}",
     editSlotAria: "Изменить {{name}}",
+    saveSlotAria: "Сохранить {{name}}",
     deleteSlotAria: "Удалить {{name}}",
     setNowPlayingAria: "Отметить «сейчас играет»: {{name}}",
     clearNowPlayingAria: "Сбросить «сейчас играет» для {{name}}",

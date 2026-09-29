@@ -1,4 +1,5 @@
 import type { Theme } from '@mui/material/styles'
+import type { BonusBuySlot } from '@/api/bonus-buy'
 import { MODULE_CATALOG } from '@/lib/modules'
 
 export const bonusBuyModule = MODULE_CATALOG.find(
@@ -29,4 +30,13 @@ export function signedValueColor(
 
 export function parseAverageX(value: string): number {
   return Number.parseFloat(value.replace(/x$/i, ''))
+}
+
+export function buildBonusBuySlotsSnapshot(slots: BonusBuySlot[]): string {
+  return slots
+    .map(
+      (slot) =>
+        `${slot.id}:${slot.name}:${slot.purchaseAmount}:${slot.winAmount ?? ''}:${slot.providerName ?? ''}:${slot.status}`,
+    )
+    .join('|')
 }

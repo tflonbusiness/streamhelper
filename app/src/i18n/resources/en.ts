@@ -134,6 +134,7 @@ export const en = {
     deleteSectorAria: "Delete {{label}}",
     copySlotAria: "Copy {{name}}",
     editSlotAria: "Edit {{name}}",
+    saveSlotAria: "Save {{name}}",
     deleteSlotAria: "Delete {{name}}",
     setNowPlayingAria: "Set {{name}} as now playing",
     clearNowPlayingAria: "Clear now playing for {{name}}",

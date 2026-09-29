@@ -1,6 +1,17 @@
 import type { TFunction } from 'i18next'
 import * as yup from 'yup'
+import i18n from '@/i18n/init-i18n'
 import { isValidIsoCurrencyCode } from '@/lib/iso-currencies'
+
+export function validationErrorMessage(error: unknown): string {
+  if (error instanceof yup.ValidationError) {
+    return error.errors[0] ?? i18n.t('errors.validationFailed')
+  }
+  if (error instanceof Error) {
+    return error.message
+  }
+  return i18n.t('errors.validationFailed')
+}
 
 function currencyCodeField(t: TFunction) {
   return yup
@@ -123,6 +134,34 @@ export function createEditBonusBuySlotFormSchema(t: TFunction) {
 export type EditBonusBuySlotFormValues = yup.InferType<
   ReturnType<typeof createEditBonusBuySlotFormSchema>
 >
+
+export type BonusBuySlotDraft = EditBonusBuySlotFormValues
+
+export function validateEditBonusBuySlotDraft(
+  draft: BonusBuySlotDraft,
+): string | null {
+  try {
+    createEditBonusBuySlotFormSchema(i18n.t.bind(i18n)).validateSync(draft, {
+      abortEarly: true,
+    })
+    return null
+  } catch (error) {
+    return validationErrorMessage(error)
+  }
+}
+
+export function validateEditBonusBuySlotMoneyDraft(
+  draft: Pick<BonusBuySlotDraft, 'purchaseAmount' | 'winAmount'>,
+): string | null {
+  try {
+    createEditBonusBuySlotFormSchema(i18n.t.bind(i18n))
+      .pick(['purchaseAmount', 'winAmount'])
+      .validateSync(draft, { abortEarly: true })
+    return null
+  } catch (error) {
+    return validationErrorMessage(error)
+  }
+}
 
 export function createBonusBuySlotFormSchema(t: TFunction) {
   return createEditBonusBuySlotFormSchema(t).pick([

@@ -8,7 +8,8 @@ import { isBonusBuySlotPlaying } from '@/api/bonus-buy'
 import { AppTable } from '@/components/AppTable'
 import { SectionHeader, sectionTableIcon } from '@/components/SectionHeader'
 import { BonusBuyDeleteSlotDialog } from '@/components/bonus-buy/session/BonusBuyDeleteSlotDialog'
-import { BonusBuyEditSlotDialog } from '@/components/bonus-buy/session/BonusBuyEditSlotDialog'
+import { BonusBuySlotInlineEditProvider } from '@/components/bonus-buy/session/BonusBuySlotInlineEdit'
+import { buildBonusBuySlotsSnapshot } from '@/components/bonus-buy/session/bonus-buy-session-utils'
 import { BonusBuySlotExpandedDetails } from '@/components/bonus-buy/session/BonusBuySlotExpandedDetails'
 import { buildBonusBuySlotColumns } from '@/components/bonus-buy/session/bonusBuySlotColumns'
 import {
@@ -45,7 +46,6 @@ export const BonusBuySessionSlotsSection = (
   const patchSlotMutation = usePatchBonusBuySlot(props.accountId, props.bonusBuyId)
 
   const [isExportingSlots, setIsExportingSlots] = useState(false)
-  const [editSlot, setEditSlot] = useState<BonusBuySlot | null>(null)
   const [deleteSlot, setDeleteSlot] = useState<BonusBuySlot | null>(null)
   const [expandedSlotIds, setExpandedSlotIds] = useState<Set<number>>(new Set())
   const [slotSort, setSlotSort] = useState<BonusBuySlotSortState>(
@@ -90,6 +90,11 @@ export const BonusBuySessionSlotsSection = (
   const sortedSlots = useMemo(
     () => sortBonusBuySlots(props.slots, slotSort),
     [props.slots, slotSort],
+  )
+
+  const slotsSnapshot = useMemo(
+    () => buildBonusBuySlotsSnapshot(props.slots),
+    [props.slots],
   )
 
   function toggleSlotExpanded(slotId: number) {
@@ -156,7 +161,6 @@ export const BonusBuySessionSlotsSection = (
     () =>
       buildBonusBuySlotColumns(t, {
         theme,
-        currencyCode: props.currencyCode,
         widgetPositiveColor: props.widgetPositiveColor,
         widgetNegativeColor: props.widgetNegativeColor,
         sort: slotSort,
@@ -168,14 +172,12 @@ export const BonusBuySessionSlotsSection = (
         onSetPlaying: (slot, playing) => {
           void handleSetPlaying(slot, playing)
         },
-        onEditSlot: setEditSlot,
         onDeleteSlot: setDeleteSlot,
         getSlotNumber: (slot) => slotNumberById.get(slot.id) ?? 0,
       }),
     [
       t,
       theme,
-      props.currencyCode,
       props.widgetPositiveColor,
       props.widgetNegativeColor,
       slotSort,
@@ -207,33 +209,33 @@ export const BonusBuySessionSlotsSection = (
               ) : null
             }
           />
-          <AppTable
-            columns={slotColumns}
-            rows={sortedSlots}
-            getRowKey={(slot) => slot.id}
-            emptyMessage={t('bonusBuy.noBonusesYet')}
-            getRowSx={(slot) =>
-              isBonusBuySlotPlaying(slot) ? playingSlotRowSx(theme) : undefined
-            }
-            expandable={{
-              isExpanded: (slot) => expandedSlotIds.has(slot.id),
-              onToggle: (slot) => toggleSlotExpanded(slot.id),
-              ariaLabel: (slot) =>
-                expandedSlotIds.has(slot.id)
-                  ? t('common.collapseDetailsAria', { title: slot.name })
-                  : t('common.expandDetailsAria', { title: slot.name }),
-              renderDetail: (slot) => <BonusBuySlotExpandedDetails slot={slot} />,
-            }}
-          />
+          <BonusBuySlotInlineEditProvider
+            accountId={props.accountId}
+            bonusBuyId={props.bonusBuyId}
+            currencyCode={props.currencyCode}
+            slotsSnapshot={slotsSnapshot}
+          >
+            <AppTable
+              columns={slotColumns}
+              rows={sortedSlots}
+              getRowKey={(slot) => slot.id}
+              emptyMessage={t('bonusBuy.noBonusesYet')}
+              getRowSx={(slot) =>
+                isBonusBuySlotPlaying(slot) ? playingSlotRowSx(theme) : undefined
+              }
+              expandable={{
+                isExpanded: (slot) => expandedSlotIds.has(slot.id),
+                onToggle: (slot) => toggleSlotExpanded(slot.id),
+                ariaLabel: (slot) =>
+                  expandedSlotIds.has(slot.id)
+                    ? t('common.collapseDetailsAria', { title: slot.name })
+                    : t('common.expandDetailsAria', { title: slot.name }),
+                renderDetail: (slot) => <BonusBuySlotExpandedDetails slot={slot} />,
+              }}
+            />
+          </BonusBuySlotInlineEditProvider>
         </StyledSessionCardContent>
       </StyledSessionCard>
-      <BonusBuyEditSlotDialog
-        accountId={props.accountId}
-        bonusBuyId={props.bonusBuyId}
-        currencyCode={props.currencyCode}
-        slot={editSlot}
-        onClose={() => setEditSlot(null)}
-      />
       <BonusBuyDeleteSlotDialog
         accountId={props.accountId}
         bonusBuyId={props.bonusBuyId}

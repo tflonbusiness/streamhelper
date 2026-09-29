@@ -3,17 +3,19 @@ import AdjustIcon from '@mui/icons-material/Adjust'
 import CircleOutlinedIcon from '@mui/icons-material/CircleOutlined'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import DeleteIcon from '@mui/icons-material/Delete'
-import EditIcon from '@mui/icons-material/Edit'
 import { alpha, type Theme } from '@mui/material/styles'
+import type { ReactNode } from 'react'
 import type { TFunction } from 'i18next'
 import type { BonusBuySlot } from '@/api/bonus-buy'
 import { isBonusBuySlotPlaying } from '@/api/bonus-buy'
 import type { AppTableColumn } from '@/components/AppTable'
-import {
-  formatMultiplierDisplay,
-} from '@/lib/bonus-buy-stats'
-import { formatBonusBuyMoney } from '@/components/bonus-buy/session/bonus-buy-session-utils'
+import { formatMultiplierDisplay } from '@/lib/bonus-buy-stats'
 import { getBonusBuySlotResultColors } from '@/components/bonus-buy/widget/bonus-buy-widget-slot-utils'
+import {
+  BonusBuySlotPurchaseCell,
+  BonusBuySlotSaveButton,
+  BonusBuySlotWinCell,
+} from '@/components/bonus-buy/session/BonusBuySlotInlineEdit'
 import { DEFAULT_AVERAGE_X_COLOR_THEME } from '@/lib/bonus-buy-widget-presentation'
 import { slotActionIconButtonSx } from '@/components/bonus-buy/session/bonusBuySessionStyles'
 import { toneChipSx } from '@/theme/colors'
@@ -24,7 +26,6 @@ import type {
 
 type BuildBonusBuySlotColumnsOptions = {
   theme: Theme
-  currencyCode: string
   widgetPositiveColor?: string | null
   widgetNegativeColor?: string | null
   sort: BonusBuySlotSortState | null
@@ -32,10 +33,23 @@ type BuildBonusBuySlotColumnsOptions = {
   onSortSlotNameHeader: () => void
   onCopySlotName: (slot: BonusBuySlot) => void
   onSetPlaying: (slot: BonusBuySlot, playing: boolean) => void
-  onEditSlot: (slot: BonusBuySlot) => void
   onDeleteSlot: (slot: BonusBuySlot) => void
   getSlotNumber: (slot: BonusBuySlot) => number
 }
+
+const COL_INDEX_WIDTH = 40
+const COL_MONEY_WIDTH = 152
+const COL_MULTIPLIER_WIDTH = 120
+const COL_ACTIONS_WIDTH = 112
+const SLOT_NAME_FIELD_MAX_WIDTH = 160
+const SLOT_NAME_COLUMN_MIN_WIDTH = 168
+
+const metricCellSx = {
+  verticalAlign: 'middle',
+  fontVariantNumeric: 'tabular-nums',
+  whiteSpace: 'nowrap',
+  px: 1.5,
+} as const
 
 const sortableHeaderIconSx = (theme: Theme, active: boolean) => ({
   color: 'inherit',
@@ -69,11 +83,16 @@ function sortableHeader(
   )
 }
 
+function metricCell(content: ReactNode) {
+  return (
+    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>{content}</Box>
+  )
+}
+
 export function buildBonusBuySlotColumns(
   t: TFunction,
   {
     theme,
-    currencyCode,
     widgetPositiveColor,
     widgetNegativeColor,
     sort,
@@ -81,7 +100,6 @@ export function buildBonusBuySlotColumns(
     onSortSlotNameHeader,
     onCopySlotName,
     onSetPlaying,
-    onEditSlot,
     onDeleteSlot,
     getSlotNumber,
   }: BuildBonusBuySlotColumnsOptions,
@@ -99,14 +117,16 @@ export function buildBonusBuySlotColumns(
   return [
     {
       id: 'number',
-      header: '',
-      width: 52,
-      minWidth: 52,
+      header: '#',
+      width: COL_INDEX_WIDTH,
+      minWidth: COL_INDEX_WIDTH,
       align: 'right',
       sx: {
         color: 'text.secondary',
         fontVariantNumeric: 'tabular-nums',
+        pl: 1.5,
         pr: 0.5,
+        verticalAlign: 'middle',
       },
       render: (slot) => getSlotNumber(slot),
     },
@@ -130,51 +150,70 @@ export function buildBonusBuySlotColumns(
       width: '100%',
       sx: {
         fontWeight: 500,
-        minWidth: 0,
+        minWidth: SLOT_NAME_COLUMN_MIN_WIDTH,
+        verticalAlign: 'middle',
+        pr: 1,
       },
       render: (slot) => (
         <Stack
           direction="row"
-          spacing={1}
-          sx={{ alignItems: 'center', minWidth: 0 }}
+          spacing={0.75}
+          sx={{
+            alignItems: 'center',
+            minWidth: 0,
+            maxWidth: SLOT_NAME_FIELD_MAX_WIDTH + 120,
+          }}
         >
           <Box
-            component="span"
             sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
               minWidth: 0,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
+              maxWidth: '100%',
             }}
           >
-            {slot.name}
+            <Box
+              component="span"
+              title={slot.name}
+              sx={{
+                minWidth: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {slot.name}
+            </Box>
+            <IconButton
+              size="small"
+              aria-label={t('table.copySlotAria', { name: slot.name })}
+              onClick={(event) => {
+                event.stopPropagation()
+                onCopySlotName(slot)
+              }}
+              sx={{
+                width: 20,
+                height: 20,
+                flexShrink: 0,
+                ml: 0.5,
+                p: 0.25,
+                color: theme.palette.warning.main,
+                '&:hover': {
+                  color: theme.palette.warning.dark,
+                  bgcolor: alpha(theme.palette.warning.main, 0.12),
+                },
+              }}
+            >
+              <ContentCopyIcon sx={{ fontSize: 12 }} aria-hidden />
+            </IconButton>
           </Box>
-          <IconButton
-            size="small"
-            aria-label={t('table.copySlotAria', { name: slot.name })}
-            onClick={(event) => {
-              event.stopPropagation()
-              onCopySlotName(slot)
-            }}
-            sx={{
-              width: 24,
-              height: 24,
-              flexShrink: 0,
-              color: theme.palette.warning.main,
-              '&:hover': {
-                color: theme.palette.warning.dark,
-                bgcolor: alpha(theme.palette.warning.main, 0.12),
-              },
-            }}
-          >
-            <ContentCopyIcon sx={{ fontSize: 12 }} aria-hidden />
-          </IconButton>
           {isBonusBuySlotPlaying(slot) ? (
             <Chip
               label={t('common.nowPlaying')}
               size="small"
               sx={{
                 flexShrink: 0,
+                height: 22,
                 ...toneChipSx(theme.palette.success.light),
               }}
             />
@@ -191,34 +230,21 @@ export function buildBonusBuySlotColumns(
         onSortField,
         theme,
       ),
-      width: 110,
+      width: COL_MONEY_WIDTH,
+      minWidth: COL_MONEY_WIDTH,
+      align: 'right',
+      sx: metricCellSx,
       render: (slot) =>
-        formatBonusBuyMoney(slot.purchaseAmount, currencyCode),
+        metricCell(<BonusBuySlotPurchaseCell slot={slot} />),
     },
     {
       id: 'win',
       header: sortableHeader(t('common.win'), 'win', sort, onSortField, theme),
-      width: 100,
-      render: (slot) => {
-        const { winColor } = getBonusBuySlotResultColors(
-          slot,
-          slotResultColorTheme,
-        )
-
-        if (slot.winAmount == null) {
-          return (
-            <Box component="span" sx={{ color: winColor }}>
-              {t('common.pending')}
-            </Box>
-          )
-        }
-
-        return (
-          <Box component="span" sx={{ color: winColor }}>
-            {formatBonusBuyMoney(slot.winAmount, currencyCode)}
-          </Box>
-        )
-      },
+      width: COL_MONEY_WIDTH,
+      minWidth: COL_MONEY_WIDTH,
+      align: 'right',
+      sx: metricCellSx,
+      render: (slot) => metricCell(<BonusBuySlotWinCell slot={slot} />),
     },
     {
       id: 'multiplier',
@@ -229,13 +255,16 @@ export function buildBonusBuySlotColumns(
         onSortField,
         theme,
       ),
-      width: 100,
+      width: COL_MULTIPLIER_WIDTH,
+      minWidth: COL_MULTIPLIER_WIDTH,
+      align: 'right',
+      sx: metricCellSx,
       render: (slot) => {
         if (!slot.multiplier) {
-          return (
+          return metricCell(
             <Box component="span" sx={{ color: 'text.secondary' }}>
               {t('common.emDash')}
-            </Box>
+            </Box>,
           )
         }
 
@@ -244,22 +273,30 @@ export function buildBonusBuySlotColumns(
           slotResultColorTheme,
         )
 
-        return (
+        return metricCell(
           <Box component="span" sx={{ color: multiplierColor }}>
             {formatMultiplierDisplay(slot.multiplier)}
-          </Box>
+          </Box>,
         )
       },
     },
     {
       id: 'actions',
       header: '',
-      width: 112,
-      minWidth: 112,
+      width: COL_ACTIONS_WIDTH,
+      minWidth: COL_ACTIONS_WIDTH,
       align: 'right',
-      sx: { px: 1, whiteSpace: 'nowrap' },
+      sx: { pl: 0.5, pr: 1.5, whiteSpace: 'nowrap', verticalAlign: 'middle' },
       render: (slot) => (
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            gap: 0.5,
+          }}
+        >
+          <BonusBuySlotSaveButton slot={slot} />
           <IconButton
             size="small"
             aria-label={
@@ -279,14 +316,6 @@ export function buildBonusBuySlotColumns(
             ) : (
               <CircleOutlinedIcon sx={{ fontSize: 14 }} aria-hidden />
             )}
-          </IconButton>
-          <IconButton
-            size="small"
-            aria-label={t('table.editSlotAria', { name: slot.name })}
-            onClick={() => onEditSlot(slot)}
-            sx={slotActionIconButtonSx('info', theme)}
-          >
-            <EditIcon sx={{ fontSize: 14 }} aria-hidden />
           </IconButton>
           <IconButton
             size="small"
