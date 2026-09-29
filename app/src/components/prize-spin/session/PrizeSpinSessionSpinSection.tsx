@@ -2,7 +2,7 @@ import { Box, Button, Stack, TextField, Typography } from '@mui/material'
 import PersonIcon from '@mui/icons-material/Person'
 import { styled } from '@mui/material/styles'
 import { SectionHeader } from '@/components/SectionHeader'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PrizeSpinSector } from '@/api/prize-spin'
 import {
@@ -15,6 +15,7 @@ import {
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { StatusAlert, type StatusAlertTone } from '@/components/StatusAlert'
 import { useNotification } from '@/context/NotificationContext'
+import { WHEEL_SPIN_COOLDOWN_MS } from '@/lib/prize-spin-wheel-overlay-timing'
 import { validateParticipantNick } from '@/lib/prize-spin-validation'
 import { useSpinPrizeSpin } from '@/queries/use-prize-spin-session'
 
@@ -59,9 +60,32 @@ export const PrizeSpinSessionSpinSection = (
   const { showSuccess, showError } = useNotification()
   const [participantNick, setParticipantNick] = useState('')
   const [spinError, setSpinError] = useState<string | null>(null)
+  const [wheelCooldown, setWheelCooldown] = useState(false)
+  const wheelCooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  )
 
   const spinMutation = useSpinPrizeSpin(props.accountId, props.prizeSpinId)
-  const isSpinning = spinMutation.isPending
+  const isSpinning = spinMutation.isPending || wheelCooldown
+
+  useEffect(() => {
+    return () => {
+      if (wheelCooldownTimerRef.current !== null) {
+        window.clearTimeout(wheelCooldownTimerRef.current)
+      }
+    }
+  }, [])
+
+  const startWheelCooldown = () => {
+    if (wheelCooldownTimerRef.current !== null) {
+      window.clearTimeout(wheelCooldownTimerRef.current)
+    }
+    setWheelCooldown(true)
+    wheelCooldownTimerRef.current = window.setTimeout(() => {
+      setWheelCooldown(false)
+      wheelCooldownTimerRef.current = null
+    }, WHEEL_SPIN_COOLDOWN_MS)
+  }
 
   const totalWinPercent = useMemo(
     () => sumWinPercent(props.sectors),
@@ -126,6 +150,7 @@ export const PrizeSpinSessionSpinSection = (
 
     try {
       const win = await spinMutation.mutateAsync(participantNick.trim())
+      startWheelCooldown()
       setParticipantNick('')
       showSuccess(
         t('prizeSpin.spinResult', {
