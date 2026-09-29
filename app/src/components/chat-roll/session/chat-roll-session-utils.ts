@@ -8,6 +8,7 @@ export function getChatRollWinRowBorderColor(
 ): string {
   switch (win.responseStatus) {
     case 'confirmed':
+    case 'not_required':
       return theme.palette.success.main
     case 'no_response':
       return theme.palette.error.main

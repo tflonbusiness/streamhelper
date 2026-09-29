@@ -14,6 +14,7 @@ export const en = {
     add: "Add",
     adding: "Adding…",
     remove: "Remove",
+    clearAll: "Clear all",
     spin: "Spin",
     spinning: "Spinning…",
     settings: "Settings",
@@ -521,8 +522,7 @@ export const en = {
     excludeWinnerHelp:
       "Rolled winners leave the pool until you remove or clear them.",
     replyInKickChat: "Reply in Kick chat",
-    replyInKickChatHelp:
-      "Bot posts a short confirmation when someone joins with the keyword.",
+    replyInKickChatHelp: "Coming soon.",
     requireWinnerChatResponse: "Require winner chat response",
     requireWinnerChatResponseHelp:
       "Winners must send any chat message within the time window to be marked confirmed.",
@@ -531,6 +531,7 @@ export const en = {
     winnerResponseSecondsOutOfRange: "Enter a value between 10 and 300 seconds.",
     winnerAwaitingResponse: "{{seconds}}s to respond",
     winnerConfirmed: "Confirmed",
+    winnerResponseNotRequired: "Chat response not required",
     winnerNoResponse: "No response",
     kickChatTitle: "Kick chat",
     kickChatPopout: "Open popout",

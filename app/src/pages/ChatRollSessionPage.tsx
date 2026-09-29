@@ -1,4 +1,4 @@
-import { Button, Grid, IconButton, Stack } from '@mui/material'
+import { Button, Grid, IconButton, Stack, Tooltip } from '@mui/material'
 import { styled, useTheme } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import DeleteIcon from '@mui/icons-material/Delete'
@@ -136,7 +136,7 @@ function NameListCard({
               onClick={onClearAll}
               disabled={rows.length === 0 || readOnly}
             >
-              Clear all
+              {t('common.clearAll')}
             </Button>
           }
         />
@@ -161,22 +161,35 @@ function NameListCard({
                 </ListRowName>
                 {renderRowExtra?.(row)}
                 {onCopyRow ? (
-                  <IconButton
-                    size="small"
-                    aria-label={t('table.copyNickAria', { nick: row.displayName })}
-                    onClick={() => onCopyRow(row)}
+                  <Tooltip
+                    title={t('table.copyNickAria', { nick: row.displayName })}
+                    arrow
                   >
-                    <ContentCopyIcon sx={{ fontSize: 16 }} aria-hidden />
-                  </IconButton>
+                    <span style={{ display: 'inline-flex' }}>
+                      <IconButton
+                        size="small"
+                        aria-label={t('table.copyNickAria', {
+                          nick: row.displayName,
+                        })}
+                        onClick={() => onCopyRow(row)}
+                      >
+                        <ContentCopyIcon sx={{ fontSize: 16 }} aria-hidden />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
                 ) : null}
-                <IconButton
-                  size="small"
-                  aria-label={removeAriaLabel}
-                  onClick={() => onRemove(row.id)}
-                  disabled={readOnly}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
+                <Tooltip title={removeAriaLabel} arrow>
+                  <span style={{ display: 'inline-flex' }}>
+                    <IconButton
+                      size="small"
+                      aria-label={removeAriaLabel}
+                      onClick={() => onRemove(row.id)}
+                      disabled={readOnly}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
               </ListRowStack>
             ))}
           </ListRowsStack>
@@ -533,9 +546,6 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
                       ...current,
                       excludeWinnerAfterRoll: checked,
                     }))
-                  }
-                  onReplyInChatChange={(checked) =>
-                    updateDraft((current) => ({ ...current, replyInChat: checked }))
                   }
                   onWinnerResponseEnabledChange={(checked) =>
                     updateDraft((current) => ({

@@ -44,7 +44,6 @@ type ChatRollSessionSettingsLeftPanelProps = {
   onKeywordChange: (value: string) => void
   onCombineModeChange: (mode: WeightCombineMode) => void
   onExcludeWinnerChange: (checked: boolean) => void
-  onReplyInChatChange: (checked: boolean) => void
   onWinnerResponseEnabledChange: (checked: boolean) => void
   onWinnerResponseSecondsChange: (raw: string) => void
   roleMeta: ChatRollRoleMeta[]
@@ -246,14 +245,12 @@ export function ChatRollSessionSettingsLeftPanel(
           <SettingsToggleCard>
             <Switch
               size="small"
-              checked={props.draft.replyInChat}
-              disabled={props.settingsDisabled}
-              onChange={(event) =>
-                props.onReplyInChatChange(event.target.checked)
-              }
+              checked={false}
+              disabled
+              readOnly
             />
             <SettingsToggleCopy>
-              <ExclusionToggleLabel variant="body2">
+              <ExclusionToggleLabel variant="body2" color="text.secondary">
                 {t('chatRoll.replyInKickChat')}
               </ExclusionToggleLabel>
               <Typography variant="caption" color="text.secondary">

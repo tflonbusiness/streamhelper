@@ -14,6 +14,7 @@ export const ru = {
     add: "Добавить",
     adding: "Добавление…",
     remove: "Удалить",
+    clearAll: "Очистить все",
     spin: "Крутить",
     spinning: "Вращение…",
     settings: "Настройки",
@@ -529,8 +530,7 @@ export const ru = {
     excludeWinnerHelp:
       "Победители выходят из пула, пока вы не удалите или не очистите их.",
     replyInKickChat: "Отвечать в чате Kick",
-    replyInKickChatHelp:
-      "Бот отправляет короткое подтверждение, когда кто-то вводит ключевое слово.",
+    replyInKickChatHelp: "Скоро будет доступно.",
     requireWinnerChatResponse: "Требовать ответ победителя в чате",
     requireWinnerChatResponseHelp:
       "Победитель должен написать любое сообщение в чат за отведённое время.",
@@ -539,6 +539,7 @@ export const ru = {
     winnerResponseSecondsOutOfRange: "Укажите значение от 10 до 300 секунд.",
     winnerAwaitingResponse: "{{seconds}} с на ответ",
     winnerConfirmed: "Подтверждён",
+    winnerResponseNotRequired: "Ответ в чате не требуется",
     winnerNoResponse: "Нет ответа",
     kickChatTitle: "Чат Kick",
     kickChatPopout: "Открыть popout",

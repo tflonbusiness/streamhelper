@@ -1,13 +1,35 @@
 import { Chip, Tooltip } from '@mui/material'
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined'
 import HighlightOffOutlinedIcon from '@mui/icons-material/HighlightOffOutlined'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ChatRollWin } from '@/api/chat-roll'
 
 function secondsRemaining(deadlineIso: string): number {
   const ms = new Date(deadlineIso).getTime() - Date.now()
   return Math.max(0, Math.ceil(ms / 1000))
+}
+
+function StatusIconTooltip({
+  title,
+  children,
+}: {
+  title: string
+  children: ReactElement
+}) {
+  return (
+    <Tooltip title={title} arrow describeChild>
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          lineHeight: 0,
+        }}
+      >
+        {children}
+      </span>
+    </Tooltip>
+  )
 }
 
 type ChatRollWinResponseChipProps = {
@@ -34,27 +56,40 @@ export function ChatRollWinResponseChip({ win }: ChatRollWinResponseChipProps) {
   }, [win.responseStatus, win.responseDeadlineAt])
 
   if (win.responseStatus === 'not_required') {
-    return null
-  }
-
-  if (win.responseStatus === 'pending') {
+    const label = t('chatRoll.winnerResponseNotRequired')
     return (
-      <Chip
-        size="small"
-        color="warning"
-        variant="filled"
-        label={t('chatRoll.winnerAwaitingResponse', { seconds: remaining })}
-      />
+      <StatusIconTooltip title={label}>
+        <CheckCircleOutlineOutlinedIcon
+          color="success"
+          fontSize="small"
+          aria-label={label}
+        />
+      </StatusIconTooltip>
     )
   }
 
   if (win.responseStatus === 'confirmed') {
     const label = t('chatRoll.winnerConfirmed')
     return (
-      <Tooltip title={label} arrow>
+      <StatusIconTooltip title={label}>
         <CheckCircleOutlineOutlinedIcon
           color="success"
           fontSize="small"
+          aria-label={label}
+        />
+      </StatusIconTooltip>
+    )
+  }
+
+  if (win.responseStatus === 'pending') {
+    const label = t('chatRoll.winnerAwaitingResponse', { seconds: remaining })
+    return (
+      <Tooltip title={label} arrow>
+        <Chip
+          size="small"
+          color="warning"
+          variant="filled"
+          label={label}
           aria-label={label}
         />
       </Tooltip>
@@ -63,8 +98,8 @@ export function ChatRollWinResponseChip({ win }: ChatRollWinResponseChipProps) {
 
   const label = t('chatRoll.winnerNoResponse')
   return (
-    <Tooltip title={label} arrow>
+    <StatusIconTooltip title={label}>
       <HighlightOffOutlinedIcon color="error" fontSize="small" aria-label={label} />
-    </Tooltip>
+    </StatusIconTooltip>
   )
 }
