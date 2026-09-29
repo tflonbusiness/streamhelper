@@ -16,8 +16,8 @@ import {
   StyledWidgetCell,
 } from '@/components/bonus-buy/widget/bonus-buy-widget-styles'
 import {
+  getBonusBuySlotResultColors,
   getWidgetProviderLabel,
-  isWinPositive,
 } from '@/components/bonus-buy/widget/bonus-buy-widget-slot-utils'
 
 const StyledCrownIcon = styled(BonusBuyWidgetCrownIcon, {
@@ -40,8 +40,11 @@ type BestXValueProps = {
 }
 
 function BestXValue({ slot, theme, currencyCode }: BestXValueProps) {
-  const positive = isWinPositive(slot)
-  const multiplierColor = positive ? theme.positiveColor : theme.negativeColor
+  const { multiplierColor } = getBonusBuySlotResultColors(slot, {
+    positiveColor: theme.positiveColor,
+    negativeColor: theme.negativeColor,
+    textMutedColor: theme.textMutedColor,
+  })
 
   if (slot.winAmount !== null && slot.multiplier !== null) {
     return (
