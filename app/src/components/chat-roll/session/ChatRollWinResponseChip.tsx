@@ -1,4 +1,6 @@
-import { Chip } from '@mui/material'
+import { Chip, Tooltip } from '@mui/material'
+import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined'
+import HighlightOffOutlinedIcon from '@mui/icons-material/HighlightOffOutlined'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ChatRollWin } from '@/api/chat-roll'
@@ -40,29 +42,29 @@ export function ChatRollWinResponseChip({ win }: ChatRollWinResponseChipProps) {
       <Chip
         size="small"
         color="warning"
-        variant="outlined"
+        variant="filled"
         label={t('chatRoll.winnerAwaitingResponse', { seconds: remaining })}
       />
     )
   }
 
   if (win.responseStatus === 'confirmed') {
+    const label = t('chatRoll.winnerConfirmed')
     return (
-      <Chip
-        size="small"
-        color="success"
-        variant="outlined"
-        label={t('chatRoll.winnerConfirmed')}
-      />
+      <Tooltip title={label} arrow>
+        <CheckCircleOutlineOutlinedIcon
+          color="success"
+          fontSize="small"
+          aria-label={label}
+        />
+      </Tooltip>
     )
   }
 
+  const label = t('chatRoll.winnerNoResponse')
   return (
-    <Chip
-      size="small"
-      color="default"
-      variant="outlined"
-      label={t('chatRoll.winnerNoResponse')}
-    />
+    <Tooltip title={label} arrow>
+      <HighlightOffOutlinedIcon color="error" fontSize="small" aria-label={label} />
+    </Tooltip>
   )
 }

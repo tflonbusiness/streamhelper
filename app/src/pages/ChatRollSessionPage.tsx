@@ -1,7 +1,8 @@
 import { Button, Grid, IconButton, Stack } from '@mui/material'
-import { styled } from '@mui/material/styles'
+import { styled, useTheme } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import DeleteIcon from '@mui/icons-material/Delete'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
@@ -41,7 +42,7 @@ import { ChatRollSessionSettingsLeftPanel } from '@/components/chat-roll/session
 import { ChatRollSessionLoadingState } from '@/components/chat-roll/session/ChatRollSessionLoadingState'
 import { ChatRollRollRevealOverlay } from '@/components/chat-roll/session/ChatRollRollRevealOverlay'
 import { ChatRollSessionUnsavedLeaveDialog } from '@/components/chat-roll/session/ChatRollSessionUnsavedLeaveDialog'
-import { chatRollModule } from '@/components/chat-roll/session/chat-roll-session-utils'
+import { chatRollModule, getChatRollWinRowBorderColor } from '@/components/chat-roll/session/chat-roll-session-utils'
 import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { SectionHeader } from '@/components/SectionHeader'
 import { useAuth } from '@/context/AuthContext'
@@ -57,8 +58,9 @@ import {
 import {
   buildChatRollSettingsPatch,
   clampRoleWeightInDraft,
-  clampWinnerResponseSeconds,
+  parseWinnerResponseSecondsDraftInput,
   validateChatRollSettingsDraftKeyword,
+  validateChatRollSettingsDraftWinnerResponseSeconds,
 } from '@/lib/chat-roll-session-settings'
 import {
   useChatRollSession,
@@ -101,6 +103,8 @@ function NameListCard({
   renderRowExtra,
   onClearAll,
   onRemove,
+  onCopyRow,
+  resolveRowBorderColor,
   readOnly,
 }: {
   title: string
@@ -112,8 +116,12 @@ function NameListCard({
   renderRowExtra?: (row: { id: number; displayName: string }) => ReactNode
   onClearAll: () => void
   onRemove: (id: number) => void
+  onCopyRow?: (row: { id: number; displayName: string }) => void
+  resolveRowBorderColor?: (row: { id: number; displayName: string }) => string
   readOnly: boolean
 }) {
+  const { t } = useTranslation()
+
   return (
     <ListCard elevation={0}>
       <ListCardContent>
@@ -140,11 +148,27 @@ function NameListCard({
         ) : (
           <ListRowsStack>
             {rows.map((row) => (
-              <ListRowStack key={row.id}>
+              <ListRowStack
+                key={row.id}
+                sx={
+                  resolveRowBorderColor
+                    ? { borderColor: resolveRowBorderColor(row) }
+                    : undefined
+                }
+              >
                 <ListRowName variant="body2" noWrap>
                   {row.displayName}
                 </ListRowName>
                 {renderRowExtra?.(row)}
+                {onCopyRow ? (
+                  <IconButton
+                    size="small"
+                    aria-label={t('table.copyNickAria', { nick: row.displayName })}
+                    onClick={() => onCopyRow(row)}
+                  >
+                    <ContentCopyIcon sx={{ fontSize: 16 }} aria-hidden />
+                  </IconButton>
+                ) : null}
                 <IconButton
                   size="small"
                   aria-label={removeAriaLabel}
@@ -220,6 +244,7 @@ type ChatRollSessionWorkspaceProps = {
 
 function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
   const { t } = useTranslation()
+  const theme = useTheme()
   const { showError, showSuccess } = useNotification()
   const [keywordError, setKeywordError] = useState<string | null>(null)
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false)
@@ -284,6 +309,13 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
     })
   }
 
+  function handleCopyWinnerNick(displayName: string) {
+    void navigator.clipboard
+      .writeText(displayName)
+      .then(() => showSuccess(t('chatRoll.winnerNickCopied')))
+      .catch(() => showError(t('chatRoll.couldNotCopyWinnerNick')))
+  }
+
   function handleSaveSettings() {
     if (!validateChatRollSettingsDraftKeyword(draft)) {
       setKeywordError(t('chatRoll.keywordRequired'))
@@ -291,6 +323,11 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
     }
 
     setKeywordError(null)
+
+    if (!validateChatRollSettingsDraftWinnerResponseSeconds(draft)) {
+      return
+    }
+
     const body = buildChatRollSettingsPatch(record, draft)
     if (Object.keys(body).length === 0) {
       return
@@ -384,9 +421,14 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
   }
 
   const settingsDisabled = readOnly || settingsSaveMutation.isPending
+  const winnerResponseSecondsError =
+    !validateChatRollSettingsDraftWinnerResponseSeconds(draft)
+      ? t('chatRoll.winnerResponseSecondsOutOfRange')
+      : null
   const canSaveSettings =
     isDirty &&
     validateChatRollSettingsDraftKeyword(draft) &&
+    validateChatRollSettingsDraftWinnerResponseSeconds(draft) &&
     !settingsSaveMutation.isPending &&
     !readOnly
 
@@ -479,6 +521,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
                 <ChatRollSessionSettingsLeftPanel
                   draft={draft}
                   keywordError={keywordError}
+                  winnerResponseSecondsError={winnerResponseSecondsError}
                   settingsDisabled={settingsDisabled}
                   onKeywordChange={(value) => {
                     updateDraft((current) => ({ ...current, keyword: value }))
@@ -504,10 +547,11 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
                       winnerResponseEnabled: checked,
                     }))
                   }
-                  onWinnerResponseSecondsChange={(seconds) =>
+                  onWinnerResponseSecondsChange={(raw) =>
                     updateDraft((current) => ({
                       ...current,
-                      winnerResponseSeconds: clampWinnerResponseSeconds(seconds),
+                      winnerResponseSeconds:
+                        parseWinnerResponseSecondsDraftInput(raw),
                     }))
                   }
                   roleMeta={roleMeta}
@@ -571,6 +615,11 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
               return win ? <ChatRollWinResponseChip win={win} /> : null
             }}
             readOnly={readOnly}
+            onCopyRow={(row) => handleCopyWinnerNick(row.displayName)}
+            resolveRowBorderColor={(row) => {
+              const win = wins.find((entry) => entry.id === row.id)
+              return win ? getChatRollWinRowBorderColor(win, theme) : theme.palette.divider
+            }}
             onClearAll={() =>
               deleteAllWinsMutation.mutate(undefined, {
                 onError: () => showError(t('chatRoll.couldNotClearWinners')),

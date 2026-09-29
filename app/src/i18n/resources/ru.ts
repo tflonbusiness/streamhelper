@@ -481,6 +481,8 @@ export const ru = {
     winnersTitle: "Победители",
     noWinners: "Победителей пока нет.",
     removeWinner: "Удалить победителя",
+    winnerNickCopied: "Ник победителя скопирован.",
+    couldNotCopyWinnerNick: "Не удалось скопировать ник победителя.",
     couldNotClearWinners: "Не удалось очистить список победителей.",
     couldNotRemoveWinner: "Не удалось удалить победителя.",
     widgetSettingsSaved: "Настройки виджета сохранены.",
@@ -531,7 +533,8 @@ export const ru = {
     requireWinnerChatResponseHelp:
       "Победитель должен написать любое сообщение в чат за отведённое время.",
     winnerResponseSecondsLabel: "Время на ответ (сек.)",
-    winnerResponseSecondsHelp: "От 5 до 300 секунд.",
+    winnerResponseSecondsHelp: "От 10 до 300 секунд.",
+    winnerResponseSecondsOutOfRange: "Укажите значение от 10 до 300 секунд.",
     winnerAwaitingResponse: "{{seconds}} с на ответ",
     winnerConfirmed: "Подтверждён",
     winnerNoResponse: "Нет ответа",

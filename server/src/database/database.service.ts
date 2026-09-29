@@ -3337,7 +3337,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       isAcceptingParticipants: row.is_accepting_participants,
       replyInChat: row.reply_in_chat,
       winnerResponseEnabled: row.winner_response_enabled ?? true,
-      winnerResponseSeconds: toInt(row.winner_response_seconds ?? 60),
+      winnerResponseSeconds: toInt(row.winner_response_seconds ?? 25),
       roleSettings,
       createdAt: row.created_at,
       createdByUserId: toInt(row.created_by_user_id),
@@ -3552,7 +3552,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     const excludeWinnerAfterRoll = true;
     const replyInChat = false;
     const winnerResponseEnabled = true;
-    const winnerResponseSeconds = 60;
+    const winnerResponseSeconds = 25;
     const roleSettings = DEFAULT_CHAT_ROLL_ROLE_SETTINGS;
 
     const client = await this.pool.connect();
@@ -3824,7 +3824,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       input.winnerResponseSeconds ?? existing.winnerResponseSeconds;
     if (
       !Number.isFinite(nextWinnerResponseSeconds) ||
-      nextWinnerResponseSeconds < 5 ||
+      nextWinnerResponseSeconds < 10 ||
       nextWinnerResponseSeconds > 300
     ) {
       throw new Error('INVALID_WINNER_RESPONSE_SECONDS');

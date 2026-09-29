@@ -12,7 +12,7 @@ export type ChatRollSessionSettingsDraft = {
   excludeWinnerAfterRoll: boolean
   replyInChat: boolean
   winnerResponseEnabled: boolean
-  winnerResponseSeconds: number
+  winnerResponseSeconds: number | ''
   roleSettings: ChatRollRoleSettings
 }
 
@@ -79,8 +79,44 @@ export function validateChatRollSettingsDraftKeyword(
   return draft.keyword.trim().length > 0
 }
 
-export function clampWinnerResponseSeconds(seconds: number): number {
-  return Math.min(300, Math.max(5, seconds))
+export const WINNER_RESPONSE_SECONDS_MIN = 10
+export const WINNER_RESPONSE_SECONDS_MAX = 300
+export const WINNER_RESPONSE_SECONDS_DEFAULT = 25
+
+export function isWinnerResponseSecondsInRange(seconds: number): boolean {
+  return (
+    Number.isFinite(seconds) &&
+    seconds >= WINNER_RESPONSE_SECONDS_MIN &&
+    seconds <= WINNER_RESPONSE_SECONDS_MAX
+  )
+}
+
+export function parseWinnerResponseSecondsDraftInput(
+  raw: string,
+): number | '' {
+  if (raw === '') {
+    return ''
+  }
+  const parsed = Number.parseInt(raw, 10)
+  if (!Number.isFinite(parsed)) {
+    return ''
+  }
+  return parsed
+}
+
+export function isWinnerResponseSecondsDraftValueValid(
+  value: number | '',
+): boolean {
+  return typeof value === 'number' && isWinnerResponseSecondsInRange(value)
+}
+
+export function validateChatRollSettingsDraftWinnerResponseSeconds(
+  draft: ChatRollSessionSettingsDraft,
+): boolean {
+  if (!draft.winnerResponseEnabled) {
+    return true
+  }
+  return isWinnerResponseSecondsDraftValueValid(draft.winnerResponseSeconds)
 }
 
 export function buildChatRollSettingsPatch(
@@ -105,10 +141,12 @@ export function buildChatRollSettingsPatch(
   if (draft.winnerResponseEnabled !== record.winnerResponseEnabled) {
     body.winner_response_enabled = draft.winnerResponseEnabled
   }
-  if (draft.winnerResponseSeconds !== record.winnerResponseSeconds) {
-    body.winner_response_seconds = clampWinnerResponseSeconds(
-      draft.winnerResponseSeconds,
-    )
+  if (
+    draft.winnerResponseSeconds !== record.winnerResponseSeconds &&
+    typeof draft.winnerResponseSeconds === 'number' &&
+    isWinnerResponseSecondsInRange(draft.winnerResponseSeconds)
+  ) {
+    body.winner_response_seconds = draft.winnerResponseSeconds
   }
 
   const roleSettingsChanged = (

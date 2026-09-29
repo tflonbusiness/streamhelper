@@ -473,6 +473,8 @@ export const en = {
     winnersTitle: "Winners",
     noWinners: "No winners yet.",
     removeWinner: "Remove winner",
+    winnerNickCopied: "Winner nick copied.",
+    couldNotCopyWinnerNick: "Could not copy winner nick.",
     couldNotClearWinners: "Could not clear winners.",
     couldNotRemoveWinner: "Could not remove winner.",
     widgetSettingsSaved: "Widget settings saved.",
@@ -523,7 +525,8 @@ export const en = {
     requireWinnerChatResponseHelp:
       "Winners must send any chat message within the time window to be marked confirmed.",
     winnerResponseSecondsLabel: "Response time (seconds)",
-    winnerResponseSecondsHelp: "Between 5 and 300 seconds.",
+    winnerResponseSecondsHelp: "Between 10 and 300 seconds.",
+    winnerResponseSecondsOutOfRange: "Enter a value between 10 and 300 seconds.",
     winnerAwaitingResponse: "{{seconds}}s to respond",
     winnerConfirmed: "Confirmed",
     winnerNoResponse: "No response",
