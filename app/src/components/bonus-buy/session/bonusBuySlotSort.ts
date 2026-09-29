@@ -1,11 +1,22 @@
 import type { BonusBuySlot } from '@/api/bonus-buy'
 
-export type BonusBuySlotSortField = 'purchase' | 'win' | 'multiplier'
+export type BonusBuySlotSortField =
+  | 'createdAt'
+  | 'slotName'
+  | 'purchase'
+  | 'win'
+  | 'multiplier'
+
 export type BonusBuySlotSortDirection = 'asc' | 'desc'
 
 export type BonusBuySlotSortState = {
   field: BonusBuySlotSortField
   direction: BonusBuySlotSortDirection
+}
+
+export const DEFAULT_BONUS_BUY_SLOT_SORT: BonusBuySlotSortState = {
+  field: 'createdAt',
+  direction: 'asc',
 }
 
 function parseNumericField(value: string | null): number | null {
@@ -36,6 +47,31 @@ function compareNullableNumbers(
   return direction === 'asc' ? diff : -diff
 }
 
+export function buildBonusBuySlotNumberMap(
+  slots: BonusBuySlot[],
+): Map<number, number> {
+  const ordered = [...slots].sort((left, right) => {
+    const byCreatedAt = left.createdAt.localeCompare(right.createdAt)
+    return byCreatedAt !== 0 ? byCreatedAt : left.id - right.id
+  })
+
+  const numbers = new Map<number, number>()
+  ordered.forEach((slot, index) => {
+    numbers.set(slot.id, index + 1)
+  })
+
+  return numbers
+}
+
+function compareStringField(
+  left: string,
+  right: string,
+  direction: BonusBuySlotSortDirection,
+): number {
+  const cmp = left.localeCompare(right, undefined, { sensitivity: 'base' })
+  return direction === 'asc' ? cmp : -cmp
+}
+
 function compareSlots(
   left: BonusBuySlot,
   right: BonusBuySlot,
@@ -45,6 +81,12 @@ function compareSlots(
   let cmp = 0
 
   switch (field) {
+    case 'createdAt':
+      cmp = compareStringField(left.createdAt, right.createdAt, direction)
+      break
+    case 'slotName':
+      cmp = compareStringField(left.name, right.name, direction)
+      break
     case 'purchase':
       cmp = compareNullableNumbers(
         parseNumericField(left.purchaseAmount),

@@ -29,10 +29,12 @@ type BuildBonusBuySlotColumnsOptions = {
   widgetNegativeColor?: string | null
   sort: BonusBuySlotSortState | null
   onSortField: (field: BonusBuySlotSortField) => void
+  onSortSlotNameHeader: () => void
   onCopySlotName: (slot: BonusBuySlot) => void
   onSetPlaying: (slot: BonusBuySlot, playing: boolean) => void
   onEditSlot: (slot: BonusBuySlot) => void
   onDeleteSlot: (slot: BonusBuySlot) => void
+  getSlotNumber: (slot: BonusBuySlot) => number
 }
 
 const sortableHeaderIconSx = (theme: Theme, active: boolean) => ({
@@ -76,10 +78,12 @@ export function buildBonusBuySlotColumns(
     widgetNegativeColor,
     sort,
     onSortField,
+    onSortSlotNameHeader,
     onCopySlotName,
     onSetPlaying,
     onEditSlot,
     onDeleteSlot,
+    getSlotNumber,
   }: BuildBonusBuySlotColumnsOptions,
 ): AppTableColumn<BonusBuySlot>[] {
   const slotResultColorTheme = {
@@ -94,8 +98,35 @@ export function buildBonusBuySlotColumns(
 
   return [
     {
+      id: 'number',
+      header: '',
+      width: 52,
+      minWidth: 52,
+      align: 'right',
+      sx: {
+        color: 'text.secondary',
+        fontVariantNumeric: 'tabular-nums',
+        pr: 0.5,
+      },
+      render: (slot) => getSlotNumber(slot),
+    },
+    {
       id: 'slotName',
-      header: t('table.slotName'),
+      header: (() => {
+        const active =
+          sort?.field === 'createdAt' || sort?.field === 'slotName'
+
+        return (
+          <TableSortLabel
+            active={active}
+            direction={active ? sort.direction : 'asc'}
+            onClick={onSortSlotNameHeader}
+            sx={sortableHeaderIconSx(theme, active)}
+          >
+            {t('table.slotName')}
+          </TableSortLabel>
+        )
+      })(),
       width: '100%',
       sx: {
         fontWeight: 500,
