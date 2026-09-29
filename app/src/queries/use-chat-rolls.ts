@@ -9,6 +9,7 @@ import {
   createChatRoll,
   fetchChatRollWidget,
   fetchChatRolls,
+  goLiveChatRoll,
   patchChatRollWidget,
   type PatchChatRollWidgetInput,
 } from '@/api/chat-roll'
@@ -55,6 +56,22 @@ export function useArchiveChatRoll(accountId: number | undefined) {
     mutationFn: (chatRollId: number) => archiveChatRoll(accountId!, chatRollId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: chatRollKeys.lists() })
+    },
+  })
+}
+
+export function useGoLiveChatRoll(accountId: number | undefined) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (chatRollId: number) => goLiveChatRoll(accountId!, chatRollId),
+    onSuccess: (_data, chatRollId) => {
+      void queryClient.invalidateQueries({ queryKey: chatRollKeys.lists() })
+      if (accountId !== undefined) {
+        void queryClient.invalidateQueries({
+          queryKey: chatRollKeys.session(accountId, chatRollId),
+        })
+      }
     },
   })
 }

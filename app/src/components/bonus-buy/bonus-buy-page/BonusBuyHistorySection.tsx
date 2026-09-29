@@ -123,8 +123,8 @@ export const BonusBuyHistorySection = ({
       <StyledCard elevation={0}>
         <StyledCardContent>
           <SectionHeader
-            title={t('bonusBuy.historyTitle')}
-            description={t('bonusBuy.historyDescription')}
+            title={t('common.sessionsTitle')}
+            description={t('common.sessionsSectionDescription')}
             icon={sectionTableIcon}
             iconVariant="secondary"
             action={

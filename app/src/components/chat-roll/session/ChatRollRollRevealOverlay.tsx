@@ -132,7 +132,7 @@ export function ChatRollRollRevealOverlay({
       return (
         <ResponseBanner tone="success">
           <CheckIcon fontSize="small" aria-hidden />
-          <Typography variant="body2" component="span" fontWeight={600}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
             {t('chatRoll.rollRevealConfirmedInChat')}
           </Typography>
         </ResponseBanner>
@@ -142,7 +142,7 @@ export function ChatRollRollRevealOverlay({
     if (responseStatus === 'no_response') {
       return (
         <ResponseBanner tone="muted">
-          <Typography variant="body2" component="span">
+          <Typography variant="body2">
             {t('chatRoll.rollRevealNoChatResponse')}
           </Typography>
         </ResponseBanner>

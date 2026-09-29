@@ -25,7 +25,7 @@ export const PrizeSpinSessionErrorState = (
       <ModuleSessionPageHeader module={prizeSpinModule} />
       <StatusAlert tone="error">{props.message}</StatusAlert>
       <Button component={Link} to={PRIZE_SPIN_ROUTE} variant="outlined">
-        {t('common.backToHistory')}
+        {t('common.backToSessions')}
       </Button>
     </PageStack>
   )

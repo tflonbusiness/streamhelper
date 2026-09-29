@@ -141,8 +141,8 @@ export const PrizeSpinHistorySection = ({
         <StyledCardContent>
           <StyledContentStack>
             <SectionHeader
-              title={t('prizeSpin.historyTitle')}
-              description={t('prizeSpin.historyDescriptionPast')}
+              title={t('common.sessionsTitle')}
+              description={t('common.sessionsSectionDescription')}
               icon={sectionTableIcon}
               iconVariant="purple"
               action={

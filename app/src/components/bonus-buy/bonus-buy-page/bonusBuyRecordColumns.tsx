@@ -1,10 +1,9 @@
-import { Chip, IconButton, type IconButtonProps, Stack } from '@mui/material'
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
+import { Chip, Stack } from '@mui/material'
 import { alpha, styled } from '@mui/material/styles'
 import type { TFunction } from 'i18next'
-import { Link, type LinkProps } from 'react-router-dom'
 import { isBonusBuyActive, type BonusBuyRecord } from '@/api/bonus-buy'
 import type { AppTableColumn } from '@/components/AppTable'
+import { OpenSessionButton } from '@/components/OpenSessionButton'
 import {
   formatBonusBuyUsd,
 } from '@/components/bonus-buy/bonus-buy-page/bonus-buy-page-utils'
@@ -54,21 +53,6 @@ const ActionsStack = styled(Stack)({
   justifyContent: 'flex-end',
 })
 
-const StyledOpenIconButton = styled(IconButton)<IconButtonProps & LinkProps>(
-  ({ theme }) => ({
-  backgroundColor: colors.brand[500],
-  color: colors.neutral[950],
-  borderRadius: theme.shape.borderRadius,
-  width: 28,
-  height: 28,
-  '&:hover': {
-    backgroundColor: colors.brand[400],
-  },
-}),
-)
-
-const actionIconSx = { fontSize: 14 } as const
-
 function recordStatusChip(record: BonusBuyRecord, t: TFunction) {
   if (isBonusBuyActive(record)) {
     return (
@@ -117,19 +101,15 @@ export function buildBonusBuyRecordColumns(
       id: 'action',
       header: '',
       align: 'right',
-      width: 56,
-      minWidth: 56,
+      width: 168,
+      minWidth: 168,
       sx: actionColumnSx,
       render: (record) => (
         <ActionsStack direction="row" spacing={0.5}>
-          <StyledOpenIconButton
-            component={Link}
+          <OpenSessionButton
             to={bonusBuySessionRoute(record.id)}
             aria-label={t('table.openNameAria', { name: record.name })}
-            size="small"
-          >
-            <ArrowForwardIcon sx={actionIconSx} aria-hidden />
-          </StyledOpenIconButton>
+          />
         </ActionsStack>
       ),
     },

@@ -1,12 +1,11 @@
-import { Chip, IconButton, type IconButtonProps, Stack, Tooltip } from '@mui/material'
+import { Chip, IconButton, Stack, Tooltip } from '@mui/material'
 import ArchiveIcon from '@mui/icons-material/Archive'
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import { styled } from '@mui/material/styles'
 import type { TFunction } from 'i18next'
-import { Link, type LinkProps } from 'react-router-dom'
 import { isPrizeSpinArchived, type PrizeSpinRecord } from '@/api/prize-spin'
 import type { AppTableColumn } from '@/components/AppTable'
+import { OpenSessionButton } from '@/components/OpenSessionButton'
 import { prizeSpinSessionRoute } from '@/lib/routes'
 import { colors, toneChipSx } from '@/theme/colors'
 
@@ -66,19 +65,6 @@ const StyledActionIconButton = styled(IconButton)(({ theme }) => {
   }
 })
 
-const StyledOpenIconButton = styled(IconButton)<IconButtonProps & LinkProps>(
-  ({ theme }) => ({
-    backgroundColor: colors.brand[500],
-    color: colors.neutral[950],
-    borderRadius: theme.shape.borderRadius,
-    width: 28,
-    height: 28,
-    '&:hover': {
-      backgroundColor: colors.brand[400],
-    },
-  }),
-)
-
 const actionIconSx = { fontSize: 14 } as const
 
 function recordStatusChip(record: PrizeSpinRecord, t: TFunction) {
@@ -124,8 +110,8 @@ export function buildPrizeSpinRecordColumns(
       id: 'action',
       header: '',
       align: 'right',
-      width: 120,
-      minWidth: 120,
+      width: 280,
+      minWidth: 280,
       sx: actionColumnSx,
       render: (record) => {
         const readOnly = isPrizeSpinArchived(record)
@@ -155,16 +141,10 @@ export function buildPrizeSpinRecordColumns(
                 <ContentCopyIcon sx={actionIconSx} aria-hidden />
               </StyledActionIconButton>
             </Tooltip>
-            <Tooltip title={t('table.open')}>
-              <StyledOpenIconButton
-                component={Link}
-                to={prizeSpinSessionRoute(record.id)}
-                aria-label={t('table.openAria', { title: record.title })}
-                size="small"
-              >
-                <ArrowForwardIcon sx={actionIconSx} aria-hidden />
-              </StyledOpenIconButton>
-            </Tooltip>
+            <OpenSessionButton
+              to={prizeSpinSessionRoute(record.id)}
+              aria-label={t('table.openAria', { title: record.title })}
+            />
           </ActionsStack>
         )
       },

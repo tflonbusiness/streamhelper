@@ -100,7 +100,7 @@ export const ChatRollSessionHeaderSection = (
                 type="button"
                 variant="contained"
                 size="small"
-                color="warning"
+                color="primary"
                 disabled={props.liveActionPending}
                 onClick={props.onGoLive}
               >

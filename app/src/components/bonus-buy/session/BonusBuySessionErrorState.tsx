@@ -25,7 +25,7 @@ export const BonusBuySessionErrorState = (
       <ModuleSessionPageHeader module={bonusBuyModule} />
       <StatusAlert tone="error">{props.message}</StatusAlert>
       <Button component={Link} to={BONUS_BUY_ROUTE} variant="outlined">
-        {t('common.backToHistory')}
+        {t('common.backToSessions')}
       </Button>
     </PageStack>
   )

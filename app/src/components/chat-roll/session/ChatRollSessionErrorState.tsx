@@ -33,7 +33,7 @@ export const ChatRollSessionErrorState = ({
         {message}
       </Typography>
       <Button component={Link} to={CHAT_ROLL_ROUTE} variant="outlined">
-        {t('chatRoll.backToList')}
+        {t('common.backToSessions')}
       </Button>
     </PageStack>
   )
