@@ -13,6 +13,7 @@ import TuneIcon from '@mui/icons-material/Tune'
 import { useTranslation } from 'react-i18next'
 import type { ChatRollRoleId, WeightCombineMode } from '@/lib/chat-roll'
 import type { ChatRollSessionSettingsDraft } from '@/lib/chat-roll-session-settings'
+import { getChatRollRoleWeightFieldError } from '@/lib/chat-roll-session-settings'
 import {
   ExclusionToggleLabel,
   KeywordField,
@@ -88,6 +89,11 @@ export function ChatRollSessionSettingsLeftPanel(
         <Stack spacing={1}>
           {props.roleMeta.map((role) => {
             const setting = props.draft.roleSettings[role.id]
+            const weightError = getChatRollRoleWeightFieldError(
+              props.draft,
+              role.id,
+              t,
+            )
             return (
               <RoleRowStack key={role.id} enabled={setting.enabled}>
                 <Switch
@@ -107,13 +113,13 @@ export function ChatRollSessionSettingsLeftPanel(
                   label="×"
                   value={setting.weight}
                   disabled={!setting.enabled || props.settingsDisabled}
+                  error={Boolean(weightError)}
+                  helperText={weightError ?? undefined}
                   onChange={(event) =>
                     props.onRoleWeightChange(role.id, event.target.value)
                   }
                   slotProps={{
                     htmlInput: {
-                      min: 0.1,
-                      max: 100,
                       step: 0.1,
                     },
                   }}

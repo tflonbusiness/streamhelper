@@ -10,13 +10,13 @@ import {
   StyledSessionCard,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { StatusAlert } from '@/components/StatusAlert'
+import { ChatRollSessionIdBadge } from '@/components/chat-roll/session/ChatRollSessionIdBadge'
 import { mutedChipSx } from '@/theme/colors'
 
 type ChatRollSessionHeaderSectionProps = {
   record: ChatRollRecord
   onOpenArchiveDialog: () => void
   onGoLive?: () => void
-  onOffAir?: () => void
   liveActionPending?: boolean
   primaryActions?: ReactNode
 }
@@ -39,13 +39,8 @@ const TitleStack = styled(Stack)({
 
 const SessionTitle = styled(Typography)({
   fontWeight: 600,
+  minWidth: 0,
 })
-
-const SessionId = styled('span')(({ theme }) => ({
-  ...theme.typography.h6,
-  fontWeight: 600,
-  color: theme.palette.text.secondary,
-}))
 
 const ActionsStack = styled(Stack)(({ theme }) => ({
   flexWrap: 'wrap',
@@ -69,9 +64,9 @@ export const ChatRollSessionHeaderSection = (
       <StyledCompactSessionCardContent>
         <HeaderStack direction={{ xs: 'column', lg: 'row' }} spacing={2}>
           <TitleStack direction="row" spacing={1}>
+            <ChatRollSessionIdBadge sessionId={props.record.id} />
             <SessionTitle variant="h6" noWrap>
-              {props.record.title}{' '}
-              <SessionId>#{props.record.id}</SessionId>
+              {props.record.title}
             </SessionTitle>
             {!readOnly && props.record.status === 'live' ? (
               <Chip
@@ -105,17 +100,6 @@ export const ChatRollSessionHeaderSection = (
                 onClick={props.onGoLive}
               >
                 {t('chatRoll.goLive')}
-              </Button>
-            ) : null}
-            {!readOnly && props.record.status === 'live' ? (
-              <Button
-                type="button"
-                variant="outlined"
-                size="small"
-                disabled={props.liveActionPending}
-                onClick={props.onOffAir}
-              >
-                {t('chatRoll.offAir')}
               </Button>
             ) : null}
             {!readOnly ? (

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import type { ChatRollRecord } from '@/api/chat-roll'
 import { chatRollHistoryStatusChip } from '@/components/chat-roll/chat-roll-page/chatRollHistoryStatusChip'
+import { ChatRollSessionIdBadge } from '@/components/chat-roll/session/ChatRollSessionIdBadge'
 import { OpenSessionButton } from '@/components/OpenSessionButton'
 import { formatPrizeSpinDateTime } from '@/components/prize-spin/prize-spin-utils'
 import { chatRollSessionRoute } from '@/lib/routes'
@@ -91,26 +92,6 @@ const StyledHeroTitle = styled(Typography)({
   whiteSpace: 'nowrap',
 })
 
-const SessionIdBadge = styled('span')(({ theme }) => ({
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  minWidth: 28,
-  height: 24,
-  paddingLeft: theme.spacing(0.75),
-  paddingRight: theme.spacing(0.75),
-  borderRadius: theme.shape.borderRadius,
-  fontSize: '0.75rem',
-  fontWeight: 600,
-  fontVariantNumeric: 'tabular-nums',
-  lineHeight: 1,
-  color: theme.palette.text.secondary,
-  backgroundColor: alpha(theme.palette.text.primary, 0.06),
-  border: '1px solid',
-  borderColor: alpha(theme.palette.text.primary, 0.1),
-  flexShrink: 0,
-}))
-
 const StyledKeywordRow = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
@@ -177,9 +158,6 @@ export function ChatRollHistoryLiveHero({
   loading = false,
 }: ChatRollHistoryLiveHeroProps) {
   const { t } = useTranslation()
-  const sessionIdLabel = record
-    ? t('chatRoll.historyCardIndex', { index: record.id })
-    : ''
 
   return (
     <StyledHeroSection>
@@ -192,7 +170,7 @@ export function ChatRollHistoryLiveHero({
         <StyledHeroCard>
           <StyledTitleRow>
             <StyledTitleMain>
-              <SessionIdBadge aria-hidden>{sessionIdLabel}</SessionIdBadge>
+              <ChatRollSessionIdBadge sessionId={record.id} aria-hidden />
               <StyledTitleLink
                 to={chatRollSessionRoute(record.id)}
                 aria-label={t('table.openAria', { title: record.title })}

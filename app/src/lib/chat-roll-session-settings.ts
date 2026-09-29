@@ -1,10 +1,20 @@
 import type {
   ChatRollRecord,
-  ChatRollRoleSettings,
   PatchChatRollInput,
 } from '@/api/chat-roll'
 import type { ChatRollRoleId } from '@/lib/chat-roll'
-import { clampRoleWeight } from '@/lib/chat-roll'
+import type { ChatRollRoleSettings } from '@/api/chat-roll'
+import type { TFunction } from 'i18next'
+
+export type ChatRollRoleSettingDraft = {
+  enabled: boolean
+  weight: number | ''
+}
+
+export type ChatRollRoleSettingsDraft = Record<
+  ChatRollRoleId,
+  ChatRollRoleSettingDraft
+>
 
 export type ChatRollSessionSettingsDraft = {
   keyword: string
@@ -13,16 +23,30 @@ export type ChatRollSessionSettingsDraft = {
   replyInChat: boolean
   winnerResponseEnabled: boolean
   winnerResponseSeconds: number | ''
-  roleSettings: ChatRollRoleSettings
+  roleSettings: ChatRollRoleSettingsDraft
 }
 
-function cloneRoleSettings(
+function cloneRoleSettingsFromRecord(
   roleSettings: ChatRollRoleSettings,
+): ChatRollRoleSettingsDraft {
+  return Object.fromEntries(
+    Object.entries(roleSettings).map(([roleId, setting]) => [
+      roleId,
+      { enabled: setting.enabled, weight: setting.weight },
+    ]),
+  ) as ChatRollRoleSettingsDraft
+}
+
+function serializeRoleSettingsDraft(
+  roleSettings: ChatRollRoleSettingsDraft,
 ): ChatRollRoleSettings {
   return Object.fromEntries(
     Object.entries(roleSettings).map(([roleId, setting]) => [
       roleId,
-      { ...setting },
+      {
+        enabled: setting.enabled,
+        weight: typeof setting.weight === 'number' ? setting.weight : 0.1,
+      },
     ]),
   ) as ChatRollRoleSettings
 }
@@ -37,7 +61,7 @@ export function chatRollSettingsDraftFromRecord(
     replyInChat: record.replyInChat,
     winnerResponseEnabled: record.winnerResponseEnabled,
     winnerResponseSeconds: record.winnerResponseSeconds,
-    roleSettings: cloneRoleSettings(record.roleSettings),
+    roleSettings: cloneRoleSettingsFromRecord(record.roleSettings),
   }
 }
 
@@ -110,6 +134,65 @@ export function isWinnerResponseSecondsDraftValueValid(
   return typeof value === 'number' && isWinnerResponseSecondsInRange(value)
 }
 
+export const ROLE_WEIGHT_MIN = 0.1
+export const ROLE_WEIGHT_MAX = 100
+
+export function isRoleWeightInRange(weight: number): boolean {
+  return (
+    Number.isFinite(weight) &&
+    weight >= ROLE_WEIGHT_MIN &&
+    weight <= ROLE_WEIGHT_MAX
+  )
+}
+
+export function parseRoleWeightDraftInput(raw: string): number | '' {
+  if (raw === '') {
+    return ''
+  }
+  const parsed = Number.parseFloat(raw)
+  if (!Number.isFinite(parsed)) {
+    return ''
+  }
+  return parsed
+}
+
+export function isRoleWeightDraftValueValid(value: number | ''): boolean {
+  return typeof value === 'number' && isRoleWeightInRange(value)
+}
+
+export function validateChatRollSettingsDraftRoleWeights(
+  draft: ChatRollSessionSettingsDraft,
+): boolean {
+  for (const roleId of Object.keys(draft.roleSettings) as ChatRollRoleId[]) {
+    const setting = draft.roleSettings[roleId]
+    if (!setting.enabled) {
+      continue
+    }
+    if (!isRoleWeightDraftValueValid(setting.weight)) {
+      return false
+    }
+  }
+  return true
+}
+
+export function getChatRollRoleWeightFieldError(
+  draft: ChatRollSessionSettingsDraft,
+  roleId: ChatRollRoleId,
+  t: TFunction,
+): string | null {
+  const setting = draft.roleSettings[roleId]
+  if (!setting.enabled) {
+    return null
+  }
+  if (isRoleWeightDraftValueValid(setting.weight)) {
+    return null
+  }
+  if (setting.weight === '') {
+    return t('chatRoll.roleWeightRequired')
+  }
+  return t('chatRoll.roleWeightOutOfRange')
+}
+
 export function validateChatRollSettingsDraftWinnerResponseSeconds(
   draft: ChatRollSessionSettingsDraft,
 ): boolean {
@@ -160,26 +243,25 @@ export function buildChatRollSettingsPatch(
     )
   })
 
-  if (roleSettingsChanged) {
-    body.role_settings = cloneRoleSettings(draft.roleSettings)
+  if (roleSettingsChanged && validateChatRollSettingsDraftRoleWeights(draft)) {
+    body.role_settings = serializeRoleSettingsDraft(draft.roleSettings)
   }
 
   return body
 }
 
-export function clampRoleWeightInDraft(
+export function updateRoleWeightInDraft(
   draft: ChatRollSessionSettingsDraft,
   roleId: ChatRollRoleId,
   raw: string,
 ): ChatRollSessionSettingsDraft {
-  const parsed = Number.parseFloat(raw)
   return {
     ...draft,
     roleSettings: {
       ...draft.roleSettings,
       [roleId]: {
         ...draft.roleSettings[roleId],
-        weight: clampRoleWeight(parsed),
+        weight: parseRoleWeightDraftInput(raw),
       },
     },
   }

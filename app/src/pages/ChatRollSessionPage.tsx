@@ -57,9 +57,10 @@ import {
 } from '@/lib/chat-roll'
 import {
   buildChatRollSettingsPatch,
-  clampRoleWeightInDraft,
   parseWinnerResponseSecondsDraftInput,
+  updateRoleWeightInDraft,
   validateChatRollSettingsDraftKeyword,
+  validateChatRollSettingsDraftRoleWeights,
   validateChatRollSettingsDraftWinnerResponseSeconds,
 } from '@/lib/chat-roll-session-settings'
 import {
@@ -68,7 +69,6 @@ import {
   useDeleteAllChatRollWins,
   useDeleteChatRollParticipant,
   useDeleteChatRollWin,
-  useDeactivateChatRollSession,
   useGoLiveChatRollSession,
   usePatchChatRollSession,
   useRollChatRoll,
@@ -209,7 +209,11 @@ export function ChatRollSessionPage() {
         ? t('chatRoll.couldNotLoadSession')
         : null
 
-  useSetBreadcrumbLabel(record ? `${record.title} #${record.id}` : null)
+  useSetBreadcrumbLabel(
+    record
+      ? `${t('chatRoll.historyCardIndex', { index: record.id })} ${record.title}`
+      : null,
+  )
 
   if (isLoading) {
     return <ChatRollSessionLoadingState />
@@ -258,9 +262,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
   const settingsSaveMutation = usePatchChatRollSession(accountId, chatRollId)
   const sessionPatchMutation = usePatchChatRollSession(accountId, chatRollId)
   const goLiveMutation = useGoLiveChatRollSession(accountId, chatRollId)
-  const deactivateMutation = useDeactivateChatRollSession(accountId, chatRollId)
-  const liveActionPending =
-    goLiveMutation.isPending || deactivateMutation.isPending
+  const liveActionPending = goLiveMutation.isPending
   const rollMutation = useRollChatRoll(accountId, chatRollId)
   const deleteParticipantMutation = useDeleteChatRollParticipant(
     accountId,
@@ -325,6 +327,10 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
     setKeywordError(null)
 
     if (!validateChatRollSettingsDraftWinnerResponseSeconds(draft)) {
+      return
+    }
+
+    if (!validateChatRollSettingsDraftRoleWeights(draft)) {
       return
     }
 
@@ -429,6 +435,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
     isDirty &&
     validateChatRollSettingsDraftKeyword(draft) &&
     validateChatRollSettingsDraftWinnerResponseSeconds(draft) &&
+    validateChatRollSettingsDraftRoleWeights(draft) &&
     !settingsSaveMutation.isPending &&
     !readOnly
 
@@ -487,17 +494,6 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
                 error instanceof Error
                   ? error.message
                   : t('chatRoll.couldNotGoLive'),
-              ),
-          })
-        }}
-        onOffAir={() => {
-          deactivateMutation.mutate(undefined, {
-            onSuccess: () => showSuccess(t('chatRoll.sessionNowOffAir')),
-            onError: (error) =>
-              showError(
-                error instanceof Error
-                  ? error.message
-                  : t('chatRoll.couldNotDeactivate'),
               ),
           })
         }}
@@ -566,7 +562,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
                   }
                   onRoleWeightChange={(roleId, raw) =>
                     updateDraft((current) =>
-                      clampRoleWeightInDraft(current, roleId, raw),
+                      updateRoleWeightInDraft(current, roleId, raw),
                     )
                   }
                 />
