@@ -217,6 +217,11 @@ export function ChatRollHistoryList({
             rowsPerPage={pagination.rowsPerPage}
             rowsPerPageOptions={[pagination.rowsPerPage]}
             labelRowsPerPage=""
+            labelDisplayedRows={({ from, to, count }) =>
+              count !== -1
+                ? t('table.displayedRows', { from, to, count })
+                : t('table.displayedRowsMoreThan', { to })
+            }
           />
         </StyledListFooter>
       ) : null}

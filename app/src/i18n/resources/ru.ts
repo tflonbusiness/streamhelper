@@ -137,7 +137,9 @@ export const ru = {
     setNowPlayingAria: "Отметить «сейчас играет»: {{name}}",
     clearNowPlayingAria: "Сбросить «сейчас играет» для {{name}}",
     expandDetailsAria: "Развернуть детали: {{title}}",
-    collapseDetailsAria: "Свернуть детали: {{title}}"
+    collapseDetailsAria: "Свернуть детали: {{title}}",
+    displayedRows: "{{from}}–{{to}} из {{count}}",
+    displayedRowsMoreThan: "более {{to}}"
   },
   nav: {
     home: "Главная",

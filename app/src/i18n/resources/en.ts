@@ -137,7 +137,9 @@ export const en = {
     setNowPlayingAria: "Set {{name}} as now playing",
     clearNowPlayingAria: "Clear now playing for {{name}}",
     expandDetailsAria: "Expand details for {{title}}",
-    collapseDetailsAria: "Collapse details for {{title}}"
+    collapseDetailsAria: "Collapse details for {{title}}",
+    displayedRows: "{{from}}–{{to}} of {{count}}",
+    displayedRowsMoreThan: "more than {{to}}"
   },
   nav: {
     home: "Home",
