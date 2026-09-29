@@ -7,18 +7,21 @@ import type {
   AverageXSentiment,
   BonusBuyWidgetTheme,
 } from '@/lib/bonus-buy-widget-presentation'
+import { BonusBuyWidgetShrinkToFit } from '@/components/bonus-buy/widget/BonusBuyWidgetShrinkToFit'
 import {
   StyledAccentIcon,
   StyledAverageXIcon,
-  StyledAverageXValue,
+  StyledStatsAverageXCell,
+  StyledStatsAverageXValue,
   StyledStatCellFlex,
   StyledStatDivider,
   StyledStatValue,
   StyledStatValueProfit,
   StyledStatValuesGroup,
   StyledStatsRow,
-  StyledWidgetCell,
 } from '@/components/bonus-buy/widget/bonus-buy-widget-styles'
+
+const STATS_ROW_CELL_HEIGHT = 54
 
 const AVERAGE_X_ICONS: Record<
   AverageXSentiment,
@@ -50,30 +53,38 @@ export function BonusBuyWidgetStatsRow({
 
   return (
     <StyledStatsRow>
-      <StyledStatCellFlex widgetTheme={theme} cellHeight={54}>
+      <StyledStatCellFlex
+        widgetTheme={theme}
+        cellHeight={STATS_ROW_CELL_HEIGHT}
+      >
         <StyledAccentIcon textColor={theme.accentColor} aria-hidden />
         <StyledStatValuesGroup>
-          <StyledStatValue>
-            {formatBonusBuyMoney(stats.spent, currencyCode)}
-          </StyledStatValue>
-          {showProfit ? (
-            <>
-              <StyledStatDivider aria-hidden>/</StyledStatDivider>
-              <StyledStatValueProfit textColor={averageXColor}>
-                {formatBonusBuyMoney(stats.profit, currencyCode)}
-              </StyledStatValueProfit>
-            </>
-          ) : null}
+          <BonusBuyWidgetShrinkToFit>
+            <StyledStatValue>
+              {formatBonusBuyMoney(stats.spent, currencyCode)}
+            </StyledStatValue>
+            {showProfit ? (
+              <>
+                <StyledStatDivider aria-hidden>/</StyledStatDivider>
+                <StyledStatValueProfit textColor={averageXColor}>
+                  {formatBonusBuyMoney(stats.profit, currencyCode)}
+                </StyledStatValueProfit>
+              </>
+            ) : null}
+          </BonusBuyWidgetShrinkToFit>
         </StyledStatValuesGroup>
       </StyledStatCellFlex>
-      <StyledWidgetCell widgetTheme={theme} cellHeight={54}>
+      <StyledStatsAverageXCell
+        widgetTheme={theme}
+        cellHeight={STATS_ROW_CELL_HEIGHT}
+      >
         <StyledAverageXIcon textColor={averageXColor} aria-hidden>
           <AverageXIcon />
         </StyledAverageXIcon>
-        <StyledAverageXValue textColor={averageXColor}>
+        <StyledStatsAverageXValue textColor={averageXColor}>
           {stats.averageX}
-        </StyledAverageXValue>
-      </StyledWidgetCell>
+        </StyledStatsAverageXValue>
+      </StyledStatsAverageXCell>
     </StyledStatsRow>
   )
 }

@@ -161,12 +161,18 @@ export const StyledStatsRow = styled(Box)({
 
 export const StyledStatCellFlex = styled(StyledWidgetCell)({
   flex: 1,
+  minWidth: 0,
+})
+
+export const StyledStatsAverageXCell = styled(StyledWidgetCell)({
+  flexShrink: 0,
 })
 
 export const StyledAccentIcon = styled(BonusBuyWidgetBasketIcon, textColorProps)<
   TextColorProp
 >(({ textColor }) => ({
   fontSize: 36,
+  flexShrink: 0,
   color: textColor,
 }))
 
@@ -176,30 +182,25 @@ export const StyledStatValuesGroup = styled(Box)({
   marginLeft: '10px',
   minWidth: 0,
   flex: 1,
-  gap: '8px',
-  overflow: 'hidden',
 })
 
 export const StyledStatValue = styled(Typography)({
   fontWeight: 600,
-  fontSize: '26px',
+  fontSize: '22px',
+  lineHeight: '28px',
   color: '#FFFFFF',
   whiteSpace: 'nowrap',
-  flexShrink: 0,
 })
 
 export const StyledStatValueProfit = styled(StyledStatValue, textColorProps)<
   TextColorProp
 >(({ textColor }) => ({
   color: textColor,
-  flexShrink: 1,
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
 }))
 
 export const StyledStatDivider = styled('span')({
   fontWeight: 500,
-  fontSize: '30px',
+  fontSize: '24px',
   lineHeight: 1,
   color: 'rgba(255, 255, 255, 0.28)',
   flexShrink: 0,
@@ -209,6 +210,7 @@ export const StyledStatDivider = styled('span')({
 export const StyledAverageXIcon = styled('span', textColorProps)<TextColorProp>(
   ({ textColor }) => ({
     display: 'inline-flex',
+    flexShrink: 0,
     fontSize: 36,
     color: textColor,
     '& svg': {
@@ -225,6 +227,11 @@ export const StyledAverageXValue = styled(Typography, textColorProps)<
   fontSize: '28px',
   color: textColor,
 }))
+
+export const StyledStatsAverageXValue = styled(StyledAverageXValue)({
+  fontSize: '24px',
+  lineHeight: '30px',
+})
 
 const titleOnlyCenterProps = {
   shouldForwardProp: (prop: string) => prop !== 'titleOnlyCentered',
