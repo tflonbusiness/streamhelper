@@ -12,7 +12,7 @@ import type { BonusBuyWidgetTheme } from '@/lib/bonus-buy-widget-presentation'
 
 export const BORDER_SUBTLE = 'rgba(255,255,255,0.12)'
 const WIDGET_SECTION_DIVIDER = '#1F1F24'
-const SLOT_LIST_EDGE_FADE_PX = 10
+const SLOT_LIST_EDGE_FADE_PX = 16
 
 type WidgetThemeProp = {
   widgetTheme: BonusBuyWidgetTheme
@@ -526,11 +526,11 @@ export const StyledSlotListSection = styled(Box, widgetThemeProps)<WidgetThemePr
       top: 0,
       left: 0,
       right: 0,
-      height: SLOT_LIST_EDGE_FADE_PX + 4,
+      height: SLOT_LIST_EDGE_FADE_PX + 6,
       background: `linear-gradient(
         180deg,
-        ${alpha(widgetTheme.backgroundColor, 0.92)} 0%,
-        ${alpha(widgetTheme.backgroundColor, 0.35)} 55%,
+        ${widgetTheme.backgroundColor} 0%,
+        ${alpha(widgetTheme.backgroundColor, 0.55)} 45%,
         transparent 100%
       )`,
       pointerEvents: 'none',
@@ -572,7 +572,7 @@ export const StyledSlotListContainer = styled(Box, widgetThemeProps)<WidgetTheme
       background: `linear-gradient(
         180deg,
         transparent 0%,
-        ${alpha(widgetTheme.backgroundColor, 0.55)} 70%,
+        ${alpha(widgetTheme.backgroundColor, 0.65)} 65%,
         ${widgetTheme.backgroundColor} 100%
       )`,
       pointerEvents: 'none',
