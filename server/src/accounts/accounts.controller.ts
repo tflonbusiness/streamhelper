@@ -715,6 +715,30 @@ export class AccountsController {
     await this.authService.archiveChatRoll(accountId, user.id, chatRollId);
   }
 
+  @Post(':accountId/chat-rolls/:chatRollId/go-live')
+  async goLiveChatRoll(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('chatRollId', ParseIntPipe) chatRollId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.goLiveChatRoll(accountId, user.id, chatRollId);
+  }
+
+  @Post(':accountId/chat-rolls/:chatRollId/deactivate')
+  async deactivateChatRoll(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('chatRollId', ParseIntPipe) chatRollId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.deactivateChatRoll(accountId, user.id, chatRollId);
+  }
+
   @Get(':accountId/chat-rolls/:chatRollId/participants')
   async listChatRollParticipants(
     @Param('accountId', ParseIntPipe) accountId: number,

@@ -81,8 +81,22 @@ function recordStatusChip(record: ChatRollRecord, t: TFunction) {
     return <MutedStatusChip label={t('table.archived')} size="small" />
   }
 
+  if (record.status === 'live') {
+    return (
+      <Chip
+        label={t('common.live')}
+        size="small"
+        sx={toneChipSx(colors.warning[500])}
+      />
+    )
+  }
+
   return (
-    <Chip label={t('table.active')} size="small" sx={toneChipSx(colors.success[400])} />
+    <Chip
+      label={t('common.offline')}
+      size="small"
+      sx={toneChipSx(colors.success[400])}
+    />
   )
 }
 

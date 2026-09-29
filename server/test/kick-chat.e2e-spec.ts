@@ -104,6 +104,68 @@ describe('Kick chat webhook (e2e)', () => {
     });
   });
 
+  it('confirms pending winner response on live session', async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    })
+      .overrideProvider(DatabaseService)
+      .useValue({
+        onModuleInit: async () => undefined,
+        onModuleDestroy: async () => undefined,
+        recordKickChatEvent: async () => true,
+        getAccountIdByKickChannelId: async (channelId: string) =>
+          channelId === 'channel-mock' ? 10 : null,
+        getLiveChatRollByAccountId: async (accountId: number) =>
+          accountId === 10
+            ? {
+                id: 1,
+                accountId: 10,
+                status: 'live',
+                winnerResponseEnabled: true,
+                winnerResponseSeconds: 60,
+              }
+            : null,
+        expirePendingChatRollWinResponses: async () => undefined,
+        confirmChatRollWinResponse: async (input: {
+          chatRollId: number;
+          providerUserId: string;
+        }) =>
+          input.chatRollId === 1 && input.providerUserId === 'winner-42'
+            ? 99
+            : null,
+        getChatRollForIntake: async () => null,
+      })
+      .compile();
+
+    const winnerApp = moduleFixture.createNestApplication({ rawBody: true });
+    winnerApp.use(cookieParser());
+    winnerApp.use(
+      session({
+        secret: 'test-secret',
+        resave: false,
+        saveUninitialized: false,
+      }),
+    );
+    await winnerApp.init();
+
+    const response = await request(winnerApp.getHttpServer())
+      .post('/dev/kick/chat')
+      .send({
+        message_id: 'mock-winner-001',
+        broadcaster: { user_id: 'channel-mock' },
+        sender: { user_id: 'winner-42', username: 'winner_user' },
+        content: 'here',
+      })
+      .expect(200);
+
+    expect(response.body.result.winnerResponse).toEqual({
+      action: 'confirmed',
+      winId: 99,
+    });
+
+    await winnerApp.close();
+  });
+
   it('ignores keyword mismatch', async () => {
     const response = await request(app.getHttpServer())
       .post('/dev/kick/chat')

@@ -15,6 +15,9 @@ import { mutedChipSx } from '@/theme/colors'
 type ChatRollSessionHeaderSectionProps = {
   record: ChatRollRecord
   onOpenArchiveDialog: () => void
+  onGoLive?: () => void
+  onOffAir?: () => void
+  liveActionPending?: boolean
   primaryActions?: ReactNode
 }
 
@@ -70,6 +73,14 @@ export const ChatRollSessionHeaderSection = (
               {props.record.title}{' '}
               <SessionId>#{props.record.id}</SessionId>
             </SessionTitle>
+            {!readOnly && props.record.status === 'live' ? (
+              <Chip
+                label={t('common.live')}
+                size="small"
+                color="warning"
+                variant="outlined"
+              />
+            ) : null}
             {!props.record.isAcceptingParticipants && !readOnly ? (
               <Chip
                 label={t('chatRoll.entriesPaused')}
@@ -84,6 +95,29 @@ export const ChatRollSessionHeaderSection = (
           </TitleStack>
           <ActionsStack direction="row">
             {props.primaryActions}
+            {!readOnly && props.record.status === 'off_air' ? (
+              <Button
+                type="button"
+                variant="contained"
+                size="small"
+                color="warning"
+                disabled={props.liveActionPending}
+                onClick={props.onGoLive}
+              >
+                {t('chatRoll.goLive')}
+              </Button>
+            ) : null}
+            {!readOnly && props.record.status === 'live' ? (
+              <Button
+                type="button"
+                variant="outlined"
+                size="small"
+                disabled={props.liveActionPending}
+                onClick={props.onOffAir}
+              >
+                {t('chatRoll.offAir')}
+              </Button>
+            ) : null}
             {!readOnly ? (
               <Button
                 type="button"

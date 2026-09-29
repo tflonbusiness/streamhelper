@@ -14,7 +14,7 @@ describe('canJoinChatRollWithRoles', () => {
         ['paid_subscriber'],
         DEFAULT_CHAT_ROLL_ROLE_SETTINGS,
       ),
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it('rejects when user roles are all disabled in session', () => {

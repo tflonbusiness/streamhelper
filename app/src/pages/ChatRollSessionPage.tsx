@@ -66,6 +66,8 @@ import {
   useDeleteAllChatRollWins,
   useDeleteChatRollParticipant,
   useDeleteChatRollWin,
+  useDeactivateChatRollSession,
+  useGoLiveChatRollSession,
   usePatchChatRollSession,
   useRollChatRoll,
 } from '@/queries/use-chat-roll-session'
@@ -230,6 +232,10 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
 
   const settingsSaveMutation = usePatchChatRollSession(accountId, chatRollId)
   const sessionPatchMutation = usePatchChatRollSession(accountId, chatRollId)
+  const goLiveMutation = useGoLiveChatRollSession(accountId, chatRollId)
+  const deactivateMutation = useDeactivateChatRollSession(accountId, chatRollId)
+  const liveActionPending =
+    goLiveMutation.isPending || deactivateMutation.isPending
   const rollMutation = useRollChatRoll(accountId, chatRollId)
   const deleteParticipantMutation = useDeleteChatRollParticipant(
     accountId,
@@ -243,6 +249,13 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
   const deleteAllWinsMutation = useDeleteAllChatRollWins(accountId, chatRollId)
 
   const roleMeta = useMemo(() => getChatRollRoleMeta(t), [t])
+
+  const rollRevealWinSynced = useMemo(() => {
+    if (!rollRevealWin) {
+      return null
+    }
+    return wins.find((row) => row.id === rollRevealWin.id) ?? rollRevealWin
+  }, [rollRevealWin, wins])
   const { draft, isDirty, resetDraft, updateDraft } =
     useChatRollSessionSettingsDraft(record)
 
@@ -424,6 +437,29 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
       <ChatRollSessionHeaderSection
         record={record}
         onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
+        onGoLive={() => {
+          goLiveMutation.mutate(undefined, {
+            onSuccess: () => showSuccess(t('chatRoll.sessionNowLive')),
+            onError: (error) =>
+              showError(
+                error instanceof Error
+                  ? error.message
+                  : t('chatRoll.couldNotGoLive'),
+              ),
+          })
+        }}
+        onOffAir={() => {
+          deactivateMutation.mutate(undefined, {
+            onSuccess: () => showSuccess(t('chatRoll.sessionNowOffAir')),
+            onError: (error) =>
+              showError(
+                error instanceof Error
+                  ? error.message
+                  : t('chatRoll.couldNotDeactivate'),
+              ),
+          })
+        }}
+        liveActionPending={liveActionPending}
         primaryActions={sessionPrimaryActions}
       />
 
@@ -565,7 +601,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
 
       <ChatRollRollRevealOverlay
         open={rollRevealOpen}
-        win={rollRevealWin}
+        win={rollRevealWinSynced}
         onClose={handleRollRevealClose}
       />
     </PageStack>

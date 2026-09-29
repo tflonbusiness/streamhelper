@@ -1516,6 +1516,8 @@ export class AuthService {
           );
         case 'NO_ELIGIBLE_PARTICIPANTS':
           throw new BadRequestException('No eligible participants to roll');
+        case 'NOT_LIVE':
+          throw new BadRequestException('Session is not live');
         default:
           break;
       }
@@ -1613,6 +1615,36 @@ export class AuthService {
 
     try {
       await this.database.archiveChatRoll(accountId, chatRollId);
+    } catch (error) {
+      this.mapChatRollMutationError(error);
+    }
+  }
+
+  async goLiveChatRoll(
+    accountId: number,
+    callerUserId: number,
+    chatRollId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      const row = await this.database.goLiveChatRoll(accountId, chatRollId);
+      return this.formatChatRollRecord(row);
+    } catch (error) {
+      this.mapChatRollMutationError(error);
+    }
+  }
+
+  async deactivateChatRoll(
+    accountId: number,
+    callerUserId: number,
+    chatRollId: number,
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    try {
+      const row = await this.database.deactivateChatRoll(accountId, chatRollId);
+      return this.formatChatRollRecord(row);
     } catch (error) {
       this.mapChatRollMutationError(error);
     }

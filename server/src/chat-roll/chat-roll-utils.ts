@@ -24,10 +24,10 @@ export const CHAT_ROLL_ROLE_IDS: ChatRollRoleId[] = [
 
 export const DEFAULT_CHAT_ROLL_ROLE_SETTINGS: ChatRollRoleSettings = {
   moderator: { enabled: false, weight: 1 },
-  vip: { enabled: true, weight: 2 },
-  og: { enabled: false, weight: 1.5 },
+  vip: { enabled: false, weight: 1 },
+  og: { enabled: false, weight: 1 },
   viewer: { enabled: true, weight: 1 },
-  paid_subscriber: { enabled: true, weight: 2 },
+  paid_subscriber: { enabled: false, weight: 1 },
 };
 
 export function clampRoleWeight(value: number): number {

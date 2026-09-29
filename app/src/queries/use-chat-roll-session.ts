@@ -8,6 +8,8 @@ import {
   fetchChatRoll,
   fetchChatRollParticipants,
   fetchChatRollWins,
+  deactivateChatRoll,
+  goLiveChatRoll,
   patchChatRoll,
   rollChatRoll,
   type PatchChatRollInput,
@@ -48,7 +50,7 @@ export function useChatRollSession(
     enabled: accountId !== undefined && Number.isFinite(chatRollId),
     refetchInterval: (query) => {
       const status = query.state.data?.record.status
-      if (!status || status === 'archived') {
+      if (status !== 'live') {
         return false
       }
       return SESSION_POLL_MS
@@ -86,6 +88,38 @@ export function usePatchChatRollSession(
     mutationFn: (body: PatchChatRollInput) =>
       patchChatRoll(accountId!, chatRollId, body),
     onSuccess: () => invalidateSession(chatRollId),
+  })
+}
+
+export function useGoLiveChatRollSession(
+  accountId: number | undefined,
+  chatRollId: number,
+) {
+  const invalidateSession = useInvalidateChatRollSession(accountId)
+  const invalidateLists = useInvalidateChatRollLists()
+
+  return useMutation({
+    mutationFn: () => goLiveChatRoll(accountId!, chatRollId),
+    onSuccess: () => {
+      invalidateSession(chatRollId)
+      invalidateLists()
+    },
+  })
+}
+
+export function useDeactivateChatRollSession(
+  accountId: number | undefined,
+  chatRollId: number,
+) {
+  const invalidateSession = useInvalidateChatRollSession(accountId)
+  const invalidateLists = useInvalidateChatRollLists()
+
+  return useMutation({
+    mutationFn: () => deactivateChatRoll(accountId!, chatRollId),
+    onSuccess: () => {
+      invalidateSession(chatRollId)
+      invalidateLists()
+    },
   })
 }
 

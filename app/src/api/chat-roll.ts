@@ -211,6 +211,48 @@ export async function patchChatRoll(
   return response.json() as Promise<ChatRollRecord>
 }
 
+export async function goLiveChatRoll(
+  accountId: number,
+  chatRollId: number,
+): Promise<ChatRollRecord> {
+  const response = await fetch(
+    `/accounts/${accountId}/chat-rolls/${chatRollId}/go-live`,
+    {
+      method: 'POST',
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, i18n.t('errors.api.goLiveChatRoll')),
+    )
+  }
+
+  return response.json() as Promise<ChatRollRecord>
+}
+
+export async function deactivateChatRoll(
+  accountId: number,
+  chatRollId: number,
+): Promise<ChatRollRecord> {
+  const response = await fetch(
+    `/accounts/${accountId}/chat-rolls/${chatRollId}/deactivate`,
+    {
+      method: 'POST',
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, i18n.t('errors.api.deactivateChatRoll')),
+    )
+  }
+
+  return response.json() as Promise<ChatRollRecord>
+}
+
 export async function archiveChatRoll(
   accountId: number,
   chatRollId: number,

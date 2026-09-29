@@ -3546,43 +3546,13 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       throw new Error('INVALID_TITLE');
     }
 
-    const previousResult = await this.pool.query<{
-      keyword: string;
-      combine_mode: string;
-      exclude_winner_after_roll: boolean;
-      reply_in_chat: boolean;
-      winner_response_enabled: boolean;
-      winner_response_seconds: number;
-      role_settings: unknown;
-    }>(
-      `
-        SELECT
-          keyword,
-          combine_mode,
-          exclude_winner_after_roll,
-          reply_in_chat,
-          winner_response_enabled,
-          winner_response_seconds,
-          role_settings
-        FROM chat_roll
-        WHERE account_id = $1
-          AND status != 'archived'
-        ORDER BY created_at DESC
-        LIMIT 1
-      `,
-      [accountId],
-    );
-
-    const previous = previousResult.rows[0];
-    const keyword = previous?.keyword ?? '!roll';
-    const combineMode = previous?.combine_mode ?? 'highest';
-    const excludeWinnerAfterRoll = previous?.exclude_winner_after_roll ?? true;
-    const replyInChat = previous?.reply_in_chat ?? false;
-    const winnerResponseEnabled = previous?.winner_response_enabled ?? true;
-    const winnerResponseSeconds = previous?.winner_response_seconds ?? 60;
-    const roleSettings =
-      normalizeRoleSettings(previous?.role_settings) ??
-      DEFAULT_CHAT_ROLL_ROLE_SETTINGS;
+    const keyword = '!roll';
+    const combineMode = 'highest';
+    const excludeWinnerAfterRoll = true;
+    const replyInChat = false;
+    const winnerResponseEnabled = true;
+    const winnerResponseSeconds = 60;
+    const roleSettings = DEFAULT_CHAT_ROLL_ROLE_SETTINGS;
 
     const client = await this.pool.connect();
     try {
@@ -3664,6 +3634,136 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     if (result.rowCount === 0) {
       throw new Error('NOT_FOUND');
     }
+  }
+
+  async goLiveChatRoll(
+    accountId: number,
+    chatRollId: number,
+  ): Promise<DbChatRoll> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const targetResult = await client.query<{ status: string }>(
+        `
+          SELECT status
+          FROM chat_roll
+          WHERE account_id = $1
+            AND id = $2
+          LIMIT 1
+        `,
+        [accountId, chatRollId],
+      );
+      const target = targetResult.rows[0];
+      if (!target || target.status === 'archived') {
+        throw new Error('NOT_FOUND');
+      }
+
+      if (target.status === 'live') {
+        await client.query('COMMIT');
+        const row = await this.getChatRollById(accountId, chatRollId);
+        if (!row) {
+          throw new Error('NOT_FOUND');
+        }
+        return row;
+      }
+
+      await client.query(
+        `
+          UPDATE chat_roll
+          SET status = 'off_air'
+          WHERE account_id = $1
+            AND status = 'live'
+        `,
+        [accountId],
+      );
+
+      const promoteResult = await client.query(
+        `
+          UPDATE chat_roll cr
+          SET status = 'live'
+          FROM users u
+          WHERE cr.created_by_user_id = u.id
+            AND cr.account_id = $1
+            AND cr.id = $2
+            AND cr.status = 'off_air'
+          RETURNING
+            cr.id,
+            cr.account_id,
+            cr.title,
+            cr.status,
+            cr.keyword,
+            cr.combine_mode,
+            cr.exclude_winner_after_roll,
+            cr.is_accepting_participants,
+            cr.reply_in_chat,
+            cr.winner_response_enabled,
+            cr.winner_response_seconds,
+            cr.role_settings,
+            cr.created_at,
+            cr.created_by_user_id,
+            u.name AS created_by_name
+        `,
+        [accountId, chatRollId],
+      );
+
+      if (promoteResult.rowCount === 0) {
+        throw new Error('NOT_FOUND');
+      }
+
+      await client.query('COMMIT');
+      return this.mapChatRollRow(promoteResult.rows[0]);
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async deactivateChatRoll(
+    accountId: number,
+    chatRollId: number,
+  ): Promise<DbChatRoll> {
+    const result = await this.pool.query(
+      `
+        UPDATE chat_roll cr
+        SET status = 'off_air'
+        FROM users u
+        WHERE cr.created_by_user_id = u.id
+          AND cr.account_id = $1
+          AND cr.id = $2
+          AND cr.status = 'live'
+        RETURNING
+          cr.id,
+          cr.account_id,
+          cr.title,
+          cr.status,
+          cr.keyword,
+          cr.combine_mode,
+          cr.exclude_winner_after_roll,
+          cr.is_accepting_participants,
+          cr.reply_in_chat,
+          cr.winner_response_enabled,
+          cr.winner_response_seconds,
+          cr.role_settings,
+          cr.created_at,
+          cr.created_by_user_id,
+          u.name AS created_by_name
+      `,
+      [accountId, chatRollId],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      const existing = await this.getChatRollById(accountId, chatRollId);
+      if (!existing) {
+        throw new Error('NOT_FOUND');
+      }
+      throw new Error('NOT_LIVE');
+    }
+
+    return this.mapChatRollRow(row);
   }
 
   async patchChatRoll(
@@ -4168,7 +4268,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         SELECT id, account_id, keyword, is_accepting_participants, reply_in_chat, role_settings
         FROM chat_roll
         WHERE account_id = $1
-          AND status != 'archived'
+          AND status = 'live'
           AND lower(trim(keyword)) = lower(trim($2))
         ORDER BY created_at DESC
         LIMIT 1

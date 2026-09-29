@@ -23,7 +23,10 @@ export class WinnerResponseHandler {
     }
 
     const session = await this.database.getLiveChatRollByAccountId(accountId);
-    if (!session || !session.winnerResponseEnabled) {
+    if (!session) {
+      return { action: 'ignored', reason: 'no_active_session' };
+    }
+    if (!session.winnerResponseEnabled) {
       return { action: 'ignored', reason: 'response_disabled' };
     }
 
