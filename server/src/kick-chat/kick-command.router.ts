@@ -17,7 +17,10 @@ export class KickCommandRouter {
     event: KickChatMessageEvent,
   ): Promise<KickChatRouteResult> {
     const winnerResponse = await this.winnerResponse.handle(event);
-    const intake = await this.chatRollIntake.handle(event);
+    const intake =
+      winnerResponse.action === 'confirmed'
+        ? { action: 'ignored' as const, reason: 'winner_response_confirmed' }
+        : await this.chatRollIntake.handle(event);
     return { winnerResponse, intake };
   }
 }

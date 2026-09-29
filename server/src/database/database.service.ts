@@ -4342,9 +4342,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   > {
     const sessionResult = await this.pool.query<{
       is_accepting_participants: boolean;
+      exclude_winner_after_roll: boolean;
     }>(
       `
-        SELECT is_accepting_participants
+        SELECT is_accepting_participants, exclude_winner_after_roll
         FROM chat_roll
         WHERE id = $1
         LIMIT 1
@@ -4357,6 +4358,25 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
     if (!session.is_accepting_participants) {
       return { status: 'entries_paused' };
+    }
+
+    if (session.exclude_winner_after_roll) {
+      const priorWin = await this.pool.query(
+        `
+          SELECT 1
+          FROM chat_roll_win w
+          INNER JOIN chat_roll_participant p ON p.id = w.participant_id
+          WHERE w.chat_roll_id = $1
+            AND p.provider = $2
+            AND p.provider_user_id = $3
+            AND w.is_archived = false
+          LIMIT 1
+        `,
+        [input.chatRollId, input.provider, input.providerUserId],
+      );
+      if (priorWin.rows[0]) {
+        return { status: 'duplicate' };
+      }
     }
 
     const existing = await this.pool.query<{ id: number }>(

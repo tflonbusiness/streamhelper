@@ -127,11 +127,34 @@ export function useRollChatRoll(
   accountId: number | undefined,
   chatRollId: number,
 ) {
+  const queryClient = useQueryClient()
   const invalidateSession = useInvalidateChatRollSession(accountId)
 
   return useMutation({
     mutationFn: () => rollChatRoll(accountId!, chatRollId),
-    onSuccess: () => invalidateSession(chatRollId),
+    onSuccess: (win) => {
+      if (accountId === undefined) {
+        return
+      }
+      queryClient.setQueryData<ChatRollSessionData>(
+        sessionQueryKey(accountId, chatRollId),
+        (current) => {
+          if (!current) {
+            return current
+          }
+          const wins = current.wins.some((row) => row.id === win.id)
+            ? current.wins
+            : [...current.wins, win]
+          const participants = current.record.excludeWinnerAfterRoll
+            ? current.participants.filter(
+                (participant) => participant.id !== win.participantId,
+              )
+            : current.participants
+          return { ...current, wins, participants }
+        },
+      )
+      invalidateSession(chatRollId)
+    },
   })
 }
 
