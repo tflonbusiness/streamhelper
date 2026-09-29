@@ -5,7 +5,7 @@ const jsonHeaders = {
 
 export type PrizeSpinArchivedFilter = 'false' | 'true' | 'all'
 
-export type PrizeSpinStatus = 'active' | 'archived'
+export type PrizeSpinStatus = 'live' | 'off_air' | 'archived'
 
 export type PrizeSpinListResult = {
   records: PrizeSpinRecord[]
@@ -34,6 +34,12 @@ export function isPrizeSpinReadOnly(
   record: Pick<PrizeSpinRecord, 'status'>,
 ): boolean {
   return record.status === 'archived'
+}
+
+export function isPrizeSpinLive(
+  record: Pick<PrizeSpinRecord, 'status'>,
+): boolean {
+  return record.status === 'live'
 }
 
 export type PrizeSpinSector = {
@@ -194,6 +200,27 @@ export async function archivePrizeSpin(
       await readErrorMessage(response, i18n.t('errors.api.archiveSession')),
     )
   }
+}
+
+export async function goLivePrizeSpin(
+  accountId: number,
+  prizeSpinId: number,
+): Promise<PrizeSpinRecord> {
+  const response = await fetch(
+    `/accounts/${accountId}/prize-spins/${prizeSpinId}/go-live`,
+    {
+      method: 'POST',
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, i18n.t('errors.api.goLivePrizeSpin')),
+    )
+  }
+
+  return response.json() as Promise<PrizeSpinRecord>
 }
 
 export async function fetchPrizeSpinSectors(

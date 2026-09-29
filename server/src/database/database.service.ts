@@ -93,7 +93,7 @@ export type DbBonusBuy = {
 
 export type PrizeSpinArchivedFilter = 'false' | 'true' | 'all';
 
-export type PrizeSpinStatus = 'active' | 'archived';
+export type PrizeSpinStatus = 'live' | 'off_air' | 'archived';
 
 export type DbPrizeSpin = {
   id: number;
@@ -2119,7 +2119,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         ? ''
         : archived === 'true'
           ? "AND ps.status = 'archived'"
-          : "AND ps.status = 'active'";
+          : "AND ps.status IN ('live', 'off_air')";
     const offset = (page - 1) * limit;
 
     const countResult = await this.pool.query<{ count: string | number }>(
@@ -2184,6 +2184,21 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     try {
       await client.query('BEGIN');
 
+      const liveCheck = await client.query<{ has_live: boolean }>(
+        `
+          SELECT EXISTS (
+            SELECT 1
+            FROM prize_spin
+            WHERE account_id = $1
+              AND status = 'live'
+          ) AS has_live
+        `,
+        [accountId],
+      );
+      const initialStatus = initialChatRollStatusOnCreate(
+        liveCheck.rows[0]?.has_live ?? false,
+      );
+
       const result = await client.query<{
         id: string | number;
         account_id: string | number;
@@ -2194,8 +2209,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         created_by_name: string;
       }>(
         `
-          INSERT INTO prize_spin (account_id, created_by_user_id, title)
-          VALUES ($1, $2, $3)
+          INSERT INTO prize_spin (account_id, created_by_user_id, title, status)
+          VALUES ($1, $2, $3, $4)
           RETURNING
             id,
             account_id,
@@ -2205,7 +2220,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             created_by_user_id,
             (SELECT name FROM users WHERE id = $2) AS created_by_name
         `,
-        [accountId, createdByUserId, trimmedTitle],
+        [accountId, createdByUserId, trimmedTitle, initialStatus],
       );
 
       await client.query(
@@ -2254,13 +2269,97 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         SET status = 'archived'
         WHERE account_id = $1
           AND id = $2
-          AND status = 'active'
       `,
       [accountId, prizeSpinId],
     );
 
     if (result.rowCount === 0) {
       throw new Error('NOT_FOUND');
+    }
+  }
+
+  async goLivePrizeSpin(
+    accountId: number,
+    prizeSpinId: number,
+  ): Promise<DbPrizeSpin> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const targetResult = await client.query<{ status: string }>(
+        `
+          SELECT status
+          FROM prize_spin
+          WHERE account_id = $1
+            AND id = $2
+          LIMIT 1
+        `,
+        [accountId, prizeSpinId],
+      );
+      const target = targetResult.rows[0];
+      if (!target || target.status === 'archived') {
+        throw new Error('NOT_FOUND');
+      }
+
+      if (target.status === 'live') {
+        await client.query('COMMIT');
+        const row = await this.getPrizeSpinById(accountId, prizeSpinId);
+        if (!row) {
+          throw new Error('NOT_FOUND');
+        }
+        return row;
+      }
+
+      await client.query(
+        `
+          UPDATE prize_spin
+          SET status = 'off_air'
+          WHERE account_id = $1
+            AND status = 'live'
+        `,
+        [accountId],
+      );
+
+      const promoteResult = await client.query<{
+        id: string | number;
+        account_id: string | number;
+        title: string;
+        status: string;
+        created_at: Date;
+        created_by_user_id: string | number;
+        created_by_name: string;
+      }>(
+        `
+          UPDATE prize_spin ps
+          SET status = 'live'
+          FROM users u
+          WHERE ps.created_by_user_id = u.id
+            AND ps.account_id = $1
+            AND ps.id = $2
+            AND ps.status = 'off_air'
+          RETURNING
+            ps.id,
+            ps.account_id,
+            ps.title,
+            ps.status,
+            ps.created_at,
+            ps.created_by_user_id,
+            u.name AS created_by_name
+        `,
+        [accountId, prizeSpinId],
+      );
+
+      if (promoteResult.rowCount === 0) {
+        throw new Error('NOT_FOUND');
+      }
+
+      await client.query('COMMIT');
+      return this.mapPrizeSpinRow(promoteResult.rows[0]);
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
     }
   }
 
@@ -2284,6 +2383,21 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     try {
       await client.query('BEGIN');
 
+      const liveCheck = await client.query<{ has_live: boolean }>(
+        `
+          SELECT EXISTS (
+            SELECT 1
+            FROM prize_spin
+            WHERE account_id = $1
+              AND status = 'live'
+          ) AS has_live
+        `,
+        [accountId],
+      );
+      const initialStatus = initialChatRollStatusOnCreate(
+        liveCheck.rows[0]?.has_live ?? false,
+      );
+
       const result = await client.query<{
         id: string | number;
         account_id: string | number;
@@ -2294,8 +2408,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         created_by_name: string;
       }>(
         `
-          INSERT INTO prize_spin (account_id, created_by_user_id, title)
-          VALUES ($1, $2, $3)
+          INSERT INTO prize_spin (account_id, created_by_user_id, title, status)
+          VALUES ($1, $2, $3, $4)
           RETURNING
             id,
             account_id,
@@ -2305,7 +2419,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             created_by_user_id,
             (SELECT name FROM users WHERE id = $2) AS created_by_name
         `,
-        [accountId, createdByUserId, trimmedTitle],
+        [accountId, createdByUserId, trimmedTitle, initialStatus],
       );
 
       const newPrizeSpinId = toInt(result.rows[0].id);
@@ -3120,7 +3234,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         FROM prize_spin ps
         JOIN users u ON u.id = ps.created_by_user_id
         WHERE ps.id = $1
-          AND ps.status = 'active'
+          AND ps.status IN ('live', 'off_air')
       `,
       [prizeSpinId],
     );

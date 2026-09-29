@@ -11,6 +11,7 @@ import {
   fetchPrizeSpinWidget,
   fetchPrizeSpins,
   fetchPublicPrizeSpinWidget,
+  goLivePrizeSpin,
   patchPrizeSpinWidget,
   type PatchPrizeSpinWidgetInput,
 } from '@/api/prize-spin'
@@ -55,6 +56,17 @@ export function useArchivePrizeSpin(accountId: number | undefined) {
 
   return useMutation({
     mutationFn: (prizeSpinId: number) => archivePrizeSpin(accountId!, prizeSpinId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: prizeSpinKeys.lists() })
+    },
+  })
+}
+
+export function useGoLivePrizeSpin(accountId: number | undefined) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (prizeSpinId: number) => goLivePrizeSpin(accountId!, prizeSpinId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: prizeSpinKeys.lists() })
     },

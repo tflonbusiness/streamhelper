@@ -328,6 +328,18 @@ export const en = {
     historyDescriptionPast: "Past and active prize spin sessions",
     noArchivedSessions: "No archived sessions",
     noSessions: "No prize spin sessions yet",
+    historyCardMeta: "{{author}} · {{created}}",
+    historyCardIndex: "#{{index}}",
+    historyListItemAria:
+      "{{index}}. {{title}}, {{status}}. Open session.",
+    historyLiveNowTitle: "On air now",
+    historyLiveHint: "OBS overlay is active for this session while it is on air.",
+    historyNoLiveSession: "No session on air",
+    historyNoLiveHint:
+      "Open a session and choose Go live to use it on stream.",
+    historyNoOtherSessions: "No other sessions in this view.",
+    goLive: "Go live",
+    couldNotGoLive: "Could not go live.",
     createSession: "Create session",
     createDialogTitle: "New Session",
     createDialogIntro:
@@ -622,6 +634,7 @@ export const en = {
       createChatRoll: "Could not create chat roll",
       updateChatRoll: "Could not update chat roll",
       goLiveChatRoll: "Could not go live",
+      goLivePrizeSpin: "Could not go live",
       deactivateChatRoll: "Could not take session off air",
       loadParticipants: "Could not load participants",
       removeParticipant: "Could not remove participant",

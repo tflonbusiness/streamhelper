@@ -9,6 +9,7 @@ import {
   fetchPrizeSpin,
   fetchPrizeSpinSectors,
   fetchPrizeSpinWins,
+  goLivePrizeSpin,
   spinPrizeSpin,
   updatePrizeSpinSector,
   type PatchPrizeSpinSectorInput,
@@ -182,6 +183,22 @@ export function useArchivePrizeSpinSession(
 
   return useMutation({
     mutationFn: () => archivePrizeSpin(accountId!, prizeSpinId),
+    onSuccess: () => {
+      invalidateSession(prizeSpinId)
+      invalidateLists()
+    },
+  })
+}
+
+export function useGoLivePrizeSpinSession(
+  accountId: number | undefined,
+  prizeSpinId: number,
+) {
+  const invalidateSession = useInvalidatePrizeSpinSession(accountId)
+  const invalidateLists = useInvalidatePrizeSpinLists()
+
+  return useMutation({
+    mutationFn: () => goLivePrizeSpin(accountId!, prizeSpinId),
     onSuccess: () => {
       invalidateSession(prizeSpinId)
       invalidateLists()

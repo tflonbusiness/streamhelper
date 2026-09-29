@@ -15,7 +15,7 @@ export function PrizeSpinPage() {
         title={t('prizeSpin.title')}
         description={t('prizeSpin.description')}
         icon={AutorenewIcon}
-        iconVariant="purple"
+        iconVariant="info"
       />
       {user?.accountId !== undefined ? (
         <PrizeSpinHistorySection accountId={user.accountId} />

@@ -1,4 +1,4 @@
-import { Chip, IconButton, Stack, Tooltip } from '@mui/material'
+import { IconButton, Stack, Tooltip } from '@mui/material'
 import ArchiveIcon from '@mui/icons-material/Archive'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import { styled } from '@mui/material/styles'
@@ -7,7 +7,7 @@ import { isPrizeSpinArchived, type PrizeSpinRecord } from '@/api/prize-spin'
 import type { AppTableColumn } from '@/components/AppTable'
 import { OpenSessionButton } from '@/components/OpenSessionButton'
 import { prizeSpinSessionRoute } from '@/lib/routes'
-import { colors, toneChipSx } from '@/theme/colors'
+import { prizeSpinHistoryStatusChip } from '@/components/prize-spin/prize-spin-page/prizeSpinHistoryStatusChip'
 
 const titleColumnSx = {
   minWidth: 0,
@@ -25,16 +25,6 @@ const actionColumnSx = {
   px: 1,
   whiteSpace: 'nowrap',
 } as const
-
-const MutedStatusChip = styled(Chip)(({ theme }) => ({
-  height: 24,
-  fontSize: '0.75rem',
-  fontWeight: 500,
-  bgcolor: theme.palette.action.hover,
-  color: theme.palette.text.secondary,
-  border: '1px solid',
-  borderColor: theme.palette.divider,
-}))
 
 const RecordTitle = styled('span', {
   shouldForwardProp: (prop) => prop !== 'archived',
@@ -68,13 +58,7 @@ const StyledActionIconButton = styled(IconButton)(({ theme }) => {
 const actionIconSx = { fontSize: 14 } as const
 
 function recordStatusChip(record: PrizeSpinRecord, t: TFunction) {
-  if (isPrizeSpinArchived(record)) {
-    return <MutedStatusChip label={t('table.archived')} size="small" />
-  }
-
-  return (
-    <Chip label={t('table.active')} size="small" sx={toneChipSx(colors.success[400])} />
-  )
+  return prizeSpinHistoryStatusChip(record, t)
 }
 
 type BuildPrizeSpinRecordColumnsOptions = {

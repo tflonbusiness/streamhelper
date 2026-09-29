@@ -1,18 +1,18 @@
-import { Box, Chip, Skeleton, Stack, Typography } from '@mui/material'
+import { Box, Skeleton, Stack, Typography } from '@mui/material'
 import { alpha, styled } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import type { ChatRollRecord } from '@/api/chat-roll'
-import { chatRollHistoryStatusChip } from '@/components/chat-roll/chat-roll-page/chatRollHistoryStatusChip'
+import { type PrizeSpinRecord } from '@/api/prize-spin'
+import { prizeSpinHistoryStatusChip } from '@/components/prize-spin/prize-spin-page/prizeSpinHistoryStatusChip'
+import { formatPrizeSpinLiveSessionHint } from '@/components/prize-spin/prize-spin-page/prize-spin-page-utils'
+import { formatPrizeSpinDateTime } from '@/components/prize-spin/prize-spin-utils'
 import { ChatRollSessionIdBadge } from '@/components/chat-roll/session/ChatRollSessionIdBadge'
 import { OpenSessionButton } from '@/components/OpenSessionButton'
-import { formatPrizeSpinDateTime } from '@/components/prize-spin/prize-spin-utils'
-import { formatChatRollLiveSessionHint } from '@/components/chat-roll/chat-roll-page/chat-roll-page-utils'
-import { chatRollSessionRoute } from '@/lib/routes'
+import { prizeSpinSessionRoute } from '@/lib/routes'
 import { colors } from '@/theme/colors'
 
-type ChatRollHistoryLiveHeroProps = {
-  record: ChatRollRecord | null
+type PrizeSpinHistoryLiveHeroProps = {
+  record: PrizeSpinRecord | null
   loading?: boolean
 }
 
@@ -93,35 +93,6 @@ const StyledHeroTitle = styled(Typography)({
   whiteSpace: 'nowrap',
 })
 
-const StyledKeywordRow = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  flexWrap: 'wrap',
-  gap: theme.spacing(1),
-}))
-
-const StyledKeywordLabel = styled(Typography)(({ theme }) => ({
-  fontSize: '0.8125rem',
-  fontWeight: 500,
-  color: theme.palette.text.secondary,
-}))
-
-const StyledKeywordValue = styled('span')(({ theme }) => ({
-  display: 'inline-block',
-  maxWidth: '100%',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-  fontSize: '0.9375rem',
-  fontWeight: 600,
-  lineHeight: 1.35,
-  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-  color: theme.palette.text.primary,
-  padding: theme.spacing(0.375, 1),
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: alpha(theme.palette.primary.main, 0.12),
-}))
-
 const StyledMeta = styled(Typography)(({ theme }) => ({
   fontSize: '0.75rem',
   color: theme.palette.text.secondary,
@@ -147,74 +118,43 @@ const StyledCardActions = styled(Box)(({ theme }) => ({
   },
 }))
 
-export function ChatRollHistoryLiveHero({
+export function PrizeSpinHistoryLiveHero({
   record,
   loading = false,
-}: ChatRollHistoryLiveHeroProps) {
+}: PrizeSpinHistoryLiveHeroProps) {
   const { t } = useTranslation()
 
   return (
     <StyledHeroSection>
       <Box component="h3" sx={{ margin: 0 }}>
-        <StyledSectionLabel>{t('chatRoll.historyLiveNowTitle')}</StyledSectionLabel>
+        <StyledSectionLabel>{t('prizeSpin.historyLiveNowTitle')}</StyledSectionLabel>
       </Box>
       {loading ? (
-        <Skeleton variant="rounded" height={160} />
+        <Skeleton variant="rounded" height={140} />
       ) : record ? (
         <StyledHeroCard>
           <StyledTitleRow>
             <StyledTitleMain>
               <ChatRollSessionIdBadge sessionId={record.id} aria-hidden />
               <StyledTitleLink
-                to={chatRollSessionRoute(record.id)}
+                to={prizeSpinSessionRoute(record.id)}
                 aria-label={t('table.openAria', { title: record.title })}
               >
                 <StyledHeroTitle>{record.title}</StyledHeroTitle>
               </StyledTitleLink>
             </StyledTitleMain>
-            <Stack
-              direction="row"
-              spacing={0.5}
-              sx={{ flexShrink: 0, alignItems: 'center' }}
-            >
-              {record.isAcceptingParticipants ? (
-                <Chip
-                  label={t('chatRoll.entriesOpen')}
-                  size="small"
-                  color="success"
-                  variant="outlined"
-                />
-              ) : (
-                <Chip
-                  label={t('chatRoll.entriesPaused')}
-                  size="small"
-                  color="warning"
-                  variant="outlined"
-                />
-              )}
-              {chatRollHistoryStatusChip(record, t)}
-            </Stack>
+            {prizeSpinHistoryStatusChip(record, t)}
           </StyledTitleRow>
-          <StyledKeywordRow>
-            <StyledKeywordLabel>
-              {t('chatRoll.historyLiveKeywordLabel')}
-            </StyledKeywordLabel>
-            <StyledKeywordValue title={record.keyword}>
-              {record.keyword}
-            </StyledKeywordValue>
-          </StyledKeywordRow>
           <StyledMeta>
-            {t('chatRoll.historyCardMeta', {
+            {t('prizeSpin.historyCardMeta', {
               author: record.createdByName,
               created: formatPrizeSpinDateTime(record.createdAt),
             })}
           </StyledMeta>
-          <StyledHint>
-            {formatChatRollLiveSessionHint(t, record.isAcceptingParticipants)}
-          </StyledHint>
+          <StyledHint>{formatPrizeSpinLiveSessionHint(t)}</StyledHint>
           <StyledCardActions>
             <OpenSessionButton
-              to={chatRollSessionRoute(record.id)}
+              to={prizeSpinSessionRoute(record.id)}
               variant="outlined"
               size="small"
               fullWidth={false}
@@ -224,8 +164,8 @@ export function ChatRollHistoryLiveHero({
         </StyledHeroCard>
       ) : (
         <StyledHeroCard empty>
-          <StyledHeroTitle>{t('chatRoll.historyNoLiveSession')}</StyledHeroTitle>
-          <StyledHint>{t('chatRoll.historyNoLiveHint')}</StyledHint>
+          <StyledHeroTitle>{t('prizeSpin.historyNoLiveSession')}</StyledHeroTitle>
+          <StyledHint>{t('prizeSpin.historyNoLiveHint')}</StyledHint>
         </StyledHeroCard>
       )}
     </StyledHeroSection>

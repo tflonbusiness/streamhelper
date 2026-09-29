@@ -17,7 +17,12 @@ import { PrizeSpinStreamWidgetSection } from '@/components/prize-spin/prize-spin
 import { prizeSpinModule } from '@/components/prize-spin/session/prize-spin-session-utils'
 import { useAuth } from '@/context/AuthContext'
 import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
-import { usePrizeSpinSession } from '@/queries/use-prize-spin-session'
+import { useNotification } from '@/context/NotificationContext'
+import { formatPrizeSpinLiveSessionHint } from '@/components/prize-spin/prize-spin-page/prize-spin-page-utils'
+import {
+  useGoLivePrizeSpinSession,
+  usePrizeSpinSession,
+} from '@/queries/use-prize-spin-session'
 
 const PageStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(4),
@@ -37,6 +42,7 @@ const WorkspaceColumnStack = styled(Stack)(({ theme }) => ({
 
 export const PrizeSpinSessionPage = () => {
   const { t } = useTranslation()
+  const { showError, showSuccess } = useNotification()
   const { id } = useParams()
   const prizeSpinId = Number.parseInt(id ?? '', 10)
   const isValidId = Number.isFinite(prizeSpinId)
@@ -48,6 +54,10 @@ export const PrizeSpinSessionPage = () => {
     isLoading: loading,
     error: sessionError,
   } = usePrizeSpinSession(user?.accountId, isValidId ? prizeSpinId : Number.NaN)
+  const goLiveMutation = useGoLivePrizeSpinSession(
+    user?.accountId,
+    isValidId ? prizeSpinId : Number.NaN,
+  )
 
   const record = session?.record ?? null
   const sectors = session?.sectors ?? []
@@ -88,6 +98,19 @@ export const PrizeSpinSessionPage = () => {
               prizeSpinId={prizeSpinId}
               record={record}
               wins={wins}
+              liveActionPending={goLiveMutation.isPending}
+              onGoLive={() => {
+                goLiveMutation.mutate(undefined, {
+                  onSuccess: () =>
+                    showSuccess(formatPrizeSpinLiveSessionHint(t)),
+                  onError: (error) =>
+                    showError(
+                      error instanceof Error
+                        ? error.message
+                        : t('prizeSpin.couldNotGoLive'),
+                    ),
+                })
+              }}
               onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
             />
             <Grid container spacing={3} sx={{ alignItems: 'stretch' }}>

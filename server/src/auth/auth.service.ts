@@ -945,7 +945,7 @@ export class AuthService {
       record: {
         id: view.record.id,
         title: view.record.title,
-        isActive: view.record.status === 'active',
+        isActive: view.record.status === 'live',
       },
       sectors: view.sectors.map((row) => this.formatPrizeSpinSector(row)),
       latestWin: view.latestWin
@@ -1224,6 +1224,30 @@ export class AuthService {
 
     try {
       await this.database.archivePrizeSpin(accountId, prizeSpinId);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'NOT_FOUND') {
+        throw new NotFoundException('Prize spin not found');
+      }
+      throw error;
+    }
+  }
+
+  async goLivePrizeSpin(
+    accountId: number,
+    callerUserId: number,
+    prizeSpinId: number,
+  ) {
+    const isMember = await this.database.hasActiveMembership(
+      accountId,
+      callerUserId,
+    );
+    if (!isMember) {
+      throw new ForbiddenException('Not a member of this account');
+    }
+
+    try {
+      const row = await this.database.goLivePrizeSpin(accountId, prizeSpinId);
+      return this.formatPrizeSpinRecord(row);
     } catch (error) {
       if (error instanceof Error && error.message === 'NOT_FOUND') {
         throw new NotFoundException('Prize spin not found');

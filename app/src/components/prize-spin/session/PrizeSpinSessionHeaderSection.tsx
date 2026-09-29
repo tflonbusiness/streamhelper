@@ -6,6 +6,8 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PrizeSpinRecord, PrizeSpinWin } from '@/api/prize-spin'
 import { isPrizeSpinReadOnly } from '@/api/prize-spin'
+import { ChatRollLiveStatusChip } from '@/components/chat-roll/ChatRollLiveStatusChip'
+import { ChatRollSessionIdBadge } from '@/components/chat-roll/session/ChatRollSessionIdBadge'
 import {
   StyledCompactSessionCardContent,
   StyledSessionCard,
@@ -22,6 +24,8 @@ type PrizeSpinSessionHeaderSectionProps = {
   record: PrizeSpinRecord
   wins: PrizeSpinWin[]
   onOpenArchiveDialog: () => void
+  onGoLive?: () => void
+  liveActionPending?: boolean
 }
 
 const HeaderStack = styled(Stack)(({ theme }) => ({
@@ -44,14 +48,9 @@ const SessionTitle = styled(Typography)({
   fontWeight: 600,
 })
 
-const SessionId = styled('span')(({ theme }) => ({
-  ...theme.typography.h6,
-  fontWeight: 600,
-  color: theme.palette.text.secondary,
-}))
-
 const ActionsStack = styled(Stack)(({ theme }) => ({
   flexWrap: 'wrap',
+  alignItems: 'center',
   gap: theme.spacing(1),
 }))
 
@@ -101,9 +100,13 @@ export const PrizeSpinSessionHeaderSection = (
       <StyledCompactSessionCardContent>
         <HeaderStack direction={{ xs: 'column', lg: 'row' }} spacing={2}>
           <TitleStack direction="row" spacing={1}>
+            <ChatRollSessionIdBadge sessionId={props.record.id} />
             <SessionTitle variant="h6" noWrap>
-              {props.record.title} <SessionId>#{props.record.id}</SessionId>
+              {props.record.title}
             </SessionTitle>
+            {!readOnly && props.record.status === 'live' ? (
+              <ChatRollLiveStatusChip />
+            ) : null}
             {readOnly ? (
               <Chip label={t('common.archived')} size="small" sx={mutedChipSx(theme)} />
             ) : null}
@@ -119,6 +122,18 @@ export const PrizeSpinSessionHeaderSection = (
             >
               {isExportingWinners ? t('common.downloading') : t('common.downloadHistory')}
             </Button>
+            {!readOnly && props.record.status === 'off_air' ? (
+              <Button
+                type="button"
+                variant="contained"
+                size="small"
+                color="primary"
+                disabled={props.liveActionPending}
+                onClick={props.onGoLive}
+              >
+                {t('prizeSpin.goLive')}
+              </Button>
+            ) : null}
             {!readOnly ? (
               <Button
                 type="button"

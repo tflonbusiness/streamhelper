@@ -331,6 +331,19 @@ export const ru = {
     historyDescriptionPast: "Активные и прошлые сессии prize spin",
     noArchivedSessions: "Нет сессий в архиве",
     noSessions: "Сессий prize spin пока нет",
+    historyCardMeta: "{{author}} · {{created}}",
+    historyCardIndex: "#{{index}}",
+    historyListItemAria:
+      "{{index}}. {{title}}, {{status}}. Открыть сессию.",
+    historyLiveNowTitle: "Сейчас в эфире",
+    historyLiveHint:
+      "Пока сессия в эфире, для неё активен OBS-оверлей.",
+    historyNoLiveSession: "Нет сессии в эфире",
+    historyNoLiveHint:
+      "Откройте сессию и нажмите «В эфир», чтобы вывести её в стрим.",
+    historyNoOtherSessions: "Других сессий в этом списке нет.",
+    goLive: "В эфир",
+    couldNotGoLive: "Не удалось вывести сессию в эфир.",
     createSession: "Создать сессию",
     createDialogTitle: "Новая сессия",
     createDialogIntro:
@@ -630,6 +643,7 @@ export const ru = {
       createChatRoll: "Не удалось создать chat roll",
       updateChatRoll: "Не удалось обновить chat roll",
       goLiveChatRoll: "Не удалось вывести сессию в эфир",
+      goLivePrizeSpin: "Не удалось вывести сессию в эфир",
       deactivateChatRoll: "Не удалось снять сессию с эфира",
       loadParticipants: "Не удалось загрузить участников",
       removeParticipant: "Не удалось удалить участника",

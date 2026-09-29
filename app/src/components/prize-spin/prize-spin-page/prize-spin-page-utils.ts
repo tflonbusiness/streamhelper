@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next'
 import type { PrizeSpinArchivedFilter } from '@/api/prize-spin'
 
 export const PRIZE_SPIN_DEFAULT_TITLE = 'Prize Spin'
@@ -17,6 +18,10 @@ export function defaultCopyPrizeSpinTitle(sourceTitle: string): string {
       PRIZE_SPIN_TITLE_MAX_LENGTH - PRIZE_SPIN_COPY_TITLE_SUFFIX.length,
     ) + PRIZE_SPIN_COPY_TITLE_SUFFIX
   )
+}
+
+export function formatPrizeSpinLiveSessionHint(t: TFunction): string {
+  return t('prizeSpin.historyLiveHint')
 }
 
 export function historyEmptyMessage(filter: PrizeSpinArchivedFilter): string {
