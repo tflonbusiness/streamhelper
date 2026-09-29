@@ -10,6 +10,7 @@ import {
   StyledSessionCard,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { StatusAlert } from '@/components/StatusAlert'
+import { ChatRollLiveStatusChip } from '@/components/chat-roll/ChatRollLiveStatusChip'
 import { ChatRollSessionIdBadge } from '@/components/chat-roll/session/ChatRollSessionIdBadge'
 import { mutedChipSx } from '@/theme/colors'
 
@@ -68,21 +69,28 @@ export const ChatRollSessionHeaderSection = (
             <SessionTitle variant="h6" noWrap>
               {props.record.title}
             </SessionTitle>
-            {!readOnly && props.record.status === 'live' ? (
+            {!readOnly &&
+            props.record.status === 'live' &&
+            props.record.isAcceptingParticipants ? (
               <Chip
-                label={t('common.live')}
+                label={t('chatRoll.entriesOpen')}
                 size="small"
-                color="warning"
+                color="success"
                 variant="outlined"
               />
             ) : null}
-            {!props.record.isAcceptingParticipants && !readOnly ? (
+            {!readOnly &&
+            props.record.status === 'live' &&
+            !props.record.isAcceptingParticipants ? (
               <Chip
                 label={t('chatRoll.entriesPaused')}
                 size="small"
                 color="warning"
                 variant="outlined"
               />
+            ) : null}
+            {!readOnly && props.record.status === 'live' ? (
+              <ChatRollLiveStatusChip />
             ) : null}
             {readOnly ? (
               <Chip label={t('common.archived')} size="small" sx={mutedChipSx(theme)} />

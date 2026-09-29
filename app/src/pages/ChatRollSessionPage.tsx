@@ -17,6 +17,7 @@ import type {
 } from '@/api/chat-roll'
 import { isChatRollReadOnly } from '@/api/chat-roll'
 import type { IconTileVariant, TileIcon } from '@/components/IconTile'
+import { formatChatRollLiveSessionHint } from '@/components/chat-roll/chat-roll-page/chat-roll-page-utils'
 import {
   CoefficientChip,
   EmptyListText,
@@ -501,7 +502,13 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
         onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
         onGoLive={() => {
           goLiveMutation.mutate(undefined, {
-            onSuccess: () => showSuccess(t('chatRoll.sessionNowLive')),
+            onSuccess: (updated) =>
+              showSuccess(
+                formatChatRollLiveSessionHint(
+                  t,
+                  updated.isAcceptingParticipants,
+                ),
+              ),
             onError: (error) =>
               showError(
                 error instanceof Error

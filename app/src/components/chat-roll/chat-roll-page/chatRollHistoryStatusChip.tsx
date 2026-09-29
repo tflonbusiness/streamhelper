@@ -2,7 +2,7 @@ import { Chip } from '@mui/material'
 import { alpha, styled } from '@mui/material/styles'
 import type { TFunction } from 'i18next'
 import { isChatRollArchived, type ChatRollRecord } from '@/api/chat-roll'
-import { colors, toneChipSx } from '@/theme/colors'
+import { ChatRollLiveStatusChip } from '@/components/chat-roll/ChatRollLiveStatusChip'
 
 const MutedStatusChip = styled(Chip)(({ theme }) => ({
   height: 24,
@@ -20,13 +20,7 @@ export function chatRollHistoryStatusChip(record: ChatRollRecord, t: TFunction) 
   }
 
   if (record.status === 'live') {
-    return (
-      <Chip
-        label={t('common.live')}
-        size="small"
-        sx={toneChipSx(colors.warning[500])}
-      />
-    )
+    return <ChatRollLiveStatusChip />
   }
 
   return <MutedStatusChip label={t('common.inactive')} size="small" />

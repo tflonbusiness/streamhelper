@@ -7,6 +7,7 @@ import { chatRollHistoryStatusChip } from '@/components/chat-roll/chat-roll-page
 import { ChatRollSessionIdBadge } from '@/components/chat-roll/session/ChatRollSessionIdBadge'
 import { OpenSessionButton } from '@/components/OpenSessionButton'
 import { formatPrizeSpinDateTime } from '@/components/prize-spin/prize-spin-utils'
+import { formatChatRollLiveSessionHint } from '@/components/chat-roll/chat-roll-page/chat-roll-page-utils'
 import { chatRollSessionRoute } from '@/lib/routes'
 import { colors } from '@/theme/colors'
 
@@ -146,13 +147,6 @@ const StyledCardActions = styled(Box)(({ theme }) => ({
   },
 }))
 
-const pausedChipSx = {
-  height: 24,
-  fontSize: '0.75rem',
-  fontWeight: 500,
-  mt: 0.75,
-} as const
-
 export function ChatRollHistoryLiveHero({
   record,
   loading = false,
@@ -178,7 +172,24 @@ export function ChatRollHistoryLiveHero({
                 <StyledHeroTitle>{record.title}</StyledHeroTitle>
               </StyledTitleLink>
             </StyledTitleMain>
-            {chatRollHistoryStatusChip(record, t)}
+            <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexShrink: 0 }}>
+              {record.isAcceptingParticipants ? (
+                <Chip
+                  label={t('chatRoll.entriesOpen')}
+                  size="small"
+                  color="success"
+                  variant="outlined"
+                />
+              ) : (
+                <Chip
+                  label={t('chatRoll.entriesPaused')}
+                  size="small"
+                  color="warning"
+                  variant="outlined"
+                />
+              )}
+              {chatRollHistoryStatusChip(record, t)}
+            </Stack>
           </StyledTitleRow>
           <StyledKeywordRow>
             <StyledKeywordLabel>
@@ -194,16 +205,9 @@ export function ChatRollHistoryLiveHero({
               created: formatPrizeSpinDateTime(record.createdAt),
             })}
           </StyledMeta>
-          <StyledHint>{t('chatRoll.sessionNowLive')}</StyledHint>
-          {!record.isAcceptingParticipants ? (
-            <Chip
-              label={t('chatRoll.entriesPaused')}
-              size="small"
-              color="warning"
-              variant="outlined"
-              sx={pausedChipSx}
-            />
-          ) : null}
+          <StyledHint>
+            {formatChatRollLiveSessionHint(t, record.isAcceptingParticipants)}
+          </StyledHint>
           <StyledCardActions>
             <OpenSessionButton
               to={chatRollSessionRoute(record.id)}

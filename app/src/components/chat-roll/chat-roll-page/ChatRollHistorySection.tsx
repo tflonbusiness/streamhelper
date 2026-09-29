@@ -22,6 +22,7 @@ import { ChatRollArchiveDialog } from '@/components/chat-roll/chat-roll-page/Cha
 import { ChatRollCreateDialog } from '@/components/chat-roll/chat-roll-page/ChatRollCreateDialog'
 import { ChatRollHistoryList } from '@/components/chat-roll/chat-roll-page/ChatRollHistoryList'
 import { ChatRollHistoryLiveHero } from '@/components/chat-roll/chat-roll-page/ChatRollHistoryLiveHero'
+import { formatChatRollLiveSessionHint } from '@/components/chat-roll/chat-roll-page/chat-roll-page-utils'
 import { CHAT_ROLL_HISTORY_PAGE_SIZE } from '@/components/chat-roll/chat-roll-page/chat-roll-page-utils'
 import { SectionHeader } from '@/components/SectionHeader'
 import { useNotification } from '@/context/NotificationContext'
@@ -194,7 +195,13 @@ export const ChatRollHistorySection = ({
               }
               onGoLive={(record) => {
                 goLiveMutation.mutate(record.id, {
-                  onSuccess: () => showSuccess(t('chatRoll.sessionNowLive')),
+                  onSuccess: (updated) =>
+                    showSuccess(
+                      formatChatRollLiveSessionHint(
+                        t,
+                        updated.isAcceptingParticipants,
+                      ),
+                    ),
                   onError: (error) =>
                     showError(
                       error instanceof Error
