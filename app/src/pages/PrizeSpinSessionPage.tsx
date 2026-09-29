@@ -76,7 +76,12 @@ export const PrizeSpinSessionPage = () => {
     return <PrizeSpinSessionLoadingState />
   }
 
-  if (error || !record || user?.accountId === undefined) {
+  if (
+    error ||
+    !record ||
+    user?.accountId === undefined ||
+    !user.accountUcid
+  ) {
     return (
       <PrizeSpinSessionErrorState
         message={error ?? t('prizeSpin.sessionNotFound')}
@@ -147,7 +152,7 @@ export const PrizeSpinSessionPage = () => {
         <Grid size={{ xs: 12, lg: 3 }}>
           <PrizeSpinStreamWidgetSection
             accountId={accountId}
-            prizeSpinId={prizeSpinId}
+            accountUcid={user.accountUcid}
           />
         </Grid>
       </ContentGrid>

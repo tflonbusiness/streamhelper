@@ -17,7 +17,7 @@ import {
 
 type PrizeSpinStreamWidgetSectionProps = {
   accountId: number
-  prizeSpinId: number
+  accountUcid: string
 }
 
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -56,8 +56,8 @@ export const PrizeSpinStreamWidgetSection = (
   const { t } = useTranslation()
   const { showSuccess } = useNotification()
   const [widgetDialogOpen, setWidgetDialogOpen] = useState(false)
-  const overlayHref = buildPrizeSpinOverlayPath(props.prizeSpinId)
-  const obsOverlayUrl = buildPrizeSpinObsOverlayUrl(props.prizeSpinId)
+  const overlayHref = buildPrizeSpinOverlayPath(props.accountUcid)
+  const obsOverlayUrl = buildPrizeSpinObsOverlayUrl(props.accountUcid)
 
   const handleCopyObsLink = async () => {
     await navigator.clipboard.writeText(obsOverlayUrl)

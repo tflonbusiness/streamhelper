@@ -7,6 +7,8 @@ import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module.js';
 import { DatabaseService } from './../src/database/database.service.js';
 
+const ACCOUNT_UCID = '550e8400-e29b-41d4-a716-446655440000';
+
 const DEFAULT_STYLE = {
   backgroundColor: '#0A0A0C',
   surfaceColor: '#121215',
@@ -23,7 +25,7 @@ const DEFAULT_STYLE = {
 
 const DEFAULT_WIDGET = {
   id: 1,
-  bonusBuyId: 1,
+  accountId: 10,
   presetId: 1,
   width: 500,
   height: 600,
@@ -48,16 +50,18 @@ describe('BonusBuyController (e2e)', () => {
       .useValue({
         onModuleInit: async () => undefined,
         onModuleDestroy: async () => undefined,
-        getPublicBonusBuyWidgetView: async (bonusBuyId: number) => {
-          if (bonusBuyId !== 1) {
-            return null;
+        getPublicBonusBuyWidgetViewByUcid: async (ucid: string) => {
+          if (ucid !== ACCOUNT_UCID) {
+            return { kind: 'not_found' };
           }
 
           return {
+            kind: 'active',
             record: {
               id: 1,
               name: 'Friday stream',
               startBalance: '50.00',
+              currencyCode: 'USD',
               status: 'live' as const,
             },
             slots: [],
@@ -81,9 +85,10 @@ describe('BonusBuyController (e2e)', () => {
 
   it('returns public widget view without auth', async () => {
     await request(app.getHttpServer())
-      .get('/bonus-buys/1/widget')
+      .get(`/bonus-buys/widget/${ACCOUNT_UCID}`)
       .expect(200)
       .expect(({ body }) => {
+        expect(body.status).toBe('active');
         expect(body.record.id).toBe(1);
         expect(body.record.name).toBe('Friday stream');
         expect(body.settings.width).toBe(500);
@@ -91,11 +96,13 @@ describe('BonusBuyController (e2e)', () => {
       });
   });
 
-  it('returns 404 for unknown bonus buy', async () => {
-    await request(app.getHttpServer()).get('/bonus-buys/999/widget').expect(404);
+  it('returns 404 for unknown account ucid', async () => {
+    await request(app.getHttpServer())
+      .get('/bonus-buys/widget/00000000-0000-0000-0000-000000000099')
+      .expect(404);
   });
 
-  it('returns 409 for archived bonus buy widget', async () => {
+  it('returns unavailable when no live session', async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
@@ -103,29 +110,33 @@ describe('BonusBuyController (e2e)', () => {
       .useValue({
         onModuleInit: async () => undefined,
         onModuleDestroy: async () => undefined,
-        getPublicBonusBuyWidgetView: async () => ({ inactive: true }),
+        getPublicBonusBuyWidgetViewByUcid: async () => ({
+          kind: 'unavailable',
+          reason: 'no_live_session',
+        }),
       })
       .compile();
 
-    const archivedApp = moduleFixture.createNestApplication();
-    archivedApp.use(cookieParser());
-    archivedApp.use(
+    const inactiveApp = moduleFixture.createNestApplication();
+    inactiveApp.use(cookieParser());
+    inactiveApp.use(
       session({
         secret: 'test-secret',
         resave: false,
         saveUninitialized: false,
       }),
     );
-    await archivedApp.init();
+    await inactiveApp.init();
 
-    await request(archivedApp.getHttpServer())
-      .get('/bonus-buys/1/widget')
-      .expect(409)
+    await request(inactiveApp.getHttpServer())
+      .get(`/bonus-buys/widget/${ACCOUNT_UCID}`)
+      .expect(200)
       .expect(({ body }) => {
-        expect(body.message).toBe('SESSION_ARCHIVED');
+        expect(body.status).toBe('unavailable');
+        expect(body.reason).toBe('no_live_session');
       });
 
-    await archivedApp.close();
+    await inactiveApp.close();
   });
 
   afterEach(async () => {

@@ -60,6 +60,7 @@ export class AuthService {
       id,
       name,
       accountId: membership.accountId,
+      accountUcid: membership.ucid,
       accountName: membership.name,
       role: membership.role,
       subscriptionPlan: membership.subscriptionPlan,
@@ -79,13 +80,21 @@ export class AuthService {
 
     const channelSlug =
       user.channelSlug ?? (await this.resolveChannelSlug(user.accountId));
+    const accountUcid =
+      user.accountUcid ??
+      (await this.database.getAccountUcid(user.accountId)) ??
+      undefined;
 
-    if (channelSlug === user.channelSlug) {
+    if (
+      channelSlug === user.channelSlug &&
+      accountUcid === user.accountUcid
+    ) {
       return user;
     }
 
     return {
       ...user,
+      ...(accountUcid ? { accountUcid } : {}),
       ...(channelSlug ? { channelSlug } : {}),
     };
   }
@@ -410,7 +419,7 @@ export class AuthService {
   private formatBonusBuyWidget(row: DbBonusBuyWidget) {
     return {
       id: row.id,
-      bonusBuyId: row.bonusBuyId,
+      accountId: row.accountId,
       presetId: row.presetId,
       width: row.width,
       height: row.height,
@@ -749,15 +758,11 @@ export class AuthService {
     }
   }
 
-  async getBonusBuyWidget(
-    accountId: number,
-    callerUserId: number,
-    bonusBuyId: number,
-  ) {
+  async getBonusBuyWidget(accountId: number, callerUserId: number) {
     await this.requireAccountMember(accountId, callerUserId);
 
     try {
-      const row = await this.database.getBonusBuyWidget(accountId, bonusBuyId);
+      const row = await this.database.getBonusBuyWidget(accountId);
       return this.formatBonusBuyWidget(row);
     } catch (error) {
       this.mapWidgetMutationError(error);
@@ -767,7 +772,6 @@ export class AuthService {
   async patchBonusBuyWidget(
     accountId: number,
     callerUserId: number,
-    bonusBuyId: number,
     body: {
       width?: number;
       height?: number;
@@ -824,11 +828,7 @@ export class AuthService {
     }
 
     try {
-      const row = await this.database.patchBonusBuyWidget(
-        accountId,
-        bonusBuyId,
-        input,
-      );
+      const row = await this.database.patchBonusBuyWidget(accountId, input);
       return this.formatBonusBuyWidget(row);
     } catch (error) {
       this.mapWidgetMutationError(error);
@@ -879,17 +879,24 @@ export class AuthService {
     }
   }
 
-  async getPublicBonusBuyWidget(bonusBuyId: number) {
-    const view = await this.database.getPublicBonusBuyWidgetView(bonusBuyId);
-    if (!view) {
-      throw new NotFoundException('Bonus buy not found');
+  async getPublicBonusBuyWidgetByUcid(ucid: string) {
+    const view = await this.database.getPublicBonusBuyWidgetViewByUcid(ucid);
+    if (view.kind === 'not_found') {
+      throw new NotFoundException({
+        status: 'not_found',
+        reason: 'unknown_account',
+      });
     }
 
-    if ('inactive' in view) {
-      throw new ConflictException('SESSION_ARCHIVED');
+    if (view.kind === 'unavailable') {
+      return {
+        status: 'unavailable' as const,
+        reason: view.reason,
+      };
     }
 
     return {
+      status: 'active' as const,
       record: {
         id: view.record.id,
         name: view.record.name,
@@ -899,6 +906,33 @@ export class AuthService {
       },
       slots: view.slots.map((row) => this.formatBonusBuySlot(row)),
       settings: this.formatBonusBuyWidget(view.settings),
+    };
+  }
+
+  async getPublicPrizeSpinWidgetByUcid(ucid: string) {
+    const view = await this.database.getPublicPrizeSpinWidgetViewByUcid(ucid);
+    if (view.kind === 'not_found') {
+      throw new NotFoundException({
+        status: 'not_found',
+        reason: 'unknown_account',
+      });
+    }
+
+    if (view.kind === 'unavailable') {
+      return {
+        status: 'unavailable' as const,
+        reason: view.reason,
+      };
+    }
+
+    return {
+      status: 'active' as const,
+      ...this.formatPublicPrizeSpinWidgetView({
+        record: view.record,
+        sectors: view.sectors,
+        latestWin: view.latestWin,
+        settings: view.settings,
+      }),
     };
   }
 

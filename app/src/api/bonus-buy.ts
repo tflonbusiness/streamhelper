@@ -74,7 +74,7 @@ export type PatchBonusBuySlotInput = {
 
 export type BonusBuyWidgetSettings = {
   id: number
-  bonusBuyId: number
+  accountId: number
   presetId: number
   width: number
   height: number
@@ -123,16 +123,30 @@ export type PublicBonusBuyRecord = {
   status: BonusBuyStatus
 }
 
-export type BonusBuyWidgetView = {
+export type PublicWidgetUnavailableReason =
+  | 'no_live_session'
+  | 'no_sessions'
+
+export type BonusBuyWidgetActiveView = {
+  status: 'active'
   record: PublicBonusBuyRecord
   slots: BonusBuySlot[]
   settings: BonusBuyWidgetSettings
 }
 
-export class BonusBuySessionArchivedError extends Error {
+export type BonusBuyWidgetUnavailableView = {
+  status: 'unavailable'
+  reason: PublicWidgetUnavailableReason
+}
+
+export type BonusBuyPublicWidgetResponse =
+  | BonusBuyWidgetActiveView
+  | BonusBuyWidgetUnavailableView
+
+export class BonusBuyWidgetNotFoundError extends Error {
   constructor() {
-    super('SESSION_ARCHIVED')
-    this.name = 'BonusBuySessionArchivedError'
+    super('ACCOUNT_NOT_FOUND')
+    this.name = 'BonusBuyWidgetNotFoundError'
   }
 }
 
@@ -394,14 +408,10 @@ export async function archiveBonusBuySlot(
 
 export async function fetchBonusBuyWidget(
   accountId: number,
-  bonusBuyId: number,
 ): Promise<BonusBuyWidgetSettings> {
-  const response = await fetch(
-    `/accounts/${accountId}/bonus-buys/${bonusBuyId}/widget`,
-    {
-      credentials: 'include',
-    },
-  )
+  const response = await fetch(`/accounts/${accountId}/bonus-buy-widget`, {
+    credentials: 'include',
+  })
 
   if (!response.ok) {
     throw new Error(
@@ -414,18 +424,14 @@ export async function fetchBonusBuyWidget(
 
 export async function patchBonusBuyWidget(
   accountId: number,
-  bonusBuyId: number,
   body: PatchBonusBuyWidgetInput,
 ): Promise<BonusBuyWidgetSettings> {
-  const response = await fetch(
-    `/accounts/${accountId}/bonus-buys/${bonusBuyId}/widget`,
-    {
-      method: 'PATCH',
-      credentials: 'include',
-      headers: jsonHeaders,
-      body: JSON.stringify(body),
-    },
-  )
+  const response = await fetch(`/accounts/${accountId}/bonus-buy-widget`, {
+    method: 'PATCH',
+    credentials: 'include',
+    headers: jsonHeaders,
+    body: JSON.stringify(body),
+  })
 
   if (!response.ok) {
     throw new Error(
@@ -495,16 +501,12 @@ export async function deleteBonusBuyWidgetCustomPreset(
 }
 
 export async function fetchPublicBonusBuyWidget(
-  bonusBuyId: number,
-): Promise<BonusBuyWidgetView> {
-  const response = await fetch(`/bonus-buys/${bonusBuyId}/widget`)
+  accountUcid: string,
+): Promise<BonusBuyPublicWidgetResponse> {
+  const response = await fetch(`/bonus-buys/widget/${accountUcid}`)
 
-  if (response.status === 409) {
-    const message = await readErrorMessage(response, 'SESSION_ARCHIVED')
-    if (message === 'SESSION_ARCHIVED') {
-      throw new BonusBuySessionArchivedError()
-    }
-    throw new Error(message)
+  if (response.status === 404) {
+    throw new BonusBuyWidgetNotFoundError()
   }
 
   if (!response.ok) {
@@ -513,7 +515,7 @@ export async function fetchPublicBonusBuyWidget(
     )
   }
 
-  return response.json() as Promise<BonusBuyWidgetView>
+  return response.json() as Promise<BonusBuyPublicWidgetResponse>
 }
 
 export function isBonusBuyArchived(

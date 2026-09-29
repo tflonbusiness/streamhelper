@@ -1,9 +1,9 @@
 import { bonusBuyWidgetRoute } from '@/lib/routes'
 
-export function buildBonusBuyOverlayPath(bonusBuyId: number): string {
-  return bonusBuyWidgetRoute(bonusBuyId)
+export function buildBonusBuyOverlayPath(accountUcid: string): string {
+  return bonusBuyWidgetRoute(accountUcid)
 }
 
-export function buildBonusBuyObsOverlayUrl(bonusBuyId: number): string {
-  return `${window.location.origin}${buildBonusBuyOverlayPath(bonusBuyId)}`
+export function buildBonusBuyObsOverlayUrl(accountUcid: string): string {
+  return `${window.location.origin}${buildBonusBuyOverlayPath(accountUcid)}`
 }

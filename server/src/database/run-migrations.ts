@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -6,8 +7,30 @@ import type { Pool, PoolClient } from 'pg';
 const MIGRATIONS_TABLE = 'schema_migrations';
 
 export function resolveMigrationsDirectory(): string {
+  const cwdCandidates = [
+    join(process.cwd(), 'migrations'),
+    join(process.cwd(), 'server', 'migrations'),
+  ];
+  for (const dir of cwdCandidates) {
+    if (existsSync(dir)) {
+      return dir;
+    }
+  }
+
   const here = dirname(fileURLToPath(import.meta.url));
-  return join(here, '../../migrations');
+  const moduleRelativeCandidates = [
+    join(here, '../../migrations'),
+    join(here, '../../../migrations'),
+  ];
+  for (const dir of moduleRelativeCandidates) {
+    if (existsSync(dir)) {
+      return dir;
+    }
+  }
+
+  throw new Error(
+    `Migrations directory not found (cwd=${process.cwd()}, moduleDir=${here})`,
+  );
 }
 
 async function ensureMigrationsTable(client: PoolClient): Promise<void> {

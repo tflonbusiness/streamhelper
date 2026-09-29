@@ -6,9 +6,17 @@ import { applyDocumentLocale } from '@/i18n/init-i18n'
 export const WIDGET_UI_LANGUAGE = 'en' as const
 
 export const widgetUiCopy = {
+  accountNotFound:
+    'Account not found. Check the overlay URL in your dashboard.',
   sessionNotFound: 'Session not found',
-  bonusBuyInactive:
-    'Widget is not active because this bonus buy session has been disabled.',
+  bonusBuyNoLive:
+    'No bonus buy is live. Open the dashboard and tap Go live.',
+  bonusBuyNoSessions:
+    'No bonus buy session available. Create a session, then go live.',
+  prizeSpinNoLive:
+    'No prize spin is live. Open the dashboard and tap Go live.',
+  prizeSpinNoSessions:
+    'No prize spin session available. Create a session, then go live.',
   live: 'Live',
   prizeSpinAddSectors: 'Add sectors in dashboard',
   prizeSpinSpinning: 'Spinning',

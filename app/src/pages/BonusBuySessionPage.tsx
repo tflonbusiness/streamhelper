@@ -60,7 +60,6 @@ export const BonusBuySessionPage = () => {
   )
   const { data: widgetSettings } = useBonusBuyWidget(
     user?.accountId,
-    isValidId ? bonusBuyId : null,
     isValidId,
   )
   const goLiveMutation = useGoLiveBonusBuySession(
@@ -97,7 +96,12 @@ export const BonusBuySessionPage = () => {
     return <BonusBuySessionLoadingState />
   }
 
-  if (error || !record || user?.accountId === undefined) {
+  if (
+    error ||
+    !record ||
+    user?.accountId === undefined ||
+    !user.accountUcid
+  ) {
     return (
       <BonusBuySessionErrorState
         message={error ?? t('bonusBuy.sessionNotFound')}
@@ -153,7 +157,7 @@ export const BonusBuySessionPage = () => {
         </Grid>
         <Grid size={{ xs: 12, lg: 3 }}>
           <BonusBuyStreamWidgetSection
-            bonusBuyId={bonusBuyId}
+            accountUcid={user.accountUcid}
             onOpenWidgetDialog={() => setWidgetDialogOpen(true)}
           />
         </Grid>
@@ -174,7 +178,7 @@ export const BonusBuySessionPage = () => {
       />
       <BonusBuyWidgetStyleDialog
         accountId={accountId}
-        bonusBuyId={bonusBuyId}
+        accountUcid={user.accountUcid}
         record={record}
         slots={slots}
         open={widgetDialogOpen}

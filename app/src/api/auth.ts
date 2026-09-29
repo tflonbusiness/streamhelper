@@ -4,6 +4,7 @@ export type AuthUser = {
   id: number
   name: string
   accountId?: number
+  accountUcid?: string
   accountName?: string
   role?: 'owner' | 'moderator'
   subscriptionPlan?: string

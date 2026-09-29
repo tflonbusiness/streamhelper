@@ -14,7 +14,7 @@ import {
 } from '@/lib/bonus-buy-overlay-url'
 
 type BonusBuyStreamWidgetSectionProps = {
-  bonusBuyId: number
+  accountUcid: string
   onOpenWidgetDialog: () => void
 }
 
@@ -53,8 +53,8 @@ export const BonusBuyStreamWidgetSection = (
 ) => {
   const { t } = useTranslation()
   const { showSuccess } = useNotification()
-  const overlayHref = buildBonusBuyOverlayPath(props.bonusBuyId)
-  const obsOverlayUrl = buildBonusBuyObsOverlayUrl(props.bonusBuyId)
+  const overlayHref = buildBonusBuyOverlayPath(props.accountUcid)
+  const obsOverlayUrl = buildBonusBuyObsOverlayUrl(props.accountUcid)
 
   const handleCopyObsLink = async () => {
     await navigator.clipboard.writeText(obsOverlayUrl)

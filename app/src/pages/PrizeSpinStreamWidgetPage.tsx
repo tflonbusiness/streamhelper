@@ -1,5 +1,5 @@
 import { Box } from '@mui/material'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { PrizeSpinWidgetNotFoundError } from '@/api/prize-spin'
 import { PrizeSpinWidgetCard } from '@/components/prize-spin/widget/PrizeSpinWidgetCard'
@@ -8,16 +8,26 @@ import { PrizeSpinWidgetMessage } from '@/components/prize-spin/widget/PrizeSpin
 import { attachPrizeSpinWheelAudioUnlock } from '@/lib/prize-spin-wheel-audio'
 import { PRIZE_SPIN_WIDGET_DEFAULTS } from '@/lib/prize-spin-widget-defaults'
 import { PRIZE_SPIN_WIDGET_THEME } from '@/lib/prize-spin-widget-theme'
+import { publicWidgetUnavailableMessage } from '@/lib/public-widget'
 import { usePinWidgetUiEnglish, widgetUiCopy } from '@/i18n/widget-ui'
 import { usePublicPrizeSpinWidget } from '@/queries/use-prize-spins'
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export function PrizeSpinStreamWidgetPage() {
   usePinWidgetUiEnglish()
-  const { id } = useParams<{ id: string }>()
-  const prizeSpinId = Number.parseInt(id ?? '', 10)
-  const isValidId = Number.isFinite(prizeSpinId)
+  const { ucid } = useParams<{ ucid: string }>()
+
+  const accountUcid = useMemo(() => {
+    if (!ucid || !UUID_REGEX.test(ucid)) {
+      return null
+    }
+    return ucid
+  }, [ucid])
+
   const { data: view, error, isLoading, isPending } =
-    usePublicPrizeSpinWidget(isValidId ? prizeSpinId : undefined)
+    usePublicPrizeSpinWidget(accountUcid)
 
   useEffect(() => {
     const prevBody = document.body.style.overflow
@@ -32,10 +42,10 @@ export function PrizeSpinStreamWidgetPage() {
 
   useEffect(() => attachPrizeSpinWheelAudioUnlock(), [])
 
-  if (!isValidId) {
+  if (accountUcid === null) {
     return (
       <PrizeSpinWidgetMessage
-        message={widgetUiCopy.sessionNotFound}
+        message={widgetUiCopy.accountNotFound}
         tone="muted"
       />
     )
@@ -48,7 +58,16 @@ export function PrizeSpinStreamWidgetPage() {
   if (error instanceof PrizeSpinWidgetNotFoundError || error || !view) {
     return (
       <PrizeSpinWidgetMessage
-        message={widgetUiCopy.sessionNotFound}
+        message={widgetUiCopy.accountNotFound}
+        tone="muted"
+      />
+    )
+  }
+
+  if (view.status === 'unavailable') {
+    return (
+      <PrizeSpinWidgetMessage
+        message={publicWidgetUnavailableMessage('prizeSpin', view.reason)}
         tone="muted"
       />
     )

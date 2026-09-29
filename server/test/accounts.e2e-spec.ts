@@ -76,7 +76,7 @@ describe('AccountsController (e2e)', () => {
     bonusBuyStartBalance = '50.00';
     widgetSettings = {
       id: 1,
-      bonusBuyId: 1,
+      accountId: 10,
       width: 500,
       height: 600,
       backgroundColor: '#0A0A0C',

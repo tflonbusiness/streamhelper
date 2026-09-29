@@ -24,8 +24,8 @@ export const prizeSpinKeys = {
     [...prizeSpinKeys.all, 'widget', accountId] as const,
   session: (accountId: number, prizeSpinId: number) =>
     [...prizeSpinKeys.all, 'session', accountId, prizeSpinId] as const,
-  publicWidget: (prizeSpinId: number) =>
-    [...prizeSpinKeys.all, 'publicWidget', prizeSpinId] as const,
+  publicWidget: (accountUcid: string) =>
+    [...prizeSpinKeys.all, 'publicWidget', accountUcid] as const,
 }
 
 export type BonusBuyListParams = {
@@ -41,12 +41,12 @@ export const bonusBuyKeys = {
     [...bonusBuyKeys.lists(), accountId, params] as const,
   session: (accountId: number, bonusBuyId: number) =>
     [...bonusBuyKeys.all, 'session', accountId, bonusBuyId] as const,
-  widget: (accountId: number, bonusBuyId: number) =>
-    [...bonusBuyKeys.all, 'widget', accountId, bonusBuyId] as const,
+  widget: (accountId: number) =>
+    [...bonusBuyKeys.all, 'widget', accountId] as const,
   presets: (accountId: number) =>
     [...bonusBuyKeys.all, 'presets', accountId] as const,
-  publicWidget: (bonusBuyId: number) =>
-    [...bonusBuyKeys.all, 'publicWidget', bonusBuyId] as const,
+  publicWidget: (accountUcid: string) =>
+    [...bonusBuyKeys.all, 'publicWidget', accountUcid] as const,
 }
 
 export const chatRollKeys = {

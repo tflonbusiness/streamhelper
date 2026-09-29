@@ -6,7 +6,6 @@ import {
 } from '@tanstack/react-query'
 import {
   archiveBonusBuySlot,
-  BonusBuySessionArchivedError,
   createBonusBuy,
   createBonusBuySlot,
   upsertBonusBuyWidgetCustomPreset,
@@ -96,13 +95,12 @@ export function useBonusBuySession(
 
 export function useBonusBuyWidget(
   accountId: number | undefined,
-  bonusBuyId: number | null,
   enabled: boolean,
 ) {
   return useQuery({
-    queryKey: bonusBuyKeys.widget(accountId ?? 0, bonusBuyId ?? 0),
-    queryFn: () => fetchBonusBuyWidget(accountId!, bonusBuyId!),
-    enabled: accountId !== undefined && bonusBuyId !== null && enabled,
+    queryKey: bonusBuyKeys.widget(accountId ?? 0),
+    queryFn: () => fetchBonusBuyWidget(accountId!),
+    enabled: accountId !== undefined && enabled,
   })
 }
 
@@ -114,17 +112,12 @@ export function useBonusBuyWidgetPresets(accountId: number | undefined) {
   })
 }
 
-export function usePublicBonusBuyWidget(bonusBuyId: number | null) {
+export function usePublicBonusBuyWidget(accountUcid: string | null) {
   return useQuery({
-    queryKey: bonusBuyKeys.publicWidget(bonusBuyId ?? 0),
-    queryFn: () => fetchPublicBonusBuyWidget(bonusBuyId!),
-    enabled: bonusBuyId !== null,
-    refetchInterval: (query) =>
-      query.state.error instanceof BonusBuySessionArchivedError
-        ? false
-        : WIDGET_POLL_MS,
-    retry: (failureCount, error) =>
-      error instanceof BonusBuySessionArchivedError ? false : failureCount < 3,
+    queryKey: bonusBuyKeys.publicWidget(accountUcid ?? ''),
+    queryFn: () => fetchPublicBonusBuyWidget(accountUcid!),
+    enabled: accountUcid !== null && accountUcid.length > 0,
+    refetchInterval: WIDGET_POLL_MS,
   })
 }
 
@@ -271,19 +264,16 @@ export function useArchiveBonusBuySession(
   })
 }
 
-export function usePatchBonusBuyWidget(
-  accountId: number | undefined,
-  bonusBuyId: number | null,
-) {
+export function usePatchBonusBuyWidget(accountId: number | undefined) {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: (body: PatchBonusBuyWidgetInput) =>
-      patchBonusBuyWidget(accountId!, bonusBuyId!, body),
+      patchBonusBuyWidget(accountId!, body),
     onSuccess: () => {
-      if (accountId !== undefined && bonusBuyId !== null) {
+      if (accountId !== undefined) {
         void queryClient.invalidateQueries({
-          queryKey: bonusBuyKeys.widget(accountId, bonusBuyId),
+          queryKey: bonusBuyKeys.widget(accountId),
         })
       }
     },

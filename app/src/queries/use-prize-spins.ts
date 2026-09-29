@@ -92,11 +92,11 @@ export function useCopyPrizeSpin(accountId: number | undefined) {
 
 const WIDGET_POLL_MS = 5000
 
-export function usePublicPrizeSpinWidget(prizeSpinId: number | undefined) {
+export function usePublicPrizeSpinWidget(accountUcid: string | null) {
   return useQuery({
-    queryKey: prizeSpinKeys.publicWidget(prizeSpinId ?? 0),
-    queryFn: () => fetchPublicPrizeSpinWidget(prizeSpinId!),
-    enabled: prizeSpinId !== undefined && Number.isFinite(prizeSpinId),
+    queryKey: prizeSpinKeys.publicWidget(accountUcid ?? ''),
+    queryFn: () => fetchPublicPrizeSpinWidget(accountUcid!),
+    enabled: accountUcid !== null && accountUcid.length > 0,
     refetchInterval: WIDGET_POLL_MS,
     retry: false,
   })

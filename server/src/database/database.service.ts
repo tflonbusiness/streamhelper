@@ -14,6 +14,10 @@ import {
   type BonusBuyWidgetStyleSettings,
 } from '../bonus-buy/bonus-buy-widget-defaults.js';
 import {
+  bonusBuyWidgetInsertParams,
+  BONUS_BUY_WIDGET_INSERT_SQL,
+} from '../bonus-buy/bonus-buy-widget-insert.js';
+import {
   parseBonusBuyWidgetStyleSettings,
 } from '../bonus-buy/bonus-buy-widget-style.js';
 import {
@@ -256,7 +260,7 @@ export type PatchBonusBuySlotInput = {
 
 export type DbBonusBuyWidget = {
   id: number;
-  bonusBuyId: number;
+  accountId: number;
   width: number;
   height: number;
   styleSettings: BonusBuyWidgetStyleSettings;
@@ -264,6 +268,27 @@ export type DbBonusBuyWidget = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+export type PublicBonusBuyWidgetViewResult =
+  | { kind: 'not_found' }
+  | { kind: 'unavailable'; reason: 'no_live_session' | 'no_sessions' }
+  | {
+      kind: 'active';
+      record: DbPublicBonusBuyRecord;
+      slots: DbBonusBuySlot[];
+      settings: DbBonusBuyWidget;
+    };
+
+export type PublicPrizeSpinWidgetViewResult =
+  | { kind: 'not_found' }
+  | { kind: 'unavailable'; reason: 'no_live_session' | 'no_sessions' }
+  | {
+      kind: 'active';
+      record: DbPrizeSpin;
+      sectors: DbPrizeSpinSector[];
+      latestWin: DbPrizeSpinWin | null;
+      settings: DbPrizeSpinWidget;
+    };
 
 export type DbBonusBuyWidgetStylePreset = {
   id: number;
@@ -515,6 +540,15 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       await client.query(
         CHAT_ROLL_WIDGET_INSERT_SQL,
         chatRollWidgetInsertParams(accountId),
+      );
+
+      const bootstrapPreset = await this.resolveBootstrapWidgetPreset(
+        client,
+        accountId,
+      );
+      await client.query(
+        BONUS_BUY_WIDGET_INSERT_SQL,
+        bonusBuyWidgetInsertParams(accountId, bootstrapPreset.presetId),
       );
 
       await client.query('COMMIT');
@@ -1038,32 +1072,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         ],
       );
 
-      const row = result.rows[0];
-      const bonusBuyId = toInt(row.id);
-      const bootstrapPreset = await this.resolveBootstrapWidgetPreset(
-        client,
-        accountId,
-      );
-
-      await client.query(
-        `
-          INSERT INTO bonus_buy_widget (
-            bonus_buy_id,
-            width,
-            height,
-            preset_id
-          )
-          VALUES ($1, $2, $3, $4)
-        `,
-        [
-          bonusBuyId,
-          BONUS_BUY_WIDGET_DIMENSION_DEFAULTS.width,
-          BONUS_BUY_WIDGET_DIMENSION_DEFAULTS.height,
-          bootstrapPreset.presetId,
-        ],
-      );
-
       await client.query('COMMIT');
+
+      const row = result.rows[0];
 
       return this.mapBonusBuyRow(row);
     } catch (error) {
@@ -1592,7 +1603,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   private mapBonusBuyWidgetRow(row: {
     id: string | number;
-    bonus_buy_id: string | number;
+    account_id: string | number;
     width: string | number;
     height: string | number;
     preset_id: string | number;
@@ -1606,7 +1617,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
     return {
       id: toInt(row.id),
-      bonusBuyId: toInt(row.bonus_buy_id),
+      accountId: toInt(row.account_id),
       width: toInt(row.width),
       height: toInt(row.height),
       styleSettings,
@@ -1642,7 +1653,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   private widgetSelectColumns(alias = 'w', presetAlias = 'p'): string {
     return `
       ${alias}.id,
-      ${alias}.bonus_buy_id,
+      ${alias}.account_id,
       ${alias}.width,
       ${alias}.height,
       ${alias}.preset_id,
@@ -1662,20 +1673,14 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   private async ensureBonusBuyWidget(
     accountId: number,
-    bonusBuyId: number,
   ): Promise<DbBonusBuyWidget> {
-    const session = await this.getBonusBuyById(accountId, bonusBuyId);
-    if (!session) {
-      throw new Error('NOT_FOUND');
-    }
-
     const existing = await this.pool.query(
       `
         SELECT ${this.widgetSelectColumns()}
         ${this.widgetFromJoin()}
-        WHERE w.bonus_buy_id = $1
+        WHERE w.account_id = $1
       `,
-      [bonusBuyId],
+      [accountId],
     );
 
     if (existing.rows[0]) {
@@ -1690,22 +1695,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         accountId,
       );
       await client.query(
-        `
-          INSERT INTO bonus_buy_widget (
-            bonus_buy_id,
-            width,
-            height,
-            preset_id
-          )
-          VALUES ($1, $2, $3, $4)
-          ON CONFLICT (bonus_buy_id) DO NOTHING
-        `,
-        [
-          bonusBuyId,
-          BONUS_BUY_WIDGET_DIMENSION_DEFAULTS.width,
-          BONUS_BUY_WIDGET_DIMENSION_DEFAULTS.height,
-          bootstrapPreset.presetId,
-        ],
+        BONUS_BUY_WIDGET_INSERT_SQL,
+        bonusBuyWidgetInsertParams(accountId, bootstrapPreset.presetId),
       );
       await client.query('COMMIT');
     } catch (error) {
@@ -1719,9 +1710,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       `
         SELECT ${this.widgetSelectColumns()}
         ${this.widgetFromJoin()}
-        WHERE w.bonus_buy_id = $1
+        WHERE w.account_id = $1
       `,
-      [bonusBuyId],
+      [accountId],
     );
 
     const row = created.rows[0];
@@ -1732,11 +1723,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     return this.mapBonusBuyWidgetRow(row);
   }
 
-  async getBonusBuyWidget(
-    accountId: number,
-    bonusBuyId: number,
-  ): Promise<DbBonusBuyWidget> {
-    return this.ensureBonusBuyWidget(accountId, bonusBuyId);
+  async getBonusBuyWidget(accountId: number): Promise<DbBonusBuyWidget> {
+    return this.ensureBonusBuyWidget(accountId);
   }
 
   private async getAccessibleBonusBuyWidgetPreset(
@@ -1776,10 +1764,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   async patchBonusBuyWidget(
     accountId: number,
-    bonusBuyId: number,
     input: PatchBonusBuyWidgetInput,
   ): Promise<DbBonusBuyWidget> {
-    const existing = await this.ensureBonusBuyWidget(accountId, bonusBuyId);
+    const existing = await this.ensureBonusBuyWidget(accountId);
 
     let nextPresetId =
       input.presetId !== undefined ? input.presetId : existing.presetId;
@@ -1814,29 +1801,24 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
     await this.pool.query(
       `
-        UPDATE bonus_buy_widget w
+        UPDATE bonus_buy_widget
         SET
           width = $2,
           height = $3,
           preset_id = $4,
           updated_at = now()
-        FROM bonus_buy bb
-        WHERE w.bonus_buy_id = bb.id
-          AND bb.account_id = $1
-          AND w.bonus_buy_id = $5
+        WHERE account_id = $1
       `,
-      [accountId, next.width, next.height, next.presetId, bonusBuyId],
+      [accountId, next.width, next.height, next.presetId],
     );
 
     const result = await this.pool.query(
       `
         SELECT ${this.widgetSelectColumns()}
         ${this.widgetFromJoin()}
-        JOIN bonus_buy bb ON bb.id = w.bonus_buy_id
-        WHERE bb.account_id = $1
-          AND w.bonus_buy_id = $2
+        WHERE w.account_id = $1
       `,
-      [accountId, bonusBuyId],
+      [accountId],
     );
 
     const row = result.rows[0];
@@ -1987,12 +1969,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
       await client.query(
         `
-          UPDATE bonus_buy_widget w
+          UPDATE bonus_buy_widget
           SET preset_id = $2, updated_at = now()
-          FROM bonus_buy bb
-          WHERE w.bonus_buy_id = bb.id
-            AND bb.account_id = $1
-            AND w.preset_id = $3
+          WHERE account_id = $1
+            AND preset_id = $3
         `,
         [accountId, fallbackPresetId, customPresetId],
       );
@@ -2020,18 +2000,16 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async getPublicBonusBuyWidgetView(bonusBuyId: number): Promise<
-    | {
-        record: DbPublicBonusBuyRecord;
-        slots: DbBonusBuySlot[];
-        settings: DbBonusBuyWidget;
-      }
-    | { inactive: true }
-    | null
-  > {
+  private async loadPublicBonusBuyWidgetActiveView(
+    accountId: number,
+    bonusBuyId: number,
+  ): Promise<{
+    record: DbPublicBonusBuyRecord;
+    slots: DbBonusBuySlot[];
+    settings: DbBonusBuyWidget;
+  }> {
     const recordResult = await this.pool.query<{
       id: string | number;
-      account_id: string | number;
       name: string;
       start_balance: string;
       currency_code: string;
@@ -2040,39 +2018,24 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       `
         SELECT
           id,
-          account_id,
           name,
           start_balance::text AS start_balance,
           currency_code,
           status
         FROM bonus_buy
         WHERE id = $1
+          AND account_id = $2
+          AND status = 'live'
       `,
-      [bonusBuyId],
+      [bonusBuyId, accountId],
     );
 
     const recordRow = recordResult.rows[0];
     if (!recordRow) {
-      return null;
-    }
-
-    if (recordRow.status === 'archived') {
-      return { inactive: true };
-    }
-
-    const settingsResult = await this.pool.query(
-      `
-        SELECT ${this.widgetSelectColumns()}
-        ${this.widgetFromJoin()}
-        WHERE w.bonus_buy_id = $1
-      `,
-      [bonusBuyId],
-    );
-
-    const settingsRow = settingsResult.rows[0];
-    if (!settingsRow) {
       throw new Error('NOT_FOUND');
     }
+
+    const settings = await this.ensureBonusBuyWidget(accountId);
 
     const slotsResult = await this.pool.query<{
       id: string | number;
@@ -2118,7 +2081,120 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         status: recordRow.status as BonusBuyStatus,
       },
       slots: slotsResult.rows.map((row) => this.mapBonusBuySlotRow(row)),
-      settings: this.mapBonusBuyWidgetRow(settingsRow),
+      settings,
+    };
+  }
+
+  async getPublicBonusBuyWidgetViewByUcid(
+    ucid: string,
+  ): Promise<PublicBonusBuyWidgetViewResult> {
+    const accountId = await this.getAccountIdByUcid(ucid);
+    if (accountId === null) {
+      return { kind: 'not_found' };
+    }
+
+    const sessionCheck = await this.pool.query<{
+      has_non_archived: boolean;
+      live_id: string | number | null;
+    }>(
+      `
+        SELECT
+          EXISTS (
+            SELECT 1
+            FROM bonus_buy
+            WHERE account_id = $1
+              AND status != 'archived'
+          ) AS has_non_archived,
+          (
+            SELECT id
+            FROM bonus_buy
+            WHERE account_id = $1
+              AND status = 'live'
+            ORDER BY id DESC
+            LIMIT 1
+          ) AS live_id
+      `,
+      [accountId],
+    );
+
+    const checkRow = sessionCheck.rows[0];
+    if (!checkRow?.has_non_archived) {
+      return { kind: 'unavailable', reason: 'no_sessions' };
+    }
+
+    if (checkRow.live_id === null) {
+      return { kind: 'unavailable', reason: 'no_live_session' };
+    }
+
+    const liveId = toInt(checkRow.live_id);
+    const active = await this.loadPublicBonusBuyWidgetActiveView(
+      accountId,
+      liveId,
+    );
+
+    return {
+      kind: 'active',
+      ...active,
+    };
+  }
+
+  async getPublicPrizeSpinWidgetViewByUcid(
+    ucid: string,
+  ): Promise<PublicPrizeSpinWidgetViewResult> {
+    const accountId = await this.getAccountIdByUcid(ucid);
+    if (accountId === null) {
+      return { kind: 'not_found' };
+    }
+
+    const sessionCheck = await this.pool.query<{
+      has_non_archived: boolean;
+      live_id: string | number | null;
+    }>(
+      `
+        SELECT
+          EXISTS (
+            SELECT 1
+            FROM prize_spin
+            WHERE account_id = $1
+              AND status != 'archived'
+          ) AS has_non_archived,
+          (
+            SELECT id
+            FROM prize_spin
+            WHERE account_id = $1
+              AND status = 'live'
+            ORDER BY id DESC
+            LIMIT 1
+          ) AS live_id
+      `,
+      [accountId],
+    );
+
+    const checkRow = sessionCheck.rows[0];
+    if (!checkRow?.has_non_archived) {
+      return { kind: 'unavailable', reason: 'no_sessions' };
+    }
+
+    if (checkRow.live_id === null) {
+      return { kind: 'unavailable', reason: 'no_live_session' };
+    }
+
+    const liveId = toInt(checkRow.live_id);
+    const view = await this.getPublicPrizeSpinWidgetView(liveId);
+    if (!view) {
+      return { kind: 'unavailable', reason: 'no_live_session' };
+    }
+
+    if (view.record.status !== 'live') {
+      return { kind: 'unavailable', reason: 'no_live_session' };
+    }
+
+    return {
+      kind: 'active',
+      record: view.record,
+      sectors: view.sectors,
+      latestWin: view.latestWin,
+      settings: view.settings,
     };
   }
 

@@ -26,11 +26,11 @@ export const appRouter = createBrowserRouter([
     children: [{ path: '/', element: <LoginPage /> }],
   },
   {
-    path: '/modules/bonus-buy/:id/widget',
+    path: '/modules/bonus-buy/widget/:ucid',
     element: <BonusBuyStreamWidgetPage />,
   },
   {
-    path: '/modules/prize-spin/:id/widget',
+    path: '/modules/prize-spin/widget/:ucid',
     element: <PrizeSpinStreamWidgetPage />,
   },
   {

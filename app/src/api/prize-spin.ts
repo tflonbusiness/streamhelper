@@ -415,7 +415,7 @@ export type PrizeSpinWidgetLatestWin = {
   createdAt: string
 }
 
-export type PrizeSpinWidgetView = {
+export type PrizeSpinWidgetActivePayload = {
   record: {
     id: number
     title: string
@@ -429,6 +429,18 @@ export type PrizeSpinWidgetView = {
     equalSectorSlices: boolean
   }
 }
+
+export type PrizeSpinWidgetUnavailableView = {
+  status: 'unavailable'
+  reason: 'no_live_session' | 'no_sessions'
+}
+
+export type PrizeSpinPublicWidgetResponse =
+  | ({ status: 'active' } & PrizeSpinWidgetActivePayload)
+  | PrizeSpinWidgetUnavailableView
+
+/** @deprecated Use {@link PrizeSpinWidgetActivePayload} from public API active branch. */
+export type PrizeSpinWidgetView = PrizeSpinWidgetActivePayload
 
 export type PatchPrizeSpinWidgetInput = {
   width?: number
@@ -480,9 +492,9 @@ export class PrizeSpinWidgetNotFoundError extends Error {
 }
 
 export async function fetchPublicPrizeSpinWidget(
-  prizeSpinId: number,
-): Promise<PrizeSpinWidgetView> {
-  const response = await fetch(`/prize-spins/${prizeSpinId}/widget`)
+  accountUcid: string,
+): Promise<PrizeSpinPublicWidgetResponse> {
+  const response = await fetch(`/prize-spins/widget/${accountUcid}`)
 
   if (response.status === 404) {
     throw new PrizeSpinWidgetNotFoundError()
@@ -494,7 +506,7 @@ export async function fetchPublicPrizeSpinWidget(
     )
   }
 
-  return response.json() as Promise<PrizeSpinWidgetView>
+  return response.json() as Promise<PrizeSpinPublicWidgetResponse>
 }
 
 export async function spinPrizeSpin(

@@ -2,6 +2,7 @@ export type SessionUser = {
   id: number;
   name: string;
   accountId?: number;
+  accountUcid?: string;
   accountName?: string;
   role?: 'owner' | 'moderator';
   subscriptionPlan?: string;

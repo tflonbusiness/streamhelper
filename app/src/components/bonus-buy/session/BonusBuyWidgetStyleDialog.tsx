@@ -36,7 +36,7 @@ import {
 
 type BonusBuyWidgetStyleDialogProps = {
   accountId: number
-  bonusBuyId: number
+  accountUcid: string
   record: BonusBuyRecord
   slots: BonusBuySlot[]
   open: boolean
@@ -85,10 +85,7 @@ export const BonusBuyWidgetStyleDialog = (
 ) => {
   const { t } = useTranslation()
   const { showSuccess, showError } = useNotification()
-  const patchWidgetMutation = usePatchBonusBuyWidget(
-    props.accountId,
-    props.bonusBuyId,
-  )
+  const patchWidgetMutation = usePatchBonusBuyWidget(props.accountId)
   const upsertCustomPresetMutation = useUpsertBonusBuyWidgetCustomPreset(
     props.accountId,
   )
@@ -105,7 +102,7 @@ export const BonusBuyWidgetStyleDialog = (
     data: widgetSettings,
     isLoading: isLoadingWidget,
     error: widgetLoadError,
-  } = useBonusBuyWidget(props.accountId, props.bonusBuyId, props.open)
+  } = useBonusBuyWidget(props.accountId, props.open)
 
   const { data: widgetPresets = [] } = useBonusBuyWidgetPresets(
     props.open ? props.accountId : undefined,
@@ -225,7 +222,7 @@ export const BonusBuyWidgetStyleDialog = (
           </StyledMobilePreviewButton>
           <Button
             component={Link}
-            to={bonusBuyWidgetRoute(props.bonusBuyId)}
+            to={bonusBuyWidgetRoute(props.accountUcid)}
             target="_blank"
             rel="noopener noreferrer"
           >

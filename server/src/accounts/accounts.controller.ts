@@ -235,32 +235,25 @@ export class AccountsController {
     );
   }
 
-  @Get(':accountId/bonus-buys/:bonusBuyId/widget')
+  @Get(':accountId/bonus-buy-widget')
   async getBonusBuyWidget(
     @Param('accountId', ParseIntPipe) accountId: number,
-    @Param('bonusBuyId', ParseIntPipe) bonusBuyId: number,
     @Req() req: Request,
   ) {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
-    return this.authService.getBonusBuyWidget(accountId, user.id, bonusBuyId);
+    return this.authService.getBonusBuyWidget(accountId, user.id);
   }
 
-  @Patch(':accountId/bonus-buys/:bonusBuyId/widget')
+  @Patch(':accountId/bonus-buy-widget')
   async patchBonusBuyWidget(
     @Param('accountId', ParseIntPipe) accountId: number,
-    @Param('bonusBuyId', ParseIntPipe) bonusBuyId: number,
     @Body() body: PatchBonusBuyWidgetBody,
     @Req() req: Request,
   ) {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
-    return this.authService.patchBonusBuyWidget(
-      accountId,
-      user.id,
-      bonusBuyId,
-      body,
-    );
+    return this.authService.patchBonusBuyWidget(accountId, user.id, body);
   }
 
   @Get(':accountId/bonus-buy-widget-presets')

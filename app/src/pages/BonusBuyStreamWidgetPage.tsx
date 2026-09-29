@@ -1,72 +1,33 @@
-import { Box, Typography } from '@mui/material'
+import { Box } from '@mui/material'
 import { useMemo } from 'react'
 import { useParams } from 'react-router-dom'
-import { BonusBuySessionArchivedError } from '@/api/bonus-buy'
+import { BonusBuyWidgetNotFoundError } from '@/api/bonus-buy'
 import { BonusBuyWidgetCard } from '@/components/bonus-buy/widget/BonusBuyWidgetCard'
+import { StreamWidgetMessage } from '@/components/widget/StreamWidgetMessage'
 import { deriveBonusBuyWidgetCardProps } from '@/lib/bonus-buy-widget-presentation'
+import { publicWidgetUnavailableMessage } from '@/lib/public-widget'
 import { usePinWidgetUiEnglish, widgetUiCopy } from '@/i18n/widget-ui'
 import { usePublicBonusBuyWidget } from '@/queries/use-bonus-buy'
 
-function WidgetNotFound({ textMutedColor }: { textMutedColor?: string }) {
-  return (
-    <Box
-      sx={{
-        minHeight: '100svh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bgcolor: 'transparent',
-        fontFamily: 'Inter, system-ui, sans-serif',
-      }}
-    >
-      <Typography sx={{ color: textMutedColor ?? '#9CA3AF', fontSize: '1rem' }}>
-        {widgetUiCopy.sessionNotFound}
-      </Typography>
-    </Box>
-  )
-}
-
-function WidgetInactive() {
-  return (
-    <Box
-      sx={{
-        minHeight: '100svh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bgcolor: 'transparent',
-        fontFamily: 'Inter, system-ui, sans-serif',
-        px: 2,
-        textAlign: 'center',
-      }}
-    >
-      <Typography sx={{ color: '#9CA3AF', fontSize: '1rem', maxWidth: 420 }}>
-        {widgetUiCopy.bonusBuyInactive}
-      </Typography>
-    </Box>
-  )
-}
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export function BonusBuyStreamWidgetPage() {
   usePinWidgetUiEnglish()
-  const { id } = useParams<{ id: string }>()
-  const bonusBuyId = useMemo(() => {
-    if (!id) {
+  const { ucid } = useParams<{ ucid: string }>()
+
+  const accountUcid = useMemo(() => {
+    if (!ucid || !UUID_REGEX.test(ucid)) {
       return null
     }
-    const parsed = Number.parseInt(id, 10)
-    return Number.isFinite(parsed) ? parsed : null
-  }, [id])
+    return ucid
+  }, [ucid])
 
-  const {
-    data: view,
-    isPending,
-    isError,
-    error,
-  } = usePublicBonusBuyWidget(bonusBuyId)
+  const { data: view, isPending, isError, error } =
+    usePublicBonusBuyWidget(accountUcid)
 
   const cardProps = useMemo(() => {
-    if (!view) {
+    if (!view || view.status !== 'active') {
       return null
     }
 
@@ -82,20 +43,32 @@ export function BonusBuyStreamWidgetPage() {
     )
   }, [view])
 
-  if (bonusBuyId === null) {
-    return <WidgetNotFound />
+  if (accountUcid === null) {
+    return <StreamWidgetMessage message={widgetUiCopy.accountNotFound} />
   }
 
   if (isPending) {
     return null
   }
 
-  if (error instanceof BonusBuySessionArchivedError) {
-    return <WidgetInactive />
+  if (error instanceof BonusBuyWidgetNotFoundError || isError) {
+    return <StreamWidgetMessage message={widgetUiCopy.accountNotFound} />
   }
 
-  if (isError || !view || !cardProps) {
-    return <WidgetNotFound />
+  if (!view) {
+    return <StreamWidgetMessage message={widgetUiCopy.accountNotFound} />
+  }
+
+  if (view.status === 'unavailable') {
+    return (
+      <StreamWidgetMessage
+        message={publicWidgetUnavailableMessage('bonusBuy', view.reason)}
+      />
+    )
+  }
+
+  if (!cardProps) {
+    return <StreamWidgetMessage message={widgetUiCopy.accountNotFound} />
   }
 
   const theme = view.settings
