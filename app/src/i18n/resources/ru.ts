@@ -130,6 +130,7 @@ export const ru = {
     copyNickAria: "Скопировать {{nick}}",
     removeNickAria: "Удалить {{nick}}",
     editSectorAria: "Изменить {{label}}",
+    saveSectorAria: "Сохранить {{label}}",
     deleteSectorAria: "Удалить {{label}}",
     copySlotAria: "Скопировать {{name}}",
     editSlotAria: "Изменить {{name}}",

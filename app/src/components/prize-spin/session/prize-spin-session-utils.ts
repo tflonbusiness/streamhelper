@@ -28,6 +28,21 @@ export function formatActiveWinPercentTotalLabel(total: number): string {
   return `Total: ${total.toFixed(2)}% / 100%`
 }
 
+export function buildPrizeSpinSectorsSnapshot(
+  sectors: PrizeSpinSector[],
+): string {
+  return sectors
+    .map((sector) =>
+      [
+        sector.id,
+        sector.winPercent,
+        sector.label,
+        sector.color ?? '',
+      ].join('\u0001'),
+    )
+    .join('\u0002')
+}
+
 export function buildWinnerSectorStats(
   wins: PrizeSpinWin[],
   sectors: PrizeSpinSector[],

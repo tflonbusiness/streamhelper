@@ -130,6 +130,7 @@ export const en = {
     copyNickAria: "Copy {{nick}}",
     removeNickAria: "Remove {{nick}}",
     editSectorAria: "Edit {{label}}",
+    saveSectorAria: "Save {{label}}",
     deleteSectorAria: "Delete {{label}}",
     copySlotAria: "Copy {{name}}",
     editSlotAria: "Edit {{name}}",

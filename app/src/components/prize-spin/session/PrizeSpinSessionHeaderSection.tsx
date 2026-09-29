@@ -1,12 +1,12 @@
-import { Button, Chip, Stack, Typography } from '@mui/material'
+import { Button, Stack, Typography } from '@mui/material'
 import ArchiveIcon from '@mui/icons-material/Archive'
 import DownloadIcon from '@mui/icons-material/Download'
-import { styled, useTheme } from '@mui/material/styles'
+import { styled } from '@mui/material/styles'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PrizeSpinRecord, PrizeSpinWin } from '@/api/prize-spin'
 import { isPrizeSpinReadOnly } from '@/api/prize-spin'
-import { ChatRollLiveStatusChip } from '@/components/chat-roll/ChatRollLiveStatusChip'
+import { prizeSpinHistoryStatusChip } from '@/components/prize-spin/prize-spin-page/prizeSpinHistoryStatusChip'
 import { ChatRollSessionIdBadge } from '@/components/chat-roll/session/ChatRollSessionIdBadge'
 import {
   StyledCompactSessionCardContent,
@@ -16,7 +16,6 @@ import { StatusAlert } from '@/components/StatusAlert'
 import { useNotification } from '@/context/NotificationContext'
 import { downloadWinnersXlsx } from '@/lib/prize-spin-winners-export'
 import { useArchivePrizeSpinSession } from '@/queries/use-prize-spin-session'
-import { mutedChipSx } from '@/theme/colors'
 
 type PrizeSpinSessionHeaderSectionProps = {
   accountId: number
@@ -62,7 +61,6 @@ export const PrizeSpinSessionHeaderSection = (
   props: PrizeSpinSessionHeaderSectionProps,
 ) => {
   const { t } = useTranslation()
-  const theme = useTheme()
   const { showSuccess, showError } = useNotification()
   const [isExportingWinners, setIsExportingWinners] = useState(false)
 
@@ -104,12 +102,7 @@ export const PrizeSpinSessionHeaderSection = (
             <SessionTitle variant="h6" noWrap>
               {props.record.title}
             </SessionTitle>
-            {!readOnly && props.record.status === 'live' ? (
-              <ChatRollLiveStatusChip />
-            ) : null}
-            {readOnly ? (
-              <Chip label={t('common.archived')} size="small" sx={mutedChipSx(theme)} />
-            ) : null}
+            {prizeSpinHistoryStatusChip(props.record, t)}
           </TitleStack>
           <ActionsStack direction="row">
             <Button

@@ -1,17 +1,22 @@
 import { IconButton, Stack } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
-import EditIcon from '@mui/icons-material/Edit'
 import { styled } from '@mui/material/styles'
 import type { TFunction } from 'i18next'
 import type { PrizeSpinSector } from '@/api/prize-spin'
 import type { AppTableColumn } from '@/components/AppTable'
-import { PrizeSpinSessionColorSwatch } from '@/components/prize-spin/session/PrizeSpinSessionColorSwatch'
+import {
+  PrizeSpinSectorColorCell,
+  PrizeSpinSectorLabelCell,
+  PrizeSpinSectorSaveButton,
+  PrizeSpinSectorWinPercentCell,
+} from '@/components/prize-spin/session/PrizeSpinSectorInlineEdit'
 
-const colorColumnSx = { px: 1 } as const
-const labelColumnSx = { fontWeight: 500 } as const
-const winPercentColumnSx = { whiteSpace: 'nowrap' } as const
+const colorColumnSx = { pl: 1.5, pr: 0.5, verticalAlign: 'middle' } as const
+const labelColumnSx = { verticalAlign: 'middle' } as const
+const winPercentColumnSx = { whiteSpace: 'nowrap', verticalAlign: 'middle' } as const
 
 const ActionsStack = styled(Stack)({
+  alignItems: 'center',
   justifyContent: 'flex-end',
 })
 
@@ -21,7 +26,6 @@ const DeleteButton = styled(IconButton)(({ theme }) => ({
 
 type BuildPrizeSpinSectorColumnsOptions = {
   readOnly: boolean
-  onEdit: (sector: PrizeSpinSector) => void
   onDelete: (sectorId: number) => void
 }
 
@@ -29,35 +33,32 @@ export function buildPrizeSpinSectorColumns(
   t: TFunction,
   {
     readOnly,
-    onEdit,
     onDelete,
   }: BuildPrizeSpinSectorColumnsOptions,
 ): AppTableColumn<PrizeSpinSector>[] {
   return [
     {
       id: 'color',
-      header: '',
-      width: 40,
-      minWidth: 40,
+      header: t('common.color'),
+      width: 48,
+      minWidth: 48,
       sx: colorColumnSx,
-      render: (sector) => (
-        <PrizeSpinSessionColorSwatch swatchColor={sector.color} />
-      ),
+      render: (sector) => <PrizeSpinSectorColorCell sector={sector} />,
     },
     {
       id: 'label',
       header: t('common.label'),
       width: '100%',
       sx: labelColumnSx,
-      render: (sector) => sector.label,
+      render: (sector) => <PrizeSpinSectorLabelCell sector={sector} />,
     },
     {
       id: 'winPercent',
       header: t('common.winPercent'),
-      width: 88,
-      minWidth: 88,
+      width: 140,
+      minWidth: 140,
       sx: winPercentColumnSx,
-      render: (sector) => `${sector.winPercent}%`,
+      render: (sector) => <PrizeSpinSectorWinPercentCell sector={sector} />,
     },
     {
       id: 'actions',
@@ -67,15 +68,7 @@ export function buildPrizeSpinSectorColumns(
       minWidth: 88,
       render: (sector) => (
         <ActionsStack direction="row" spacing={0.5}>
-          <IconButton
-            type="button"
-            size="small"
-            aria-label={t('table.editSectorAria', { label: sector.label })}
-            disabled={readOnly}
-            onClick={() => onEdit(sector)}
-          >
-            <EditIcon fontSize="small" aria-hidden />
-          </IconButton>
+          <PrizeSpinSectorSaveButton sector={sector} />
           <DeleteButton
             type="button"
             size="small"

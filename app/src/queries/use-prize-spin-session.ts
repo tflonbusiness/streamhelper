@@ -140,12 +140,20 @@ export function useDistributePrizeSpinSectors(
   accountId: number | undefined,
   prizeSpinId: number,
 ) {
-  const invalidateSession = useInvalidatePrizeSpinSession(accountId)
+  const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: () =>
       distributePrizeSpinSectorsEqually(accountId!, prizeSpinId),
-    onSuccess: () => invalidateSession(prizeSpinId),
+    onSuccess: (sectors) => {
+      if (accountId === undefined) {
+        return
+      }
+      queryClient.setQueryData<PrizeSpinSessionData>(
+        sessionQueryKey(accountId, prizeSpinId),
+        (current) => (current ? { ...current, sectors } : current),
+      )
+    },
   })
 }
 

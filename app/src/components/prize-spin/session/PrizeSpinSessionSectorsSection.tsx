@@ -4,14 +4,15 @@ import AddIcon from '@mui/icons-material/Add'
 import BalanceIcon from '@mui/icons-material/Balance'
 import PieChartIcon from '@mui/icons-material/PieChart'
 import { styled } from '@mui/material/styles'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { PrizeSpinSector } from '@/api/prize-spin'
 import { AppTable } from '@/components/AppTable'
 import { SectionHeader } from '@/components/SectionHeader'
 import { PrizeSpinAddSectorDialog } from '@/components/prize-spin/session/PrizeSpinAddSectorDialog'
-import { PrizeSpinEditSectorDialog } from '@/components/prize-spin/session/PrizeSpinEditSectorDialog'
+import { PrizeSpinSectorInlineEditProvider } from '@/components/prize-spin/session/PrizeSpinSectorInlineEdit'
 import { buildPrizeSpinSectorColumns } from '@/components/prize-spin/session/prizeSpinSectorColumns'
 import {
+  buildPrizeSpinSectorsSnapshot,
   formatActiveWinPercentTotalLabel,
   isCompleteWinPercentTotal,
   sumWinPercent,
@@ -39,6 +40,11 @@ const SectionActions = styled(Stack)({
   flexShrink: 0,
 })
 
+const DistributeButton = styled(Button)({
+  flexShrink: 0,
+  minWidth: 168,
+})
+
 type WinPercentTotalTone = 'complete' | 'under' | 'over'
 
 const WinPercentTotal = styled(Typography, {
@@ -48,6 +54,7 @@ const WinPercentTotal = styled(Typography, {
   fontWeight: 700,
   fontSize: '0.9375rem',
   letterSpacing: '-0.01em',
+  fontVariantNumeric: 'tabular-nums',
   color:
     $tone === 'complete'
       ? theme.palette.success.main
@@ -62,7 +69,6 @@ export const PrizeSpinSessionSectorsSection = (
   const { t } = useTranslation()
   const { showSuccess, showError } = useNotification()
   const [addDialogOpen, setAddDialogOpen] = useState(false)
-  const [editSector, setEditSector] = useState<PrizeSpinSector | null>(null)
 
   const deleteSectorMutation = useDeletePrizeSpinSector(
     props.accountId,
@@ -85,16 +91,26 @@ export const PrizeSpinSessionSectorsSection = (
       ? 'under'
       : 'over'
 
-  const handleDeleteSector = (sectorId: number) => {
-    deleteSectorMutation.mutate(sectorId, {
-      onSuccess: () => showSuccess(t('prizeSpin.sectorRemoved')),
-      onError: (error) => {
-        showError(
-          error instanceof Error ? error.message : t('prizeSpin.couldNotDeleteSector'),
-        )
-      },
-    })
-  }
+  const handleDeleteSector = useCallback(
+    (sectorId: number) => {
+      deleteSectorMutation.mutate(sectorId, {
+        onSuccess: () => showSuccess(t('prizeSpin.sectorRemoved')),
+        onError: (error) => {
+          showError(
+            error instanceof Error
+              ? error.message
+              : t('prizeSpin.couldNotDeleteSector'),
+          )
+        },
+      })
+    },
+    [deleteSectorMutation, showError, showSuccess, t],
+  )
+
+  const sectorsSnapshot = useMemo(
+    () => buildPrizeSpinSectorsSnapshot(props.sectors),
+    [props.sectors],
+  )
 
   const handleDistributeSectorsEqually = () => {
     if (props.sectors.length === 0) {
@@ -113,11 +129,14 @@ export const PrizeSpinSessionSectorsSection = (
     })
   }
 
-  const sectorColumns = buildPrizeSpinSectorColumns(t, {
-    readOnly: props.readOnly,
-    onEdit: setEditSector,
-    onDelete: handleDeleteSector,
-  })
+  const sectorColumns = useMemo(
+    () =>
+      buildPrizeSpinSectorColumns(t, {
+        readOnly: props.readOnly,
+        onDelete: handleDeleteSector,
+      }),
+    [handleDeleteSector, props.readOnly, t],
+  )
 
   return (
     <>
@@ -131,11 +150,13 @@ export const PrizeSpinSessionSectorsSection = (
             showDivider={false}
             action={
               <SectionActions direction="row" spacing={1}>
-                <Button
+                <DistributeButton
                   type="button"
                   variant="outlined"
                   size="small"
                   startIcon={<BalanceIcon fontSize="small" aria-hidden />}
+                  loading={distributeSectorsMutation.isPending}
+                  loadingPosition="start"
                   disabled={
                     props.readOnly ||
                     props.sectors.length === 0 ||
@@ -143,10 +164,8 @@ export const PrizeSpinSessionSectorsSection = (
                   }
                   onClick={() => void handleDistributeSectorsEqually()}
                 >
-                  {distributeSectorsMutation.isPending
-                    ? t('prizeSpin.splitting')
-                    : t('prizeSpin.split100')}
-                </Button>
+                  {t('prizeSpin.split100')}
+                </DistributeButton>
                 <Button
                   type="button"
                   variant="contained"
@@ -167,11 +186,19 @@ export const PrizeSpinSessionSectorsSection = (
           ) : null}
           <StyledSectionDivider />
           {props.sectors.length > 0 ? (
-            <AppTable
-              columns={sectorColumns}
-              rows={props.sectors}
-              getRowKey={(sector) => sector.id}
-            />
+            <PrizeSpinSectorInlineEditProvider
+              accountId={props.accountId}
+              prizeSpinId={props.prizeSpinId}
+              existingTotalWinPercent={totalWinPercent}
+              sectorsSnapshot={sectorsSnapshot}
+              readOnly={props.readOnly}
+            >
+              <AppTable
+                columns={sectorColumns}
+                rows={props.sectors}
+                getRowKey={(sector) => sector.id}
+              />
+            </PrizeSpinSectorInlineEditProvider>
           ) : (
             <StatusAlert tone="info">
               {t('prizeSpin.sectorsEmptyHint')}
@@ -187,13 +214,6 @@ export const PrizeSpinSessionSectorsSection = (
         nextColorIndex={props.sectors.length}
         open={addDialogOpen}
         onClose={() => setAddDialogOpen(false)}
-      />
-      <PrizeSpinEditSectorDialog
-        accountId={props.accountId}
-        prizeSpinId={props.prizeSpinId}
-        existingTotalWinPercent={totalWinPercent}
-        sector={editSector}
-        onClose={() => setEditSector(null)}
       />
     </>
   )
