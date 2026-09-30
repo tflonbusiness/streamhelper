@@ -23,12 +23,12 @@ import {
 import {
   computeParticipantCoefficient,
   DEFAULT_CHAT_ROLL_ROLE_SETTINGS,
-  initialChatRollStatusOnCreate,
   normalizeKeyword,
   normalizeRoleSettings,
   pickWeightedParticipant,
   type ChatRollRoleSettings,
 } from '../chat-roll/chat-roll-utils.js';
+import { initialSessionStatusOnCreate } from '../session-lifecycle/initial-session-status-on-create.js';
 import {
   CHAT_ROLL_WIDGET_INSERT_SQL,
   chatRollWidgetInsertParams,
@@ -1031,7 +1031,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         `,
         [accountId],
       );
-      const initialStatus = initialChatRollStatusOnCreate(
+      const initialStatus = initialSessionStatusOnCreate(
         liveCheck.rows[0]?.has_live ?? false,
       );
 
@@ -2385,7 +2385,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         `,
         [accountId],
       );
-      const initialStatus = initialChatRollStatusOnCreate(
+      const initialStatus = initialSessionStatusOnCreate(
         liveCheck.rows[0]?.has_live ?? false,
       );
 
@@ -2584,7 +2584,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         `,
         [accountId],
       );
-      const initialStatus = initialChatRollStatusOnCreate(
+      const initialStatus = initialSessionStatusOnCreate(
         liveCheck.rows[0]?.has_live ?? false,
       );
 
@@ -3874,7 +3874,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         `,
         [accountId],
       );
-      const initialStatus = initialChatRollStatusOnCreate(
+      const initialStatus = initialSessionStatusOnCreate(
         liveCheck.rows[0]?.has_live ?? false,
       );
 

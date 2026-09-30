@@ -5,22 +5,21 @@ import session from 'express-session';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module.js';
-import { DEFAULT_CHAT_ROLL_ROLE_SETTINGS } from './../src/chat-roll/chat-roll-utils.js';
-import { initialSessionStatusOnCreate } from './../src/session-lifecycle/initial-session-status-on-create.js';
-import type { DbChatRoll } from './../src/database/database.service.js';
+import type { DbPrizeSpin } from './../src/database/database.service.js';
 import { DatabaseService } from './../src/database/database.service.js';
+import { initialSessionStatusOnCreate } from './../src/session-lifecycle/initial-session-status-on-create.js';
 
-describe('Chat roll create (e2e)', () => {
+describe('Prize spin create (e2e)', () => {
   let app: INestApplication<App>;
   let previousMockEnv: string | undefined;
-  let chatRolls: DbChatRoll[] = [];
-  let nextChatRollId = 1;
+  let prizeSpins: DbPrizeSpin[] = [];
+  let nextPrizeSpinId = 1;
 
   beforeEach(async () => {
     previousMockEnv = process.env.KICK_OAUTH_MOCK;
     process.env.KICK_OAUTH_MOCK = 'true';
-    chatRolls = [];
-    nextChatRollId = 1;
+    prizeSpins = [];
+    nextPrizeSpinId = 1;
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -43,7 +42,7 @@ describe('Chat roll create (e2e)', () => {
             : null,
         hasActiveMembership: async (accountId: number, userId: number) =>
           accountId === 10 && userId === 1,
-        createChatRoll: async (
+        createPrizeSpin: async (
           accountId: number,
           createdByUserId: number,
           title: string,
@@ -53,28 +52,20 @@ describe('Chat roll create (e2e)', () => {
             throw new Error('INVALID_TITLE');
           }
 
-          const hasLive = chatRolls.some(
+          const hasLive = prizeSpins.some(
             (row) => row.accountId === accountId && row.status === 'live',
           );
           const status = initialSessionStatusOnCreate(hasLive);
-          const row: DbChatRoll = {
-            id: nextChatRollId++,
+          const row: DbPrizeSpin = {
+            id: nextPrizeSpinId++,
             accountId,
             title: trimmedTitle,
             status,
-            keyword: '!roll',
-            combineMode: 'highest',
-            excludeWinnerAfterRoll: true,
-            isAcceptingParticipants: true,
-            replyInChat: false,
-            winnerResponseEnabled: true,
-            winnerResponseSeconds: 60,
-            roleSettings: DEFAULT_CHAT_ROLL_ROLE_SETTINGS,
             createdAt: new Date('2026-09-14T12:00:00.000Z'),
             createdByUserId,
             createdByName: 'demo_streamer',
           };
-          chatRolls.push(row);
+          prizeSpins.push(row);
           return row;
         },
       })
@@ -110,45 +101,37 @@ describe('Chat roll create (e2e)', () => {
     await loginOwner(agent);
 
     await agent
-      .post('/accounts/10/chat-rolls')
-      .send({ title: 'Friday roll' })
+      .post('/accounts/10/prize-spins')
+      .send({ title: 'Friday wheel' })
       .expect(201)
       .expect(({ body }) => {
         expect(body.status).toBe('live');
-        expect(body.title).toBe('Friday roll');
+        expect(body.title).toBe('Friday wheel');
       });
   });
 
   it('creates off_air when another session is already live', async () => {
-    chatRolls.push({
+    prizeSpins.push({
       id: 1,
       accountId: 10,
       title: 'Live session',
       status: 'live',
-      keyword: '!roll',
-      combineMode: 'highest',
-      excludeWinnerAfterRoll: true,
-      isAcceptingParticipants: true,
-      replyInChat: false,
-      winnerResponseEnabled: true,
-      winnerResponseSeconds: 60,
-      roleSettings: DEFAULT_CHAT_ROLL_ROLE_SETTINGS,
       createdAt: new Date('2026-09-14T11:00:00.000Z'),
       createdByUserId: 1,
       createdByName: 'demo_streamer',
     });
-    nextChatRollId = 2;
+    nextPrizeSpinId = 2;
 
     const agent = request.agent(app.getHttpServer());
     await loginOwner(agent);
 
     await agent
-      .post('/accounts/10/chat-rolls')
-      .send({ title: 'Second roll' })
+      .post('/accounts/10/prize-spins')
+      .send({ title: 'Second wheel' })
       .expect(201)
       .expect(({ body }) => {
         expect(body.status).toBe('off_air');
-        expect(body.title).toBe('Second roll');
+        expect(body.title).toBe('Second wheel');
       });
   });
 });

@@ -5,22 +5,21 @@ import session from 'express-session';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module.js';
-import { DEFAULT_CHAT_ROLL_ROLE_SETTINGS } from './../src/chat-roll/chat-roll-utils.js';
-import { initialSessionStatusOnCreate } from './../src/session-lifecycle/initial-session-status-on-create.js';
-import type { DbChatRoll } from './../src/database/database.service.js';
+import type { DbBonusBuy } from './../src/database/database.service.js';
 import { DatabaseService } from './../src/database/database.service.js';
+import { initialSessionStatusOnCreate } from './../src/session-lifecycle/initial-session-status-on-create.js';
 
-describe('Chat roll create (e2e)', () => {
+describe('Bonus buy create (e2e)', () => {
   let app: INestApplication<App>;
   let previousMockEnv: string | undefined;
-  let chatRolls: DbChatRoll[] = [];
-  let nextChatRollId = 1;
+  let bonusBuys: DbBonusBuy[] = [];
+  let nextBonusBuyId = 1;
 
   beforeEach(async () => {
     previousMockEnv = process.env.KICK_OAUTH_MOCK;
     process.env.KICK_OAUTH_MOCK = 'true';
-    chatRolls = [];
-    nextChatRollId = 1;
+    bonusBuys = [];
+    nextBonusBuyId = 1;
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -43,38 +42,34 @@ describe('Chat roll create (e2e)', () => {
             : null,
         hasActiveMembership: async (accountId: number, userId: number) =>
           accountId === 10 && userId === 1,
-        createChatRoll: async (
+        createBonusBuy: async (
           accountId: number,
           createdByUserId: number,
-          title: string,
+          name: string,
+          startBalance: string,
+          currencyCode: string,
         ) => {
-          const trimmedTitle = title.trim();
-          if (trimmedTitle.length === 0 || trimmedTitle.length > 200) {
-            throw new Error('INVALID_TITLE');
+          const trimmedName = name.trim();
+          if (trimmedName.length === 0 || trimmedName.length > 200) {
+            throw new Error('INVALID_NAME');
           }
 
-          const hasLive = chatRolls.some(
+          const hasLive = bonusBuys.some(
             (row) => row.accountId === accountId && row.status === 'live',
           );
           const status = initialSessionStatusOnCreate(hasLive);
-          const row: DbChatRoll = {
-            id: nextChatRollId++,
+          const row: DbBonusBuy = {
+            id: nextBonusBuyId++,
             accountId,
-            title: trimmedTitle,
+            name: trimmedName,
+            startBalance,
+            currencyCode,
             status,
-            keyword: '!roll',
-            combineMode: 'highest',
-            excludeWinnerAfterRoll: true,
-            isAcceptingParticipants: true,
-            replyInChat: false,
-            winnerResponseEnabled: true,
-            winnerResponseSeconds: 60,
-            roleSettings: DEFAULT_CHAT_ROLL_ROLE_SETTINGS,
             createdAt: new Date('2026-09-14T12:00:00.000Z'),
             createdByUserId,
             createdByName: 'demo_streamer',
           };
-          chatRolls.push(row);
+          bonusBuys.push(row);
           return row;
         },
       })
@@ -110,45 +105,39 @@ describe('Chat roll create (e2e)', () => {
     await loginOwner(agent);
 
     await agent
-      .post('/accounts/10/chat-rolls')
-      .send({ title: 'Friday roll' })
+      .post('/accounts/10/bonus-buys')
+      .send({ name: 'Friday stream', start_balance: '50.00' })
       .expect(201)
       .expect(({ body }) => {
         expect(body.status).toBe('live');
-        expect(body.title).toBe('Friday roll');
+        expect(body.name).toBe('Friday stream');
       });
   });
 
   it('creates off_air when another session is already live', async () => {
-    chatRolls.push({
+    bonusBuys.push({
       id: 1,
       accountId: 10,
-      title: 'Live session',
+      name: 'Live session',
+      startBalance: '10.00',
+      currencyCode: 'USD',
       status: 'live',
-      keyword: '!roll',
-      combineMode: 'highest',
-      excludeWinnerAfterRoll: true,
-      isAcceptingParticipants: true,
-      replyInChat: false,
-      winnerResponseEnabled: true,
-      winnerResponseSeconds: 60,
-      roleSettings: DEFAULT_CHAT_ROLL_ROLE_SETTINGS,
       createdAt: new Date('2026-09-14T11:00:00.000Z'),
       createdByUserId: 1,
       createdByName: 'demo_streamer',
     });
-    nextChatRollId = 2;
+    nextBonusBuyId = 2;
 
     const agent = request.agent(app.getHttpServer());
     await loginOwner(agent);
 
     await agent
-      .post('/accounts/10/chat-rolls')
-      .send({ title: 'Second roll' })
+      .post('/accounts/10/bonus-buys')
+      .send({ name: 'Second stream', start_balance: '25.00' })
       .expect(201)
       .expect(({ body }) => {
         expect(body.status).toBe('off_air');
-        expect(body.title).toBe('Second roll');
+        expect(body.name).toBe('Second stream');
       });
   });
 });

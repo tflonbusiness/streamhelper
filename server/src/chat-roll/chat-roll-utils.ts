@@ -1,3 +1,5 @@
+import { initialSessionStatusOnCreate } from '../session-lifecycle/initial-session-status-on-create.js';
+
 export type ChatRollRoleId =
   | 'moderator'
   | 'vip'
@@ -15,11 +17,11 @@ export type ChatRollRoleSetting = {
 export type ChatRollRoleSettings = Record<ChatRollRoleId, ChatRollRoleSetting>;
 
 export const CHAT_ROLL_ROLE_IDS: ChatRollRoleId[] = [
-  'moderator',
-  'vip',
-  'og',
   'viewer',
   'paid_subscriber',
+  'vip',
+  'og',
+  'moderator',
 ];
 
 export const DEFAULT_CHAT_ROLL_ROLE_SETTINGS: ChatRollRoleSettings = {
@@ -82,12 +84,8 @@ export function normalizeRoleSettings(
   return result;
 }
 
-/** Status for a newly created session when at most one live session is allowed per account. */
-export function initialChatRollStatusOnCreate(
-  accountHasLiveSession: boolean,
-): 'live' | 'off_air' {
-  return accountHasLiveSession ? 'off_air' : 'live';
-}
+/** @deprecated Use `initialSessionStatusOnCreate` from session-lifecycle. */
+export const initialChatRollStatusOnCreate = initialSessionStatusOnCreate;
 
 /** True when the user has at least one role that is enabled for this session. */
 export function canJoinChatRollWithRoles(

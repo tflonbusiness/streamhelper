@@ -41,9 +41,14 @@ export const CHAT_ROLL_ROLE_META: {
   description: string
 }[] = [
   {
-    id: 'moderator',
-    label: 'Moderator',
-    description: 'Channel moderators',
+    id: 'viewer',
+    label: 'Viewer',
+    description: 'Every chatter at intake (badge roles are additional)',
+  },
+  {
+    id: 'paid_subscriber',
+    label: 'Paid subscriber',
+    description: 'Active paid subscription',
   },
   {
     id: 'vip',
@@ -56,14 +61,9 @@ export const CHAT_ROLL_ROLE_META: {
     description: 'OG badge in chat',
   },
   {
-    id: 'viewer',
-    label: 'Viewer',
-    description: 'Every chatter at intake (badge roles are additional)',
-  },
-  {
-    id: 'paid_subscriber',
-    label: 'Paid subscriber',
-    description: 'Active paid subscription',
+    id: 'moderator',
+    label: 'Moderator',
+    description: 'Channel moderators',
   },
 ]
 
@@ -76,11 +76,11 @@ export const CHAT_ROLL_ROLE_CHIP_LABEL: Record<ChatRollRoleId, string> = {
 }
 
 const CHAT_ROLL_ROLE_IDS: ChatRollRoleId[] = [
-  'moderator',
-  'vip',
-  'og',
   'viewer',
   'paid_subscriber',
+  'vip',
+  'og',
+  'moderator',
 ]
 
 export function getChatRollRoleMeta(t: TFunction) {
