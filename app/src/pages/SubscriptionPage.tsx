@@ -2,25 +2,35 @@ import { Stack } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import CreditCardIcon from '@mui/icons-material/CreditCard'
 import { PageHeader } from '@/components/PageHeader'
-import { SubscriptionPlanCard } from '@/components/SubscriptionPlanCard'
+import { SubscriptionPlansOverview } from '@/components/subscription/SubscriptionPlansOverview'
+import { SubscriptionTrialReminder } from '@/components/SubscriptionTrialReminder'
 import { TelegramActivationNotice } from '@/components/TelegramActivationNotice'
 import { useAuth } from '@/context/AuthContext'
+import { accountHasSubscriptionAccess } from '@/lib/account-subscription'
 
 export function SubscriptionPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const hasAccess = accountHasSubscriptionAccess(user)
 
   return (
     <Stack spacing={4}>
       <PageHeader
         title={t('subscription.title')}
-        description={t('subscription.description')}
+        description={
+          hasAccess
+            ? t('subscription.description')
+            : t('subscription.descriptionExpired')
+        }
         icon={CreditCardIcon}
         iconVariant="warning"
       />
 
       <Stack spacing={3}>
-        <SubscriptionPlanCard subscriptionPlan={user?.subscriptionPlan} />
+        {hasAccess ? <SubscriptionTrialReminder user={user} /> : null}
+
+        <SubscriptionPlansOverview user={user} />
+
         <TelegramActivationNotice />
       </Stack>
     </Stack>

@@ -53,6 +53,13 @@ import {
   verifyAccessToken,
 } from '../auth/token.util.js';
 import { runMigrations } from './run-migrations.js';
+import { TRIAL_DURATION_DAYS } from '../subscriptions/account-subscription.constants.js';
+import {
+  resolveAccountSubscriptionAccess,
+  shouldMarkSubscriptionExpired,
+  type AccountSubscriptionRow,
+  type AccountSubscriptionSnapshot,
+} from '../subscriptions/account-subscription-access.js';
 
 export type DbUser = {
   id: number;
@@ -65,6 +72,7 @@ export type DbMembership = {
   name: string;
   role: 'owner' | 'moderator';
   subscriptionPlan: string;
+  subscription: AccountSubscriptionSnapshot;
 };
 
 export type DbAccountMember = {
@@ -425,6 +433,105 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     return { userId: toInt(row.user_id), isActive: row.is_active };
   }
 
+  private mapAccountSubscriptionRow(row: {
+    kind: AccountSubscriptionRow['kind'] | null;
+    status: AccountSubscriptionRow['status'] | null;
+    plan_tier: string | null;
+    starts_at: Date | null;
+    ends_at: Date | null;
+  }): AccountSubscriptionRow | null {
+    if (
+      row.kind === null ||
+      row.status === null ||
+      row.plan_tier === null ||
+      row.starts_at === null ||
+      row.ends_at === null
+    ) {
+      return null;
+    }
+
+    return {
+      kind: row.kind,
+      status: row.status,
+      planTier: row.plan_tier,
+      startsAt: row.starts_at,
+      endsAt: row.ends_at,
+    };
+  }
+
+  async expireAccountSubscriptionIfNeeded(accountId: number): Promise<void> {
+    await this.pool.query(
+      `
+        UPDATE account_subscriptions
+        SET status = 'expired', updated_at = now()
+        WHERE account_id = $1
+          AND status = 'active'
+          AND ends_at <= now()
+      `,
+      [accountId],
+    );
+  }
+
+  async loadAccountSubscriptionSnapshot(
+    accountId: number,
+  ): Promise<AccountSubscriptionSnapshot> {
+    const result = await this.pool.query<{
+      kind: AccountSubscriptionRow['kind'] | null;
+      status: AccountSubscriptionRow['status'] | null;
+      plan_tier: string | null;
+      starts_at: Date | null;
+      ends_at: Date | null;
+    }>(
+      `
+        SELECT kind, status, plan_tier, starts_at, ends_at
+        FROM account_subscriptions
+        WHERE account_id = $1
+        LIMIT 1
+      `,
+      [accountId],
+    );
+
+    const subscriptionRow = this.mapAccountSubscriptionRow(
+      result.rows[0] ?? {
+        kind: null,
+        status: null,
+        plan_tier: null,
+        starts_at: null,
+        ends_at: null,
+      },
+    );
+
+    if (subscriptionRow && shouldMarkSubscriptionExpired(subscriptionRow)) {
+      await this.expireAccountSubscriptionIfNeeded(accountId);
+      subscriptionRow.status = 'expired';
+    }
+
+    return resolveAccountSubscriptionAccess(subscriptionRow);
+  }
+
+  async insertTrialSubscriptionForAccount(
+    accountId: number,
+    client: { query: Pool['query'] },
+  ): Promise<void> {
+    await client.query(
+      `
+        INSERT INTO account_subscriptions (
+          account_id, kind, status, plan_tier, starts_at, ends_at
+        )
+        VALUES (
+          $1, 'trial', 'active', 'full', now(),
+          now() + make_interval(days => $2::int)
+        )
+      `,
+      [accountId, TRIAL_DURATION_DAYS],
+    );
+  }
+
+  async accountHasSubscriptionAccess(accountId: number): Promise<boolean> {
+    const snapshot = await this.loadAccountSubscriptionSnapshot(accountId);
+    return snapshot.hasAccess;
+  }
+
   async getPrimaryMembership(userId: number): Promise<DbMembership | null> {
     const result = await this.pool.query<{
       account_id: string | number;
@@ -432,11 +539,27 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       name: string;
       role: 'owner' | 'moderator';
       subscription_plan: string;
+      kind: AccountSubscriptionRow['kind'] | null;
+      status: AccountSubscriptionRow['status'] | null;
+      plan_tier: string | null;
+      starts_at: Date | null;
+      ends_at: Date | null;
     }>(
       `
-        SELECT a.id AS account_id, a.ucid, a.name, am.role, a.subscription_plan
+        SELECT
+          a.id AS account_id,
+          a.ucid,
+          a.name,
+          am.role,
+          a.subscription_plan,
+          s.kind,
+          s.status,
+          s.plan_tier,
+          s.starts_at,
+          s.ends_at
         FROM account_members am
         JOIN accounts a ON a.id = am.account_id
+        LEFT JOIN account_subscriptions s ON s.account_id = a.id
         WHERE am.user_id = $1 AND am.is_active = true
         ORDER BY CASE WHEN am.role = 'owner' THEN 0 ELSE 1 END, a.name
         LIMIT 1
@@ -449,12 +572,21 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       return null;
     }
 
+    const accountId = toInt(row.account_id);
+    const subscriptionRow = this.mapAccountSubscriptionRow(row);
+    if (subscriptionRow && shouldMarkSubscriptionExpired(subscriptionRow)) {
+      await this.expireAccountSubscriptionIfNeeded(accountId);
+      subscriptionRow.status = 'expired';
+    }
+    const subscription = resolveAccountSubscriptionAccess(subscriptionRow);
+
     return {
-      accountId: toInt(row.account_id),
+      accountId,
       ucid: row.ucid,
       name: row.name,
       role: row.role,
       subscriptionPlan: row.subscription_plan,
+      subscription,
     };
   }
 
@@ -516,6 +648,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       const accountId = toInt(accountResult.rows[0].id);
       const accountUcid = accountResult.rows[0].ucid;
 
+      await this.insertTrialSubscriptionForAccount(accountId, client);
+
       await client.query(
         `
           INSERT INTO account_members (account_id, user_id, role, is_active)
@@ -553,6 +687,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
       await client.query('COMMIT');
 
+      const subscription = await this.loadAccountSubscriptionSnapshot(accountId);
+
       return {
         userId,
         membership: {
@@ -561,6 +697,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           name: accountName,
           role: 'owner',
           subscriptionPlan: 'free',
+          subscription,
         },
       };
     } catch (error) {

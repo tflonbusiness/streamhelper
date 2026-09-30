@@ -68,6 +68,9 @@ describe('BonusBuyController (e2e)', () => {
             settings: DEFAULT_WIDGET,
           };
         },
+        getAccountIdByUcid: async (ucid: string) =>
+          ucid === ACCOUNT_UCID ? 10 : null,
+        accountHasSubscriptionAccess: async () => true,
       })
       .compile();
 
@@ -102,6 +105,54 @@ describe('BonusBuyController (e2e)', () => {
       .expect(404);
   });
 
+  it('returns unavailable when subscription expired', async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    })
+      .overrideProvider(DatabaseService)
+      .useValue({
+        onModuleInit: async () => undefined,
+        onModuleDestroy: async () => undefined,
+        getAccountIdByUcid: async (ucid: string) =>
+          ucid === ACCOUNT_UCID ? 10 : null,
+        accountHasSubscriptionAccess: async () => false,
+        getPublicBonusBuyWidgetViewByUcid: async () => ({
+          kind: 'active',
+          record: {
+            id: 1,
+            name: 'Friday stream',
+            startBalance: '50.00',
+            currencyCode: 'USD',
+            status: 'live' as const,
+          },
+          slots: [],
+          settings: DEFAULT_WIDGET,
+        }),
+      })
+      .compile();
+
+    const expiredApp = moduleFixture.createNestApplication();
+    expiredApp.use(cookieParser());
+    expiredApp.use(
+      session({
+        secret: 'test-secret',
+        resave: false,
+        saveUninitialized: false,
+      }),
+    );
+    await expiredApp.init();
+
+    await request(expiredApp.getHttpServer())
+      .get(`/bonus-buys/widget/${ACCOUNT_UCID}`)
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.status).toBe('unavailable');
+        expect(body.reason).toBe('subscription_expired');
+      });
+
+    await expiredApp.close();
+  });
+
   it('returns unavailable when no live session', async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -114,6 +165,9 @@ describe('BonusBuyController (e2e)', () => {
           kind: 'unavailable',
           reason: 'no_live_session',
         }),
+        getAccountIdByUcid: async (ucid: string) =>
+          ucid === ACCOUNT_UCID ? 10 : null,
+        accountHasSubscriptionAccess: async () => true,
       })
       .compile();
 

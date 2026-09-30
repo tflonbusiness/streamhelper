@@ -28,6 +28,18 @@ export class ChatRollIntakeHandler {
       return result;
     }
 
+    const hasSubscription = await this.database.accountHasSubscriptionAccess(
+      accountId,
+    );
+    if (!hasSubscription) {
+      const result = {
+        action: 'ignored' as const,
+        reason: 'subscription_expired',
+      };
+      this.logger.debug(`intake ${result.reason} account=${accountId}`);
+      return result;
+    }
+
     const message = event.content.trim();
     const session = await this.database.getChatRollForIntake(
       accountId,

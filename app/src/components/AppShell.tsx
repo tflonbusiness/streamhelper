@@ -27,6 +27,7 @@ import {
   moduleNameKey,
   type ModuleIconVariant,
 } from '@/lib/modules'
+import { accountHasSubscriptionAccess } from '@/lib/account-subscription'
 import { MODULES_ROUTE } from '@/lib/routes'
 import { colors } from '@/theme/colors'
 
@@ -37,6 +38,8 @@ type NavItem = {
   end: boolean
   requiresAccount: boolean
   requiresOwner?: boolean
+  /** Owner can open this route after trial expires (e.g. activation CTA). */
+  allowWhenSubscriptionExpired?: boolean
 }
 
 const NAV_EXPANDED_STORAGE_KEY = 'caz-shell-nav-visible'
@@ -86,6 +89,7 @@ const navItems: NavItem[] = [
     end: true,
     requiresAccount: true,
     requiresOwner: true,
+    allowWhenSubscriptionExpired: true,
   },
 ]
 
@@ -605,9 +609,21 @@ export function AppShell() {
   }
 
   const hasAccount = Boolean(user?.accountId)
-  const visibleNavItems = navItems.filter(
-    (item) => !item.requiresOwner || user?.role === 'owner',
-  )
+  const hasSubscriptionAccess = accountHasSubscriptionAccess(user)
+  const visibleNavItems = navItems.filter((item) => {
+    if (item.requiresOwner && user?.role !== 'owner') {
+      return false
+    }
+    if (
+      item.requiresAccount &&
+      hasAccount &&
+      !hasSubscriptionAccess &&
+      !item.allowWhenSubscriptionExpired
+    ) {
+      return false
+    }
+    return true
+  })
   const isNavCollapsed = !isNavExpanded
 
   return (

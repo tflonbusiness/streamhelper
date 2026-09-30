@@ -1,5 +1,13 @@
 import i18n from '@/i18n/init-i18n'
 
+export type AccountSubscriptionSession = {
+  kind: 'trial' | 'paid'
+  status: 'active' | 'expired' | 'cancelled'
+  planTier: string
+  endsAt: string
+  hasAccess: boolean
+}
+
 export type AuthUser = {
   id: number
   name: string
@@ -8,6 +16,7 @@ export type AuthUser = {
   accountName?: string
   role?: 'owner' | 'moderator'
   subscriptionPlan?: string
+  subscription?: AccountSubscriptionSession
   channelSlug?: string
 }
 

@@ -22,6 +22,13 @@ export class WinnerResponseHandler {
       return { action: 'ignored', reason: 'unknown_channel' };
     }
 
+    const hasSubscription = await this.database.accountHasSubscriptionAccess(
+      accountId,
+    );
+    if (!hasSubscription) {
+      return { action: 'ignored', reason: 'subscription_expired' };
+    }
+
     const session = await this.database.getLiveChatRollByAccountId(accountId);
     if (!session) {
       return { action: 'ignored', reason: 'no_active_session' };

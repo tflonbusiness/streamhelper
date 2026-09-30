@@ -126,6 +126,7 @@ export type PublicBonusBuyRecord = {
 export type PublicWidgetUnavailableReason =
   | 'no_live_session'
   | 'no_sessions'
+  | 'subscription_expired'
 
 export type BonusBuyWidgetActiveView = {
   status: 'active'

@@ -6,6 +6,10 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module.js';
 import { DatabaseService } from './../src/database/database.service.js';
+import {
+  activeTrialSubscriptionFixture,
+  subscriptionDatabaseMocks,
+} from '../src/subscriptions/account-subscription-fixtures.js';
 
 const MEMBERS = [
   {
@@ -113,6 +117,8 @@ describe('AccountsController (e2e)', () => {
               name: 'demo_streamer',
               role: 'owner' as const,
               subscriptionPlan: 'free',
+              ucid: '550e8400-e29b-41d4-a716-446655440000',
+              subscription: activeTrialSubscriptionFixture(),
             };
           }
           if (userId === 3) {
@@ -121,6 +127,8 @@ describe('AccountsController (e2e)', () => {
               name: 'demo_streamer',
               role: 'moderator' as const,
               subscriptionPlan: 'free',
+              ucid: '550e8400-e29b-41d4-a716-446655440000',
+              subscription: activeTrialSubscriptionFixture(),
             };
           }
           return null;
@@ -159,6 +167,8 @@ describe('AccountsController (e2e)', () => {
             name: 'demo_streamer',
             role: 'owner' as const,
             subscriptionPlan: 'free',
+            ucid: '550e8400-e29b-41d4-a716-446655440000',
+            subscription: activeTrialSubscriptionFixture(),
           },
         }),
         findCredentialByProvider: async (provider: string, providerUserId: string) => {
@@ -374,6 +384,7 @@ describe('AccountsController (e2e)', () => {
           createdByUserId: 1,
           createdByName: 'demo_streamer',
         }),
+        ...subscriptionDatabaseMocks,
       })
       .compile();
 

@@ -5,25 +5,21 @@ import session from 'express-session';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module.js';
-import type { DbPrizeSpin } from './../src/database/database.service.js';
 import { DatabaseService } from './../src/database/database.service.js';
-import { initialSessionStatusOnCreate } from './../src/session-lifecycle/initial-session-status-on-create.js';
 import {
   activeTrialSubscriptionFixture,
   subscriptionDatabaseMocks,
 } from '../src/subscriptions/account-subscription-fixtures.js';
 
-describe('Prize spin create (e2e)', () => {
+describe('Subscription access (e2e)', () => {
   let app: INestApplication<App>;
   let previousMockEnv: string | undefined;
-  let prizeSpins: DbPrizeSpin[] = [];
-  let nextPrizeSpinId = 1;
+  let subscriptionActive = true;
 
   beforeEach(async () => {
     previousMockEnv = process.env.KICK_OAUTH_MOCK;
     process.env.KICK_OAUTH_MOCK = 'true';
-    prizeSpins = [];
-    nextPrizeSpinId = 1;
+    subscriptionActive = true;
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -39,42 +35,46 @@ describe('Prize spin create (e2e)', () => {
           userId === 1
             ? {
                 accountId: 10,
+                ucid: '550e8400-e29b-41d4-a716-446655440000',
                 name: 'demo_streamer',
                 role: 'owner' as const,
                 subscriptionPlan: 'free',
-                ucid: '550e8400-e29b-41d4-a716-446655440000',
-                subscription: activeTrialSubscriptionFixture(),
+                subscription: activeTrialSubscriptionFixture({
+                  hasAccess: subscriptionActive,
+                  status: subscriptionActive ? 'active' : 'expired',
+                }),
               }
             : null,
         hasActiveMembership: async (accountId: number, userId: number) =>
           accountId === 10 && userId === 1,
-        createPrizeSpin: async (
-          accountId: number,
-          createdByUserId: number,
-          title: string,
-        ) => {
-          const trimmedTitle = title.trim();
-          if (trimmedTitle.length === 0 || trimmedTitle.length > 200) {
-            throw new Error('INVALID_TITLE');
+        accountHasSubscriptionAccess: async () => subscriptionActive,
+        findCredentialByProvider: async (provider: string, providerUserId: string) => {
+          if (provider === 'kick' && providerUserId === 'kick-mock-user') {
+            return { userId: 1, isActive: true };
           }
-
-          const hasLive = prizeSpins.some(
-            (row) => row.accountId === accountId && row.status === 'live',
-          );
-          const status = initialSessionStatusOnCreate(hasLive);
-          const row: DbPrizeSpin = {
-            id: nextPrizeSpinId++,
-            accountId,
-            title: trimmedTitle,
-            status,
-            createdAt: new Date('2026-09-14T12:00:00.000Z'),
-            createdByUserId,
-            createdByName: 'demo_streamer',
-          };
-          prizeSpins.push(row);
-          return row;
+          return null;
         },
-        ...subscriptionDatabaseMocks,
+        provisionOwnerFromKick: async () => ({
+          userId: 1,
+          membership: {
+            accountId: 10,
+            ucid: '550e8400-e29b-41d4-a716-446655440000',
+            name: 'demo_streamer',
+            role: 'owner' as const,
+            subscriptionPlan: 'free',
+            subscription: activeTrialSubscriptionFixture({
+              hasAccess: subscriptionActive,
+              status: subscriptionActive ? 'active' : 'expired',
+            }),
+          },
+        }),
+        listBonusBuys: async () => [],
+        loadAccountSubscriptionSnapshot: async () =>
+          activeTrialSubscriptionFixture({
+            hasAccess: subscriptionActive,
+            status: subscriptionActive ? 'active' : 'expired',
+          }),
+        getAccountIdByUcid: subscriptionDatabaseMocks.getAccountIdByUcid,
       })
       .compile();
 
@@ -103,42 +103,36 @@ describe('Prize spin create (e2e)', () => {
     await agent.get('/auth/oauth/kick/callback?code=mock-kick-code');
   }
 
-  it('creates the first session as live', async () => {
+  it('allows module API while subscription is active', async () => {
+    const agent = request.agent(app.getHttpServer());
+    await loginOwner(agent);
+
+    await agent.get('/accounts/10/bonus-buys').expect(200);
+  });
+
+  it('blocks module API when subscription expired', async () => {
+    subscriptionActive = false;
     const agent = request.agent(app.getHttpServer());
     await loginOwner(agent);
 
     await agent
-      .post('/accounts/10/prize-spins')
-      .send({ title: 'Friday wheel' })
-      .expect(201)
+      .get('/accounts/10/bonus-buys')
+      .expect(403)
       .expect(({ body }) => {
-        expect(body.status).toBe('live');
-        expect(body.title).toBe('Friday wheel');
+        expect(body.message?.code ?? body.code).toBe('SUBSCRIPTION_EXPIRED');
       });
   });
 
-  it('creates off_air when another session is already live', async () => {
-    prizeSpins.push({
-      id: 1,
-      accountId: 10,
-      title: 'Live session',
-      status: 'live',
-      createdAt: new Date('2026-09-14T11:00:00.000Z'),
-      createdByUserId: 1,
-      createdByName: 'demo_streamer',
-    });
-    nextPrizeSpinId = 2;
-
+  it('still returns session on /auth/me when subscription expired', async () => {
+    subscriptionActive = false;
     const agent = request.agent(app.getHttpServer());
     await loginOwner(agent);
 
     await agent
-      .post('/accounts/10/prize-spins')
-      .send({ title: 'Second wheel' })
-      .expect(201)
+      .get('/auth/me')
+      .expect(200)
       .expect(({ body }) => {
-        expect(body.status).toBe('off_air');
-        expect(body.title).toBe('Second wheel');
+        expect(body.user.subscription?.hasAccess).toBe(false);
       });
   });
 });

@@ -254,7 +254,68 @@ export const en = {
     activationSubtitle: "Contact us on Telegram to upgrade to a paid plan",
     telegramSupportBody:
       "Message our support team — we will help you choose a plan and activate a subscription for your team.",
-    telegramMessageCta: "Message @{{username}}"
+    telegramMessageCta: "Message @{{username}}",
+    trialActiveTitle: "Trial period",
+    trialActiveBody:
+      "You have full access to all modules. Trial ends in {{days}} day(s).",
+    trialEndingSoonTitle: "Trial ending soon",
+    trialLastDayBody:
+      "Less than a day left in your trial — full access to all modules.",
+    trialDaysRemaining_one: "{{count}} day left in your trial — full access to all modules.",
+    trialDaysRemaining_other: "{{count}} days left in your trial — full access to all modules.",
+    manageSubscriptionCta: "Manage subscription",
+    activateSubscriptionCta: "Activate subscription",
+    descriptionExpired:
+      "Your trial has ended. Contact support to restore access for your team.",
+    trialExpiredTitle: "Trial period ended",
+    trialExpiredBody:
+      "Your team's trial has ended. Open subscription settings to activate a plan, or contact the account owner.",
+    trialExpiredSubscriptionPageBody:
+      "Modules and stream overlays are paused until you activate a subscription. Message us on Telegram — we will help you choose a plan and enable access for your team.",
+    currentPlanSection: "Current plan",
+    alternativesSection: "Other plans",
+    alternativesHint:
+      "Paid plans are activated manually. Pick an option and message us on Telegram.",
+    planCurrentBadge: "Current",
+    planValidUntil: "Active until {{date}}",
+    planUpgradeCta: "Choose {{plan}}",
+    plans: {
+      trial: {
+        name: "Trial",
+        blurb: "Full access to every module while your trial is active.",
+        features: {
+          allModules: "Bonus Buy, Prize Spin, Chat Roll, and stream overlays",
+          team: "Owner and moderators on one team account",
+          overlays: "OBS widgets for live sessions",
+        },
+      },
+      pro: {
+        name: "Pro",
+        blurb: "For growing streamers who run giveaways and bonus buys every week.",
+        features: {
+          allModules: "All streamer modules without trial time limit",
+          limits: "Comfortable limits for sessions and team size",
+          support: "Standard support in Telegram",
+        },
+      },
+      studio: {
+        name: "Studio",
+        blurb: "For teams that need priority help and room to scale.",
+        features: {
+          allPro: "Everything in Pro",
+          priority: "Priority support and faster activation",
+          custom: "Custom limits and onboarding help",
+        },
+      },
+      expired: {
+        name: "No active plan",
+        blurb: "Modules are paused. Choose Pro or Studio to restore access.",
+        features: {
+          dashboardOnly: "Dashboard and subscription page only",
+          modulesPaused: "Modules and overlays stay off until activation",
+        },
+      },
+    },
   },
   bonusBuy: {
     title: "Bonus Buy",

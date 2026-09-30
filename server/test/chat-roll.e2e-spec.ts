@@ -9,6 +9,10 @@ import { DEFAULT_CHAT_ROLL_ROLE_SETTINGS } from './../src/chat-roll/chat-roll-ut
 import { initialSessionStatusOnCreate } from './../src/session-lifecycle/initial-session-status-on-create.js';
 import type { DbChatRoll } from './../src/database/database.service.js';
 import { DatabaseService } from './../src/database/database.service.js';
+import {
+  activeTrialSubscriptionFixture,
+  subscriptionDatabaseMocks,
+} from '../src/subscriptions/account-subscription-fixtures.js';
 
 describe('Chat roll create (e2e)', () => {
   let app: INestApplication<App>;
@@ -39,6 +43,8 @@ describe('Chat roll create (e2e)', () => {
                 name: 'demo_streamer',
                 role: 'owner' as const,
                 subscriptionPlan: 'free',
+                ucid: '550e8400-e29b-41d4-a716-446655440000',
+                subscription: activeTrialSubscriptionFixture(),
               }
             : null,
         hasActiveMembership: async (accountId: number, userId: number) =>
@@ -77,6 +83,7 @@ describe('Chat roll create (e2e)', () => {
           chatRolls.push(row);
           return row;
         },
+        ...subscriptionDatabaseMocks,
       })
       .compile();
 

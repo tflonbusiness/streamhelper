@@ -258,7 +258,74 @@ export const ru = {
     activationSubtitle: "Напишите нам в Telegram, чтобы перейти на платный тариф",
     telegramSupportBody:
       "Напишите в поддержку — поможем выбрать тариф и активировать подписку для вашей команды.",
-    telegramMessageCta: "Написать @{{username}}"
+    telegramMessageCta: "Написать @{{username}}",
+    trialActiveTitle: "Пробный период",
+    trialActiveBody:
+      "Доступны все модули. Пробный период закончится через {{days}} дн.",
+    trialEndingSoonTitle: "Пробный период скоро закончится",
+    trialLastDayBody:
+      "До конца пробного периода осталось меньше суток — доступны все модули.",
+    trialDaysRemaining_one:
+      "Остался {{count}} день пробного периода — доступны все модули.",
+    trialDaysRemaining_few:
+      "Осталось {{count}} дня пробного периода — доступны все модули.",
+    trialDaysRemaining_many:
+      "Осталось {{count}} дней пробного периода — доступны все модули.",
+    trialDaysRemaining_other:
+      "Осталось {{count}} дней пробного периода — доступны все модули.",
+    manageSubscriptionCta: "Управление подпиской",
+    activateSubscriptionCta: "Активировать подписку",
+    descriptionExpired:
+      "Пробный период закончился. Свяжитесь с поддержкой, чтобы восстановить доступ команды.",
+    trialExpiredTitle: "Пробный период закончился",
+    trialExpiredBody:
+      "Пробный период команды истёк. Откройте раздел подписки для активации тарифа или обратитесь к владельцу аккаунта.",
+    trialExpiredSubscriptionPageBody:
+      "Модули и оверлеи для стрима отключены, пока не активирована подписка. Напишите нам в Telegram — поможем выбрать тариф и включить доступ для команды.",
+    currentPlanSection: "Текущий тариф",
+    alternativesSection: "Другие тарифы",
+    alternativesHint:
+      "Платные тарифы подключаются вручную. Выберите вариант и напишите нам в Telegram.",
+    planCurrentBadge: "Текущий",
+    planValidUntil: "Действует до {{date}}",
+    planUpgradeCta: "Выбрать {{plan}}",
+    plans: {
+      trial: {
+        name: "Пробный период",
+        blurb: "Полный доступ ко всем модулям, пока активен пробный период.",
+        features: {
+          allModules: "Bonus Buy, Prize Spin, Chat Roll и оверлеи для стрима",
+          team: "Владелец и модераторы в одной команде",
+          overlays: "Виджеты OBS для live-сессий",
+        },
+      },
+      pro: {
+        name: "Pro",
+        blurb: "Для стримеров с регулярными розыгрышами и bonus buy.",
+        features: {
+          allModules: "Все модули без ограничения по времени trial",
+          limits: "Комфортные лимиты на сессии и размер команды",
+          support: "Стандартная поддержка в Telegram",
+        },
+      },
+      studio: {
+        name: "Studio",
+        blurb: "Для команд, которым нужен приоритет и запас по масштабу.",
+        features: {
+          allPro: "Всё из тарифа Pro",
+          priority: "Приоритетная поддержка и быстрая активация",
+          custom: "Индивидуальные лимиты и помощь с настройкой",
+        },
+      },
+      expired: {
+        name: "Нет активного тарифа",
+        blurb: "Модули отключены. Выберите Pro или Studio, чтобы восстановить доступ.",
+        features: {
+          dashboardOnly: "Доступны только панель и раздел подписки",
+          modulesPaused: "Модули и оверлеи включатся после активации",
+        },
+      },
+    },
   },
   bonusBuy: {
     title: "Bonus Buy",
@@ -531,7 +598,7 @@ export const ru = {
     keywordHelp: "Зрители должны отправить это сообщение в чат Kick, чтобы участвовать.",
     pauseEntries: "Закрыть набор",
     resumeEntries: "Открыть набор",
-    roll: "Разыграть",
+    roll: "Выбрать победителя",
     rollRevealRolling: "Розыгрыш",
     rollRevealWinnerLabel: "Победитель",
     rollRevealPicking: "Выбираем победителя…",

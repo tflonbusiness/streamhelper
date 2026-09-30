@@ -1,3 +1,11 @@
+export type AccountSubscriptionSession = {
+  kind: 'trial' | 'paid';
+  status: 'active' | 'expired' | 'cancelled';
+  planTier: string;
+  endsAt: string;
+  hasAccess: boolean;
+};
+
 export type SessionUser = {
   id: number;
   name: string;
@@ -6,6 +14,7 @@ export type SessionUser = {
   accountName?: string;
   role?: 'owner' | 'moderator';
   subscriptionPlan?: string;
+  subscription?: AccountSubscriptionSession;
   channelSlug?: string;
 };
 

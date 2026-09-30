@@ -64,6 +64,7 @@ export class AuthService {
       accountName: membership.name,
       role: membership.role,
       subscriptionPlan: membership.subscriptionPlan,
+      subscription: membership.subscription,
       channelSlug,
     };
   }
@@ -71,6 +72,17 @@ export class AuthService {
   private async resolveChannelSlug(accountId: number): Promise<string | undefined> {
     const channel = await this.database.getPrimaryKickChannel(accountId);
     return channel?.channelSlug;
+  }
+
+  async refreshSessionSubscription(user: SessionUser): Promise<SessionUser> {
+    if (!user.accountId) {
+      return user;
+    }
+
+    const subscription = await this.database.loadAccountSubscriptionSnapshot(
+      user.accountId,
+    );
+    return { ...user, subscription };
   }
 
   async enrichSessionUser(user: SessionUser): Promise<SessionUser> {
@@ -506,6 +518,14 @@ export class AuthService {
     if (!isMember) {
       throw new ForbiddenException('Not a member of this account');
     }
+
+    const hasAccess = await this.database.accountHasSubscriptionAccess(accountId);
+    if (!hasAccess) {
+      throw new ForbiddenException({
+        code: 'SUBSCRIPTION_EXPIRED',
+        message: 'Account subscription has expired',
+      });
+    }
   }
 
   private formatPrizeSpinSector(row: DbPrizeSpinSector) {
@@ -880,6 +900,22 @@ export class AuthService {
   }
 
   async getPublicBonusBuyWidgetByUcid(ucid: string) {
+    const accountId = await this.database.getAccountIdByUcid(ucid);
+    if (accountId === null) {
+      throw new NotFoundException({
+        status: 'not_found',
+        reason: 'unknown_account',
+      });
+    }
+
+    const hasAccess = await this.database.accountHasSubscriptionAccess(accountId);
+    if (!hasAccess) {
+      return {
+        status: 'unavailable' as const,
+        reason: 'subscription_expired' as const,
+      };
+    }
+
     const view = await this.database.getPublicBonusBuyWidgetViewByUcid(ucid);
     if (view.kind === 'not_found') {
       throw new NotFoundException({
@@ -910,6 +946,22 @@ export class AuthService {
   }
 
   async getPublicPrizeSpinWidgetByUcid(ucid: string) {
+    const accountId = await this.database.getAccountIdByUcid(ucid);
+    if (accountId === null) {
+      throw new NotFoundException({
+        status: 'not_found',
+        reason: 'unknown_account',
+      });
+    }
+
+    const hasAccess = await this.database.accountHasSubscriptionAccess(accountId);
+    if (!hasAccess) {
+      return {
+        status: 'unavailable' as const,
+        reason: 'subscription_expired' as const,
+      };
+    }
+
     const view = await this.database.getPublicPrizeSpinWidgetViewByUcid(ucid);
     if (view.kind === 'not_found') {
       throw new NotFoundException({
@@ -1035,14 +1087,7 @@ export class AuthService {
   }
 
   async getAccountMembers(accountId: number, callerUserId: number) {
-    const isMember = await this.database.hasActiveMembership(
-      accountId,
-      callerUserId,
-    );
-    if (!isMember) {
-      throw new ForbiddenException('Not a member of this account');
-    }
-
+    await this.requireAccountMember(accountId, callerUserId);
     return this.database.listAccountMembers(accountId);
   }
 
@@ -1050,14 +1095,7 @@ export class AuthService {
     accountId: number,
     callerUserId: number,
   ): Promise<KickChannelDto> {
-    const isMember = await this.database.hasActiveMembership(
-      accountId,
-      callerUserId,
-    );
-    if (!isMember) {
-      throw new ForbiddenException('Not a member of this account');
-    }
-
+    await this.requireAccountMember(accountId, callerUserId);
     return this.kickChannel.getChannelForAccount(accountId);
   }
 

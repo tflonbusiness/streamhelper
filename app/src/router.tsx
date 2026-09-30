@@ -5,6 +5,7 @@ import {
   GuestRoute,
   OwnerRoute,
   ProtectedRoute,
+  SubscriptionAccessRoute,
 } from './components/ProtectedRoute'
 import { DashboardHomePage } from './pages/DashboardHomePage'
 import { LoginPage } from './pages/LoginPage'
@@ -43,26 +44,34 @@ export const appRouter = createBrowserRouter([
           {
             element: <AccountActiveRoute />,
             children: [
-              { path: '/modules', element: <ModulesPage /> },
-              { path: '/modules/bonus-buy', element: <BonusBuyPage /> },
               {
-                path: '/modules/bonus-buy/:id',
-                element: <BonusBuySessionPage />,
-              },
-              { path: '/modules/prize-spin', element: <PrizeSpinPage /> },
-              {
-                path: '/modules/prize-spin/:id',
-                element: <PrizeSpinSessionPage />,
-              },
-              { path: '/modules/chat-roll', element: <ChatRollPage /> },
-              {
-                path: '/modules/chat-roll/:id',
-                element: <ChatRollSessionPage />,
+                element: <SubscriptionAccessRoute />,
+                children: [
+                  { path: '/modules', element: <ModulesPage /> },
+                  { path: '/modules/bonus-buy', element: <BonusBuyPage /> },
+                  {
+                    path: '/modules/bonus-buy/:id',
+                    element: <BonusBuySessionPage />,
+                  },
+                  { path: '/modules/prize-spin', element: <PrizeSpinPage /> },
+                  {
+                    path: '/modules/prize-spin/:id',
+                    element: <PrizeSpinSessionPage />,
+                  },
+                  { path: '/modules/chat-roll', element: <ChatRollPage /> },
+                  {
+                    path: '/modules/chat-roll/:id',
+                    element: <ChatRollSessionPage />,
+                  },
+                  {
+                    element: <OwnerRoute />,
+                    children: [{ path: '/team', element: <TeamPage /> }],
+                  },
+                ],
               },
               {
                 element: <OwnerRoute />,
                 children: [
-                  { path: '/team', element: <TeamPage /> },
                   { path: '/subscription', element: <SubscriptionPage /> },
                 ],
               },

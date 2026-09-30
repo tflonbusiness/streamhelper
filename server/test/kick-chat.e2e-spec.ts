@@ -49,6 +49,7 @@ describe('Kick chat webhook (e2e)', () => {
           status: 'created' as const,
           participantId: 42,
         }),
+        accountHasSubscriptionAccess: async () => true,
       })
       .compile();
 
@@ -134,6 +135,7 @@ describe('Kick chat webhook (e2e)', () => {
             ? 99
             : null,
         getChatRollForIntake: async () => null,
+        accountHasSubscriptionAccess: async () => true,
       })
       .compile();
 
@@ -164,6 +166,51 @@ describe('Kick chat webhook (e2e)', () => {
     });
 
     await winnerApp.close();
+  });
+
+  it('ignores chat roll intake when subscription expired', async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    })
+      .overrideProvider(DatabaseService)
+      .useValue({
+        onModuleInit: async () => undefined,
+        onModuleDestroy: async () => undefined,
+        getAccountIdByKickChannelId: async (channelId: string) =>
+          channelId === 'channel-mock' ? 10 : null,
+        accountHasSubscriptionAccess: async () => false,
+        getChatRollForIntake: async () => liveSession,
+        recordKickChatEvent: async () => true,
+      })
+      .compile();
+
+    const expiredApp = moduleFixture.createNestApplication({ rawBody: true });
+    expiredApp.use(cookieParser());
+    expiredApp.use(
+      session({
+        secret: 'test-secret',
+        resave: false,
+        saveUninitialized: false,
+      }),
+    );
+    await expiredApp.init();
+
+    const response = await request(expiredApp.getHttpServer())
+      .post('/dev/kick/chat')
+      .send({
+        message_id: 'mock-join-expired',
+        broadcaster: { user_id: 'channel-mock' },
+        sender: { user_id: 'viewer-9', username: 'blocked' },
+        content: '!join',
+      })
+      .expect(200);
+
+    expect(response.body.result.intake).toEqual({
+      action: 'ignored',
+      reason: 'subscription_expired',
+    });
+
+    await expiredApp.close();
   });
 
   it('ignores keyword mismatch', async () => {

@@ -432,7 +432,7 @@ export type PrizeSpinWidgetActivePayload = {
 
 export type PrizeSpinWidgetUnavailableView = {
   status: 'unavailable'
-  reason: 'no_live_session' | 'no_sessions'
+  reason: 'no_live_session' | 'no_sessions' | 'subscription_expired'
 }
 
 export type PrizeSpinPublicWidgetResponse =

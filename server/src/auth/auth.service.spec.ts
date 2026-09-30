@@ -6,6 +6,7 @@ import { DatabaseService } from '../database/database.service.js';
 import { KickChannelService } from './kick-channel.service.js';
 import { KickEventsService } from '../kick-chat/kick-events.service.js';
 import { KickOAuthService } from './kick-oauth.service.js';
+import { activeTrialSubscriptionFixture } from '../subscriptions/account-subscription-fixtures.js';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -71,6 +72,7 @@ describe('AuthService', () => {
       name: 'demo_streamer',
       role: 'owner',
       subscriptionPlan: 'free',
+      subscription: activeTrialSubscriptionFixture(),
     });
 
     await expect(service.establishSessionForUserId(1)).resolves.toEqual({
@@ -80,6 +82,7 @@ describe('AuthService', () => {
       accountName: 'demo_streamer',
       role: 'owner',
       subscriptionPlan: 'free',
+      subscription: activeTrialSubscriptionFixture(),
     });
   });
 
