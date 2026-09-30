@@ -1,4 +1,4 @@
-import { Button, Chip, Stack, Typography } from '@mui/material'
+import { Button, Chip, Stack } from '@mui/material'
 import type { ReactNode } from 'react'
 import ArchiveIcon from '@mui/icons-material/Archive'
 import { styled, useTheme } from '@mui/material/styles'
@@ -7,7 +7,10 @@ import type { ChatRollRecord } from '@/api/chat-roll'
 import { isChatRollReadOnly } from '@/api/chat-roll'
 import {
   StyledCompactSessionCardContent,
+  StyledSessionBadgeGroup,
   StyledSessionCard,
+  StyledSessionHeaderTitle,
+  StyledSessionHeaderTitleRow,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { StatusAlert } from '@/components/StatusAlert'
 import { ChatRollLiveStatusChip } from '@/components/chat-roll/ChatRollLiveStatusChip'
@@ -33,16 +36,6 @@ const HeaderStack = styled(Stack)(({ theme }) => ({
   },
 }))
 
-const TitleStack = styled(Stack)({
-  minWidth: 0,
-  alignItems: 'center',
-})
-
-const SessionTitle = styled(Typography)({
-  fontWeight: 600,
-  minWidth: 0,
-})
-
 const ActionsStack = styled(Stack)(({ theme }) => ({
   flexWrap: 'wrap',
   alignItems: 'center',
@@ -64,38 +57,44 @@ export const ChatRollSessionHeaderSection = (
     <StyledSessionCard elevation={0}>
       <StyledCompactSessionCardContent>
         <HeaderStack direction={{ xs: 'column', lg: 'row' }} spacing={2}>
-          <TitleStack direction="row" spacing={1}>
+          <StyledSessionHeaderTitleRow>
             <ChatRollSessionIdBadge sessionId={props.record.id} />
-            <SessionTitle variant="h6" noWrap>
+            <StyledSessionHeaderTitle variant="h6" noWrap>
               {props.record.title}
-            </SessionTitle>
-            {!readOnly &&
-            props.record.status === 'live' &&
-            props.record.isAcceptingParticipants ? (
-              <Chip
-                label={t('chatRoll.entriesOpen')}
-                size="small"
-                color="success"
-                variant="outlined"
-              />
-            ) : null}
-            {!readOnly &&
-            props.record.status === 'live' &&
-            !props.record.isAcceptingParticipants ? (
-              <Chip
-                label={t('chatRoll.entriesPaused')}
-                size="small"
-                color="warning"
-                variant="outlined"
-              />
-            ) : null}
-            {!readOnly && props.record.status === 'live' ? (
-              <ChatRollLiveStatusChip />
-            ) : null}
-            {readOnly ? (
-              <Chip label={t('common.archived')} size="small" sx={mutedChipSx(theme)} />
-            ) : null}
-          </TitleStack>
+            </StyledSessionHeaderTitle>
+            <StyledSessionBadgeGroup>
+              {readOnly ? (
+                <Chip
+                  label={t('common.archived')}
+                  size="small"
+                  sx={mutedChipSx(theme)}
+                />
+              ) : null}
+              {!readOnly && props.record.status === 'live' ? (
+                <ChatRollLiveStatusChip />
+              ) : null}
+              {!readOnly &&
+              props.record.status === 'live' &&
+              props.record.isAcceptingParticipants ? (
+                <Chip
+                  label={t('chatRoll.entriesOpen')}
+                  size="small"
+                  color="success"
+                  variant="outlined"
+                />
+              ) : null}
+              {!readOnly &&
+              props.record.status === 'live' &&
+              !props.record.isAcceptingParticipants ? (
+                <Chip
+                  label={t('chatRoll.entriesPaused')}
+                  size="small"
+                  color="warning"
+                  variant="outlined"
+                />
+              ) : null}
+            </StyledSessionBadgeGroup>
+          </StyledSessionHeaderTitleRow>
           <ActionsStack direction="row">
             {props.primaryActions}
             {!readOnly && props.record.status === 'off_air' ? (

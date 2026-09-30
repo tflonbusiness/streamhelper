@@ -1,4 +1,4 @@
-import { Card, CardContent } from '@mui/material'
+import { Card, CardContent, Stack, Typography } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { SectionDivider } from '@/components/SectionHeader'
 
@@ -23,6 +23,28 @@ export const StyledCompactSessionCardContent = styled(CardContent)(({ theme }) =
     paddingBottom: theme.spacing(2),
   },
 }))
+
+/** Session page header: badge group + title row. */
+export const StyledSessionHeaderTitleRow = styled(Stack)(({ theme }) => ({
+  minWidth: 0,
+  alignItems: 'center',
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: theme.spacing(1.5),
+}))
+
+/** Adjacent status chips after the session title (e.g. Chat Roll live). */
+export const StyledSessionBadgeGroup = styled(Stack)(({ theme }) => ({
+  flexDirection: 'row',
+  alignItems: 'center',
+  flexShrink: 0,
+  gap: theme.spacing(1.5),
+}))
+
+export const StyledSessionHeaderTitle = styled(Typography)({
+  fontWeight: 600,
+  minWidth: 0,
+})
 
 export const StyledSectionDivider = SectionDivider
 

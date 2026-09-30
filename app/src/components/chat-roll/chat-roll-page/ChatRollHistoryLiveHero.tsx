@@ -6,6 +6,7 @@ import type { ChatRollRecord } from '@/api/chat-roll'
 import { chatRollHistoryStatusChip } from '@/components/chat-roll/chat-roll-page/chatRollHistoryStatusChip'
 import { ChatRollSessionIdBadge } from '@/components/chat-roll/session/ChatRollSessionIdBadge'
 import { OpenSessionButton } from '@/components/OpenSessionButton'
+import { StyledSessionBadgeGroup } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { formatPrizeSpinDateTime } from '@/components/prize-spin/prize-spin-utils'
 import { formatChatRollLiveSessionHint } from '@/components/chat-roll/chat-roll-page/chat-roll-page-utils'
 import { chatRollSessionRoute } from '@/lib/routes'
@@ -172,11 +173,8 @@ export function ChatRollHistoryLiveHero({
                 <StyledHeroTitle>{record.title}</StyledHeroTitle>
               </StyledTitleLink>
             </StyledTitleMain>
-            <Stack
-              direction="row"
-              spacing={0.5}
-              sx={{ flexShrink: 0, alignItems: 'center' }}
-            >
+            <StyledSessionBadgeGroup>
+              {chatRollHistoryStatusChip(record, t)}
               {record.isAcceptingParticipants ? (
                 <Chip
                   label={t('chatRoll.entriesOpen')}
@@ -192,8 +190,7 @@ export function ChatRollHistoryLiveHero({
                   variant="outlined"
                 />
               )}
-              {chatRollHistoryStatusChip(record, t)}
-            </Stack>
+            </StyledSessionBadgeGroup>
           </StyledTitleRow>
           <StyledKeywordRow>
             <StyledKeywordLabel>

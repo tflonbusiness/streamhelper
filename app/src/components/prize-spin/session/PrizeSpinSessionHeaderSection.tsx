@@ -1,4 +1,4 @@
-import { Button, Stack, Typography } from '@mui/material'
+import { Button, Stack } from '@mui/material'
 import ArchiveIcon from '@mui/icons-material/Archive'
 import DownloadIcon from '@mui/icons-material/Download'
 import { styled } from '@mui/material/styles'
@@ -11,6 +11,8 @@ import { ChatRollSessionIdBadge } from '@/components/chat-roll/session/ChatRollS
 import {
   StyledCompactSessionCardContent,
   StyledSessionCard,
+  StyledSessionHeaderTitle,
+  StyledSessionHeaderTitleRow,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { StatusAlert } from '@/components/StatusAlert'
 import { useNotification } from '@/context/NotificationContext'
@@ -37,15 +39,6 @@ const HeaderStack = styled(Stack)(({ theme }) => ({
     alignItems: 'center',
   },
 }))
-
-const TitleStack = styled(Stack)({
-  minWidth: 0,
-  alignItems: 'center',
-})
-
-const SessionTitle = styled(Typography)({
-  fontWeight: 600,
-})
 
 const ActionsStack = styled(Stack)(({ theme }) => ({
   flexWrap: 'wrap',
@@ -97,13 +90,13 @@ export const PrizeSpinSessionHeaderSection = (
     <StyledSessionCard elevation={0}>
       <StyledCompactSessionCardContent>
         <HeaderStack direction={{ xs: 'column', lg: 'row' }} spacing={2}>
-          <TitleStack direction="row" spacing={1}>
+          <StyledSessionHeaderTitleRow>
             <ChatRollSessionIdBadge sessionId={props.record.id} />
-            <SessionTitle variant="h6" noWrap>
+            <StyledSessionHeaderTitle variant="h6" noWrap>
               {props.record.title}
-            </SessionTitle>
+            </StyledSessionHeaderTitle>
             {prizeSpinHistoryStatusChip(props.record, t)}
-          </TitleStack>
+          </StyledSessionHeaderTitleRow>
           <ActionsStack direction="row">
             <Button
               type="button"

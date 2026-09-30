@@ -1,18 +1,19 @@
-import { Button, Chip, Stack, Typography } from '@mui/material'
+import { Button, Stack } from '@mui/material'
 import ArchiveIcon from '@mui/icons-material/Archive'
 import EditIcon from '@mui/icons-material/Edit'
-import { styled, useTheme } from '@mui/material/styles'
+import { styled } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import type { BonusBuyRecord } from '@/api/bonus-buy'
 import { isBonusBuyReadOnly } from '@/api/bonus-buy'
-import { ChatRollLiveStatusChip } from '@/components/chat-roll/ChatRollLiveStatusChip'
+import { bonusBuyHistoryStatusChip } from '@/components/bonus-buy/bonus-buy-page/bonusBuyHistoryStatusChip'
 import { ChatRollSessionIdBadge } from '@/components/chat-roll/session/ChatRollSessionIdBadge'
 import {
   StyledCompactSessionCardContent,
   StyledSessionCard,
+  StyledSessionHeaderTitle,
+  StyledSessionHeaderTitleRow,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { StatusAlert } from '@/components/StatusAlert'
-import { mutedChipSx } from '@/theme/colors'
 
 type BonusBuySessionHeaderSectionProps = {
   record: BonusBuyRecord
@@ -33,16 +34,6 @@ const HeaderStack = styled(Stack)(({ theme }) => ({
   },
 }))
 
-const TitleStack = styled(Stack)({
-  minWidth: 0,
-  alignItems: 'center',
-})
-
-const SessionTitle = styled(Typography)({
-  fontWeight: 600,
-  minWidth: 0,
-})
-
 const ActionsStack = styled(Stack)(({ theme }) => ({
   flexWrap: 'wrap',
   alignItems: 'center',
@@ -57,25 +48,19 @@ export const BonusBuySessionHeaderSection = (
   props: BonusBuySessionHeaderSectionProps,
 ) => {
   const { t } = useTranslation()
-  const theme = useTheme()
   const readOnly = isBonusBuyReadOnly(props.record)
 
   return (
     <StyledSessionCard elevation={0}>
       <StyledCompactSessionCardContent>
         <HeaderStack direction={{ xs: 'column', lg: 'row' }} spacing={2}>
-          <TitleStack direction="row" spacing={1}>
+          <StyledSessionHeaderTitleRow>
             <ChatRollSessionIdBadge sessionId={props.record.id} />
-            <SessionTitle variant="h6" noWrap>
+            <StyledSessionHeaderTitle variant="h6" noWrap>
               {props.record.name}
-            </SessionTitle>
-            {!readOnly && props.record.status === 'live' ? (
-              <ChatRollLiveStatusChip />
-            ) : null}
-            {readOnly ? (
-              <Chip label={t('common.archived')} size="small" sx={mutedChipSx(theme)} />
-            ) : null}
-          </TitleStack>
+            </StyledSessionHeaderTitle>
+            {bonusBuyHistoryStatusChip(props.record, t)}
+          </StyledSessionHeaderTitleRow>
           <ActionsStack direction="row">
             {!readOnly && props.record.status === 'off_air' ? (
               <Button
