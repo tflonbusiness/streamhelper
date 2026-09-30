@@ -609,7 +609,7 @@ export const ru = {
       },
       viewer: {
         label: "Зритель",
-        description: "Зрители в чате без бейджа Kick",
+        description: "Любой участник чата (всегда при intake)",
         chip: "Зритель"
       },
       'paid_subscriber': {

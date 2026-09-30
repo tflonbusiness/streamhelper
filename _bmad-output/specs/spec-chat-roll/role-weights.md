@@ -9,7 +9,7 @@ Operator selects which viewer categories may join, sets a **weight** per enabled
 | `moderator` | Moderator | Channel moderators | off | `1` |
 | `vip` | VIP | VIP badge in chat | on | `2` |
 | `og` | OG | OG badge in chat | off | `1.5` |
-| `viewer` | Viewer | Chat viewers without a Kick badge role (follower and non-follower) | on | `1` |
+| `viewer` | Viewer | Every chatter at intake (always in `role_ids`; badge roles are additional) | on | `1` |
 | `paid_subscriber` | Paid subscriber | Active paid subscription | on | `2` |
 
 ## Weight combine (operator setting)
@@ -51,6 +51,6 @@ Implementation: `server/src/kick-chat/kick-badge.mapper.ts` → `chat_roll_parti
 | `og`, `founder` | `og` | (map when seen) |
 | `subscriber`, `sub` | `paid_subscriber` | (map when seen) |
 | `broadcaster` | *(none)* | badge present for channel owner; not mapped to Chat Roll roles |
-| *(empty `badges`)* | `viewer` | follower and non-follower are indistinguishable in Kick chat — both map to `viewer` at intake |
+| *(any `badges`, including empty)* | `viewer` + mapped badge roles | `viewer` is always stored; mapped badges add `moderator`, `vip`, `og`, `paid_subscriber`, etc. |
 
 `broadcaster.identity` is often `null`; use `sender` for the chatter’s badges.

@@ -32,9 +32,9 @@ describe('resolveKickChatRollRoleIds', () => {
     expect(resolveKickChatRollRoleIds(undefined)).toEqual(['viewer']);
   });
 
-  it('keeps badge roles without viewer', () => {
+  it('always includes viewer alongside mapped badge roles', () => {
     expect(
       resolveKickChatRollRoleIds([{ type: 'moderator', text: 'Moderator' }]),
-    ).toEqual(['moderator']);
+    ).toEqual(['moderator', 'viewer']);
   });
 });

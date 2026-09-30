@@ -600,7 +600,7 @@ export const en = {
       },
       viewer: {
         label: "Viewer",
-        description: "Chat viewers without a Kick badge role",
+        description: "Every chatter in the session (always applies at intake)",
         chip: "Viewer"
       },
       'paid_subscriber': {

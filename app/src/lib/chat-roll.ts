@@ -58,7 +58,7 @@ export const CHAT_ROLL_ROLE_META: {
   {
     id: 'viewer',
     label: 'Viewer',
-    description: 'Chat viewers without a Kick badge role',
+    description: 'Every chatter at intake (badge roles are additional)',
   },
   {
     id: 'paid_subscriber',
