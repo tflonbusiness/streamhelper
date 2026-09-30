@@ -8,7 +8,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import GroupIcon from '@mui/icons-material/Group'
 import ReplayIcon from '@mui/icons-material/Replay'
-import { type ReactNode, useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { useBlocker, useParams } from 'react-router-dom'
 import type {
   ChatRollParticipant,
@@ -63,6 +63,7 @@ import {
   computeParticipantCoefficient,
   formatCoefficient,
 } from '@/lib/chat-roll'
+import { attachChatRollAudioUnlock, chatRollAudio } from '@/lib/chat-roll-audio'
 import { formatTime } from '@/lib/format-date-time'
 import {
   buildChatRollSettingsPatch,
@@ -348,6 +349,44 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
     }
     return wins.find((row) => row.id === rollRevealWin.id) ?? rollRevealWin
   }, [rollRevealWin, wins])
+
+  const rollWinSoundPlayedForIdRef = useRef<number | null>(null)
+  const winsConfirmBaselineReadyRef = useRef(false)
+  const confirmedWinSoundPlayedRef = useRef<Set<number>>(new Set())
+
+  useEffect(() => attachChatRollAudioUnlock(), [])
+
+  useEffect(() => {
+    const winId = rollRevealWin?.id
+    if (!winId || rollWinSoundPlayedForIdRef.current === winId) {
+      return
+    }
+    rollWinSoundPlayedForIdRef.current = winId
+    chatRollAudio.playRollWin()
+  }, [rollRevealWin?.id])
+
+  useEffect(() => {
+    if (!winsConfirmBaselineReadyRef.current) {
+      for (const win of wins) {
+        if (win.responseStatus === 'confirmed') {
+          confirmedWinSoundPlayedRef.current.add(win.id)
+        }
+      }
+      winsConfirmBaselineReadyRef.current = true
+      return
+    }
+
+    for (const win of wins) {
+      if (
+        win.responseStatus === 'confirmed' &&
+        !confirmedWinSoundPlayedRef.current.has(win.id)
+      ) {
+        confirmedWinSoundPlayedRef.current.add(win.id)
+        chatRollAudio.playWinnerConfirmed()
+      }
+    }
+  }, [wins])
+
   const { draft, isDirty, resetDraft, updateDraft } =
     useChatRollSessionSettingsDraft(record)
 
@@ -438,7 +477,9 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
       return
     }
 
+    void chatRollAudio.unlock()
     setRollRevealWin(null)
+    rollWinSoundPlayedForIdRef.current = null
     setRollRevealOpen(true)
 
     rollMutation.mutate(undefined, {
