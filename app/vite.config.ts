@@ -23,6 +23,7 @@ export default defineConfig({
       '/join': 'http://localhost:3000',
       '/bonus-buys': 'http://localhost:3000',
       '/prize-spins': 'http://localhost:3000',
+      '/chat-rolls': 'http://localhost:3000',
     },
   },
 })

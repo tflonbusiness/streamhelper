@@ -16,6 +16,7 @@ export function useChatRollSessionSettingsDraft(record: ChatRollRecord) {
     [
       record.id,
       record.keyword,
+      record.widgetKeywordPrefix,
       record.combineMode,
       record.excludeWinnerAfterRoll,
       record.replyInChat,

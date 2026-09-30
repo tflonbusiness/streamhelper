@@ -18,6 +18,7 @@ export type ChatRollRoleSettingsDraft = Record<
 
 export type ChatRollSessionSettingsDraft = {
   keyword: string
+  widgetKeywordPrefix: string
   combineMode: ChatRollRecord['combineMode']
   excludeWinnerAfterRoll: boolean
   replyInChat: boolean
@@ -56,6 +57,7 @@ export function chatRollSettingsDraftFromRecord(
 ): ChatRollSessionSettingsDraft {
   return {
     keyword: record.keyword,
+    widgetKeywordPrefix: record.widgetKeywordPrefix,
     combineMode: record.combineMode,
     excludeWinnerAfterRoll: record.excludeWinnerAfterRoll,
     replyInChat: record.replyInChat,
@@ -70,6 +72,7 @@ export function areChatRollSettingsDraftsEqual(
   b: ChatRollSessionSettingsDraft,
 ): boolean {
   if (a.keyword !== b.keyword) return false
+  if (a.widgetKeywordPrefix !== b.widgetKeywordPrefix) return false
   if (a.combineMode !== b.combineMode) return false
   if (a.excludeWinnerAfterRoll !== b.excludeWinnerAfterRoll) return false
   if (a.replyInChat !== b.replyInChat) return false
@@ -101,6 +104,15 @@ export function validateChatRollSettingsDraftKeyword(
   draft: ChatRollSessionSettingsDraft,
 ): boolean {
   return draft.keyword.trim().length > 0
+}
+
+export const WIDGET_KEYWORD_PREFIX_MAX_LENGTH = 120
+
+export function validateChatRollSettingsDraftWidgetKeywordPrefix(
+  draft: ChatRollSessionSettingsDraft,
+): boolean {
+  const trimmed = draft.widgetKeywordPrefix.trim()
+  return trimmed.length > 0 && trimmed.length <= WIDGET_KEYWORD_PREFIX_MAX_LENGTH
 }
 
 export const WINNER_RESPONSE_SECONDS_MIN = 10

@@ -5,6 +5,7 @@ import session from 'express-session';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module.js';
+import { CHAT_ROLL_WIDGET_KEYWORD_PREFIX_DEFAULT } from './../src/chat-roll/chat-roll-widget.constants.js';
 import { DEFAULT_CHAT_ROLL_ROLE_SETTINGS } from './../src/chat-roll/chat-roll-utils.js';
 import { initialSessionStatusOnCreate } from './../src/session-lifecycle/initial-session-status-on-create.js';
 import type { DbChatRoll } from './../src/database/database.service.js';
@@ -69,6 +70,7 @@ describe('Chat roll create (e2e)', () => {
             title: trimmedTitle,
             status,
             keyword: '!roll',
+            widgetKeywordPrefix: CHAT_ROLL_WIDGET_KEYWORD_PREFIX_DEFAULT,
             combineMode: 'highest',
             excludeWinnerAfterRoll: true,
             isAcceptingParticipants: true,
@@ -133,6 +135,7 @@ describe('Chat roll create (e2e)', () => {
       title: 'Live session',
       status: 'live',
       keyword: '!roll',
+      widgetKeywordPrefix: CHAT_ROLL_WIDGET_KEYWORD_PREFIX_DEFAULT,
       combineMode: 'highest',
       excludeWinnerAfterRoll: true,
       isAcceptingParticipants: true,

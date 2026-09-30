@@ -56,6 +56,8 @@ export const chatRollKeys = {
     [...chatRollKeys.lists(), accountId, params] as const,
   widget: (accountId: number) =>
     [...chatRollKeys.all, 'widget', accountId] as const,
+  publicWidget: (accountUcid: string) =>
+    [...chatRollKeys.all, 'publicWidget', accountUcid] as const,
   session: (accountId: number, chatRollId: number) =>
     [...chatRollKeys.all, 'session', accountId, chatRollId] as const,
 }

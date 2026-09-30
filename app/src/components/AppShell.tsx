@@ -594,7 +594,7 @@ export function AppShell() {
     return t(item.labelKey)
   }
   const wideMainContent =
-    /^\/modules\/(?:bonus-buy|chat-roll|prize-spin)\/\d+(?:\/|$)/.test(
+    /^\/modules\/(?:bonus-buy|chat-roll|prize-spin)(?:\/\d+)?(?:\/|$)/.test(
       location.pathname,
     )
   const [isNavExpanded, setIsNavExpanded] = useState(loadNavExpanded)

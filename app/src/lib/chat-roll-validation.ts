@@ -1,5 +1,6 @@
 import type { TFunction } from 'i18next'
 import * as yup from 'yup'
+import { WIDGET_KEYWORD_PREFIX_MAX_LENGTH } from '@/lib/chat-roll-session-settings'
 
 export type CreateChatRollFormValues = {
   title: string
@@ -16,28 +17,20 @@ export function createChatRollFormSchema(t: TFunction) {
   })
 }
 
-export type ChatRollWidgetSettingsFormValues = {
-  width: number
-  height: number
+export type ChatRollStreamWidgetSettingsFormValues = {
+  widgetKeywordPrefix: string
 }
 
-export function createChatRollWidgetSettingsFormSchema(t: TFunction) {
-  const widthLabel = t('common.width')
-  const heightLabel = t('common.height')
+export function createChatRollStreamWidgetSettingsFormSchema(t: TFunction) {
   return yup.object({
-    width: yup
-      .number()
-      .typeError(t('validation.dimensionType', { label: widthLabel }))
-      .required(t('validation.dimensionRequired', { label: widthLabel }))
-      .integer(t('validation.widthInteger'))
-      .min(200, t('validation.widthRange'))
-      .max(2400, t('validation.widthRange')),
-    height: yup
-      .number()
-      .typeError(t('validation.dimensionType', { label: heightLabel }))
-      .required(t('validation.dimensionRequired', { label: heightLabel }))
-      .integer(t('validation.heightInteger'))
-      .min(200, t('validation.heightRange'))
-      .max(2400, t('validation.heightRange')),
+    widgetKeywordPrefix: yup
+      .string()
+      .trim()
+      .required(t('chatRoll.widgetKeywordPrefixRequired'))
+      .min(1, t('chatRoll.widgetKeywordPrefixRequired'))
+      .max(
+        WIDGET_KEYWORD_PREFIX_MAX_LENGTH,
+        t('chatRoll.widgetKeywordPrefixRequired'),
+      ),
   })
 }

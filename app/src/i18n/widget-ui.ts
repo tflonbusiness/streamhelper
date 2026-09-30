@@ -17,6 +17,10 @@ export const widgetUiCopy = {
     'No prize spin is live. Open the dashboard and tap Go live.',
   prizeSpinNoSessions:
     'No prize spin session available. Create a session, then go live.',
+  chatRollNoLive:
+    'No chat roll is live. Open the dashboard and tap Go live.',
+  chatRollNoSessions:
+    'No chat roll session available. Create a session, then go live.',
   subscriptionExpired:
     'Team subscription inactive. Renew in the dashboard to restore this overlay.',
   live: 'Live',

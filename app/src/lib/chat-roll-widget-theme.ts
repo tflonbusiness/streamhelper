@@ -1,0 +1,15 @@
+export const CHAT_ROLL_WIDGET_THEME = {
+  fontFamily: 'Inter, system-ui, sans-serif',
+  cardBg: '#0A0A0CE6',
+  cardBorder: '#2F2F31',
+  cardRadius: 20,
+  cardShadow: '0 8px 32px rgba(0,0,0,0.45)',
+  surface: '#121215',
+  moduleAccent: '#38BDF8',
+  moduleAccentGlow: 'rgba(56,189,248,0.35)',
+  keywordBg: '#121215',
+  textPrimary: '#FFFFFF',
+  textMuted: '#9CA3AF',
+  live: '#22C55E',
+  divider: 'rgba(255,255,255,0.12)',
+} as const

@@ -945,6 +945,49 @@ export class AuthService {
     };
   }
 
+  async getPublicChatRollWidgetByUcid(ucid: string) {
+    const accountId = await this.database.getAccountIdByUcid(ucid);
+    if (accountId === null) {
+      throw new NotFoundException({
+        status: 'not_found',
+        reason: 'unknown_account',
+      });
+    }
+
+    const hasAccess = await this.database.accountHasSubscriptionAccess(accountId);
+    if (!hasAccess) {
+      return {
+        status: 'unavailable' as const,
+        reason: 'subscription_expired' as const,
+      };
+    }
+
+    const view = await this.database.getPublicChatRollWidgetViewByUcid(ucid);
+    if (view.kind === 'not_found') {
+      throw new NotFoundException({
+        status: 'not_found',
+        reason: 'unknown_account',
+      });
+    }
+
+    if (view.kind === 'unavailable') {
+      return {
+        status: 'unavailable' as const,
+        reason: view.reason,
+      };
+    }
+
+    return {
+      status: 'active' as const,
+      record: {
+        id: view.record.id,
+        keyword: view.record.keyword,
+        widgetKeywordPrefix: view.record.widgetKeywordPrefix,
+        status: view.record.status,
+      },
+    };
+  }
+
   async getPublicPrizeSpinWidgetByUcid(ucid: string) {
     const accountId = await this.database.getAccountIdByUcid(ucid);
     if (accountId === null) {
@@ -1565,6 +1608,7 @@ export class AuthService {
       title: row.title,
       status: row.status,
       keyword: row.keyword,
+      widgetKeywordPrefix: row.widgetKeywordPrefix,
       combineMode: row.combineMode,
       excludeWinnerAfterRoll: row.excludeWinnerAfterRoll,
       isAcceptingParticipants: row.isAcceptingParticipants,
@@ -1626,6 +1670,10 @@ export class AuthService {
           throw new BadRequestException('Title must be 1-200 characters');
         case 'INVALID_KEYWORD':
           throw new BadRequestException('Keyword must be 1-32 characters');
+        case 'INVALID_WIDGET_KEYWORD_PREFIX':
+          throw new BadRequestException(
+            'Widget label must be 1-120 characters',
+          );
         case 'INVALID_COMBINE_MODE':
           throw new BadRequestException('Invalid combine mode');
         case 'INVALID_ROLE_SETTINGS':
@@ -1777,6 +1825,7 @@ export class AuthService {
     body: {
       title?: string;
       keyword?: string;
+      widget_keyword_prefix?: string;
       combine_mode?: string;
       exclude_winner_after_roll?: boolean;
       is_accepting_participants?: boolean;
@@ -1794,6 +1843,9 @@ export class AuthService {
     }
     if (body.keyword !== undefined) {
       input.keyword = body.keyword;
+    }
+    if (body.widget_keyword_prefix !== undefined) {
+      input.widgetKeywordPrefix = body.widget_keyword_prefix;
     }
     if (body.combine_mode !== undefined) {
       if (body.combine_mode !== 'highest' && body.combine_mode !== 'sum') {

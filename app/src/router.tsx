@@ -15,6 +15,7 @@ import { BonusBuyStreamWidgetPage } from './pages/BonusBuyStreamWidgetPage'
 import { ModulesPage } from './pages/ModulesPage'
 import { ChatRollPage } from './pages/ChatRollPage'
 import { ChatRollSessionPage } from './pages/ChatRollSessionPage'
+import { ChatRollStreamWidgetPage } from './pages/ChatRollStreamWidgetPage'
 import { PrizeSpinPage } from './pages/PrizeSpinPage'
 import { PrizeSpinSessionPage } from './pages/PrizeSpinSessionPage'
 import { PrizeSpinStreamWidgetPage } from './pages/PrizeSpinStreamWidgetPage'
@@ -33,6 +34,10 @@ export const appRouter = createBrowserRouter([
   {
     path: '/modules/prize-spin/widget/:ucid',
     element: <PrizeSpinStreamWidgetPage />,
+  },
+  {
+    path: '/modules/chat-roll/widget/:ucid',
+    element: <ChatRollStreamWidgetPage />,
   },
   {
     element: <ProtectedRoute />,

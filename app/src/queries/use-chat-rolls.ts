@@ -11,6 +11,7 @@ import {
   fetchChatRolls,
   deactivateChatRoll,
   goLiveChatRoll,
+  fetchPublicChatRollWidget,
   patchChatRollWidget,
   type PatchChatRollWidgetInput,
 } from '@/api/chat-roll'
@@ -25,6 +26,18 @@ export function useChatRolls(
     queryFn: () => fetchChatRolls(accountId!, params),
     enabled: accountId !== undefined,
     placeholderData: keepPreviousData,
+  })
+}
+
+const WIDGET_POLL_MS = 5000
+
+export function usePublicChatRollWidget(accountUcid: string | null) {
+  return useQuery({
+    queryKey: chatRollKeys.publicWidget(accountUcid ?? ''),
+    queryFn: () => fetchPublicChatRollWidget(accountUcid!),
+    enabled: accountUcid !== null && accountUcid.length > 0,
+    refetchInterval: WIDGET_POLL_MS,
+    retry: false,
   })
 }
 

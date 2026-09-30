@@ -5,23 +5,31 @@ export type PublicWidgetUnavailableReason =
   | 'no_sessions'
   | 'subscription_expired'
 
-export type PublicWidgetModule = 'bonusBuy' | 'prizeSpin'
+export type PublicWidgetModule = 'bonusBuy' | 'prizeSpin' | 'chatRoll'
 
 export function publicWidgetUnavailableMessage(
   module: PublicWidgetModule,
   reason: PublicWidgetUnavailableReason,
 ): string {
   if (reason === 'no_sessions') {
-    return module === 'bonusBuy'
-      ? widgetUiCopy.bonusBuyNoSessions
-      : widgetUiCopy.prizeSpinNoSessions
+    if (module === 'bonusBuy') {
+      return widgetUiCopy.bonusBuyNoSessions
+    }
+    if (module === 'chatRoll') {
+      return widgetUiCopy.chatRollNoSessions
+    }
+    return widgetUiCopy.prizeSpinNoSessions
   }
 
   if (reason === 'subscription_expired') {
     return widgetUiCopy.subscriptionExpired
   }
 
-  return module === 'bonusBuy'
-    ? widgetUiCopy.bonusBuyNoLive
-    : widgetUiCopy.prizeSpinNoLive
+  if (module === 'bonusBuy') {
+    return widgetUiCopy.bonusBuyNoLive
+  }
+  if (module === 'chatRoll') {
+    return widgetUiCopy.chatRollNoLive
+  }
+  return widgetUiCopy.prizeSpinNoLive
 }

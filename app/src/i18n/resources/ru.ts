@@ -596,6 +596,19 @@ export const ru = {
     keywordLabel: "Ключевое слово",
     keywordRequired: "Укажите ключевое слово",
     keywordHelp: "Зрители должны отправить это сообщение в чат Kick, чтобы участвовать.",
+    widgetKeywordPrefixLabel: "Текст перед кодовым словом в оверлее",
+    widgetKeywordPrefixRequired:
+      "Укажите текст для оверлея (не более 120 символов)",
+    widgetKeywordPrefixHelp: "Как на стриме: {{preview}}",
+    streamWidgetDescription:
+      "OBS-оверлей для live-сессии Chat Roll. Текст на стриме — в «Настройках оверлея».",
+    streamWidgetSettingsButton: "Настройки оверлея",
+    streamWidgetSettingsTitle: "Настройки оверлея",
+    streamWidgetSettingsNoSession:
+      "Сначала создайте сессию Chat Roll, затем настройте оверлей.",
+    streamWidgetSettingsOffAirHint:
+      "Редактируется «{{title}}». Оверлей обновится, когда сессия выйдет в эфир.",
+    streamWidgetSettingsOpenSession: "Открыть сессию",
     pauseEntries: "Закрыть набор",
     resumeEntries: "Открыть набор",
     roll: "Выбрать победителя",

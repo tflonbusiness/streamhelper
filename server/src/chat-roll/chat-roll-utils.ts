@@ -1,3 +1,4 @@
+import { CHAT_ROLL_WIDGET_KEYWORD_PREFIX_MAX_LENGTH } from './chat-roll-widget.constants.js';
 import { initialSessionStatusOnCreate } from '../session-lifecycle/initial-session-status-on-create.js';
 
 export type ChatRollRoleId =
@@ -156,6 +157,17 @@ export function pickWeightedParticipant<
 export function normalizeKeyword(value: string): string | null {
   const trimmed = value.trim();
   if (trimmed.length === 0 || trimmed.length > 32) {
+    return null;
+  }
+  return trimmed;
+}
+
+export function normalizeWidgetKeywordPrefix(value: string): string | null {
+  const trimmed = value.trim();
+  if (
+    trimmed.length === 0 ||
+    trimmed.length > CHAT_ROLL_WIDGET_KEYWORD_PREFIX_MAX_LENGTH
+  ) {
     return null;
   }
   return trimmed;

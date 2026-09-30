@@ -21,6 +21,7 @@ export type ChatRollRecord = {
   title: string
   status: ChatRollStatus
   keyword: string
+  widgetKeywordPrefix: string
   combineMode: WeightCombineMode
   excludeWinnerAfterRoll: boolean
   isAcceptingParticipants: boolean
@@ -82,6 +83,7 @@ export type ChatRollWidget = {
 export type PatchChatRollInput = {
   title?: string
   keyword?: string
+  widget_keyword_prefix?: string
   combine_mode?: WeightCombineMode
   exclude_winner_after_roll?: boolean
   is_accepting_participants?: boolean
@@ -423,4 +425,43 @@ export async function patchChatRollWidget(
   }
 
   return response.json() as Promise<ChatRollWidget>
+}
+
+export type ChatRollPublicWidgetUnavailableReason =
+  | 'no_live_session'
+  | 'no_sessions'
+  | 'subscription_expired'
+
+export type ChatRollPublicWidgetActiveRecord = {
+  id: number
+  keyword: string
+  widgetKeywordPrefix: string
+  status: 'live'
+}
+
+export type ChatRollPublicWidgetResponse =
+  | { status: 'unavailable'; reason: ChatRollPublicWidgetUnavailableReason }
+  | { status: 'active'; record: ChatRollPublicWidgetActiveRecord }
+
+export class ChatRollWidgetNotFoundError extends Error {
+  constructor() {
+    super(i18n.t('errors.sessionNotFound'))
+    this.name = 'ChatRollWidgetNotFoundError'
+  }
+}
+
+export async function fetchPublicChatRollWidget(
+  accountUcid: string,
+): Promise<ChatRollPublicWidgetResponse> {
+  const response = await fetch(`/chat-rolls/widget/${accountUcid}`)
+
+  if (response.status === 404) {
+    throw new ChatRollWidgetNotFoundError()
+  }
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, i18n.t('errors.api.loadWidget')))
+  }
+
+  return response.json() as Promise<ChatRollPublicWidgetResponse>
 }

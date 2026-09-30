@@ -25,9 +25,11 @@ import {
   DEFAULT_CHAT_ROLL_ROLE_SETTINGS,
   normalizeKeyword,
   normalizeRoleSettings,
+  normalizeWidgetKeywordPrefix,
   pickWeightedParticipant,
   type ChatRollRoleSettings,
 } from '../chat-roll/chat-roll-utils.js';
+import { CHAT_ROLL_WIDGET_KEYWORD_PREFIX_DEFAULT } from '../chat-roll/chat-roll-widget.constants.js';
 import { initialSessionStatusOnCreate } from '../session-lifecycle/initial-session-status-on-create.js';
 import {
   CHAT_ROLL_WIDGET_INSERT_SQL,
@@ -179,6 +181,7 @@ export type DbChatRoll = {
   title: string;
   status: ChatRollStatus;
   keyword: string;
+  widgetKeywordPrefix: string;
   combineMode: 'highest' | 'sum';
   excludeWinnerAfterRoll: boolean;
   isAcceptingParticipants: boolean;
@@ -230,6 +233,7 @@ export type DbChatRollWidget = {
 export type PatchChatRollInput = {
   title?: string;
   keyword?: string;
+  widgetKeywordPrefix?: string;
   combineMode?: 'highest' | 'sum';
   excludeWinnerAfterRoll?: boolean;
   isAcceptingParticipants?: boolean;
@@ -296,6 +300,17 @@ export type PublicPrizeSpinWidgetViewResult =
       sectors: DbPrizeSpinSector[];
       latestWin: DbPrizeSpinWin | null;
       settings: DbPrizeSpinWidget;
+    };
+
+export type PublicChatRollWidgetViewResult =
+  | { kind: 'not_found' }
+  | { kind: 'unavailable'; reason: 'no_live_session' | 'no_sessions' }
+  | {
+      kind: 'active';
+      record: Pick<
+        DbChatRoll,
+        'id' | 'keyword' | 'widgetKeywordPrefix' | 'status'
+      >;
     };
 
 export type DbBonusBuyWidgetStylePreset = {
@@ -3652,6 +3667,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           cr.title,
           cr.status,
           cr.keyword,
+          cr.widget_keyword_prefix,
           cr.combine_mode,
           cr.exclude_winner_after_roll,
           cr.is_accepting_participants,
@@ -3753,6 +3769,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     title: string;
     status: string;
     keyword: string;
+    widget_keyword_prefix?: string;
     combine_mode: string;
     exclude_winner_after_roll: boolean;
     is_accepting_participants: boolean;
@@ -3773,6 +3790,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       title: row.title,
       status: row.status as ChatRollStatus,
       keyword: row.keyword,
+      widgetKeywordPrefix:
+        row.widget_keyword_prefix ?? CHAT_ROLL_WIDGET_KEYWORD_PREFIX_DEFAULT,
       combineMode: row.combine_mode as 'highest' | 'sum',
       excludeWinnerAfterRoll: row.exclude_winner_after_roll,
       isAcceptingParticipants: row.is_accepting_participants,
@@ -3885,6 +3904,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           cr.title,
           cr.status,
           cr.keyword,
+          cr.widget_keyword_prefix,
           cr.combine_mode,
           cr.exclude_winner_after_roll,
           cr.is_accepting_participants,
@@ -3950,6 +3970,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           cr.title,
           cr.status,
           cr.keyword,
+          cr.widget_keyword_prefix,
           cr.combine_mode,
           cr.exclude_winner_after_roll,
           cr.is_accepting_participants,
@@ -4000,6 +4021,21 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     try {
       await client.query('BEGIN');
 
+      const prefixResult = await client.query<{ widget_keyword_prefix: string }>(
+        `
+          SELECT widget_keyword_prefix
+          FROM chat_roll
+          WHERE account_id = $1
+            AND status != 'archived'
+          ORDER BY created_at DESC
+          LIMIT 1
+        `,
+        [accountId],
+      );
+      const widgetKeywordPrefix =
+        prefixResult.rows[0]?.widget_keyword_prefix ??
+        CHAT_ROLL_WIDGET_KEYWORD_PREFIX_DEFAULT;
+
       const liveCheck = await client.query<{ has_live: boolean }>(
         `
           SELECT EXISTS (
@@ -4023,6 +4059,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             title,
             status,
             keyword,
+            widget_keyword_prefix,
             combine_mode,
             exclude_winner_after_roll,
             reply_in_chat,
@@ -4030,13 +4067,14 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             winner_response_seconds,
             role_settings
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
           RETURNING
             id,
             account_id,
             title,
             status,
             keyword,
+            widget_keyword_prefix,
             combine_mode,
             exclude_winner_after_roll,
             is_accepting_participants,
@@ -4054,6 +4092,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           trimmedTitle,
           initialStatus,
           keyword,
+          widgetKeywordPrefix,
           combineMode,
           excludeWinnerAfterRoll,
           replyInChat,
@@ -4152,6 +4191,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             cr.title,
             cr.status,
             cr.keyword,
+            cr.widget_keyword_prefix,
             cr.combine_mode,
             cr.exclude_winner_after_roll,
             cr.is_accepting_participants,
@@ -4199,6 +4239,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           cr.title,
           cr.status,
           cr.keyword,
+          cr.widget_keyword_prefix,
           cr.combine_mode,
           cr.exclude_winner_after_roll,
           cr.is_accepting_participants,
@@ -4246,6 +4287,14 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       throw new Error('INVALID_KEYWORD');
     }
 
+    const nextWidgetKeywordPrefix =
+      input.widgetKeywordPrefix !== undefined
+        ? normalizeWidgetKeywordPrefix(input.widgetKeywordPrefix)
+        : existing.widgetKeywordPrefix;
+    if (nextWidgetKeywordPrefix === null) {
+      throw new Error('INVALID_WIDGET_KEYWORD_PREFIX');
+    }
+
     const nextCombineMode = input.combineMode ?? existing.combineMode;
     if (nextCombineMode !== 'highest' && nextCombineMode !== 'sum') {
       throw new Error('INVALID_COMBINE_MODE');
@@ -4277,13 +4326,14 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         SET
           title = $3,
           keyword = $4,
-          combine_mode = $5,
-          exclude_winner_after_roll = $6,
-          is_accepting_participants = $7,
-          reply_in_chat = $8,
-          winner_response_enabled = $9,
-          winner_response_seconds = $10,
-          role_settings = $11
+          widget_keyword_prefix = $5,
+          combine_mode = $6,
+          exclude_winner_after_roll = $7,
+          is_accepting_participants = $8,
+          reply_in_chat = $9,
+          winner_response_enabled = $10,
+          winner_response_seconds = $11,
+          role_settings = $12
         FROM users u
         WHERE cr.created_by_user_id = u.id
           AND cr.account_id = $1
@@ -4295,6 +4345,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           cr.title,
           cr.status,
           cr.keyword,
+          cr.widget_keyword_prefix,
           cr.combine_mode,
           cr.exclude_winner_after_roll,
           cr.is_accepting_participants,
@@ -4311,6 +4362,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         chatRollId,
         nextTitle,
         nextKeyword,
+        nextWidgetKeywordPrefix,
         nextCombineMode,
         input.excludeWinnerAfterRoll ?? existing.excludeWinnerAfterRoll,
         input.isAcceptingParticipants ?? existing.isAcceptingParticipants,
@@ -4327,6 +4379,64 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
 
     return this.mapChatRollRow(row);
+  }
+
+  async getPublicChatRollWidgetViewByUcid(
+    ucid: string,
+  ): Promise<PublicChatRollWidgetViewResult> {
+    const accountId = await this.getAccountIdByUcid(ucid);
+    if (accountId === null) {
+      return { kind: 'not_found' };
+    }
+
+    const sessionCheck = await this.pool.query<{
+      has_non_archived: boolean;
+      live_id: string | number | null;
+    }>(
+      `
+        SELECT
+          EXISTS (
+            SELECT 1
+            FROM chat_roll
+            WHERE account_id = $1
+              AND status != 'archived'
+          ) AS has_non_archived,
+          (
+            SELECT id
+            FROM chat_roll
+            WHERE account_id = $1
+              AND status = 'live'
+            ORDER BY id DESC
+            LIMIT 1
+          ) AS live_id
+      `,
+      [accountId],
+    );
+
+    const checkRow = sessionCheck.rows[0];
+    if (!checkRow?.has_non_archived) {
+      return { kind: 'unavailable', reason: 'no_sessions' };
+    }
+
+    if (checkRow.live_id === null) {
+      return { kind: 'unavailable', reason: 'no_live_session' };
+    }
+
+    const liveId = toInt(checkRow.live_id);
+    const session = await this.getChatRollById(accountId, liveId);
+    if (!session || session.status !== 'live') {
+      return { kind: 'unavailable', reason: 'no_live_session' };
+    }
+
+    return {
+      kind: 'active',
+      record: {
+        id: session.id,
+        keyword: session.keyword,
+        widgetKeywordPrefix: session.widgetKeywordPrefix,
+        status: session.status,
+      },
+    };
   }
 
   async listChatRollParticipants(

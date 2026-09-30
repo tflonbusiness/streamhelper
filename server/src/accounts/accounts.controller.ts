@@ -89,6 +89,7 @@ type CreateChatRollBody = {
 type PatchChatRollBody = {
   title?: string;
   keyword?: string;
+  widget_keyword_prefix?: string;
   combine_mode?: string;
   exclude_winner_after_roll?: boolean;
   is_accepting_participants?: boolean;

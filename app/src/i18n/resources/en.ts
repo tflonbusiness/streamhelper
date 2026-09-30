@@ -582,6 +582,18 @@ export const en = {
     keywordLabel: "Keyword",
     keywordRequired: "Keyword is required",
     keywordHelp: "Viewers must send this exact message in Kick chat to join.",
+    widgetKeywordPrefixLabel: "Overlay text before keyword",
+    widgetKeywordPrefixRequired: "Overlay text is required (max 120 characters)",
+    widgetKeywordPrefixHelp: "Stream overlay preview: {{preview}}",
+    streamWidgetDescription:
+      "OBS overlay for your live chat roll. Configure the on-stream message with Settings.",
+    streamWidgetSettingsButton: "Overlay settings",
+    streamWidgetSettingsTitle: "Stream overlay settings",
+    streamWidgetSettingsNoSession:
+      "Create a chat roll session first, then configure the overlay.",
+    streamWidgetSettingsOffAirHint:
+      "Editing «{{title}}». The overlay updates when this session goes live.",
+    streamWidgetSettingsOpenSession: "Open session",
     pauseEntries: "Close sign-up",
     resumeEntries: "Open sign-up",
     roll: "Roll",
