@@ -21,15 +21,31 @@ export const PageStack = styled(Stack)(({ theme }) => ({
 
 export const RollActionBar = styled(Box)(({ theme }) => ({
   display: 'flex',
-  justifyContent: 'center',
-  paddingTop: theme.spacing(0.5),
-  paddingBottom: theme.spacing(0.5),
+  flexWrap: 'wrap',
+  alignItems: 'stretch',
+  gap: theme.spacing(1),
+  width: '100%',
+  padding: theme.spacing(1.5),
+  borderRadius: theme.spacing(1),
+  border: '1px solid',
+  borderColor: alpha(theme.palette.primary.main, 0.28),
+  backgroundColor: alpha(theme.palette.primary.main, 0.06),
 }))
 
 export const RollButton = styled(Button)(({ theme }) => ({
-  minWidth: 120,
-  paddingLeft: theme.spacing(2),
-  paddingRight: theme.spacing(2),
+  flex: '0 0 auto',
+  minWidth: 200,
+  minHeight: 44,
+  fontWeight: 700,
+  fontSize: theme.typography.pxToRem(15),
+  letterSpacing: '0.02em',
+  boxShadow: theme.shadows[2],
+  '&:hover': {
+    boxShadow: theme.shadows[4],
+  },
+  '&.Mui-disabled': {
+    boxShadow: 'none',
+  },
 }))
 
 export const ListCard = styled(Card)(({ theme }) => ({

@@ -547,46 +547,6 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
     !settingsSaveMutation.isPending &&
     !readOnly
 
-  const sessionPrimaryActions = (
-    <>
-      <RollButton
-        variant="contained"
-        size="small"
-        startIcon={<ReplayIcon />}
-        onClick={handleRoll}
-        disabled={
-          readOnly ||
-          participants.length <= 1 ||
-          rollMutation.isPending ||
-          rollRevealOpen
-        }
-      >
-        {t('chatRoll.roll')}
-      </RollButton>
-      <Button
-        variant="outlined"
-        size="small"
-        startIcon={
-          record.isAcceptingParticipants ? (
-            <PauseIcon fontSize="small" />
-          ) : (
-            <PlayArrowIcon fontSize="small" />
-          )
-        }
-        disabled={readOnly || sessionPatchMutation.isPending}
-        onClick={() =>
-          patchSession({
-            is_accepting_participants: !record.isAcceptingParticipants,
-          })
-        }
-      >
-        {record.isAcceptingParticipants
-          ? t('chatRoll.pauseEntries')
-          : t('chatRoll.resumeEntries')}
-      </Button>
-    </>
-  )
-
   return (
     <PageStack>
       <ModuleSessionPageHeader module={chatRollModule} />
@@ -612,7 +572,49 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
           })
         }}
         liveActionPending={liveActionPending}
-        primaryActions={sessionPrimaryActions}
+        centerAction={
+          !readOnly ? (
+            <RollButton
+              variant="contained"
+              size="medium"
+              color="primary"
+              startIcon={<ReplayIcon />}
+              onClick={handleRoll}
+              disabled={
+                participants.length <= 1 ||
+                rollMutation.isPending ||
+                rollRevealOpen
+              }
+            >
+              {t('chatRoll.roll')}
+            </RollButton>
+          ) : undefined
+        }
+        primaryActions={
+          !readOnly ? (
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={
+                record.isAcceptingParticipants ? (
+                  <PauseIcon fontSize="small" />
+                ) : (
+                  <PlayArrowIcon fontSize="small" />
+                )
+              }
+              disabled={sessionPatchMutation.isPending}
+              onClick={() =>
+                patchSession({
+                  is_accepting_participants: !record.isAcceptingParticipants,
+                })
+              }
+            >
+              {record.isAcceptingParticipants
+                ? t('chatRoll.pauseEntries')
+                : t('chatRoll.resumeEntries')}
+            </Button>
+          ) : undefined
+        }
       />
 
       <WorkspaceGrid container spacing={3}>
@@ -621,69 +623,69 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
           sx={settingsColumnSx(settingsExpanded)}
         >
           {settingsExpanded ? (
-            <SettingsCard elevation={0}>
-              <SettingsCardContent>
-                <ChatRollSessionSettingsChrome
-                  readOnly={readOnly}
-                  isDirty={isDirty}
-                  canSave={canSaveSettings}
-                  isSaving={settingsSaveMutation.isPending}
-                  onSave={handleSaveSettings}
-                  onCollapse={() => setSettingsExpanded(false)}
-                />
-
-                <SettingsStack>
-                  <ChatRollSessionSettingsLeftPanel
-                    draft={draft}
-                    keywordError={keywordError}
-                    winnerResponseSecondsError={winnerResponseSecondsError}
-                    settingsDisabled={settingsDisabled}
-                    onKeywordChange={(value) => {
-                      updateDraft((current) => ({ ...current, keyword: value }))
-                      if (value.trim()) {
-                        setKeywordError(null)
-                      }
-                    }}
-                    onCombineModeChange={(mode) =>
-                      updateDraft((current) => ({ ...current, combineMode: mode }))
-                    }
-                    onExcludeWinnerChange={(checked) =>
-                      updateDraft((current) => ({
-                        ...current,
-                        excludeWinnerAfterRoll: checked,
-                      }))
-                    }
-                    onWinnerResponseEnabledChange={(checked) =>
-                      updateDraft((current) => ({
-                        ...current,
-                        winnerResponseEnabled: checked,
-                      }))
-                    }
-                    onWinnerResponseSecondsChange={(raw) =>
-                      updateDraft((current) => ({
-                        ...current,
-                        winnerResponseSeconds:
-                          parseWinnerResponseSecondsDraftInput(raw),
-                      }))
-                    }
-                    roleMeta={roleMeta}
-                    onRoleToggle={(roleId, enabled) =>
-                      updateDraft((current) => ({
-                        ...current,
-                        roleSettings: {
-                          ...current.roleSettings,
-                          [roleId]: { ...current.roleSettings[roleId], enabled },
-                        },
-                      }))
-                    }
-                    onRoleWeightChange={(roleId, raw) =>
-                      updateDraft((current) =>
-                        updateRoleWeightInDraft(current, roleId, raw),
-                      )
-                    }
+            <SettingsCard elevation={0} sx={{ width: '100%', minHeight: 0 }}>
+                <SettingsCardContent>
+                  <ChatRollSessionSettingsChrome
+                    readOnly={readOnly}
+                    isDirty={isDirty}
+                    canSave={canSaveSettings}
+                    isSaving={settingsSaveMutation.isPending}
+                    onSave={handleSaveSettings}
+                    onCollapse={() => setSettingsExpanded(false)}
                   />
-                </SettingsStack>
-              </SettingsCardContent>
+
+                  <SettingsStack>
+                    <ChatRollSessionSettingsLeftPanel
+                      draft={draft}
+                      keywordError={keywordError}
+                      winnerResponseSecondsError={winnerResponseSecondsError}
+                      settingsDisabled={settingsDisabled}
+                      onKeywordChange={(value) => {
+                        updateDraft((current) => ({ ...current, keyword: value }))
+                        if (value.trim()) {
+                          setKeywordError(null)
+                        }
+                      }}
+                      onCombineModeChange={(mode) =>
+                        updateDraft((current) => ({ ...current, combineMode: mode }))
+                      }
+                      onExcludeWinnerChange={(checked) =>
+                        updateDraft((current) => ({
+                          ...current,
+                          excludeWinnerAfterRoll: checked,
+                        }))
+                      }
+                      onWinnerResponseEnabledChange={(checked) =>
+                        updateDraft((current) => ({
+                          ...current,
+                          winnerResponseEnabled: checked,
+                        }))
+                      }
+                      onWinnerResponseSecondsChange={(raw) =>
+                        updateDraft((current) => ({
+                          ...current,
+                          winnerResponseSeconds:
+                            parseWinnerResponseSecondsDraftInput(raw),
+                        }))
+                      }
+                      roleMeta={roleMeta}
+                      onRoleToggle={(roleId, enabled) =>
+                        updateDraft((current) => ({
+                          ...current,
+                          roleSettings: {
+                            ...current.roleSettings,
+                            [roleId]: { ...current.roleSettings[roleId], enabled },
+                          },
+                        }))
+                      }
+                      onRoleWeightChange={(roleId, raw) =>
+                        updateDraft((current) =>
+                          updateRoleWeightInDraft(current, roleId, raw),
+                        )
+                      }
+                    />
+                  </SettingsStack>
+                </SettingsCardContent>
             </SettingsCard>
           ) : (
             <ChatRollSessionSettingsCollapsedRail
