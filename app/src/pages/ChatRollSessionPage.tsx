@@ -592,7 +592,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
         </Grid>
         <Grid size={{ xs: 12, lg: 3 }} sx={workspaceColumnSx}>
           <NameListCard
-            title={t('chatRoll.participantsTitle')}
+            title={t('chatRoll.participantsTitle', { count: participants.length })}
             icon={GroupIcon}
             emptyLabel={t('chatRoll.noParticipants')}
             removeAriaLabel={t('chatRoll.removeParticipant')}
@@ -617,7 +617,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
         </Grid>
         <Grid size={{ xs: 12, lg: 3 }} sx={workspaceColumnSx}>
           <NameListCard
-            title={t('chatRoll.winnersTitle')}
+            title={t('chatRoll.winnersTitle', { count: wins.length })}
             icon={EmojiEventsIcon}
             iconVariant="primary"
             emptyLabel={t('chatRoll.noWinners')}
