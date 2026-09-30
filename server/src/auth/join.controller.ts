@@ -17,12 +17,13 @@ export class JoinController {
       const sessionUser = await this.authService.handleJoinToken(token);
       const session = req.session as SessionData;
       session.user = sessionUser;
+      session.loginSurface = 'streamer';
 
       const appUrl = this.authService.getAppBaseUrl();
       res.redirect(`${appUrl}/dashboard`);
     } catch {
       const appUrl = this.authService.getAppBaseUrl();
-      res.redirect(`${appUrl}/?join_error=1`);
+      res.redirect(`${appUrl}/login?join_error=1`);
     }
   }
 }

@@ -75,6 +75,7 @@ describe('Subscription access (e2e)', () => {
             status: subscriptionActive ? 'active' : 'expired',
           }),
         getAccountIdByUcid: subscriptionDatabaseMocks.getAccountIdByUcid,
+        isPlatformAdmin: subscriptionDatabaseMocks.isPlatformAdmin,
       })
       .compile();
 

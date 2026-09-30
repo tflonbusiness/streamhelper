@@ -60,12 +60,20 @@ server {
         include /etc/nginx/snippets/proxy-api.conf;
     }
 
+    location /chat-rolls/ {
+        proxy_pass http://api;
+        include /etc/nginx/snippets/proxy-api.conf;
+    }
+
     location /webhooks/ {
         proxy_pass http://api;
         include /etc/nginx/snippets/proxy-api.conf;
     }
 
+    include /etc/nginx/snippets/landing-static.conf;
+
     location / {
+        include /etc/nginx/snippets/seo-noindex.conf;
         try_files $uri $uri/ /index.html;
     }
 }

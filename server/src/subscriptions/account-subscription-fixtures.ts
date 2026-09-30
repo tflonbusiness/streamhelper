@@ -17,4 +17,5 @@ export const subscriptionDatabaseMocks = {
   accountHasSubscriptionAccess: async () => true,
   loadAccountSubscriptionSnapshot: async () => activeTrialSubscriptionFixture(),
   getAccountIdByUcid: async (ucid: string) => (ucid ? 10 : null),
+  isPlatformAdmin: async () => false,
 };

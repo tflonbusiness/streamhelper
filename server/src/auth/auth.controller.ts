@@ -1,5 +1,7 @@
 import {
+  Body,
   Controller,
+  ForbiddenException,
   Get,
   HttpCode,
   Post,
@@ -11,7 +13,8 @@ import {
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service.js';
 import { KickOAuthService } from './kick-oauth.service.js';
-import type { SessionData } from './auth.types.js';
+import type { LoginSurface, SessionData } from './auth.types.js';
+import { DatabaseService } from '../database/database.service.js';
 
 function saveSession(req: Request): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -25,18 +28,32 @@ function saveSession(req: Request): Promise<void> {
   });
 }
 
+function resolveLoginSurface(raw: string | undefined): LoginSurface {
+  return raw === 'service' ? 'service' : 'streamer';
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly kickOAuth: KickOAuthService,
+    private readonly database: DatabaseService,
   ) {}
 
+  private loginErrorRedirect(appUrl: string): string {
+    return `${appUrl}/login?auth_error=1`;
+  }
+
   @Get('oauth/kick')
-  async kickAuthorize(@Req() req: Request, @Res() res: Response) {
+  async kickAuthorize(
+    @Query('surface') surfaceQuery: string | undefined,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     const oauthRequest = this.kickOAuth.createOAuthRequest();
     const session = req.session as SessionData;
 
+    session.loginSurface = resolveLoginSurface(surfaceQuery);
     session.kickOAuth = {
       state: oauthRequest.state,
       codeVerifier: oauthRequest.codeVerifier,
@@ -58,18 +75,18 @@ export class AuthController {
     @Res() res: Response,
   ) {
     const appUrl = this.authService.getAppBaseUrl();
+    const session = req.session as SessionData;
 
     if (oauthError) {
-      res.redirect(`${appUrl}/?auth_error=1`);
+      res.redirect(this.loginErrorRedirect(appUrl));
       return;
     }
 
     if (!code) {
-      res.redirect(`${appUrl}/?auth_error=1`);
+      res.redirect(this.loginErrorRedirect(appUrl));
       return;
     }
 
-    const session = req.session as SessionData;
     let codeVerifier: string | undefined;
 
     if (!this.kickOAuth.isMockMode()) {
@@ -78,7 +95,7 @@ export class AuthController {
         !session.kickOAuth ||
         session.kickOAuth.state !== state
       ) {
-        res.redirect(`${appUrl}/?auth_error=state`);
+        res.redirect(`${appUrl}/login?auth_error=state`);
         return;
       }
       codeVerifier = session.kickOAuth.codeVerifier;
@@ -94,11 +111,19 @@ export class AuthController {
         codeVerifier,
       );
       session.user = sessionUser;
+      session.loginSurface = 'streamer';
       await saveSession(req);
+
+      const isAdmin = await this.database.isPlatformAdmin(sessionUser.id);
+      if (isAdmin) {
+        res.redirect(`${appUrl}/continue`);
+        return;
+      }
+
       res.redirect(`${appUrl}/dashboard`);
     } catch (error) {
       if (error instanceof UnauthorizedException) {
-        res.redirect(`${appUrl}/?auth_error=1`);
+        res.redirect(this.loginErrorRedirect(appUrl));
         return;
       }
       throw error;
@@ -111,9 +136,35 @@ export class AuthController {
     const user = await this.authService.requireValidSessionUser(session.user);
     const withSubscription =
       await this.authService.refreshSessionSubscription(user);
+    const enriched = await this.authService.enrichSessionUser(withSubscription);
+    const platformAdmin = await this.database.isPlatformAdmin(enriched.id);
     return {
-      user: await this.authService.enrichSessionUser(withSubscription),
+      user: { ...enriched, platformAdmin },
+      loginSurface: session.loginSurface ?? 'streamer',
     };
+  }
+
+  @Post('surface')
+  @HttpCode(200)
+  async setSurface(
+    @Req() req: Request,
+    @Body() body: { surface?: string },
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    const surface = resolveLoginSurface(body.surface);
+
+    if (surface === 'service') {
+      const isAdmin = await this.database.isPlatformAdmin(user.id);
+      if (!isAdmin) {
+        throw new ForbiddenException('Platform admin access required');
+      }
+    }
+
+    session.loginSurface = surface;
+    await saveSession(req);
+
+    return { ok: true as const, loginSurface: surface };
   }
 
   @Post('logout')

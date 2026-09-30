@@ -79,10 +79,19 @@ export class AuthService {
       return user;
     }
 
-    const subscription = await this.database.loadAccountSubscriptionSnapshot(
-      user.accountId,
-    );
-    return { ...user, subscription };
+    const membership = await this.database.getPrimaryMembership(user.id);
+    if (!membership || membership.accountId !== user.accountId) {
+      const subscription = await this.database.loadAccountSubscriptionSnapshot(
+        user.accountId,
+      );
+      return { ...user, subscription };
+    }
+
+    return {
+      ...user,
+      subscriptionPlan: membership.subscriptionPlan,
+      subscription: membership.subscription,
+    };
   }
 
   async enrichSessionUser(user: SessionUser): Promise<SessionUser> {

@@ -5,15 +5,16 @@ import { kickLoginUrl } from '@/api/auth'
 
 type KickLoginButtonProps = {
   className?: string
+  surface?: 'streamer' | 'service'
 }
 
-export function KickLoginButton({ className }: KickLoginButtonProps) {
+export function KickLoginButton({ className, surface = 'streamer' }: KickLoginButtonProps) {
   const { t } = useTranslation()
 
   return (
     <Button
       component="a"
-      href={kickLoginUrl()}
+      href={kickLoginUrl(surface)}
       className={className}
       size="large"
       fullWidth

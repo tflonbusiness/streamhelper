@@ -12,6 +12,11 @@
       heroLead:
         'Stream Helper gives casino streamers ready-to-run engagement modules — bonus buys, prize wheels, and weighted giveaways — with OBS overlays your viewers see on stream.',
       signInKick: 'Sign in with Kick',
+      heroSecondary: 'Get access via Telegram',
+      navModules: 'Modules',
+      navPricing: 'Pricing',
+      navHowItWorks: 'How it works',
+      navContact: 'Contact',
       modulesTitle: 'Everything you need to engage chat',
       modulesLead:
         'Pick a module, configure it in the dashboard, and drop the browser-source widget into OBS.',
@@ -90,6 +95,11 @@
       heroLead:
         'Stream Helper — готовые модули для казино-стримеров: bonus buy, колесо призов и розыгрыши в чате с OBS-оверлеями для зрителей.',
       signInKick: 'Войти через Kick',
+      heroSecondary: 'Получить доступ в Telegram',
+      navModules: 'Модули',
+      navPricing: 'Тарифы',
+      navHowItWorks: 'Как это работает',
+      navContact: 'Контакты',
       modulesTitle: 'Всё для вовлечения чата',
       modulesLead:
         'Выберите модуль, настройте его в панели и добавьте browser source в OBS.',

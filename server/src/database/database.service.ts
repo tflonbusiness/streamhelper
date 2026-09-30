@@ -4972,6 +4972,379 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       participantId: toInt(insertResult.rows[0].id),
     };
   }
+
+  async isPlatformAdmin(userId: number): Promise<boolean> {
+    const result = await this.pool.query(
+      `
+        SELECT 1
+        FROM platform_admins
+        WHERE user_id = $1 AND revoked_at IS NULL
+        LIMIT 1
+      `,
+      [userId],
+    );
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async searchSubscriptionAdminAccounts(
+    query: string,
+  ): Promise<
+    import('../internal-admin/internal-subscriptions.types.js').SubscriptionAdminSearchItem[]
+  > {
+    const trimmed = query.trim();
+    const accountId = /^\d+$/.test(trimmed)
+      ? Number.parseInt(trimmed, 10)
+      : null;
+    const uuidMatch = trimmed.match(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
+    const ucid = uuidMatch ? trimmed : null;
+    const text =
+      accountId === null && ucid === null ? `%${trimmed}%` : null;
+
+    const result = await this.pool.query<{
+      account_id: string | number;
+      ucid: string;
+      name: string;
+      subscription_plan: string;
+      channel_slug: string | null;
+      kind: AccountSubscriptionRow['kind'] | null;
+      status: AccountSubscriptionRow['status'] | null;
+      plan_tier: string | null;
+      starts_at: Date | null;
+      ends_at: Date | null;
+    }>(
+      `
+        SELECT
+          a.id AS account_id,
+          a.ucid,
+          a.name,
+          a.subscription_plan,
+          ch.channel_slug,
+          s.kind,
+          s.status,
+          s.plan_tier,
+          s.starts_at,
+          s.ends_at
+        FROM accounts a
+        LEFT JOIN account_subscriptions s ON s.account_id = a.id
+        LEFT JOIN LATERAL (
+          SELECT channel_slug
+          FROM account_channels
+          WHERE account_id = a.id AND provider = 'kick'
+          ORDER BY is_primary DESC, id ASC
+          LIMIT 1
+        ) ch ON true
+        WHERE
+          ($1::bigint IS NOT NULL AND a.id = $1::bigint)
+          OR ($2::uuid IS NOT NULL AND a.ucid = $2::uuid)
+          OR (
+            $3::text IS NOT NULL
+            AND (
+              a.name ILIKE $3
+              OR ch.channel_slug ILIKE $3
+            )
+          )
+        ORDER BY a.updated_at DESC
+        LIMIT 20
+      `,
+      [accountId, ucid, text],
+    );
+
+    const items: import('../internal-admin/internal-subscriptions.types.js').SubscriptionAdminSearchItem[] =
+      [];
+
+    for (const row of result.rows) {
+      const item = await this.mapSubscriptionAdminSearchRow(row);
+      if (item) {
+        items.push(item);
+      }
+    }
+
+    return items;
+  }
+
+  async getSubscriptionAdminAccountDetail(
+    accountId: number,
+  ): Promise<
+    import('../internal-admin/internal-subscriptions.types.js').SubscriptionAdminAccountDetail | null
+  > {
+    const result = await this.pool.query<{
+      account_id: string | number;
+      ucid: string;
+      name: string;
+      subscription_plan: string;
+      channel_slug: string | null;
+      kind: AccountSubscriptionRow['kind'] | null;
+      status: AccountSubscriptionRow['status'] | null;
+      plan_tier: string | null;
+      starts_at: Date | null;
+      ends_at: Date | null;
+    }>(
+      `
+        SELECT
+          a.id AS account_id,
+          a.ucid,
+          a.name,
+          a.subscription_plan,
+          ch.channel_slug,
+          s.kind,
+          s.status,
+          s.plan_tier,
+          s.starts_at,
+          s.ends_at
+        FROM accounts a
+        LEFT JOIN account_subscriptions s ON s.account_id = a.id
+        LEFT JOIN LATERAL (
+          SELECT channel_slug
+          FROM account_channels
+          WHERE account_id = a.id AND provider = 'kick'
+          ORDER BY is_primary DESC, id ASC
+          LIMIT 1
+        ) ch ON true
+        WHERE a.id = $1
+        LIMIT 1
+      `,
+      [accountId],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      return null;
+    }
+
+    const base = await this.mapSubscriptionAdminSearchRow(row);
+    if (!base) {
+      return null;
+    }
+
+    const ownersResult = await this.pool.query<{
+      user_id: string | number;
+      name: string;
+    }>(
+      `
+        SELECT u.id AS user_id, u.name
+        FROM account_members am
+        JOIN users u ON u.id = am.user_id
+        WHERE am.account_id = $1
+          AND am.role = 'owner'
+          AND am.is_active = true
+        ORDER BY u.name
+      `,
+      [accountId],
+    );
+
+    return {
+      ...base,
+      owners: ownersResult.rows.map((owner) => ({
+        userId: toInt(owner.user_id),
+        name: owner.name,
+      })),
+    };
+  }
+
+  async applySubscriptionAdminUpdate(
+    accountId: number,
+    operatorUserId: number,
+    input: {
+      mode: 'revoked' | 'trial' | 'paid';
+      paidPlan?: 'pro' | 'studio';
+      endsAt?: Date;
+      planTier: string;
+    },
+  ): Promise<
+    import('../internal-admin/internal-subscriptions.types.js').SubscriptionAdminAccountDetail | null
+  > {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const exists = await client.query<{ id: number }>(
+        `SELECT id FROM accounts WHERE id = $1 LIMIT 1`,
+        [accountId],
+      );
+      if (!exists.rows[0]) {
+        await client.query('ROLLBACK');
+        return null;
+      }
+
+      const before = await this.loadSubscriptionAdminAuditPayload(accountId, client);
+
+      const existingSub = await client.query<{
+        kind: AccountSubscriptionRow['kind'] | null;
+      }>(
+        `SELECT kind FROM account_subscriptions WHERE account_id = $1 LIMIT 1`,
+        [accountId],
+      );
+      const previousKind = existingSub.rows[0]?.kind ?? 'trial';
+
+      let subscriptionPlan = 'free';
+      let kind: AccountSubscriptionRow['kind'] = previousKind;
+      let status: AccountSubscriptionRow['status'] = 'expired';
+      let endsAt = new Date();
+
+      if (input.mode === 'revoked') {
+        subscriptionPlan = 'free';
+        kind = previousKind;
+        status = 'expired';
+        endsAt = new Date();
+      } else if (input.mode === 'trial') {
+        subscriptionPlan = 'free';
+        kind = 'trial';
+        status = 'active';
+        endsAt = input.endsAt!;
+      } else {
+        subscriptionPlan = input.paidPlan!;
+        kind = 'paid';
+        status = 'active';
+        endsAt = input.endsAt!;
+      }
+
+      await client.query(
+        `
+          UPDATE accounts
+          SET subscription_plan = $2, updated_at = now()
+          WHERE id = $1
+        `,
+        [accountId, subscriptionPlan],
+      );
+
+      await client.query(
+        `
+          INSERT INTO account_subscriptions (
+            account_id, kind, status, plan_tier, starts_at, ends_at
+          )
+          VALUES ($1, $2, $3, $4, now(), $5)
+          ON CONFLICT (account_id) DO UPDATE SET
+            kind = EXCLUDED.kind,
+            status = EXCLUDED.status,
+            plan_tier = EXCLUDED.plan_tier,
+            ends_at = EXCLUDED.ends_at,
+            updated_at = now(),
+            starts_at = CASE
+              WHEN EXCLUDED.status = 'active'
+                AND account_subscriptions.status IS DISTINCT FROM 'active'
+              THEN now()
+              ELSE account_subscriptions.starts_at
+            END
+        `,
+        [accountId, kind, status, input.planTier, endsAt],
+      );
+
+      const after = await this.loadSubscriptionAdminAuditPayload(accountId, client);
+
+      await client.query(
+        `
+          INSERT INTO subscription_admin_events (
+            operator_user_id, account_id, payload_before, payload_after
+          )
+          VALUES ($1, $2, $3::jsonb, $4::jsonb)
+        `,
+        [
+          operatorUserId,
+          accountId,
+          JSON.stringify(before),
+          JSON.stringify(after),
+        ],
+      );
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+
+    return this.getSubscriptionAdminAccountDetail(accountId);
+  }
+
+  private async mapSubscriptionAdminSearchRow(row: {
+    account_id: string | number;
+    ucid: string;
+    name: string;
+    subscription_plan: string;
+    channel_slug: string | null;
+    kind: AccountSubscriptionRow['kind'] | null;
+    status: AccountSubscriptionRow['status'] | null;
+    plan_tier: string | null;
+    starts_at: Date | null;
+    ends_at: Date | null;
+  }): Promise<
+    import('../internal-admin/internal-subscriptions.types.js').SubscriptionAdminSearchItem | null
+  > {
+    const accountId = toInt(row.account_id);
+    const subscriptionRow = this.mapAccountSubscriptionRow(row);
+    if (subscriptionRow && shouldMarkSubscriptionExpired(subscriptionRow)) {
+      await this.expireAccountSubscriptionIfNeeded(accountId);
+      subscriptionRow.status = 'expired';
+    }
+    const subscription = resolveAccountSubscriptionAccess(subscriptionRow);
+
+    return {
+      accountId,
+      ucid: row.ucid,
+      name: row.name,
+      subscriptionPlan: row.subscription_plan,
+      channelSlug: row.channel_slug,
+      subscription,
+    };
+  }
+
+  private async loadSubscriptionAdminAuditPayload(
+    accountId: number,
+    client: { query: Pool['query'] },
+  ): Promise<
+    import('../internal-admin/internal-subscriptions.types.js').SubscriptionAdminAuditPayload
+  > {
+    const result = await client.query<{
+      subscription_plan: string;
+      kind: AccountSubscriptionRow['kind'] | null;
+      status: AccountSubscriptionRow['status'] | null;
+      plan_tier: string | null;
+      starts_at: Date | null;
+      ends_at: Date | null;
+    }>(
+      `
+        SELECT
+          a.subscription_plan,
+          s.kind,
+          s.status,
+          s.plan_tier,
+          s.starts_at,
+          s.ends_at
+        FROM accounts a
+        LEFT JOIN account_subscriptions s ON s.account_id = a.id
+        WHERE a.id = $1
+        LIMIT 1
+      `,
+      [accountId],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      return {
+        subscriptionPlan: 'free',
+        subscription: null,
+      };
+    }
+
+    const subscriptionRow = this.mapAccountSubscriptionRow({
+      kind: row.kind,
+      status: row.status,
+      plan_tier: row.plan_tier,
+      starts_at: row.starts_at,
+      ends_at: row.ends_at,
+    });
+    const subscription = subscriptionRow
+      ? resolveAccountSubscriptionAccess(subscriptionRow)
+      : null;
+
+    return {
+      subscriptionPlan: row.subscription_plan,
+      subscription,
+    };
+  }
 }
 
 export type DbChatRollIntakeSession = {

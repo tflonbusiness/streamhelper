@@ -18,6 +18,14 @@ export type AuthUser = {
   subscriptionPlan?: string
   subscription?: AccountSubscriptionSession
   channelSlug?: string
+  platformAdmin?: boolean
+}
+
+export type LoginSurface = 'streamer' | 'service'
+
+export type AuthSessionSnapshot = {
+  user: AuthUser
+  loginSurface: LoginSurface
 }
 
 export type AccountMember = {
@@ -57,11 +65,14 @@ async function readErrorMessage(response: Response, fallback: string): Promise<s
   return fallback
 }
 
-export function kickLoginUrl(): string {
+export function kickLoginUrl(surface: LoginSurface = 'streamer'): string {
+  if (surface === 'service') {
+    return '/auth/oauth/kick?surface=service'
+  }
   return '/auth/oauth/kick'
 }
 
-export async function fetchCurrentUser(): Promise<AuthUser | null> {
+export async function fetchCurrentUser(): Promise<AuthSessionSnapshot | null> {
   const response = await fetch('/auth/me', {
     credentials: 'include',
   })
@@ -74,8 +85,31 @@ export async function fetchCurrentUser(): Promise<AuthUser | null> {
     throw new Error(i18n.t('errors.failedToLoadSession'))
   }
 
-  const data = await parseJson<{ user: AuthUser }>(response)
-  return data.user
+  const data = await parseJson<{ user: AuthUser; loginSurface?: LoginSurface }>(
+    response,
+  )
+  return {
+    user: data.user,
+    loginSurface: data.loginSurface ?? 'streamer',
+  }
+}
+
+export async function setLoginSurface(
+  surface: LoginSurface,
+): Promise<LoginSurface> {
+  const response = await fetch('/auth/surface', {
+    method: 'POST',
+    credentials: 'include',
+    headers: jsonHeaders,
+    body: JSON.stringify({ surface }),
+  })
+
+  if (!response.ok) {
+    throw new Error(i18n.t('errors.failedToLoadSession'))
+  }
+
+  const data = await parseJson<{ loginSurface: LoginSurface }>(response)
+  return data.loginSurface
 }
 
 export async function createModerator(

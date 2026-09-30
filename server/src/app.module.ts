@@ -8,6 +8,7 @@ import { BonusBuyModule } from './bonus-buy/bonus-buy.module.js';
 import { DatabaseModule } from './database/database.module.js';
 import { KickChatModule } from './kick-chat/kick-chat.module.js';
 import { ChatRollModule } from './chat-roll/chat-roll.module.js';
+import { InternalAdminModule } from './internal-admin/internal-admin.module.js';
 import { PrizeSpinModule } from './prize-spin/prize-spin.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
@@ -26,6 +27,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     PrizeSpinModule,
     ChatRollModule,
     KickChatModule,
+    InternalAdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

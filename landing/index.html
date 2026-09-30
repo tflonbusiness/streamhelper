@@ -3,17 +3,84 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Stream Helper — Kick stream engagement tools</title>
+    <title>Stream Helper | Kick Stream Overlays — Bonus Buy, Prize Wheel &amp; Chat Giveaways</title>
     <meta
       name="description"
-      content="Run bonus buys, prize wheels, and chat giveaways on Kick. OBS-ready overlays, team access, one dashboard. Sign in with Kick."
+      content="Stream Helper helps Kick casino streamers run bonus buys, prize wheels, and weighted chat giveaways with OBS browser-source overlays, team access, and one dashboard."
     />
-    <meta property="og:title" content="Stream Helper — Kick stream engagement tools" />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+    <meta
+      name="keywords"
+      content="Kick stream overlay, Kick bonus buy, casino stream tools, OBS browser source, chat giveaway, prize wheel, stream engagement"
+    />
+    <link rel="canonical" href="https://streamhelper.best/" />
+    <meta name="theme-color" content="#0b0b0f" />
+    <meta property="og:site_name" content="Stream Helper" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content="https://streamhelper.best/" />
+    <meta
+      property="og:title"
+      content="Stream Helper | Kick Stream Overlays — Bonus Buy, Prize Wheel &amp; Chat Giveaways"
+    />
     <meta
       property="og:description"
-      content="Interactive modules and stream overlays for Kick casino streamers. Sign in to get started."
+      content="Interactive modules and OBS-ready overlays for Kick casino streamers: Bonus Buy, Prize Spin, and Chat Roll. Sign in with Kick to start free."
     />
     <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://streamhelper.best/og-image.png" />
+    <meta property="og:image:alt" content="Stream Helper — Kick stream engagement tools" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Stream Helper | Kick Stream Overlays — Bonus Buy, Prize Wheel &amp; Chat Giveaways"
+    />
+    <meta
+      name="twitter:description"
+      content="Bonus buys, prize wheels, and chat giveaways on Kick with OBS overlays. Free tier available."
+    />
+    <meta name="twitter:image" content="https://streamhelper.best/og-image.png" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://streamhelper.best/#website",
+            "url": "https://streamhelper.best/",
+            "name": "Stream Helper",
+            "description": "Kick stream engagement tools with OBS overlays for bonus buys, prize wheels, and chat giveaways.",
+            "inLanguage": "en"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://streamhelper.best/#software",
+            "name": "Stream Helper",
+            "applicationCategory": "MultimediaApplication",
+            "operatingSystem": "Web",
+            "url": "https://streamhelper.best/",
+            "description": "Dashboard and OBS widgets for Kick streamers: Bonus Buy, Prize Spin, and Chat Roll modules.",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD",
+              "description": "Free tier with sign-in via Kick"
+            },
+            "featureList": [
+              "Bonus Buy sessions with live overlay",
+              "Weighted Prize Spin wheel",
+              "Chat Roll giveaways with keyword entry",
+              "OBS browser-source widgets",
+              "Team owner and moderator access"
+            ]
+          }
+        ]
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -40,6 +107,10 @@
         box-sizing: border-box;
       }
 
+      html {
+        scroll-behavior: smooth;
+      }
+
       body {
         margin: 0;
         min-height: 100vh;
@@ -47,6 +118,120 @@
         background: #0b0b0f;
         color: var(--foreground);
         line-height: 1.5;
+        padding-top: 3.75rem;
+      }
+
+      .site-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 20;
+        border-bottom: 1px solid var(--border);
+        background: rgba(11, 11, 15, 0.82);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        transition: box-shadow 0.2s ease;
+      }
+
+      .site-header.is-scrolled {
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+      }
+
+      .site-header-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        min-height: 3.75rem;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+      }
+
+      .site-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        color: var(--foreground);
+        font-weight: 700;
+        font-size: 0.95rem;
+        text-decoration: none;
+        flex-shrink: 0;
+      }
+
+      .site-brand img {
+        width: 2rem;
+        height: 2rem;
+        filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.35));
+      }
+
+      .site-brand:focus-visible {
+        outline: 2px solid #f59e0b;
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+
+      .site-nav {
+        display: none;
+        align-items: center;
+        gap: 1.25rem;
+      }
+
+      .site-nav a {
+        color: var(--muted-foreground);
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: color 0.15s ease;
+      }
+
+      .site-nav a:hover {
+        color: var(--foreground);
+      }
+
+      .site-nav a:focus-visible {
+        outline: 2px solid #f59e0b;
+        outline-offset: 2px;
+        border-radius: 2px;
+      }
+
+      .site-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+      }
+
+      .cta-header {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+        white-space: nowrap;
+      }
+
+      #lang-toggle {
+        padding: 0.4rem 0.75rem;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: var(--card-secondary);
+        color: var(--foreground);
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      #lang-toggle:hover {
+        border-color: rgba(245, 158, 11, 0.4);
+      }
+
+      #lang-toggle:focus-visible {
+        outline: 2px solid #f59e0b;
+        outline-offset: 2px;
+      }
+
+      @media (min-width: 900px) {
+        .site-nav {
+          display: flex;
+        }
       }
 
       #dot-field-bg {
@@ -208,8 +393,8 @@
 
       /* Hero */
       .hero {
-        min-height: 100vh;
-        min-height: 100dvh;
+        min-height: calc(100vh - 3.75rem);
+        min-height: calc(100dvh - 3.75rem);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -234,30 +419,27 @@
         text-align: center;
       }
 
-      .hero h1 {
-        font-size: clamp(1.75rem, 4.5vw, 2.5rem);
-        font-weight: 600;
-        line-height: 1.2;
-        color: var(--muted-foreground);
+      .hero-logo {
+        width: 4.5rem;
+        height: 4.5rem;
+        filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.45));
       }
 
       .hero .brand-name {
-        font-size: clamp(2.5rem, 7vw, 4.25rem);
-        font-weight: 800;
-        letter-spacing: -0.03em;
-        line-height: 1.05;
+        font-size: 0.95rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        line-height: 1.2;
+        color: var(--primary);
+      }
+
+      .hero h1 {
+        font-size: clamp(2.25rem, 5.5vw, 3.5rem);
+        font-weight: 700;
+        line-height: 1.12;
+        letter-spacing: -0.02em;
         color: var(--foreground);
-        background: linear-gradient(
-          135deg,
-          #ffffff 0%,
-          #ffffff 55%,
-          #f59e0b 100%
-        );
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: none;
-        filter: drop-shadow(0 0 40px rgba(245, 158, 11, 0.15));
       }
 
       .hero h1,
@@ -276,8 +458,11 @@
 
       .hero-actions {
         display: flex;
+        flex-wrap: wrap;
         justify-content: center;
-        margin-top: 1rem;
+        align-items: center;
+        gap: 1rem 1.5rem;
+        margin-top: 0.5rem;
       }
 
       .hero .cta {
@@ -304,6 +489,147 @@
         border: 1px solid var(--border);
         border-radius: var(--radius);
         background: var(--card);
+      }
+
+      .module-preview {
+        border-radius: calc(var(--radius) - 2px);
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, #141418 0%, #0e0e12 100%);
+        padding: 0.75rem;
+        min-height: 7.5rem;
+        overflow: hidden;
+      }
+
+      .module-preview--bonus .mp-stat-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .module-preview--bonus .mp-stat {
+        flex: 1;
+        padding: 0.45rem 0.5rem;
+        border-radius: 0.4rem;
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+      }
+
+      .module-preview--bonus .mp-stat span {
+        display: block;
+        font-size: 0.6rem;
+        color: var(--muted-foreground);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .module-preview--bonus .mp-stat strong {
+        font-size: 0.85rem;
+        color: var(--primary);
+      }
+
+      .module-preview--bonus .mp-line {
+        height: 0.35rem;
+        border-radius: 999px;
+        background: #1f1f24;
+        margin-bottom: 0.35rem;
+        overflow: hidden;
+      }
+
+      .module-preview--bonus .mp-line > i {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #f59e0b, #fbbf24);
+      }
+
+      .module-preview--wheel {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 7.5rem;
+      }
+
+      .module-preview--wheel .mp-wheel {
+        width: 5.5rem;
+        height: 5.5rem;
+        border-radius: 50%;
+        background: conic-gradient(
+          #a855f7 0deg 72deg,
+          #38bdf8 72deg 144deg,
+          #f59e0b 144deg 216deg,
+          #10b981 216deg 288deg,
+          #6366f1 288deg 360deg
+        );
+        position: relative;
+        box-shadow: 0 0 0 3px #1f1f24, 0 0 24px rgba(168, 85, 247, 0.25);
+      }
+
+      .module-preview--wheel .mp-wheel::after {
+        content: "";
+        position: absolute;
+        inset: 28%;
+        border-radius: 50%;
+        background: #121215;
+        border: 2px solid #2a2a32;
+      }
+
+      .module-preview--wheel .mp-pointer {
+        position: absolute;
+        top: 0.35rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 0.35rem solid transparent;
+        border-right: 0.35rem solid transparent;
+        border-bottom: 0.55rem solid #fff;
+      }
+
+      .module-preview--roll {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        justify-content: center;
+        min-height: 7.5rem;
+      }
+
+      .module-preview--roll .mp-keyword {
+        align-self: center;
+        padding: 0.25rem 0.65rem;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: #38bdf8;
+        background: rgba(56, 189, 248, 0.12);
+        border: 1px solid rgba(56, 189, 248, 0.25);
+      }
+
+      .module-preview--roll .mp-winner {
+        text-align: center;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--foreground);
+      }
+
+      .module-preview--roll .mp-winner em {
+        font-style: normal;
+        color: var(--primary);
+      }
+
+      .module-preview--roll .mp-chat {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      .module-preview--roll .mp-chat span {
+        font-size: 0.62rem;
+        color: var(--muted-foreground);
+        padding: 0.2rem 0.45rem;
+        border-radius: 0.35rem;
+        background: rgba(255, 255, 255, 0.03);
+        width: fit-content;
       }
 
       .card-icon {
@@ -566,33 +892,40 @@
         }
       }
 
-      #lang-toggle {
-        position: fixed;
-        top: 1rem;
-        right: 1rem;
-        z-index: 10;
-        padding: 0.4rem 0.75rem;
-        border-radius: 999px;
-        border: 1px solid var(--border);
-        background: var(--card-secondary);
-        color: var(--foreground);
-        font-size: 0.75rem;
-        font-weight: 600;
-        cursor: pointer;
-      }
-
-      #lang-toggle:hover {
-        border-color: rgba(245, 158, 11, 0.4);
-      }
     </style>
   </head>
   <body>
-    <button type="button" id="lang-toggle" aria-label="Switch language">RU</button>
+    <header class="site-header" id="site-header">
+      <div class="page site-header-inner">
+        <a class="site-brand" href="#hero">
+          <img src="logo.svg" width="32" height="32" alt="" />
+          <span data-i18n="brandName">Stream Helper</span>
+        </a>
+        <nav class="site-nav" aria-label="Page sections">
+          <a href="#modules" data-i18n="navModules">Modules</a>
+          <a href="#pricing" data-i18n="navPricing">Pricing</a>
+          <a href="#how-it-works" data-i18n="navHowItWorks">How it works</a>
+          <a href="#contact" data-i18n="navContact">Contact</a>
+        </nav>
+        <div class="site-header-actions">
+          <button type="button" id="lang-toggle" aria-label="Switch language">RU</button>
+          <a class="cta cta-header" href="/login" rel="nofollow" data-i18n="signInKick">Sign in with Kick</a>
+        </div>
+      </div>
+    </header>
     <div id="dot-field-bg" aria-hidden="true"></div>
     <main>
       <section class="hero" id="hero">
         <div class="page">
           <div class="hero-inner">
+            <img
+              class="hero-logo"
+              src="logo.svg"
+              width="72"
+              height="72"
+              alt=""
+              aria-hidden="true"
+            />
             <span class="brand-name" data-i18n="brandName">Stream Helper</span>
             <h1 data-i18n="heroTitle">Turn your Kick chat into a live game show</h1>
             <p class="lead" data-i18n="heroLead">
@@ -601,7 +934,10 @@
               overlays your viewers see on stream.
             </p>
             <div class="hero-actions">
-              <a class="cta" href="http://localhost:5173/" data-i18n="signInKick">Sign in with Kick</a>
+              <a class="cta" href="/login" rel="nofollow" data-i18n="signInKick">Sign in with Kick</a>
+              <a class="cta-secondary" href="#contact" data-i18n="heroSecondary"
+                >Get access via Telegram</a
+              >
             </div>
           </div>
         </div>
@@ -618,7 +954,14 @@
           </div>
           <div class="card-grid">
             <article class="card">
-              <div class="card-icon amber" aria-hidden="true">🎰</div>
+              <div class="module-preview module-preview--bonus" aria-hidden="true">
+                <div class="mp-stat-row">
+                  <div class="mp-stat"><span>Balance</span><strong>$1,240</strong></div>
+                  <div class="mp-stat"><span>Round</span><strong>7 / 12</strong></div>
+                </div>
+                <div class="mp-line"><i style="width: 58%"></i></div>
+                <div class="mp-line"><i style="width: 42%"></i></div>
+              </div>
               <h3 data-i18n="moduleBonusBuyTitle">Bonus Buy</h3>
               <p class="card-body" data-i18n="moduleBonusBuyBody">
                 Run slot bonus-buy sessions on stream. Track balance, open
@@ -627,7 +970,12 @@
               </p>
             </article>
             <article class="card">
-              <div class="card-icon purple" aria-hidden="true">🎡</div>
+              <div class="module-preview module-preview--wheel" aria-hidden="true">
+                <div style="position: relative">
+                  <div class="mp-pointer"></div>
+                  <div class="mp-wheel"></div>
+                </div>
+              </div>
               <h3 data-i18n="modulePrizeSpinTitle">Prize Spin</h3>
               <p class="card-body" data-i18n="modulePrizeSpinBody">
                 Spin a weighted prize wheel for any viewer nick. Set sectors,
@@ -635,7 +983,14 @@
               </p>
             </article>
             <article class="card">
-              <div class="card-icon blue" aria-hidden="true">🎲</div>
+              <div class="module-preview module-preview--roll" aria-hidden="true">
+                <span class="mp-keyword">!roll</span>
+                <div class="mp-chat">
+                  <span>viewer_42</span>
+                  <span>mod_kick ×2</span>
+                </div>
+                <p class="mp-winner">Winner: <em>viewer_42</em></p>
+              </div>
               <h3 data-i18n="moduleChatRollTitle">Chat Roll</h3>
               <p class="card-body" data-i18n="moduleChatRollBody">
                 Weighted chat giveaways with a keyword. Boost odds for VIPs,
@@ -700,7 +1055,7 @@
                 <li data-i18n="planFreeFeature3">Kick channel stats</li>
               </ul>
               <p class="plan-note" data-i18n="planFreeNote">Included when you sign in</p>
-              <a class="cta-outline" href="http://localhost:5173/" data-i18n="signInKick">Sign in with Kick</a>
+              <a class="cta-outline" href="/login" rel="nofollow" data-i18n="signInKick">Sign in with Kick</a>
             </article>
             <article class="plan-card featured">
               <span class="popular-chip" data-i18n="planPopular">Popular</span>
@@ -775,7 +1130,7 @@
               Sign in with Kick to open your dashboard, or message us to
               activate your subscription.
             </p>
-            <a class="cta" href="http://localhost:5173/" data-i18n="signInKick">Sign in with Kick</a>
+            <a class="cta" href="/login" rel="nofollow" data-i18n="signInKick">Sign in with Kick</a>
           </div>
         </div>
       </section>
@@ -796,7 +1151,7 @@
               data-i18n="contactTelegram"
               >Message @parsyuk on Telegram</a
             >
-            <a class="cta-secondary" href="http://localhost:5173/" data-i18n="contactOrSignIn">Or sign in with Kick</a>
+            <a class="cta-secondary" href="/login" rel="nofollow" data-i18n="contactOrSignIn">Or sign in with Kick</a>
           </div>
           <p class="footer" data-i18n="footer">© 2026 Stream Helper</p>
         </div>
@@ -804,5 +1159,16 @@
     </main>
     <script src="locale.js"></script>
     <script src="dot-field.js"></script>
+    <script>
+      (function () {
+        var header = document.getElementById('site-header')
+        if (!header) return
+        function onScroll() {
+          header.classList.toggle('is-scrolled', window.scrollY > 8)
+        }
+        window.addEventListener('scroll', onScroll, { passive: true })
+        onScroll()
+      })()
+    </script>
   </body>
 </html>

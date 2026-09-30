@@ -6,6 +6,8 @@ export type AccountSubscriptionSession = {
   hasAccess: boolean;
 };
 
+export type LoginSurface = 'streamer' | 'service';
+
 export type SessionUser = {
   id: number;
   name: string;
@@ -16,10 +18,12 @@ export type SessionUser = {
   subscriptionPlan?: string;
   subscription?: AccountSubscriptionSession;
   channelSlug?: string;
+  platformAdmin?: boolean;
 };
 
 export type SessionData = {
   user?: SessionUser;
+  loginSurface?: LoginSurface;
   kickOAuth?: {
     state: string;
     codeVerifier: string;

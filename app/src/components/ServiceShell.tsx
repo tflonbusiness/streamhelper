@@ -8,45 +8,25 @@ import type { SvgIconComponent } from '@mui/icons-material'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import CreditCardIcon from '@mui/icons-material/CreditCard'
-import DashboardIcon from '@mui/icons-material/Dashboard'
-import SportsEsportsIcon from '@mui/icons-material/SportsEsports'
-import GroupIcon from '@mui/icons-material/Group'
 import LogoutIcon from '@mui/icons-material/Logout'
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz'
 import { alpha, styled } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { AppLogo } from '@/components/AppLogo'
 import { AppBrandName, appBrandNamePlain } from '@/components/AppBrandName'
-import { IconTile } from '@/components/IconTile'
 import { BreadcrumbProvider } from '@/context/BreadcrumbContext'
 import { useAuth } from '@/context/AuthContext'
-import {
-  getAvailableNavModules,
-  moduleNameKey,
-  type ModuleIconVariant,
-} from '@/lib/modules'
-import { accountHasSubscriptionAccess } from '@/lib/account-subscription'
-import { MODULES_ROUTE } from '@/lib/routes'
 import { colors } from '@/theme/colors'
 
-type NavItem = {
-  to: string
-  labelKey: string
-  icon: SvgIconComponent
-  end: boolean
-  requiresAccount: boolean
-  requiresOwner?: boolean
-  /** Owner can open this route after trial expires (e.g. activation CTA). */
-  allowWhenSubscriptionExpired?: boolean
-}
-
-const NAV_EXPANDED_STORAGE_KEY = 'caz-shell-nav-visible'
+const NAV_EXPANDED_STORAGE_KEY = 'caz-service-shell-nav-visible'
 
 const SIDEBAR_WIDTH_EXPANDED = 224
 const SIDEBAR_WIDTH_COLLAPSED = 64
+
+const SERVICE_HOME = '/service/subscriptions'
 
 function loadNavExpanded(): boolean {
   try {
@@ -59,40 +39,6 @@ function loadNavExpanded(): boolean {
     return true
   }
 }
-
-const navItems: NavItem[] = [
-  {
-    to: '/dashboard',
-    labelKey: 'nav.home',
-    icon: DashboardIcon,
-    end: true,
-    requiresAccount: false,
-  },
-  {
-    to: MODULES_ROUTE,
-    labelKey: 'nav.widgets',
-    icon: SportsEsportsIcon,
-    end: false,
-    requiresAccount: true,
-  },
-  {
-    to: '/team',
-    labelKey: 'nav.team',
-    icon: GroupIcon,
-    end: true,
-    requiresAccount: true,
-    requiresOwner: true,
-  },
-  {
-    to: '/subscription',
-    labelKey: 'nav.subscription',
-    icon: CreditCardIcon,
-    end: true,
-    requiresAccount: true,
-    requiresOwner: true,
-    allowWhenSubscriptionExpired: true,
-  },
-]
 
 const ShellRoot = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -143,9 +89,7 @@ const StyledSwapHorizIcon = styled(SwapHorizIcon)({
   fontSize: 16,
 })
 
-const MobileNav = styled('nav', {
-  shouldForwardProp: (prop) => prop !== 'expanded',
-})<{ expanded?: boolean }>(({ theme }) => ({
+const MobileNav = styled('nav')(({ theme }) => ({
   display: 'flex',
   gap: theme.spacing(0.5),
   overflowX: 'auto',
@@ -163,7 +107,7 @@ const SidebarRouterLink = styled(NavLink)({
   display: 'block',
 })
 
-const BrandDashboardLink = styled(NavLink)(({ theme }) => ({
+const BrandHomeLink = styled(NavLink)(({ theme }) => ({
   textDecoration: 'none',
   color: 'inherit',
   display: 'inline-flex',
@@ -180,6 +124,7 @@ const MobileRouterLink = styled(NavLink)({
   textDecoration: 'none',
   color: 'inherit',
   minWidth: 0,
+  flex: 1,
 })
 
 const SidebarNavButton = styled(ListItemButton, {
@@ -192,32 +137,16 @@ const SidebarNavButton = styled(ListItemButton, {
   minHeight: 40,
 }))
 
-const MobileNavButton = styled(ListItemButton, {
-  shouldForwardProp: (prop) => prop !== 'collapsed',
-})<{ collapsed?: boolean }>(({ theme, collapsed }) => ({
-  flex: collapsed ? '0 0 auto' : 1,
+const MobileNavButton = styled(ListItemButton)(({ theme }) => ({
+  flex: 1,
   borderRadius: theme.shape.borderRadius,
-  gap: collapsed ? 0 : theme.spacing(0.75),
-  padding: collapsed ? theme.spacing(0.75) : theme.spacing(0.75, 1),
+  gap: theme.spacing(0.75),
+  padding: theme.spacing(0.75, 1),
   justifyContent: 'center',
-  minWidth: collapsed ? 40 : undefined,
   color: theme.palette.text.secondary,
   '&.Mui-selected': {
     color: theme.palette.text.primary,
   },
-}))
-
-const DisabledMobileNavButton = styled(ListItemButton, {
-  shouldForwardProp: (prop) => prop !== 'collapsed',
-})<{ collapsed?: boolean }>(({ theme, collapsed }) => ({
-  flex: collapsed ? '0 0 auto' : 1,
-  borderRadius: theme.shape.borderRadius,
-  gap: collapsed ? 0 : theme.spacing(0.75),
-  padding: collapsed ? theme.spacing(0.75) : theme.spacing(0.75, 1),
-  justifyContent: 'center',
-  minWidth: collapsed ? 40 : undefined,
-  opacity: 0.5,
-  color: theme.palette.text.secondary,
 }))
 
 const NavIconSlot = styled('span')({
@@ -294,54 +223,6 @@ const SidebarNavList = styled(Box, {
   overflowX: 'hidden',
 }))
 
-const SidebarModulesGroup = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: theme.spacing(0.25),
-  marginBottom: theme.spacing(0.5),
-}))
-
-const SidebarSubmoduleList = styled('ul')(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: theme.spacing(0.25),
-  margin: 0,
-  padding: theme.spacing(0, 0.25),
-  listStyle: 'none',
-}))
-
-const SidebarSubmoduleButton = styled(ListItemButton)(({ theme }) => ({
-  borderRadius: theme.shape.borderRadius,
-  gap: theme.spacing(1),
-  padding: theme.spacing(0.5, 0.75),
-  justifyContent: 'flex-start',
-  alignItems: 'center',
-  minHeight: 36,
-  color: theme.palette.text.secondary,
-  '&.Mui-selected': {
-    color: theme.palette.text.primary,
-    backgroundColor: alpha(colors.purple[500], 0.12),
-  },
-  '&.Mui-selected:hover': {
-    backgroundColor: alpha(colors.purple[500], 0.16),
-  },
-  '&:hover': {
-    backgroundColor: alpha(theme.palette.text.primary, 0.04),
-  },
-}))
-
-const DisabledSidebarNavButton = styled(ListItemButton, {
-  shouldForwardProp: (prop) => prop !== 'collapsed',
-})<{ collapsed?: boolean }>(({ theme, collapsed }) => ({
-  borderRadius: theme.shape.borderRadius,
-  gap: collapsed ? 0 : theme.spacing(1),
-  padding: collapsed ? theme.spacing(1) : theme.spacing(1, 1.5),
-  justifyContent: collapsed ? 'center' : 'flex-start',
-  minHeight: 40,
-  opacity: 0.5,
-  color: theme.palette.text.secondary,
-}))
-
 const SidebarFooter = styled(Box)(({ theme }) => ({
   flexShrink: 0,
   marginTop: 'auto',
@@ -378,7 +259,7 @@ const SidebarUserAvatar = styled(Box)(({ theme }) => ({
   lineHeight: 1,
 }))
 
-const SidebarLogoutButton = styled(Button)(({ theme }) => ({
+const SidebarFooterButton = styled(Button)(({ theme }) => ({
   justifyContent: 'flex-start',
   textTransform: 'none',
   whiteSpace: 'nowrap',
@@ -393,25 +274,18 @@ const MainColumn = styled(Box)({
   flexDirection: 'column',
 })
 
-const DEFAULT_MAIN_MAX_WIDTH = 1024
-const WIDE_MAIN_MAX_WIDTH = 1800
-
-const MainContent = styled('main', {
-  shouldForwardProp: (prop) => prop !== 'wide',
-})<{ wide?: boolean }>(({ theme, wide }) => ({
+const MainContent = styled('main')(({ theme }) => ({
   flex: 1,
   overflow: 'auto',
-  padding: theme.spacing(wide ? 2 : 3),
+  padding: theme.spacing(3),
 }))
 
-const MainInner = styled(Box, {
-  shouldForwardProp: (prop) => prop !== 'wide',
-})<{ wide?: boolean }>(({ wide }) => ({
+const MainInner = styled(Box)({
   marginLeft: 'auto',
   marginRight: 'auto',
   width: '100%',
-  maxWidth: wide ? WIDE_MAIN_MAX_WIDTH : DEFAULT_MAIN_MAX_WIDTH,
-}))
+  maxWidth: 1024,
+})
 
 function SidebarNavLink({
   to,
@@ -440,120 +314,14 @@ function SidebarNavLink({
   )
 
   if (collapsed) {
-    return <Tooltip title={label} placement="right">{link}</Tooltip>
+    return (
+      <Tooltip title={label} placement="right">
+        {link}
+      </Tooltip>
+    )
   }
 
   return link
-}
-
-function SidebarSubmoduleLink({
-  to,
-  label,
-  icon,
-  iconVariant,
-}: {
-  to: string
-  label: string
-  icon: SvgIconComponent
-  iconVariant: ModuleIconVariant
-}) {
-  return (
-    <Box component="li" sx={{ display: 'block' }}>
-      <SidebarRouterLink to={to} end={false}>
-        {({ isActive }) => (
-          <SidebarSubmoduleButton selected={isActive} dense>
-            <IconTile icon={icon} variant={iconVariant} size="sm" />
-            <Typography
-              variant="body2"
-              component="span"
-              sx={{
-                fontSize: '0.8125rem',
-                fontWeight: isActive ? 600 : 500,
-                lineHeight: 1.3,
-                color: 'inherit',
-              }}
-              noWrap
-            >
-              {label}
-            </Typography>
-          </SidebarSubmoduleButton>
-        )}
-      </SidebarRouterLink>
-    </Box>
-  )
-}
-
-function SidebarModulesNav({
-  collapsed,
-  disabled,
-  icon: Icon,
-  label,
-}: {
-  collapsed: boolean
-  disabled: boolean
-  icon: SvgIconComponent
-  label: string
-}) {
-  const { t } = useTranslation()
-  const submodules = getAvailableNavModules()
-
-  if (disabled) {
-    const disabledButton = (
-      <DisabledSidebarNavButton disabled collapsed={collapsed}>
-        <NavIconSlot>
-          <Icon aria-hidden />
-        </NavIconSlot>
-        {!collapsed ? <Typography variant="body2">{label}</Typography> : null}
-      </DisabledSidebarNavButton>
-    )
-
-    if (collapsed) {
-      return (
-        <Tooltip title={label} placement="right">
-          <span>{disabledButton}</span>
-        </Tooltip>
-      )
-    }
-
-    return disabledButton
-  }
-
-  if (collapsed) {
-    return (
-      <SidebarNavLink
-        to={MODULES_ROUTE}
-        label={label}
-        icon={Icon}
-        end={false}
-        collapsed={collapsed}
-      />
-    )
-  }
-
-  return (
-    <SidebarModulesGroup>
-      <SidebarNavLink
-        to={MODULES_ROUTE}
-        label={label}
-        icon={Icon}
-        end={false}
-        collapsed={false}
-      />
-      {submodules.length > 0 ? (
-        <SidebarSubmoduleList aria-label={t('common.widgetShortcuts')}>
-          {submodules.map((module) => (
-            <SidebarSubmoduleLink
-              key={module.id}
-              to={module.widgetRoute!}
-              label={t(moduleNameKey(module.id))}
-              icon={module.icon}
-              iconVariant={module.iconVariant}
-            />
-          ))}
-        </SidebarSubmoduleList>
-      ) : null}
-    </SidebarModulesGroup>
-  )
 }
 
 function MobileNavLink({
@@ -561,52 +329,35 @@ function MobileNavLink({
   label,
   icon: Icon,
   end,
-  collapsed,
 }: {
   to: string
   label: string
   icon: SvgIconComponent
   end: boolean
-  collapsed: boolean
 }) {
-  const link = (
-    <MobileRouterLink to={to} end={end} style={{ flex: collapsed ? '0 0 auto' : 1 }}>
+  return (
+    <MobileRouterLink to={to} end={end}>
       {({ isActive }) => (
-        <MobileNavButton selected={isActive} collapsed={collapsed}>
+        <MobileNavButton selected={isActive}>
           <NavIconSlot>
             <Icon aria-hidden />
           </NavIconSlot>
-          {!collapsed ? (
-            <Typography variant="body2" noWrap>
-              {label}
-            </Typography>
-          ) : null}
+          <Typography variant="body2" noWrap>
+            {label}
+          </Typography>
         </MobileNavButton>
       )}
     </MobileRouterLink>
   )
-
-  if (collapsed) {
-    return <Tooltip title={label}>{link}</Tooltip>
-  }
-
-  return link
 }
 
-export function AppShell() {
+export function ServiceShell() {
   const { t } = useTranslation()
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const location = useLocation()
-
-  function navLabel(item: NavItem) {
-    return t(item.labelKey)
-  }
-  const wideMainContent =
-    /^\/modules\/(?:bonus-buy|chat-roll|prize-spin)(?:\/\d+)?(?:\/|$)/.test(
-      location.pathname,
-    )
   const [isNavExpanded, setIsNavExpanded] = useState(loadNavExpanded)
+
+  const subscriptionsLabel = t('servicePortal.navSubscriptions')
 
   useEffect(() => {
     localStorage.setItem(NAV_EXPANDED_STORAGE_KEY, String(isNavExpanded))
@@ -617,22 +368,6 @@ export function AppShell() {
     navigate('/login', { replace: true })
   }
 
-  const hasAccount = Boolean(user?.accountId)
-  const hasSubscriptionAccess = accountHasSubscriptionAccess(user)
-  const visibleNavItems = navItems.filter((item) => {
-    if (item.requiresOwner && user?.role !== 'owner') {
-      return false
-    }
-    if (
-      item.requiresAccount &&
-      hasAccount &&
-      !hasSubscriptionAccess &&
-      !item.allowWhenSubscriptionExpired
-    ) {
-      return false
-    }
-    return true
-  })
   const isNavCollapsed = !isNavExpanded
 
   return (
@@ -663,9 +398,9 @@ export function AppShell() {
             </NavToggleButton>
           </Tooltip>
           <MobileBrandLockup>
-            <BrandDashboardLink to="/dashboard" end aria-label={t('nav.home')}>
-              <AppLogo alt={appBrandNamePlain(t)} size={isNavExpanded ? 'sidebar' : 'sidebarCompact'} />
-            </BrandDashboardLink>
+            <BrandHomeLink to={SERVICE_HOME} end aria-label={subscriptionsLabel}>
+              <AppLogo alt={appBrandNamePlain(t)} size="sidebar" />
+            </BrandHomeLink>
             <AppBrandName size="sidebar" />
           </MobileBrandLockup>
           <MobileLogoutButton
@@ -679,57 +414,24 @@ export function AppShell() {
         </MobileHeaderInner>
       </MobileHeader>
 
-      <MobileNav expanded={isNavExpanded}>
-        {visibleNavItems.map((item) => {
-          const disabled = item.requiresAccount && !hasAccount
-
-          if (disabled) {
-            const disabledButton = (
-              <DisabledMobileNavButton key={item.to} disabled collapsed={isNavCollapsed}>
-                <NavIconSlot>
-                  <item.icon aria-hidden />
-                </NavIconSlot>
-                {!isNavCollapsed ? (
-                  <Typography variant="body2" noWrap>
-                    {navLabel(item)}
-                  </Typography>
-                ) : null}
-              </DisabledMobileNavButton>
-            )
-
-            if (isNavCollapsed) {
-              return (
-                <Tooltip key={item.to} title={navLabel(item)}>
-                  <span>{disabledButton}</span>
-                </Tooltip>
-              )
-            }
-
-            return disabledButton
-          }
-
-          return (
-            <MobileNavLink
-              key={item.to}
-              to={item.to}
-              label={navLabel(item)}
-              icon={item.icon}
-              end={item.end}
-              collapsed={isNavCollapsed}
-            />
-          )
-        })}
+      <MobileNav>
+        <MobileNavLink
+          to={SERVICE_HOME}
+          label={subscriptionsLabel}
+          icon={CreditCardIcon}
+          end
+        />
       </MobileNav>
 
       <Sidebar expanded={isNavExpanded}>
         <SidebarHeaderRow expanded={isNavExpanded}>
           <SidebarBrandLockup expanded={isNavExpanded}>
-            <BrandDashboardLink to="/dashboard" end aria-label={t('nav.home')}>
+            <BrandHomeLink to={SERVICE_HOME} end aria-label={subscriptionsLabel}>
               <AppLogo
                 alt={appBrandNamePlain(t)}
                 size={isNavExpanded ? 'sidebar' : 'sidebarCompact'}
               />
-            </BrandDashboardLink>
+            </BrandHomeLink>
             {isNavExpanded ? <AppBrandName size="sidebar" /> : null}
           </SidebarBrandLockup>
           <Tooltip
@@ -756,57 +458,17 @@ export function AppShell() {
             </NavToggleButton>
           </Tooltip>
         </SidebarHeaderRow>
+
         <SidebarNavList expanded={isNavExpanded}>
-          {visibleNavItems.map((item) => {
-            const disabled = item.requiresAccount && !hasAccount
-
-            if (disabled) {
-              const disabledButton = (
-                <DisabledSidebarNavButton key={item.to} disabled collapsed={isNavCollapsed}>
-                  <NavIconSlot>
-                    <item.icon aria-hidden />
-                  </NavIconSlot>
-                  {!isNavCollapsed ? (
-                    <Typography variant="body2">{navLabel(item)}</Typography>
-                  ) : null}
-                </DisabledSidebarNavButton>
-              )
-
-              if (isNavCollapsed) {
-                return (
-                  <Tooltip key={item.to} title={navLabel(item)} placement="right">
-                    <span>{disabledButton}</span>
-                  </Tooltip>
-                )
-              }
-
-              return disabledButton
-            }
-
-            if (item.to === MODULES_ROUTE) {
-              return (
-                <SidebarModulesNav
-                  key={item.to}
-                  collapsed={isNavCollapsed}
-                  disabled={false}
-                  icon={item.icon}
-                  label={navLabel(item)}
-                />
-              )
-            }
-
-            return (
-              <SidebarNavLink
-                key={item.to}
-                to={item.to}
-                label={navLabel(item)}
-                icon={item.icon}
-                end={item.end}
-                collapsed={isNavCollapsed}
-              />
-            )
-          })}
+          <SidebarNavLink
+            to={SERVICE_HOME}
+            label={subscriptionsLabel}
+            icon={CreditCardIcon}
+            end
+            collapsed={isNavCollapsed}
+          />
         </SidebarNavList>
+
         <SidebarFooter>
           <Box
             sx={{
@@ -814,7 +476,6 @@ export function AppShell() {
               display: 'flex',
               flexDirection: 'column',
               gap: 1,
-              px: isNavExpanded ? 0 : 0,
               alignItems: isNavExpanded ? 'stretch' : 'center',
             }}
           >
@@ -857,8 +518,8 @@ export function AppShell() {
                 alignItems: isNavExpanded ? 'stretch' : 'center',
               }}
             >
-              {user?.platformAdmin && isNavExpanded ? (
-                <SidebarLogoutButton
+              {isNavExpanded ? (
+                <SidebarFooterButton
                   type="button"
                   variant="text"
                   fullWidth
@@ -866,13 +527,9 @@ export function AppShell() {
                   startIcon={<StyledSwapHorizIcon aria-hidden />}
                 >
                   {t('continueWorkspace.switchMode')}
-                </SidebarLogoutButton>
-              ) : null}
-              {user?.platformAdmin && !isNavExpanded ? (
-                <Tooltip
-                  title={t('continueWorkspace.switchMode')}
-                  placement="right"
-                >
+                </SidebarFooterButton>
+              ) : (
+                <Tooltip title={t('continueWorkspace.switchMode')} placement="right">
                   <NavToggleButton
                     size="small"
                     aria-label={t('continueWorkspace.switchMode')}
@@ -881,9 +538,9 @@ export function AppShell() {
                     <StyledSwapHorizIcon aria-hidden />
                   </NavToggleButton>
                 </Tooltip>
-              ) : null}
+              )}
               {isNavExpanded ? (
-                <SidebarLogoutButton
+                <SidebarFooterButton
                   type="button"
                   variant="text"
                   fullWidth
@@ -891,7 +548,7 @@ export function AppShell() {
                   startIcon={<StyledLogoutIcon aria-hidden />}
                 >
                   {t('common.signOut')}
-                </SidebarLogoutButton>
+                </SidebarFooterButton>
               ) : (
                 <Tooltip title={t('common.signOut')} placement="right">
                   <NavToggleButton
@@ -909,9 +566,9 @@ export function AppShell() {
       </Sidebar>
 
       <MainColumn>
-        <MainContent wide={wideMainContent}>
+        <MainContent>
           <BreadcrumbProvider>
-            <MainInner wide={wideMainContent}>
+            <MainInner>
               <Outlet />
             </MainInner>
           </BreadcrumbProvider>

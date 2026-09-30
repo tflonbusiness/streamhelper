@@ -7,6 +7,9 @@ import {
   ProtectedRoute,
   SubscriptionAccessRoute,
 } from './components/ProtectedRoute'
+import { ServicePortalRoute } from './components/ServicePortalRoute'
+import { ServiceShell } from './components/ServiceShell'
+import { ContinueWorkspacePage } from './pages/ContinueWorkspacePage'
 import { DashboardHomePage } from './pages/DashboardHomePage'
 import { LoginPage } from './pages/LoginPage'
 import { BonusBuyPage } from './pages/BonusBuyPage'
@@ -20,12 +23,17 @@ import { PrizeSpinPage } from './pages/PrizeSpinPage'
 import { PrizeSpinSessionPage } from './pages/PrizeSpinSessionPage'
 import { PrizeSpinStreamWidgetPage } from './pages/PrizeSpinStreamWidgetPage'
 import { SubscriptionPage } from './pages/SubscriptionPage'
+import { SubscriptionAdminPage } from './pages/SubscriptionAdminPage'
 import { TeamPage } from './pages/TeamPage'
 
 export const appRouter = createBrowserRouter([
   {
     element: <GuestRoute />,
-    children: [{ path: '/', element: <LoginPage /> }],
+    children: [{ path: '/login', element: <LoginPage /> }],
+  },
+  {
+    path: '/service/login',
+    element: <Navigate to="/login" replace />,
   },
   {
     path: '/modules/bonus-buy/widget/:ucid',
@@ -40,8 +48,31 @@ export const appRouter = createBrowserRouter([
     element: <ChatRollStreamWidgetPage />,
   },
   {
+    path: '/internal/subscriptions',
+    element: <Navigate to="/service/subscriptions" replace />,
+  },
+  {
     element: <ProtectedRoute />,
     children: [
+      { path: '/continue', element: <ContinueWorkspacePage /> },
+      {
+        element: <ServicePortalRoute />,
+        children: [
+          {
+            element: <ServiceShell />,
+            children: [
+              {
+                path: '/service',
+                element: <Navigate to="/service/subscriptions" replace />,
+              },
+              {
+                path: '/service/subscriptions',
+                element: <SubscriptionAdminPage />,
+              },
+            ],
+          },
+        ],
+      },
       {
         element: <AppShell />,
         children: [
@@ -86,5 +117,5 @@ export const appRouter = createBrowserRouter([
       },
     ],
   },
-  { path: '*', element: <Navigate to="/" replace /> },
+  { path: '*', element: <Navigate to="/login" replace /> },
 ])

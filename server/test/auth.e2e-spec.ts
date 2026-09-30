@@ -100,6 +100,7 @@ describe('AuthController (e2e)', () => {
         revokeModeratorPermanently: async () => {
           moderatorActive = false;
         },
+        isPlatformAdmin: async () => false,
         ...subscriptionDatabaseMocks,
       })
       .compile();
@@ -147,6 +148,7 @@ describe('AuthController (e2e)', () => {
         expect(body.user.id).toBe(1);
         expect(body.user.accountId).toBe(10);
         expect(body.user.role).toBe('owner');
+        expect(body.loginSurface).toBe('streamer');
       });
   });
 
@@ -180,6 +182,6 @@ describe('AuthController (e2e)', () => {
     return request(app.getHttpServer())
       .get('/join/bad-token')
       .expect(302)
-      .expect('Location', 'http://localhost:5173/?join_error=1');
+      .expect('Location', 'http://localhost:5173/login?join_error=1');
   });
 });

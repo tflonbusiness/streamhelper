@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Stream Helper  Kick stream engagement tools">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f6920e"/>
+      <stop offset="100%" stop-color="#fab315"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="85%" cy="35%" r="45%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#0b0b0f" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#0b0b0f"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect x="88" y="198" width="160" height="160" rx="56" fill="url(#g)"/>
+  <rect x="118" y="248" width="100" height="52" rx="12" fill="none" stroke="#FFF8ED" stroke-width="6"/>
+  <path d="M128 318 Q168 348 208 318" fill="none" stroke="#FFF8ED" stroke-width="6" stroke-linecap="round"/>
+  <text x="290" y="270" fill="#ffffff" font-family="Inter, system-ui, sans-serif" font-size="56" font-weight="700">Stream Helper</text>
+  <text x="290" y="330" fill="#9ca3af" font-family="Inter, system-ui, sans-serif" font-size="30" font-weight="500">Kick stream engagement tools</text>
+  <text x="290" y="390" fill="#f59e0b" font-family="Inter, system-ui, sans-serif" font-size="28" font-weight="600">Bonus Buy · Prize Spin · Chat Roll</text>
+</svg>

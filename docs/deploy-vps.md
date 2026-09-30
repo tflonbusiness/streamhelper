@@ -96,7 +96,9 @@ docker compose --env-file .env.production -f docker-compose.prod.yml logs nginx 
 
 | Проверка | Как |
 |----------|-----|
-| Фронт | Открыть `http://YOUR_VPS_IP/` (или домен) |
+| Лендинг | `https://your-domain/` — статика из `landing/` (собирается в образ nginx) |
+| Вход в приложение | `https://your-domain/login` — React SPA |
+| Фронт (дашборд) | После Kick OAuth — `/dashboard` |
 | Миграции | `docker compose --env-file .env.production -f docker-compose.prod.yml exec postgres psql -U postgres -d caz_agent -c "SELECT * FROM schema_migrations;"` |
 | Kick OAuth redirect | `http://YOUR_VPS_IP/auth/oauth/kick/callback` (с TLS — `https://`) |
 | Kick webhook | `http://YOUR_VPS_IP/webhooks/kick` |
@@ -109,7 +111,30 @@ docker compose --env-file .env.production -f docker-compose.prod.yml logs nginx 
 docker compose --env-file .env.production -f docker-compose.prod.yml exec server node dist/database/migrate-cli.js
 ```
 
-## 5. Обновление версии приложения
+## 5. Лендинг и маршруты nginx
+
+В production **корень сайта** (`/`) — продающая страница `landing/index.html`. React-приложение и виджеты OBS по-прежнему на тех же путях (`/login`, `/dashboard`, `/modules/.../widget/...`). API проксируется nginx на контейнер `server`.
+
+После изменений в `landing/` или `deploy/nginx/`:
+
+```bash
+cd /opt/streamhelper
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build nginx
+```
+
+Полный пересбор (`--build` без сервиса) — если менялись `app/` или `server/`.
+
+### SEO (только лендинг в Google)
+
+- **`/`** — индексируется (`robots` + canonical + `sitemap.xml` в `landing/`).
+- **`/login`, `/dashboard`, `/modules/...`, API** — `noindex` (meta в SPA + заголовок `X-Robots-Tag` в nginx).
+- **`/robots.txt`** — `Allow: /$`, остальное `Disallow: /`.
+
+После деплоя: [Google Search Console](https://search.google.com/search-console) → добавить свойство `streamhelper.best` → отправить sitemap `https://streamhelper.best/sitemap.xml`.
+
+Если домен не `streamhelper.best`, обновите абсолютные URL в `landing/index.html`, `landing/sitemap.xml` и `landing/robots.txt`.
+
+## 6. Обновление версии приложения
 
 С git на VPS:
 
@@ -129,7 +154,7 @@ scp .env.production root@YOUR_VPS_IP:/opt/streamhelper/.env.production
 
 На VPS: `docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build`.
 
-## 6. Алиас в shell (по желанию)
+## 7. Алиас в shell (по желанию)
 
 На VPS:
 
@@ -142,7 +167,7 @@ source ~/.bashrc
 cd /opt/streamhelper && dcprod ps
 ```
 
-## 7. HTTPS и домен
+## 8. HTTPS и домен
 
 Пошагово для **streamhelper.best**: **[instrukciya-https.md](instrukciya-https.md)** (полный чеклист). Справка и renew: [https-streamhelper.md](https-streamhelper.md).
 
@@ -150,7 +175,7 @@ cd /opt/streamhelper && dcprod ps
 
 В production **не** включайте `KICK_OAUTH_MOCK` и `KICK_CHAT_MOCK`.
 
-## 8. SSH после переустановки VPS
+## 9. SSH после переустановки VPS
 
 На Mac удалите старый host key:
 
@@ -159,7 +184,7 @@ ssh-keygen -R YOUR_VPS_IP
 ssh root@YOUR_VPS_IP
 ```
 
-## 9. Бэкап Postgres (рекомендуется)
+## 10. Бэкап Postgres (рекомендуется)
 
 ```bash
 cd /opt/streamhelper
@@ -167,7 +192,7 @@ docker compose --env-file .env.production -f docker-compose.prod.yml exec postgr
   pg_dump -U postgres caz_agent > backup-$(date +%F).sql
 ```
 
-## 10. Подключение к БД с Mac (TablePlus)
+## 11. Подключение к БД с Mac (TablePlus)
 
 Пошаговая настройка SSH, порт `127.0.0.1:5433`, типичные ошибки: **[podklyuchenie-bazy-gui.md](podklyuchenie-bazy-gui.md)**.
 
