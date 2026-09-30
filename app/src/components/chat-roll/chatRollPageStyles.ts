@@ -94,10 +94,38 @@ export const ListRowStack = styled(Stack)(({ theme }) => ({
   borderColor: theme.palette.divider,
 }))
 
-export const ListRowName = styled(Typography)({
-  fontFamily: 'monospace',
+export const ListRowPrimaryStack = styled(Stack)({
   flex: 1,
   minWidth: 0,
+})
+
+export const ListRowNameTooltipWrap = styled('span')({
+  display: 'block',
+  flex: 1,
+  minWidth: 0,
+  overflow: 'hidden',
+})
+
+export const ListRowName = styled(Typography)({
+  fontFamily: 'monospace',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+})
+
+export const ListRowMeta = styled(Typography)({
+  flexShrink: 0,
+  minWidth: 0,
+  display: 'inline-flex',
+  alignItems: 'center',
+  lineHeight: 1.43,
+})
+
+export const ListRowMetaTooltipWrap = styled('span')({
+  display: 'inline-flex',
+  alignItems: 'center',
+  flexShrink: 0,
+  lineHeight: 0,
 })
 
 export const ParticipantExtraStack = styled(Stack)(({ theme }) => ({

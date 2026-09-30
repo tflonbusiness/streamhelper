@@ -1,6 +1,8 @@
 export const en = {
   common: {
-    appName: "Stream Helper",
+    appName: "StreamHelper",
+    appNameStream: "Stream",
+    appNameHelper: "Helper",
     save: "Save",
     saving: "Saving…",
     cancel: "Cancel",
@@ -128,6 +130,7 @@ export const en = {
     multiplier: "Multiplier",
     prize: "Prize",
     copyNickAria: "Copy {{nick}}",
+    copyNickname: "Copy nick",
     removeNickAria: "Remove {{nick}}",
     editSectorAria: "Edit {{label}}",
     saveSectorAria: "Save {{label}}",
@@ -564,6 +567,8 @@ export const en = {
     winnerResponseSecondsOutOfRange: "Enter a value between 10 and 300 seconds.",
     winnerAwaitingResponse: "{{seconds}}s to respond",
     winnerConfirmed: "Confirmed",
+    winnerTooltipWon: "Won — {{time}}",
+    winnerTooltipConfirmed: "Confirmed — {{time}}",
     winnerResponseNotRequired: "Chat response not required",
     winnerNoResponse: "No response",
     kickChatTitle: "Kick chat",

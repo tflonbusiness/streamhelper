@@ -1,5 +1,7 @@
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
+import { AppLogo } from '@/components/AppLogo'
+import { AppBrandName } from '@/components/AppBrandName'
 
 type BrandHeaderProps = {
   title?: string
@@ -10,7 +12,7 @@ type BrandHeaderProps = {
 }
 
 export function BrandHeader({
-  title = 'Stream Helper',
+  title,
   description,
   compact = false,
   horizontal = false,
@@ -27,20 +29,18 @@ export function BrandHeader({
         textAlign: horizontal ? 'left' : 'center',
       }}
     >
-      <Box
-        component="img"
-        src="/logo.svg"
-        alt="Stream Helper"
-        sx={{
-          flexShrink: 0,
-          width: compact ? 32 : 48,
-          height: compact ? 32 : 48,
-        }}
-      />
+      <AppLogo alt="StreamHelper" size={compact ? 'sidebar' : 'md'} />
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-        <Typography variant={compact ? 'h6' : 'h5'} component="h1">
-          {title}
-        </Typography>
+        {title ? (
+          <Typography variant={compact ? 'h6' : 'h5'} component="h1">
+            {title}
+          </Typography>
+        ) : (
+          <AppBrandName
+            size={compact ? 'sidebar' : 'md'}
+            component="h1"
+          />
+        )}
         {description ? (
           <Typography variant="body2" color="text.secondary">
             {description}

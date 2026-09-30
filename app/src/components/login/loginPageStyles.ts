@@ -1,4 +1,5 @@
 import { alpha, type SxProps, type Theme } from '@mui/material/styles'
+import { appLogoImageHoverSx, appLogoImageTransitionSx } from '@/components/AppLogo'
 import { colors } from '@/theme/colors'
 
 export const loginCardOuterSx: SxProps<Theme> = {
@@ -110,4 +111,17 @@ export const loginLogoRingSx: SxProps<Theme> = {
     0 0 32px ${alpha(colors.purple[500], 0.25)},
     inset 0 1px 0 ${alpha(colors.neutral[100], 0.08)}
   `,
+  transition: 'box-shadow 0.22s ease, border-color 0.22s ease',
+  '& img': {
+    borderRadius: 2,
+    ...appLogoImageTransitionSx,
+  },
+  '&:hover img': appLogoImageHoverSx,
+  '&:hover': {
+    borderColor: alpha(colors.brand[400], 0.45),
+    boxShadow: `
+      0 0 40px ${alpha(colors.brand[500], 0.35)},
+      inset 0 1px 0 ${alpha(colors.neutral[100], 0.08)}
+    `,
+  },
 }

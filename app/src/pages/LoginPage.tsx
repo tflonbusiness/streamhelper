@@ -6,6 +6,8 @@ import LayersIcon from '@mui/icons-material/Layers'
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
+import { AppLogo } from '@/components/AppLogo'
+import { AppBrandName, appBrandNamePlain } from '@/components/AppBrandName'
 import { DotFieldBackground } from '@/components/backgrounds/DotFieldBackground'
 import { IconTile } from '@/components/IconTile'
 import {
@@ -69,18 +71,11 @@ export function LoginPage() {
                 </Box>
                 <Stack spacing={2} sx={{ alignItems: 'center', textAlign: 'center' }}>
                   <Box sx={loginLogoRingSx}>
-                    <Box
-                      component="img"
-                      src="/logo.svg"
-                      alt={t('common.appName')}
-                      sx={{ width: 64, height: 64, borderRadius: 2 }}
-                    />
+                    <AppLogo alt={appBrandNamePlain(t)} size="lg" />
                   </Box>
 
                   <Stack spacing={0.75}>
-                    <Typography variant="h4" component="h1" sx={{ fontWeight: 700, letterSpacing: '-0.02em' }}>
-                      {t('common.appName')}
-                    </Typography>
+                    <AppBrandName size="lg" component="h1" />
                     <Typography variant="body2" sx={loginTaglineSx}>
                       {t('auth.tagline')}
                     </Typography>

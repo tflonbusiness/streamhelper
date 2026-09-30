@@ -17,6 +17,8 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { AppLogo } from '@/components/AppLogo'
+import { AppBrandName, appBrandNamePlain } from '@/components/AppBrandName'
 import { IconTile } from '@/components/IconTile'
 import { BreadcrumbProvider } from '@/context/BreadcrumbContext'
 import { useAuth } from '@/context/AuthContext'
@@ -110,7 +112,16 @@ const MobileHeaderInner = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
+  gap: theme.spacing(1),
   padding: theme.spacing(1.5, 2),
+}))
+
+const MobileBrandLockup = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(1.25),
+  minWidth: 0,
+  flex: 1,
 }))
 
 const MobileLogoutButton = styled(Button)({
@@ -142,6 +153,19 @@ const SidebarRouterLink = styled(NavLink)({
   color: 'inherit',
   display: 'block',
 })
+
+const BrandDashboardLink = styled(NavLink)(({ theme }) => ({
+  textDecoration: 'none',
+  color: 'inherit',
+  display: 'inline-flex',
+  flexShrink: 0,
+  borderRadius: theme.shape.borderRadius,
+  cursor: 'pointer',
+  '&:focus-visible': {
+    outline: `2px solid ${alpha(colors.brand[500], 0.85)}`,
+    outlineOffset: 2,
+  },
+}))
 
 const MobileRouterLink = styled(NavLink)({
   textDecoration: 'none',
@@ -210,7 +234,7 @@ const Sidebar = styled('aside', {
   borderRight: '1px solid',
   borderColor: theme.palette.divider,
   backgroundColor: theme.palette.background.paper,
-  padding: expanded ? theme.spacing(2) : theme.spacing(1),
+  padding: expanded ? theme.spacing(2) : theme.spacing(2, 1),
   transition: theme.transitions.create('width', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.shortest,
@@ -231,12 +255,15 @@ const SidebarHeaderRow = styled(Box, {
   gap: 8,
 }))
 
-const SidebarLogo = styled('img', {
+const SidebarBrandLockup = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'expanded',
-})<{ expanded?: boolean }>(({ expanded }) => ({
-  flexShrink: 0,
-  width: expanded ? 32 : 28,
-  height: expanded ? 32 : 28,
+})<{ expanded?: boolean }>(({ theme, expanded }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(1.25),
+  minWidth: 0,
+  flex: expanded ? 1 : undefined,
+  justifyContent: expanded ? 'flex-start' : 'center',
 }))
 
 const NavToggleButton = styled(IconButton)(({ theme }) => ({
@@ -610,7 +637,12 @@ export function AppShell() {
               )}
             </NavToggleButton>
           </Tooltip>
-          <SidebarLogo src="/logo.svg" alt={t('common.appName')} expanded />
+          <MobileBrandLockup>
+            <BrandDashboardLink to="/dashboard" end aria-label={t('nav.home')}>
+              <AppLogo alt={appBrandNamePlain(t)} size={isNavExpanded ? 'sidebar' : 'sidebarCompact'} />
+            </BrandDashboardLink>
+            <AppBrandName size="sidebar" />
+          </MobileBrandLockup>
           <MobileLogoutButton
             type="button"
             variant="text"
@@ -666,11 +698,15 @@ export function AppShell() {
 
       <Sidebar expanded={isNavExpanded}>
         <SidebarHeaderRow expanded={isNavExpanded}>
-          <SidebarLogo
-            src="/logo.svg"
-            alt={t('common.appName')}
-            expanded={isNavExpanded}
-          />
+          <SidebarBrandLockup expanded={isNavExpanded}>
+            <BrandDashboardLink to="/dashboard" end aria-label={t('nav.home')}>
+              <AppLogo
+                alt={appBrandNamePlain(t)}
+                size={isNavExpanded ? 'sidebar' : 'sidebarCompact'}
+              />
+            </BrandDashboardLink>
+            {isNavExpanded ? <AppBrandName size="sidebar" /> : null}
+          </SidebarBrandLockup>
           <Tooltip
             title={
               isNavExpanded

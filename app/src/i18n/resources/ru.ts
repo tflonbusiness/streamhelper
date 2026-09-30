@@ -1,6 +1,8 @@
 export const ru = {
   common: {
-    appName: "Stream Helper",
+    appName: "StreamHelper",
+    appNameStream: "Stream",
+    appNameHelper: "Helper",
     save: "Сохранить",
     saving: "Сохранение…",
     cancel: "Отмена",
@@ -128,6 +130,7 @@ export const ru = {
     multiplier: "Множитель",
     prize: "Приз",
     copyNickAria: "Скопировать {{nick}}",
+    copyNickname: "Скопировать ник",
     removeNickAria: "Удалить {{nick}}",
     editSectorAria: "Изменить {{label}}",
     saveSectorAria: "Сохранить {{label}}",
@@ -573,6 +576,8 @@ export const ru = {
     winnerResponseSecondsOutOfRange: "Укажите значение от 10 до 300 секунд.",
     winnerAwaitingResponse: "{{seconds}} с на ответ",
     winnerConfirmed: "Подтверждён",
+    winnerTooltipWon: "Победил — {{time}}",
+    winnerTooltipConfirmed: "Подтвердил — {{time}}",
     winnerResponseNotRequired: "Ответ в чате не требуется",
     winnerNoResponse: "Нет ответа",
     kickChatTitle: "Чат Kick",

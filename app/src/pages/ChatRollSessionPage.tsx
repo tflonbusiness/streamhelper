@@ -23,7 +23,11 @@ import {
   EmptyListText,
   ListCard,
   ListCardContent,
+  ListRowMeta,
+  ListRowMetaTooltipWrap,
   ListRowName,
+  ListRowNameTooltipWrap,
+  ListRowPrimaryStack,
   ListRowStack,
   ListRowsStack,
   ParticipantExtraStack,
@@ -38,6 +42,7 @@ import { ChatRollSessionErrorState } from '@/components/chat-roll/session/ChatRo
 import { ChatRollSessionHeaderSection } from '@/components/chat-roll/session/ChatRollSessionHeaderSection'
 import { ChatRollKickChatSection } from '@/components/chat-roll/session/ChatRollKickChatSection'
 import { ChatRollWinResponseChip } from '@/components/chat-roll/session/ChatRollWinResponseChip'
+import { ChatRollWinnerNickTooltipContent } from '@/components/chat-roll/session/ChatRollWinnerNickTooltipContent'
 import { ChatRollSessionSettingsChrome } from '@/components/chat-roll/session/ChatRollSessionSettingsChrome'
 import { ChatRollSessionSettingsLeftPanel } from '@/components/chat-roll/session/ChatRollSessionSettingsLeftPanel'
 import { ChatRollSessionLoadingState } from '@/components/chat-roll/session/ChatRollSessionLoadingState'
@@ -56,6 +61,7 @@ import {
   computeParticipantCoefficient,
   formatCoefficient,
 } from '@/lib/chat-roll'
+import { formatTime } from '@/lib/format-date-time'
 import {
   buildChatRollSettingsPatch,
   parseWinnerResponseSecondsDraftInput,
@@ -102,9 +108,11 @@ function NameListCard({
   removeAriaLabel,
   rows,
   renderRowExtra,
+  renderRowSubtitle,
   onClearAll,
   onRemove,
   onCopyRow,
+  copyRowTooltip,
   resolveRowBorderColor,
   readOnly,
 }: {
@@ -115,9 +123,11 @@ function NameListCard({
   removeAriaLabel: string
   rows: { id: number; displayName: string }[]
   renderRowExtra?: (row: { id: number; displayName: string }) => ReactNode
+  renderRowSubtitle?: (row: { id: number; displayName: string }) => ReactNode
   onClearAll: () => void
   onRemove: (id: number) => void
   onCopyRow?: (row: { id: number; displayName: string }) => void
+  copyRowTooltip?: string
   resolveRowBorderColor?: (row: { id: number; displayName: string }) => string
   readOnly: boolean
 }) {
@@ -157,21 +167,36 @@ function NameListCard({
                     : undefined
                 }
               >
-                <ListRowName variant="body2" noWrap>
-                  {row.displayName}
-                </ListRowName>
+                <ListRowPrimaryStack
+                  direction={renderRowSubtitle ? 'row' : 'column'}
+                  spacing={renderRowSubtitle ? 1 : 0.25}
+                  sx={{
+                    alignItems: renderRowSubtitle ? 'center' : 'stretch',
+                  }}
+                >
+                  <Tooltip title={row.displayName} arrow>
+                    <ListRowNameTooltipWrap>
+                      <ListRowName variant="body2">{row.displayName}</ListRowName>
+                    </ListRowNameTooltipWrap>
+                  </Tooltip>
+                  {renderRowSubtitle?.(row)}
+                </ListRowPrimaryStack>
                 {renderRowExtra?.(row)}
                 {onCopyRow ? (
                   <Tooltip
-                    title={t('table.copyNickAria', { nick: row.displayName })}
+                    title={
+                      copyRowTooltip ??
+                      t('table.copyNickAria', { nick: row.displayName })
+                    }
                     arrow
                   >
                     <span style={{ display: 'inline-flex' }}>
                       <IconButton
                         size="small"
-                        aria-label={t('table.copyNickAria', {
-                          nick: row.displayName,
-                        })}
+                        aria-label={
+                          copyRowTooltip ??
+                          t('table.copyNickAria', { nick: row.displayName })
+                        }
                         onClick={() => onCopyRow(row)}
                       >
                         <ContentCopyIcon sx={{ fontSize: 16 }} aria-hidden />
@@ -623,11 +648,31 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
             emptyLabel={t('chatRoll.noWinners')}
             removeAriaLabel={t('chatRoll.removeWinner')}
             rows={wins}
+            renderRowSubtitle={(row) => {
+              const win = wins.find((entry) => entry.id === row.id)
+              if (!win) {
+                return null
+              }
+              const timeLabel = formatTime(win.createdAt)
+              return (
+                <Tooltip
+                  title={<ChatRollWinnerNickTooltipContent win={win} />}
+                  arrow
+                >
+                  <ListRowMetaTooltipWrap>
+                    <ListRowMeta variant="caption" color="text.secondary" noWrap>
+                      <time dateTime={win.createdAt}>{timeLabel}</time>
+                    </ListRowMeta>
+                  </ListRowMetaTooltipWrap>
+                </Tooltip>
+              )
+            }}
             renderRowExtra={(row) => {
               const win = wins.find((entry) => entry.id === row.id)
               return win ? <ChatRollWinResponseChip win={win} /> : null
             }}
             readOnly={readOnly}
+            copyRowTooltip={t('table.copyNickname')}
             onCopyRow={(row) => handleCopyWinnerNick(row.displayName)}
             resolveRowBorderColor={(row) => {
               const win = wins.find((entry) => entry.id === row.id)

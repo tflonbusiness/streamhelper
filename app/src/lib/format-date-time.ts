@@ -7,6 +7,11 @@ const DATE_TIME_FORMAT: Record<AppLocale, string> = {
   ru: 'D.MM.YYYY, HH:mm',
 }
 
+const TIME_FORMAT: Record<AppLocale, string> = {
+  en: 'h:mm A',
+  ru: 'HH:mm',
+}
+
 function resolveFormatLocale(locale?: AppLocale): AppLocale {
   if (locale) {
     return locale
@@ -18,4 +23,10 @@ function resolveFormatLocale(locale?: AppLocale): AppLocale {
 export function formatDateTime(iso: string, locale?: AppLocale): string {
   const loc = resolveFormatLocale(locale)
   return dayjs(iso).format(DATE_TIME_FORMAT[loc])
+}
+
+/** Localized time of day only (dayjs). */
+export function formatTime(iso: string, locale?: AppLocale): string {
+  const loc = resolveFormatLocale(locale)
+  return dayjs(iso).format(TIME_FORMAT[loc])
 }
