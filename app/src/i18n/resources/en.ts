@@ -499,6 +499,8 @@ export const en = {
     leaveUnsavedStay: "Stay",
     leaveUnsavedLeave: "Leave",
     settingsTitle: "Settings",
+    collapseSettingsPanel: "Hide settings panel",
+    expandSettingsPanel: "Show settings panel",
     participantsTitle: "Participants ({{count}})",
     noParticipants: "No participants yet.",
     removeParticipant: "Remove participant",

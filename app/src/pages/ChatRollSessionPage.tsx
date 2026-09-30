@@ -32,6 +32,7 @@ import {
   ListRowsStack,
   ParticipantExtraStack,
   RoleTagChip,
+  SETTINGS_PANEL_COLLAPSED_WIDTH,
   SettingsCard,
   SettingsCardContent,
   RollButton,
@@ -43,6 +44,7 @@ import { ChatRollSessionHeaderSection } from '@/components/chat-roll/session/Cha
 import { ChatRollKickChatSection } from '@/components/chat-roll/session/ChatRollKickChatSection'
 import { ChatRollWinResponseChip } from '@/components/chat-roll/session/ChatRollWinResponseChip'
 import { ChatRollWinnerNickTooltipContent } from '@/components/chat-roll/session/ChatRollWinnerNickTooltipContent'
+import { ChatRollSessionSettingsCollapsedRail } from '@/components/chat-roll/session/ChatRollSessionSettingsCollapsedRail'
 import { ChatRollSessionSettingsChrome } from '@/components/chat-roll/session/ChatRollSessionSettingsChrome'
 import { ChatRollSessionSettingsLeftPanel } from '@/components/chat-roll/session/ChatRollSessionSettingsLeftPanel'
 import { ChatRollSessionLoadingState } from '@/components/chat-roll/session/ChatRollSessionLoadingState'
@@ -98,6 +100,30 @@ const workspaceColumnSx = {
   display: 'flex',
   minWidth: 0,
   minHeight: 0,
+}
+
+function workspaceMainColumnSx(settingsExpanded: boolean) {
+  return {
+    ...workspaceColumnSx,
+    ...(settingsExpanded
+      ? {}
+      : {
+          flex: { lg: 1 },
+        }),
+  }
+}
+
+function settingsColumnSx(settingsExpanded: boolean) {
+  return {
+    ...workspaceColumnSx,
+    ...(settingsExpanded
+      ? {}
+      : {
+          width: { lg: SETTINGS_PANEL_COLLAPSED_WIDTH },
+          maxWidth: { lg: SETTINGS_PANEL_COLLAPSED_WIDTH },
+          flex: { lg: `0 0 ${SETTINGS_PANEL_COLLAPSED_WIDTH}px` },
+        }),
+  }
 }
 
 function NameListCard({
@@ -465,6 +491,8 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
     )
   }
 
+  const [settingsExpanded, setSettingsExpanded] = useState(true)
+
   const settingsDisabled = readOnly || settingsSaveMutation.isPending
   const winnerResponseSecondsError =
     !validateChatRollSettingsDraftWinnerResponseSeconds(draft)
@@ -547,75 +575,90 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
       />
 
       <WorkspaceGrid container spacing={3}>
-        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceColumnSx}>
-          <SettingsCard elevation={0}>
-            <SettingsCardContent>
-              <ChatRollSessionSettingsChrome
-                readOnly={readOnly}
-                isDirty={isDirty}
-                canSave={canSaveSettings}
-                isSaving={settingsSaveMutation.isPending}
-                onSave={handleSaveSettings}
-              />
-
-              <SettingsStack>
-                <ChatRollSessionSettingsLeftPanel
-                  draft={draft}
-                  keywordError={keywordError}
-                  winnerResponseSecondsError={winnerResponseSecondsError}
-                  settingsDisabled={settingsDisabled}
-                  onKeywordChange={(value) => {
-                    updateDraft((current) => ({ ...current, keyword: value }))
-                    if (value.trim()) {
-                      setKeywordError(null)
-                    }
-                  }}
-                  onCombineModeChange={(mode) =>
-                    updateDraft((current) => ({ ...current, combineMode: mode }))
-                  }
-                  onExcludeWinnerChange={(checked) =>
-                    updateDraft((current) => ({
-                      ...current,
-                      excludeWinnerAfterRoll: checked,
-                    }))
-                  }
-                  onWinnerResponseEnabledChange={(checked) =>
-                    updateDraft((current) => ({
-                      ...current,
-                      winnerResponseEnabled: checked,
-                    }))
-                  }
-                  onWinnerResponseSecondsChange={(raw) =>
-                    updateDraft((current) => ({
-                      ...current,
-                      winnerResponseSeconds:
-                        parseWinnerResponseSecondsDraftInput(raw),
-                    }))
-                  }
-                  roleMeta={roleMeta}
-                  onRoleToggle={(roleId, enabled) =>
-                    updateDraft((current) => ({
-                      ...current,
-                      roleSettings: {
-                        ...current.roleSettings,
-                        [roleId]: { ...current.roleSettings[roleId], enabled },
-                      },
-                    }))
-                  }
-                  onRoleWeightChange={(roleId, raw) =>
-                    updateDraft((current) =>
-                      updateRoleWeightInDraft(current, roleId, raw),
-                    )
-                  }
+        <Grid
+          size={{ xs: 12, lg: settingsExpanded ? 3 : 'auto' }}
+          sx={settingsColumnSx(settingsExpanded)}
+        >
+          {settingsExpanded ? (
+            <SettingsCard elevation={0}>
+              <SettingsCardContent>
+                <ChatRollSessionSettingsChrome
+                  readOnly={readOnly}
+                  isDirty={isDirty}
+                  canSave={canSaveSettings}
+                  isSaving={settingsSaveMutation.isPending}
+                  onSave={handleSaveSettings}
+                  onCollapse={() => setSettingsExpanded(false)}
                 />
-              </SettingsStack>
-            </SettingsCardContent>
-          </SettingsCard>
+
+                <SettingsStack>
+                  <ChatRollSessionSettingsLeftPanel
+                    draft={draft}
+                    keywordError={keywordError}
+                    winnerResponseSecondsError={winnerResponseSecondsError}
+                    settingsDisabled={settingsDisabled}
+                    onKeywordChange={(value) => {
+                      updateDraft((current) => ({ ...current, keyword: value }))
+                      if (value.trim()) {
+                        setKeywordError(null)
+                      }
+                    }}
+                    onCombineModeChange={(mode) =>
+                      updateDraft((current) => ({ ...current, combineMode: mode }))
+                    }
+                    onExcludeWinnerChange={(checked) =>
+                      updateDraft((current) => ({
+                        ...current,
+                        excludeWinnerAfterRoll: checked,
+                      }))
+                    }
+                    onWinnerResponseEnabledChange={(checked) =>
+                      updateDraft((current) => ({
+                        ...current,
+                        winnerResponseEnabled: checked,
+                      }))
+                    }
+                    onWinnerResponseSecondsChange={(raw) =>
+                      updateDraft((current) => ({
+                        ...current,
+                        winnerResponseSeconds:
+                          parseWinnerResponseSecondsDraftInput(raw),
+                      }))
+                    }
+                    roleMeta={roleMeta}
+                    onRoleToggle={(roleId, enabled) =>
+                      updateDraft((current) => ({
+                        ...current,
+                        roleSettings: {
+                          ...current.roleSettings,
+                          [roleId]: { ...current.roleSettings[roleId], enabled },
+                        },
+                      }))
+                    }
+                    onRoleWeightChange={(roleId, raw) =>
+                      updateDraft((current) =>
+                        updateRoleWeightInDraft(current, roleId, raw),
+                      )
+                    }
+                  />
+                </SettingsStack>
+              </SettingsCardContent>
+            </SettingsCard>
+          ) : (
+            <ChatRollSessionSettingsCollapsedRail
+              readOnly={readOnly}
+              isDirty={isDirty}
+              canSave={canSaveSettings}
+              isSaving={settingsSaveMutation.isPending}
+              onExpand={() => setSettingsExpanded(true)}
+              onSave={handleSaveSettings}
+            />
+          )}
         </Grid>
-        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceColumnSx}>
+        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceMainColumnSx(settingsExpanded)}>
           <ChatRollKickChatSection accountId={accountId} />
         </Grid>
-        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceColumnSx}>
+        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceMainColumnSx(settingsExpanded)}>
           <NameListCard
             title={t('chatRoll.participantsTitle', { count: participants.length })}
             icon={GroupIcon}
@@ -640,7 +683,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
             }
           />
         </Grid>
-        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceColumnSx}>
+        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceMainColumnSx(settingsExpanded)}>
           <NameListCard
             title={t('chatRoll.winnersTitle', { count: wins.length })}
             icon={EmojiEventsIcon}

@@ -508,6 +508,8 @@ export const ru = {
     leaveUnsavedStay: "Остаться",
     leaveUnsavedLeave: "Уйти",
     settingsTitle: "Настройки",
+    collapseSettingsPanel: "Свернуть панель настроек",
+    expandSettingsPanel: "Развернуть панель настроек",
     participantsTitle: "Участники ({{count}})",
     noParticipants: "Участников пока нет.",
     removeParticipant: "Удалить участника",

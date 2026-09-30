@@ -7,6 +7,7 @@ import {
   Chip,
   FormControlLabel,
   FormLabel,
+  IconButton,
   RadioGroup,
   Stack,
   TextField,
@@ -357,6 +358,35 @@ export const SettingsUnsavedAlert = styled(Alert)(({ theme }) => ({
     paddingTop: theme.spacing(0.25),
     paddingBottom: theme.spacing(0.25),
   },
+}))
+
+export const SettingsHeaderActions = styled(Stack)(({ theme }) => ({
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: theme.spacing(0.5),
+  flexShrink: 0,
+}))
+
+export const SETTINGS_PANEL_COLLAPSED_WIDTH = 52
+
+export const SettingsCollapsedCard = styled(SettingsCard)({
+  width: SETTINGS_PANEL_COLLAPSED_WIDTH,
+  flex: `0 0 ${SETTINGS_PANEL_COLLAPSED_WIDTH}px`,
+  alignSelf: 'stretch',
+})
+
+export const SettingsCollapsedRail = styled(Stack)(({ theme }) => ({
+  alignItems: 'center',
+  gap: theme.spacing(1.5),
+  paddingTop: theme.spacing(0.5),
+  paddingBottom: theme.spacing(0.5),
+  height: '100%',
+}))
+
+export const SettingsExpandButton = styled(IconButton)(({ theme }) => ({
+  width: 32,
+  height: 32,
+  color: theme.palette.text.secondary,
 }))
 
 export const SettingsSaveButton = styled(Button)(({ theme }) => ({
