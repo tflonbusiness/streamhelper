@@ -196,7 +196,7 @@ export const ru = {
     subscribers: "Подписчики",
     gifted: "Подарки",
     matureBadge: "18+",
-    modulesQuickAccessTitle: "Виджеты",
+    modulesQuickAccessTitle: "Избранные виджеты",
     modulesQuickAccessDescription: "Быстрый переход к модулям для стрима",
     viewAllModules: "Все виджеты"
   },

@@ -196,7 +196,7 @@ export const en = {
     subscribers: "Subscribers",
     gifted: "Gifted",
     matureBadge: "18+",
-    modulesQuickAccessTitle: "Widgets",
+    modulesQuickAccessTitle: "Featured widgets",
     modulesQuickAccessDescription: "Open a streamer module in one click",
     viewAllModules: "All widgets"
   },

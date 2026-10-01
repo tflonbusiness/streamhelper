@@ -1,5 +1,4 @@
 import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardActionArea from '@mui/material/CardActionArea'
 import CardContent from '@mui/material/CardContent'
@@ -17,7 +16,6 @@ import {
   moduleDescriptionKey,
   moduleNameKey,
 } from '@/lib/modules'
-import { MODULES_ROUTE } from '@/lib/routes'
 import { cardSx, colors } from '@/theme/colors'
 
 function accentColor(variant: ModuleIconVariant, theme: Theme): string {
@@ -51,19 +49,8 @@ export function DashboardModuleQuickAccess() {
   return (
     <DashboardSection
       title={t('dashboard.modulesQuickAccessTitle')}
-      description={t('dashboard.modulesQuickAccessDescription')}
-      action={
-        <Button
-          component={RouterLink}
-          to={MODULES_ROUTE}
-          size="small"
-          variant="text"
-          endIcon={<ArrowForwardIcon />}
-          sx={{ flexShrink: 0 }}
-        >
-          {t('dashboard.viewAllModules')}
-        </Button>
-      }
+      variant="panel"
+      headerInPanel
     >
       <Grid container spacing={2}>
         {modules.map((module) => {
