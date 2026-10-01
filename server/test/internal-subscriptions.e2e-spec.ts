@@ -66,20 +66,24 @@ describe('Internal subscriptions admin (e2e)', () => {
         getAccountIdByUcid: subscriptionDatabaseMocks.getAccountIdByUcid,
         isPlatformAdmin: async (userId: number) =>
           platformAdmin && userId === 1,
-        searchSubscriptionAdminAccounts: async (q: string) => {
-          if (q === 'demo') {
-            return [
-              {
-                accountId: 10,
-                ucid: '550e8400-e29b-41d4-a716-446655440000',
-                name: 'demo_streamer',
-                subscriptionPlan: 'free',
-                channelSlug: 'demo',
-                subscription: activeTrialSubscriptionFixture(),
-              },
-            ];
+        searchSubscriptionAdminAccounts: async (params: { query: string }) => {
+          const demoItem = {
+            accountId: 10,
+            ucid: '550e8400-e29b-41d4-a716-446655440000',
+            name: 'demo_streamer',
+            subscriptionPlan: 'free',
+            channelSlug: 'demo',
+            subscription: activeTrialSubscriptionFixture(),
+          };
+          if (params.query === '' || params.query === 'demo') {
+            return {
+              items: [demoItem],
+              total: 1,
+              page: 1,
+              pageSize: 20,
+            };
           }
-          return [];
+          return { items: [], total: 0, page: 1, pageSize: 20 };
         },
         getSubscriptionAdminAccountDetail: async (accountId: number) => {
           if (accountId !== 10) {
@@ -154,8 +158,14 @@ describe('Internal subscriptions admin (e2e)', () => {
     const agent = request.agent(app.getHttpServer());
     await loginOwner(agent);
 
+    const listAll = await agent.get('/internal/subscriptions').expect(200);
+    expect(listAll.body.items).toHaveLength(1);
+    expect(listAll.body.total).toBe(1);
+
     const search = await agent.get('/internal/subscriptions?q=demo').expect(200);
     expect(search.body.items).toHaveLength(1);
+    expect(search.body.total).toBe(1);
+    expect(search.body.page).toBe(1);
 
     const endsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 

@@ -281,10 +281,8 @@ const MainContent = styled('main')(({ theme }) => ({
 }))
 
 const MainInner = styled(Box)({
-  marginLeft: 'auto',
-  marginRight: 'auto',
   width: '100%',
-  maxWidth: 1024,
+  minWidth: 0,
 })
 
 function SidebarNavLink({

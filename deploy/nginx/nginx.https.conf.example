@@ -70,6 +70,11 @@ server {
         include /etc/nginx/snippets/proxy-api.conf;
     }
 
+    location /internal/ {
+        proxy_pass http://api;
+        include /etc/nginx/snippets/proxy-api.conf;
+    }
+
     include /etc/nginx/snippets/landing-static.conf;
 
     location / {

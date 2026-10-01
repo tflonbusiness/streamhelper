@@ -1,46 +1,28 @@
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  FormControl,
-  FormLabel,
-  Grid,
-  InputAdornment,
-  List,
-  ListItemButton,
-  ListItemText,
-  MenuItem,
-  Select,
-  Skeleton,
-  Stack,
-  TextField,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-} from '@mui/material'
-import BlockIcon from '@mui/icons-material/Block'
+import { Chip, Grid, Stack } from '@mui/material'
 import CreditCardIcon from '@mui/icons-material/CreditCard'
-import PersonIcon from '@mui/icons-material/Person'
-import SearchIcon from '@mui/icons-material/Search'
-import TimerIcon from '@mui/icons-material/Timer'
-import TuneIcon from '@mui/icons-material/Tune'
 import { alpha, useTheme } from '@mui/material/styles'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   fetchSubscriptionAdminAccount,
   searchSubscriptionAdminAccounts,
+  SUBSCRIPTION_ADMIN_PAGE_SIZE,
   updateSubscriptionAdminAccount,
   type SubscriptionAdminAccountDetail,
   type SubscriptionAdminSearchItem,
+  type SubscriptionAdminSortField,
 } from '@/api/internal-subscriptions'
+import { AppTable } from '@/components/AppTable'
 import { PageHeader } from '@/components/PageHeader'
-import { SectionHeader } from '@/components/SectionHeader'
 import { StatusAlert } from '@/components/StatusAlert'
 import { useNotification } from '@/context/NotificationContext'
-import { cardSx, inputFieldSx, mutedChipSx, toneChipSx } from '@/theme/colors'
+import { SubscriptionAdminDetailPanel } from '@/pages/subscription-admin/SubscriptionAdminDetailPanel'
+import { SubscriptionAdminSearchToolbar } from '@/pages/subscription-admin/SubscriptionAdminSearchToolbar'
+import {
+  buildSubscriptionAdminTableColumns,
+  type SubscriptionAdminSortState,
+} from '@/pages/subscription-admin/subscriptionAdminTableColumns'
+import { mutedChipSx, toneChipSx } from '@/theme/colors'
 
 type AdminMode = 'revoked' | 'trial' | 'paid'
 
@@ -73,12 +55,19 @@ function accessKind(
 }
 
 export function SubscriptionAdminPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const theme = useTheme()
   const { showSuccess } = useNotification()
   const [query, setQuery] = useState('')
+  const [submittedQuery, setSubmittedQuery] = useState('')
   const [searching, setSearching] = useState(false)
   const [results, setResults] = useState<SubscriptionAdminSearchItem[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [sort, setSort] = useState<SubscriptionAdminSortState>({
+    field: 'updatedAt',
+    direction: 'desc',
+  })
   const [selected, setSelected] = useState<SubscriptionAdminAccountDetail | null>(null)
   const [mode, setMode] = useState<AdminMode>('trial')
   const [paidPlan, setPaidPlan] = useState<'pro' | 'studio'>('pro')
@@ -86,49 +75,51 @@ export function SubscriptionAdminPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  function accessChip(
-    account: SubscriptionAdminSearchItem | SubscriptionAdminAccountDetail,
-  ) {
-    const kind = accessKind(account)
-    if (kind === 'none') {
+  const accessChip = useCallback(
+    (account: SubscriptionAdminSearchItem | SubscriptionAdminAccountDetail) => {
+      const kind = accessKind(account)
+      if (kind === 'none') {
+        return (
+          <Chip
+            label={t('subscriptionAdmin.chipNoAccess')}
+            size="small"
+            sx={mutedChipSx(theme)}
+          />
+        )
+      }
+      if (kind === 'active-trial') {
+        return (
+          <Chip
+            label={t('subscriptionAdmin.chipTrial')}
+            size="small"
+            sx={toneChipSx(theme.palette.info.light)}
+          />
+        )
+      }
       return (
         <Chip
-          label={t('subscriptionAdmin.chipNoAccess')}
+          label={t('subscriptionAdmin.chipPaid', { plan: account.subscriptionPlan })}
           size="small"
-          sx={mutedChipSx(theme)}
+          sx={toneChipSx(theme.palette.success.light)}
         />
       )
-    }
-    if (kind === 'active-trial') {
-      return (
-        <Chip
-          label={t('subscriptionAdmin.chipTrial')}
-          size="small"
-          sx={toneChipSx(theme.palette.info.light)}
-        />
-      )
-    }
-    return (
-      <Chip
-        label={t('subscriptionAdmin.chipPaid', { plan: account.subscriptionPlan })}
-        size="small"
-        sx={toneChipSx(theme.palette.success.light)}
-      />
-    )
-  }
+    },
+    [t, theme],
+  )
 
   const runSearch = useCallback(async () => {
-    const trimmed = query.trim()
-    if (trimmed.length < 1) {
-      setResults([])
-      return
-    }
-
     setSearching(true)
     setError(null)
     try {
-      const items = await searchSubscriptionAdminAccounts(trimmed)
-      setResults(items)
+      const response = await searchSubscriptionAdminAccounts({
+        query: submittedQuery,
+        page,
+        pageSize: SUBSCRIPTION_ADMIN_PAGE_SIZE,
+        sortBy: sort.field,
+        sortOrder: sort.direction,
+      })
+      setResults(response.items)
+      setTotal(response.total)
     } catch (searchError) {
       setError(
         searchError instanceof Error
@@ -136,10 +127,33 @@ export function SubscriptionAdminPage() {
           : t('errors.failedToLoadSession'),
       )
       setResults([])
+      setTotal(0)
     } finally {
       setSearching(false)
     }
-  }, [query, t])
+  }, [page, sort.direction, sort.field, submittedQuery, t])
+
+  function submitSearch() {
+    const trimmed = query.trim()
+    if (trimmed.length === 1) {
+      return
+    }
+    setPage(1)
+    setSubmittedQuery(trimmed)
+  }
+
+  const handleSortField = useCallback((field: SubscriptionAdminSortField) => {
+    setSort((prev) => {
+      if (prev.field === field) {
+        return {
+          field,
+          direction: prev.direction === 'asc' ? 'desc' : 'asc',
+        }
+      }
+      return { field, direction: 'asc' }
+    })
+    setPage(1)
+  }, [])
 
   async function selectAccount(accountId: number) {
     setError(null)
@@ -212,19 +226,37 @@ export function SubscriptionAdminPage() {
   }
 
   useEffect(() => {
-    if (query.trim().length < 2) {
-      setResults([])
-      return
-    }
-    const timer = window.setTimeout(() => {
-      void runSearch()
-    }, 350)
-    return () => window.clearTimeout(timer)
-  }, [query, runSearch])
+    void runSearch()
+  }, [runSearch])
+
+  const tableColumns = useMemo(
+    () =>
+      buildSubscriptionAdminTableColumns({
+        t,
+        theme,
+        locale: i18n.language,
+        sort,
+        onSortField: handleSortField,
+      }),
+    [handleSortField, i18n.language, sort, t, theme],
+  )
 
   const trimmedQuery = query.trim()
-  const showNoResults =
-    trimmedQuery.length >= 2 && !searching && results.length === 0
+  const canSubmit = trimmedQuery.length === 0 || trimmedQuery.length >= 2
+  const isFiltered = submittedQuery.length > 0
+
+  const searchToolbar = (
+    <SubscriptionAdminSearchToolbar
+      query={query}
+      submittedQuery={submittedQuery}
+      total={total}
+      searching={searching}
+      canSubmit={canSubmit}
+      isFiltered={isFiltered}
+      onQueryChange={setQuery}
+      onSubmit={submitSearch}
+    />
+  )
 
   return (
     <Stack spacing={3}>
@@ -237,316 +269,48 @@ export function SubscriptionAdminPage() {
 
       {error ? <StatusAlert tone="error">{error}</StatusAlert> : null}
 
-      <Grid container spacing={3} alignItems="flex-start">
-        <Grid size={{ xs: 12, lg: 5 }}>
-          <Card sx={cardSx}>
-            <CardContent sx={{ pt: 1 }}>
-              <SectionHeader
-                title={t('subscriptionAdmin.searchSectionTitle')}
-                description={t('subscriptionAdmin.searchHint')}
-                icon={SearchIcon}
-                iconVariant="info"
-                showDivider={false}
-              />
-
-              <TextField
-                label={t('subscriptionAdmin.searchLabel')}
-                placeholder={t('subscriptionAdmin.searchPlaceholder')}
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                fullWidth
-                sx={{ ...inputFieldSx, mt: 2 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon fontSize="small" color="action" />
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-
-              <Box sx={{ mt: 2, minHeight: 120 }}>
-                {trimmedQuery.length < 2 ? (
-                  <Typography variant="body2" color="text.secondary">
-                    {t('subscriptionAdmin.searchPrompt')}
-                  </Typography>
-                ) : null}
-
-                {searching ? (
-                  <Stack spacing={1}>
-                    {[0, 1, 2].map((key) => (
-                      <Skeleton key={key} variant="rounded" height={64} />
-                    ))}
-                  </Stack>
-                ) : null}
-
-                {showNoResults ? (
-                  <Typography variant="body2" color="text.secondary">
-                    {t('subscriptionAdmin.noResults')}
-                  </Typography>
-                ) : null}
-
-                {!searching && results.length > 0 ? (
-                  <List
-                    disablePadding
-                    sx={{
-                      border: `1px solid ${theme.palette.divider}`,
-                      borderRadius: 2,
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {results.map((row, index) => {
-                      const isSelected = selected?.accountId === row.accountId
-                      return (
-                        <ListItemButton
-                          key={row.accountId}
-                          selected={isSelected}
-                          onClick={() => void selectAccount(row.accountId)}
-                          sx={{
-                            alignItems: 'flex-start',
-                            py: 1.5,
-                            borderTop:
-                              index === 0
-                                ? undefined
-                                : `1px solid ${theme.palette.divider}`,
-                            '&.Mui-selected': {
-                              backgroundColor: alpha(
-                                theme.palette.primary.main,
-                                0.08,
-                              ),
-                            },
-                          }}
-                        >
-                          <ListItemText
-                            primary={
-                              <Stack
-                                direction="row"
-                                spacing={1}
-                                alignItems="center"
-                                flexWrap="wrap"
-                                useFlexGap
-                              >
-                                <Typography variant="subtitle2" component="span">
-                                  {row.name}
-                                </Typography>
-                                {accessChip(row)}
-                              </Stack>
-                            }
-                            secondary={
-                              <Stack
-                                component="span"
-                                spacing={0.25}
-                                sx={{ mt: 0.5 }}
-                              >
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                  component="span"
-                                  display="block"
-                                >
-                                  #{row.accountId}
-                                  {row.channelSlug ? ` · @${row.channelSlug}` : ''}
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                  component="span"
-                                  display="block"
-                                  sx={{ fontFamily: 'monospace', fontSize: '0.7rem' }}
-                                >
-                                  {row.ucid}
-                                </Typography>
-                              </Stack>
-                            }
-                          />
-                        </ListItemButton>
-                      )
-                    })}
-                  </List>
-                ) : null}
-              </Box>
-            </CardContent>
-          </Card>
+      <Grid container spacing={3} sx={{ alignItems: 'flex-start' }}>
+        <Grid size={{ xs: 12, lg: 9 }}>
+          <AppTable
+            columns={tableColumns}
+            rows={results}
+            getRowKey={(row) => row.accountId}
+            loading={searching}
+            toolbar={searchToolbar}
+            emptyMessage={
+              !searching ? t('subscriptionAdmin.noResults') : undefined
+            }
+            pagination={{
+              count: total,
+              page,
+              rowsPerPage: SUBSCRIPTION_ADMIN_PAGE_SIZE,
+              onPageChange: setPage,
+            }}
+            onRowClick={(row) => void selectAccount(row.accountId)}
+            getRowSx={(row) =>
+              selected?.accountId === row.accountId
+                ? {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                    boxShadow: `inset 3px 0 0 ${theme.palette.primary.main}`,
+                  }
+                : undefined
+            }
+          />
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 7 }}>
-          <Card
-            sx={{
-              ...cardSx,
-              minHeight: { lg: 420 },
-              ...(selected
-                ? {}
-                : {
-                    borderStyle: 'dashed',
-                    backgroundColor: alpha(theme.palette.background.paper, 0.5),
-                  }),
-            }}
-          >
-            <CardContent sx={{ pt: 1 }}>
-              {!selected ? (
-                <Stack
-                  spacing={2}
-                  alignItems="center"
-                  justifyContent="center"
-                  sx={{ py: { xs: 4, md: 8 }, textAlign: 'center' }}
-                >
-                  <TuneIcon sx={{ fontSize: 48, color: 'text.disabled' }} />
-                  <Typography variant="h6">
-                    {t('subscriptionAdmin.emptySelectTitle')}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" maxWidth={360}>
-                    {t('subscriptionAdmin.emptySelectBody')}
-                  </Typography>
-                </Stack>
-              ) : (
-                <>
-                  <SectionHeader
-                    title={t('subscriptionAdmin.editSectionTitle')}
-                    description={selected.name}
-                    icon={TuneIcon}
-                    iconVariant="primary"
-                    showDivider={false}
-                    action={accessChip(selected)}
-                  />
-
-                  <Stack
-                    direction={{ xs: 'column', sm: 'row' }}
-                    spacing={2}
-                    sx={{ mt: 2, mb: 3 }}
-                    useFlexGap
-                  >
-                    <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        {t('subscriptionAdmin.fieldAccountId')}
-                      </Typography>
-                      <Typography variant="body2" fontWeight={600}>
-                        {selected.accountId}
-                      </Typography>
-                    </Stack>
-                    <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        {t('subscriptionAdmin.fieldPlan')}
-                      </Typography>
-                      <Typography variant="body2" fontWeight={600}>
-                        {selected.subscriptionPlan}
-                      </Typography>
-                    </Stack>
-                    {selected.owners.length > 0 ? (
-                      <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="caption" color="text.secondary">
-                          {t('subscriptionAdmin.fieldOwners')}
-                        </Typography>
-                        <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-                          {selected.owners.map((owner) => (
-                            <Chip
-                              key={owner.userId}
-                              icon={<PersonIcon aria-hidden />}
-                              label={owner.name}
-                              size="small"
-                              variant="outlined"
-                            />
-                          ))}
-                        </Stack>
-                      </Stack>
-                    ) : null}
-                  </Stack>
-
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ fontFamily: 'monospace', display: 'block', mb: 3 }}
-                  >
-                    {selected.ucid}
-                  </Typography>
-
-                  <FormControl component="fieldset" fullWidth sx={{ mb: 2 }}>
-                    <FormLabel sx={{ mb: 1, fontWeight: 600 }}>
-                      {t('subscriptionAdmin.modeLabel')}
-                    </FormLabel>
-                    <ToggleButtonGroup
-                      exclusive
-                      fullWidth
-                      value={mode}
-                      onChange={(_event, value: AdminMode | null) => {
-                        if (value) {
-                          setMode(value)
-                        }
-                      }}
-                      sx={{
-                        flexWrap: 'wrap',
-                        gap: 1,
-                        '& .MuiToggleButtonGroup-grouped': {
-                          flex: { xs: '1 1 100%', sm: '1 1 0' },
-                          border: `1px solid ${theme.palette.divider} !important`,
-                          borderRadius: '8px !important',
-                          textTransform: 'none',
-                          py: 1.25,
-                        },
-                      }}
-                    >
-                      <ToggleButton value="revoked">
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <BlockIcon fontSize="small" />
-                          <span>{t('subscriptionAdmin.modeRevoked')}</span>
-                        </Stack>
-                      </ToggleButton>
-                      <ToggleButton value="trial">
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <TimerIcon fontSize="small" />
-                          <span>{t('subscriptionAdmin.modeTrial')}</span>
-                        </Stack>
-                      </ToggleButton>
-                      <ToggleButton value="paid">
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <CreditCardIcon fontSize="small" />
-                          <span>{t('subscriptionAdmin.modePaid')}</span>
-                        </Stack>
-                      </ToggleButton>
-                    </ToggleButtonGroup>
-                  </FormControl>
-
-                  {mode === 'paid' ? (
-                    <FormControl fullWidth sx={{ ...inputFieldSx, mb: 2 }}>
-                      <FormLabel sx={{ mb: 1 }}>{t('subscriptionAdmin.paidPlanLabel')}</FormLabel>
-                      <Select
-                        value={paidPlan}
-                        onChange={(event) =>
-                          setPaidPlan(event.target.value as 'pro' | 'studio')
-                        }
-                      >
-                        <MenuItem value="pro">Pro</MenuItem>
-                        <MenuItem value="studio">Studio</MenuItem>
-                      </Select>
-                    </FormControl>
-                  ) : null}
-
-                  {mode !== 'revoked' ? (
-                    <TextField
-                      label={t('subscriptionAdmin.endsAtLabel')}
-                      type="datetime-local"
-                      value={endsAtLocal}
-                      onChange={(event) => setEndsAtLocal(event.target.value)}
-                      fullWidth
-                      sx={{ ...inputFieldSx, mb: 3 }}
-                      slotProps={{ inputLabel: { shrink: true } }}
-                    />
-                  ) : null}
-
-                  <Button
-                    variant="contained"
-                    size="large"
-                    onClick={() => void handleSave()}
-                    disabled={saving}
-                    fullWidth
-                  >
-                    {saving ? t('common.saving') : t('subscriptionAdmin.saveCta')}
-                  </Button>
-                </>
-              )}
-            </CardContent>
-          </Card>
+        <Grid size={{ xs: 12, lg: 3 }}>
+          <SubscriptionAdminDetailPanel
+            selected={selected}
+            mode={mode}
+            paidPlan={paidPlan}
+            endsAtLocal={endsAtLocal}
+            saving={saving}
+            accessChip={accessChip}
+            onModeChange={setMode}
+            onPaidPlanChange={setPaidPlan}
+            onEndsAtChange={setEndsAtLocal}
+            onSave={() => void handleSave()}
+          />
         </Grid>
       </Grid>
     </Stack>

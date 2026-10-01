@@ -24,6 +24,7 @@ export default defineConfig({
       '/bonus-buys': 'http://localhost:3000',
       '/prize-spins': 'http://localhost:3000',
       '/chat-rolls': 'http://localhost:3000',
+      '/internal': 'http://localhost:3000',
     },
   },
 })

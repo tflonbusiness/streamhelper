@@ -4986,21 +4986,80 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     return (result.rowCount ?? 0) > 0;
   }
 
-  async searchSubscriptionAdminAccounts(
-    query: string,
-  ): Promise<
-    import('../internal-admin/internal-subscriptions.types.js').SubscriptionAdminSearchItem[]
+  async searchSubscriptionAdminAccounts(input: {
+    query: string;
+    page: number;
+    pageSize: number;
+    sortBy: import('../internal-admin/internal-subscriptions.types.js').SubscriptionAdminSortField;
+    sortOrder: 'asc' | 'desc';
+  }): Promise<
+    import('../internal-admin/internal-subscriptions.types.js').SubscriptionAdminSearchResult
   > {
-    const trimmed = query.trim();
-    const accountId = /^\d+$/.test(trimmed)
-      ? Number.parseInt(trimmed, 10)
-      : null;
-    const uuidMatch = trimmed.match(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
-    );
+    const trimmed = input.query.trim();
+    const listAll = trimmed.length === 0;
+    const accountId =
+      !listAll && /^\d+$/.test(trimmed)
+        ? Number.parseInt(trimmed, 10)
+        : null;
+    const uuidMatch =
+      !listAll &&
+      trimmed.match(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+      );
     const ucid = uuidMatch ? trimmed : null;
     const text =
-      accountId === null && ucid === null ? `%${trimmed}%` : null;
+      !listAll && accountId === null && ucid === null ? `%${trimmed}%` : null;
+
+    const sortColumns: Record<
+      import('../internal-admin/internal-subscriptions.types.js').SubscriptionAdminSortField,
+      string
+    > = {
+      accountId: 'a.id',
+      name: 'a.name',
+      subscriptionPlan: 'a.subscription_plan',
+      channelSlug: 'ch.channel_slug',
+      endsAt: 's.ends_at',
+      updatedAt: 'a.updated_at',
+    };
+    const sortColumn = sortColumns[input.sortBy] ?? sortColumns.updatedAt;
+    const sortDirection = input.sortOrder === 'asc' ? 'ASC' : 'DESC';
+    const offset = (input.page - 1) * input.pageSize;
+
+    const countResult = await this.pool.query<{ total: number }>(
+      `
+        SELECT COUNT(*)::int AS total
+        FROM accounts a
+        LEFT JOIN LATERAL (
+          SELECT channel_slug
+          FROM account_channels
+          WHERE account_id = a.id AND provider = 'kick'
+          ORDER BY is_primary DESC, id ASC
+          LIMIT 1
+        ) ch ON true
+        WHERE
+          ($4::boolean IS TRUE)
+          OR ($1::bigint IS NOT NULL AND a.id = $1::bigint)
+          OR ($2::uuid IS NOT NULL AND a.ucid = $2::uuid)
+          OR (
+            $3::text IS NOT NULL
+            AND (
+              a.name ILIKE $3
+              OR ch.channel_slug ILIKE $3
+            )
+          )
+      `,
+      [accountId, ucid, text, listAll],
+    );
+    const total = countResult.rows[0]?.total ?? 0;
+
+    if (total === 0) {
+      return {
+        items: [],
+        total: 0,
+        page: input.page,
+        pageSize: input.pageSize,
+      };
+    }
 
     const result = await this.pool.query<{
       account_id: string | number;
@@ -5036,7 +5095,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           LIMIT 1
         ) ch ON true
         WHERE
-          ($1::bigint IS NOT NULL AND a.id = $1::bigint)
+          ($4::boolean IS TRUE)
+          OR ($1::bigint IS NOT NULL AND a.id = $1::bigint)
           OR ($2::uuid IS NOT NULL AND a.ucid = $2::uuid)
           OR (
             $3::text IS NOT NULL
@@ -5045,10 +5105,11 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
               OR ch.channel_slug ILIKE $3
             )
           )
-        ORDER BY a.updated_at DESC
-        LIMIT 20
+        ORDER BY ${sortColumn} ${sortDirection} NULLS LAST, a.id DESC
+        OFFSET $5
+        LIMIT $6
       `,
-      [accountId, ucid, text],
+      [accountId, ucid, text, listAll, offset, input.pageSize],
     );
 
     const items: import('../internal-admin/internal-subscriptions.types.js').SubscriptionAdminSearchItem[] =
@@ -5061,7 +5122,12 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       }
     }
 
-    return items;
+    return {
+      items,
+      total,
+      page: input.page,
+      pageSize: input.pageSize,
+    };
   }
 
   async getSubscriptionAdminAccountDetail(

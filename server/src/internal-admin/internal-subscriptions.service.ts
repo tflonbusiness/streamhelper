@@ -4,22 +4,67 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service.js';
-import type {
-  SubscriptionAdminAccountDetail,
-  SubscriptionAdminSearchItem,
-  SubscriptionAdminUpdateBody,
+import {
+  SUBSCRIPTION_ADMIN_SORT_FIELDS,
+  type SubscriptionAdminAccountDetail,
+  type SubscriptionAdminSearchQuery,
+  type SubscriptionAdminSearchResult,
+  type SubscriptionAdminSortField,
+  type SubscriptionAdminSortOrder,
+  type SubscriptionAdminUpdateBody,
 } from './internal-subscriptions.types.js';
 
 @Injectable()
 export class InternalSubscriptionsService {
   constructor(private readonly database: DatabaseService) {}
 
-  search(query: string): Promise<SubscriptionAdminSearchItem[]> {
-    const trimmed = query.trim();
-    if (trimmed.length < 1) {
-      return Promise.resolve([]);
+  search(query: SubscriptionAdminSearchQuery): Promise<SubscriptionAdminSearchResult> {
+    const page = Math.max(1, Math.floor(query.page) || 1);
+    const pageSize = Math.min(100, Math.max(1, Math.floor(query.pageSize) || 20));
+    const sortBy = this.parseSortField(query.sortBy);
+    const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
+
+    return this.database.searchSubscriptionAdminAccounts({
+      query: query.q.trim(),
+      page,
+      pageSize,
+      sortBy,
+      sortOrder,
+    });
+  }
+
+  private parseSortField(value: string | undefined): SubscriptionAdminSortField {
+    if (
+      value &&
+      (SUBSCRIPTION_ADMIN_SORT_FIELDS as readonly string[]).includes(value)
+    ) {
+      return value as SubscriptionAdminSortField;
     }
-    return this.database.searchSubscriptionAdminAccounts(trimmed);
+    return 'updatedAt';
+  }
+
+  parseSearchQuery(input: {
+    q?: string;
+    page?: string;
+    pageSize?: string;
+    sortBy?: string;
+    sortOrder?: string;
+  }): SubscriptionAdminSearchQuery {
+    const page = Math.max(1, Number.parseInt(input.page ?? '1', 10) || 1);
+    const pageSize = Math.min(
+      100,
+      Math.max(1, Number.parseInt(input.pageSize ?? '20', 10) || 20),
+    );
+    const sortOrder: SubscriptionAdminSortOrder =
+      input.sortOrder === 'asc' ? 'asc' : 'desc';
+
+    return {
+      q: input.q ?? '',
+      page,
+      pageSize,
+      sortBy: this.parseSortField(input.sortBy),
+      sortOrder,
+    };
   }
 
   async getDetail(accountId: number): Promise<SubscriptionAdminAccountDetail> {

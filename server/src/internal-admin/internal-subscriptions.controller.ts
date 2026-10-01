@@ -31,10 +31,23 @@ export class InternalSubscriptionsController {
   }
 
   @Get()
-  async search(@Req() req: Request, @Query('q') q?: string) {
+  async search(
+    @Req() req: Request,
+    @Query('q') q?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
+  ) {
     await this.requireOperator(req);
-    const items = await this.subscriptions.search(q ?? '');
-    return { items };
+    const query = this.subscriptions.parseSearchQuery({
+      q,
+      page,
+      pageSize,
+      sortBy,
+      sortOrder,
+    });
+    return this.subscriptions.search(query);
   }
 
   @Get(':accountId')

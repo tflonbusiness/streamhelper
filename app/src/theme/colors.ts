@@ -51,6 +51,20 @@ export const inputFieldSx: SxProps<Theme> = {
   },
 }
 
+/** Native date/time picker icon visibility on dark backgrounds (WebKit). */
+export const datetimeLocalFieldSx: SxProps<Theme> = {
+  ...inputFieldSx,
+  '& .MuiOutlinedInput-input[type="datetime-local"]': {
+    colorScheme: 'dark',
+    paddingRight: 4,
+  },
+  '& .MuiOutlinedInput-input[type="datetime-local"]::-webkit-calendar-picker-indicator': {
+    cursor: 'pointer',
+    filter: 'invert(0.92)',
+    opacity: 0.92,
+  },
+}
+
 export function toneChipSx(color: string): SxProps<Theme> {
   return {
     height: 24,

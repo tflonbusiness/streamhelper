@@ -50,6 +50,7 @@ type AppTableProps<T> = {
   pagination?: AppTablePaginationConfig
   expandable?: AppTableExpandableConfig<T>
   getRowSx?: (row: T) => SxProps<Theme> | undefined
+  onRowClick?: (row: T) => void
   loading?: boolean
 }
 
@@ -244,6 +245,7 @@ export function AppTable<T>({
   pagination,
   expandable,
   getRowSx,
+  onRowClick,
   loading = false,
 }: AppTableProps<T>) {
   const { t } = useTranslation()
@@ -302,7 +304,12 @@ export function AppTable<T>({
 
               return (
                 <Fragment key={rowKey}>
-                  <StyledDataRow hover sx={rowSx}>
+                  <StyledDataRow
+                    hover
+                    sx={rowSx}
+                    onClick={onRowClick ? () => onRowClick(row) : undefined}
+                    style={onRowClick ? { cursor: 'pointer' } : undefined}
+                  >
                     {expandable ? (
                       <StyledExpandBodyCell>
                         <StyledExpandButton

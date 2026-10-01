@@ -64,6 +64,15 @@ export const theme = createTheme({
         body: {
           backgroundColor: colors.neutral[950],
         },
+        'input[type="date"], input[type="datetime-local"], input[type="time"]': {
+          colorScheme: 'dark',
+        },
+        'input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-local"]::-webkit-calendar-picker-indicator, input[type="time"]::-webkit-calendar-picker-indicator':
+          {
+            cursor: 'pointer',
+            filter: 'invert(0.92)',
+            opacity: 0.92,
+          },
       },
     },
     MuiCard: {
