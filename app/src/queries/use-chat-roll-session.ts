@@ -14,14 +14,17 @@ import {
   rollChatRoll,
   type PatchChatRollInput,
 } from '@/api/chat-roll'
+import type { ChatRollRecord } from '@/api/chat-roll'
+import { pickEntitlementEnvelope, type EntitlementEnvelope } from '@/lib/entitlements'
 import { chatRollKeys } from '@/queries/keys'
 
 const SESSION_POLL_MS = 5000
 
 export type ChatRollSessionData = {
-  record: Awaited<ReturnType<typeof fetchChatRoll>>
+  record: ChatRollRecord
   participants: Awaited<ReturnType<typeof fetchChatRollParticipants>>
   wins: Awaited<ReturnType<typeof fetchChatRollWins>>
+  envelope?: EntitlementEnvelope
 }
 
 function sessionQueryKey(accountId: number, chatRollId: number) {
@@ -32,12 +35,13 @@ async function fetchChatRollSession(
   accountId: number,
   chatRollId: number,
 ): Promise<ChatRollSessionData> {
-  const [record, participants, wins] = await Promise.all([
+  const [recordPayload, participants, wins] = await Promise.all([
     fetchChatRoll(accountId, chatRollId),
     fetchChatRollParticipants(accountId, chatRollId),
     fetchChatRollWins(accountId, chatRollId),
   ])
-  return { record, participants, wins }
+  const { data: record, envelope } = pickEntitlementEnvelope(recordPayload)
+  return { record, participants, wins, envelope }
 }
 
 export function useChatRollSession(

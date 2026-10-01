@@ -1,0 +1,61 @@
+- id: "1"
+  title: Plan tier data model and auto trial provision
+  description: >-
+    Migration and provision paths set plan_tier trial|pro|max; auto trial on
+    account create; admin API studio→max. CAP-1.
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    Read SPEC companions plan-entitlements.md and architecture spine AD-2 AD-9.
+    Add SQL migration for plan_tier values; update provision insert and
+    internal-subscriptions paidPlan max.
+
+- id: "2"
+  title: Entitlement matrix and compliance helper (server)
+  description: >-
+    PLAN_ENTITLEMENTS, usage counts, compliance ok|over_limit shared helper.
+    CAP-2. Unit tests required.
+  invoke_dev_with: >-
+    server/src/subscriptions/ — pure functions + DB count queries per
+    plan-entitlements.md counting table.
+
+- id: "3"
+  title: Module GET envelope — Bonus Buy and Prize Spin
+  description: >-
+    Attach entitlements, usage, compliance to list and session detail GET
+    responses. CAP-3 partial.
+  invoke_dev_with: >-
+    Follow get-envelope-and-compliance.md JSON shape; do not add INSERT guards.
+
+- id: "4"
+  title: Module GET envelope — Chat Roll and Team moderators
+  description: >-
+    Same envelope for Chat Roll session/list; admin member usage on team GET.
+    CAP-3 complete.
+  invoke_dev_with: >-
+    adminMembers usage counts role admin only; owner excluded.
+
+- id: "5"
+  title: App UI gates and refetch after cleanup
+  description: >-
+    Disable create/copy/add at cap; over_limit banner and removal-only mode;
+    refetch session GET after delete/archive. CAP-4.
+  invoke_dev_with: >-
+    React Query invalidate pattern; no F5; copy blocked at 2 non-archived sessions.
+
+- id: "6"
+  title: Public widgets and dashboard admin banner
+  description: >-
+    Widget GET entitlement_over_limit; i18n; admin subscription inactive banner.
+    CAP-5 CAP-6.
+  invoke_dev_with: >-
+    public-widget.ts new reason; auth.service public widget methods use shared
+    compliance helper.
+
+- id: "7"
+  title: Subscription catalog and labels trial pro max
+  description: >-
+    App subscription pages and catalog align with plan_tier naming; studio→max
+    in user-facing copy. Supports CAP-1 UX.
+  invoke_dev_with: >-
+    subscription-catalog.ts and i18n; coordinate with spec-subscription-tab
+    where plan badge shown.

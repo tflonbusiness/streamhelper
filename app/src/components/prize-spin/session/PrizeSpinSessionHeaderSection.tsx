@@ -27,6 +27,7 @@ type PrizeSpinSessionHeaderSectionProps = {
   onOpenArchiveDialog: () => void
   onGoLive?: () => void
   liveActionPending?: boolean
+  goLiveDisabled?: boolean
 }
 
 const HeaderStack = styled(Stack)(({ theme }) => ({
@@ -114,7 +115,7 @@ export const PrizeSpinSessionHeaderSection = (
                 variant="contained"
                 size="small"
                 color="primary"
-                disabled={props.liveActionPending}
+                disabled={props.liveActionPending || props.goLiveDisabled}
                 onClick={props.onGoLive}
               >
                 {t('prizeSpin.goLive')}

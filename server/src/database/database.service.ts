@@ -56,6 +56,7 @@ import {
 } from '../auth/token.util.js';
 import { runMigrations } from './run-migrations.js';
 import { TRIAL_DURATION_DAYS } from '../subscriptions/account-subscription.constants.js';
+import type { EntitlementUsage } from '../subscriptions/plan-entitlements.js';
 import {
   resolveAccountSubscriptionAccess,
   shouldMarkSubscriptionExpired,
@@ -449,14 +450,12 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   }
 
   private mapAccountSubscriptionRow(row: {
-    kind: AccountSubscriptionRow['kind'] | null;
     status: AccountSubscriptionRow['status'] | null;
     plan_tier: string | null;
     starts_at: Date | null;
     ends_at: Date | null;
   }): AccountSubscriptionRow | null {
     if (
-      row.kind === null ||
       row.status === null ||
       row.plan_tier === null ||
       row.starts_at === null ||
@@ -466,7 +465,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
 
     return {
-      kind: row.kind,
       status: row.status,
       planTier: row.plan_tier,
       startsAt: row.starts_at,
@@ -491,14 +489,13 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     accountId: number,
   ): Promise<AccountSubscriptionSnapshot> {
     const result = await this.pool.query<{
-      kind: AccountSubscriptionRow['kind'] | null;
       status: AccountSubscriptionRow['status'] | null;
       plan_tier: string | null;
       starts_at: Date | null;
       ends_at: Date | null;
     }>(
       `
-        SELECT kind, status, plan_tier, starts_at, ends_at
+        SELECT status, plan_tier, starts_at, ends_at
         FROM account_subscriptions
         WHERE account_id = $1
         LIMIT 1
@@ -508,7 +505,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
     const subscriptionRow = this.mapAccountSubscriptionRow(
       result.rows[0] ?? {
-        kind: null,
         status: null,
         plan_tier: null,
         starts_at: null,
@@ -531,10 +527,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     await client.query(
       `
         INSERT INTO account_subscriptions (
-          account_id, kind, status, plan_tier, starts_at, ends_at
+          account_id, status, plan_tier, starts_at, ends_at
         )
         VALUES (
-          $1, 'trial', 'active', 'full', now(),
+          $1, 'active', 'trial', now(),
           now() + make_interval(days => $2::int)
         )
       `,
@@ -547,6 +543,90 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     return snapshot.hasAccess;
   }
 
+  async loadEntitlementUsage(
+    accountId: number,
+    context: { bonusBuyId?: number; prizeSpinId?: number } = {},
+  ): Promise<EntitlementUsage> {
+    const counts = await this.pool.query<{
+      bonus_buy: number;
+      prize_spin: number;
+      chat_roll: number;
+    }>(
+      `
+        SELECT
+          (
+            SELECT COUNT(*)::int
+            FROM bonus_buy
+            WHERE account_id = $1 AND status != 'archived'
+          ) AS bonus_buy,
+          (
+            SELECT COUNT(*)::int
+            FROM prize_spin
+            WHERE account_id = $1 AND status != 'archived'
+          ) AS prize_spin,
+          (
+            SELECT COUNT(*)::int
+            FROM chat_roll
+            WHERE account_id = $1 AND status != 'archived'
+          ) AS chat_roll
+      `,
+      [accountId],
+    );
+    const sessionRow = counts.rows[0] ?? {
+      bonus_buy: 0,
+      prize_spin: 0,
+      chat_roll: 0,
+    };
+
+    let bonusBuySlots: number | null = null;
+    if (context.bonusBuyId !== undefined) {
+      const slotResult = await this.pool.query<{ count: number }>(
+        `
+          SELECT COUNT(*)::int AS count
+          FROM bonus_buy_slot
+          WHERE bonus_buy_id = $1 AND status != 'archived'
+        `,
+        [context.bonusBuyId],
+      );
+      bonusBuySlots = slotResult.rows[0]?.count ?? 0;
+    }
+
+    let prizeSpinSectors: number | null = null;
+    if (context.prizeSpinId !== undefined) {
+      const sectorResult = await this.pool.query<{ count: number }>(
+        `
+          SELECT COUNT(*)::int AS count
+          FROM prize_spin_sector
+          WHERE prize_spin_id = $1
+        `,
+        [context.prizeSpinId],
+      );
+      prizeSpinSectors = sectorResult.rows[0]?.count ?? 0;
+    }
+
+    const moderatorResult = await this.pool.query<{ count: number }>(
+      `
+        SELECT COUNT(*)::int AS count
+        FROM account_members
+        WHERE account_id = $1
+          AND role = 'moderator'
+          AND is_active = true
+      `,
+      [accountId],
+    );
+
+    return {
+      sessions: {
+        bonusBuy: sessionRow.bonus_buy,
+        prizeSpin: sessionRow.prize_spin,
+        chatRoll: sessionRow.chat_roll,
+      },
+      bonusBuySlots,
+      prizeSpinSectors,
+      moderatorMembers: moderatorResult.rows[0]?.count ?? 0,
+    };
+  }
+
   async getPrimaryMembership(userId: number): Promise<DbMembership | null> {
     const result = await this.pool.query<{
       account_id: string | number;
@@ -554,7 +634,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       name: string;
       role: 'owner' | 'moderator';
       subscription_plan: string;
-      kind: AccountSubscriptionRow['kind'] | null;
       status: AccountSubscriptionRow['status'] | null;
       plan_tier: string | null;
       starts_at: Date | null;
@@ -567,7 +646,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           a.name,
           am.role,
           a.subscription_plan,
-          s.kind,
           s.status,
           s.plan_tier,
           s.starts_at,
@@ -5067,7 +5145,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       name: string;
       subscription_plan: string;
       channel_slug: string | null;
-      kind: AccountSubscriptionRow['kind'] | null;
       status: AccountSubscriptionRow['status'] | null;
       plan_tier: string | null;
       starts_at: Date | null;
@@ -5080,7 +5157,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           a.name,
           a.subscription_plan,
           ch.channel_slug,
-          s.kind,
           s.status,
           s.plan_tier,
           s.starts_at,
@@ -5141,7 +5217,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       name: string;
       subscription_plan: string;
       channel_slug: string | null;
-      kind: AccountSubscriptionRow['kind'] | null;
       status: AccountSubscriptionRow['status'] | null;
       plan_tier: string | null;
       starts_at: Date | null;
@@ -5154,7 +5229,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           a.name,
           a.subscription_plan,
           ch.channel_slug,
-          s.kind,
           s.status,
           s.plan_tier,
           s.starts_at,
@@ -5214,7 +5288,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     operatorUserId: number,
     input: {
       mode: 'revoked' | 'trial' | 'paid';
-      paidPlan?: 'pro' | 'studio';
+      paidPlan?: 'pro' | 'max';
       endsAt?: Date;
       planTier: string;
     },
@@ -5236,35 +5310,32 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
       const before = await this.loadSubscriptionAdminAuditPayload(accountId, client);
 
-      const existingSub = await client.query<{
-        kind: AccountSubscriptionRow['kind'] | null;
-      }>(
-        `SELECT kind FROM account_subscriptions WHERE account_id = $1 LIMIT 1`,
-        [accountId],
-      );
-      const previousKind = existingSub.rows[0]?.kind ?? 'trial';
-
       let subscriptionPlan = 'free';
-      let kind: AccountSubscriptionRow['kind'] = previousKind;
       let status: AccountSubscriptionRow['status'] = 'expired';
       let endsAt = new Date();
 
       if (input.mode === 'revoked') {
         subscriptionPlan = 'free';
-        kind = previousKind;
         status = 'expired';
         endsAt = new Date();
       } else if (input.mode === 'trial') {
-        subscriptionPlan = 'free';
-        kind = 'trial';
+        subscriptionPlan = 'trial';
         status = 'active';
         endsAt = input.endsAt!;
       } else {
         subscriptionPlan = input.paidPlan!;
-        kind = 'paid';
         status = 'active';
         endsAt = input.endsAt!;
       }
+
+      const planTier =
+        input.planTier === 'pro' ||
+        input.planTier === 'max' ||
+        input.planTier === 'trial'
+          ? input.planTier
+          : input.mode === 'trial'
+            ? 'trial'
+            : input.paidPlan ?? 'pro';
 
       await client.query(
         `
@@ -5278,11 +5349,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       await client.query(
         `
           INSERT INTO account_subscriptions (
-            account_id, kind, status, plan_tier, starts_at, ends_at
+            account_id, status, plan_tier, starts_at, ends_at
           )
-          VALUES ($1, $2, $3, $4, now(), $5)
+          VALUES ($1, $2, $3, now(), $4)
           ON CONFLICT (account_id) DO UPDATE SET
-            kind = EXCLUDED.kind,
             status = EXCLUDED.status,
             plan_tier = EXCLUDED.plan_tier,
             ends_at = EXCLUDED.ends_at,
@@ -5294,7 +5364,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
               ELSE account_subscriptions.starts_at
             END
         `,
-        [accountId, kind, status, input.planTier, endsAt],
+        [accountId, status, planTier, endsAt],
       );
 
       const after = await this.loadSubscriptionAdminAuditPayload(accountId, client);
@@ -5331,7 +5401,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     name: string;
     subscription_plan: string;
     channel_slug: string | null;
-    kind: AccountSubscriptionRow['kind'] | null;
     status: AccountSubscriptionRow['status'] | null;
     plan_tier: string | null;
     starts_at: Date | null;
@@ -5365,7 +5434,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   > {
     const result = await client.query<{
       subscription_plan: string;
-      kind: AccountSubscriptionRow['kind'] | null;
       status: AccountSubscriptionRow['status'] | null;
       plan_tier: string | null;
       starts_at: Date | null;
@@ -5374,7 +5442,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       `
         SELECT
           a.subscription_plan,
-          s.kind,
           s.status,
           s.plan_tier,
           s.starts_at,
@@ -5396,7 +5463,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
 
     const subscriptionRow = this.mapAccountSubscriptionRow({
-      kind: row.kind,
       status: row.status,
       plan_tier: row.plan_tier,
       starts_at: row.starts_at,

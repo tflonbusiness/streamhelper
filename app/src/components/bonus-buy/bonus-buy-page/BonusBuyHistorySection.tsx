@@ -14,6 +14,14 @@ import SensorsIcon from '@mui/icons-material/Sensors'
 import { styled } from '@mui/material/styles'
 import { useEffect, useMemo, useState } from 'react'
 import { type BonusBuyArchivedFilter, type BonusBuyRecord } from '@/api/bonus-buy'
+import {
+  hasEntitlementEnvelope,
+  isAtSessionCap,
+  isOverLimit,
+  canGoLiveModuleSession,
+  type EntitlementEnvelope,
+} from '@/lib/entitlements'
+import { EntitlementNoticesSection } from '@/components/EntitlementNoticesSection'
 import { BonusBuyCreateDialog } from '@/components/bonus-buy/bonus-buy-page/BonusBuyCreateDialog'
 import { BonusBuyHistoryList } from '@/components/bonus-buy/bonus-buy-page/BonusBuyHistoryList'
 import { BonusBuyHistoryLiveHero } from '@/components/bonus-buy/bonus-buy-page/BonusBuyHistoryLiveHero'
@@ -99,6 +107,13 @@ export const BonusBuyHistorySection = ({
   })
 
   const records = recordsResult?.records ?? []
+  const listEnvelope: EntitlementEnvelope | undefined = hasEntitlementEnvelope(
+    recordsResult,
+  )
+    ? recordsResult
+    : undefined
+  const createSessionDisabled =
+    isOverLimit(listEnvelope) || isAtSessionCap(listEnvelope, 'bonusBuy')
   const recordsTotal =
     typeof recordsResult?.total === 'number'
       ? recordsResult.total
@@ -152,22 +167,29 @@ export const BonusBuyHistorySection = ({
       <StyledCard elevation={0}>
         <StyledCardContent>
           <StyledContentStack>
-            <SectionHeader
-              title={t('common.sessionsTitle')}
-              description={t('common.sessionsSectionDescription')}
-              icon={SensorsIcon}
-              iconVariant="warning"
-              action={
-                <Button
-                  type="button"
-                  variant="contained"
-                  startIcon={<AddIcon fontSize="small" aria-hidden />}
-                  onClick={() => setCreateDialogOpen(true)}
-                >
-                  {t('common.newSession')}
-                </Button>
-              }
-            />
+            <Stack spacing={0} sx={{ width: '100%' }}>
+              <SectionHeader
+                title={t('common.sessionsTitle')}
+                description={t('common.sessionsSectionDescription')}
+                icon={SensorsIcon}
+                iconVariant="warning"
+                action={
+                  <Button
+                    type="button"
+                    variant="contained"
+                    startIcon={<AddIcon fontSize="small" aria-hidden />}
+                    onClick={() => setCreateDialogOpen(true)}
+                    disabled={createSessionDisabled}
+                  >
+                    {t('common.newSession')}
+                  </Button>
+                }
+              />
+              <EntitlementNoticesSection
+                envelope={listEnvelope}
+                module="bonusBuy"
+              />
+            </Stack>
             {showLiveHero ? (
               <BonusBuyHistoryLiveHero
                 record={liveRecord}
@@ -184,6 +206,7 @@ export const BonusBuyHistorySection = ({
               goLivePendingId={
                 goLiveMutation.isPending ? goLiveMutation.variables : undefined
               }
+              goLiveDisabled={!canGoLiveModuleSession(listEnvelope, 'bonusBuy')}
               onArchive={setArchiveDialogRecord}
               onGoLive={(record) => {
                 goLiveMutation.mutate(record.id, {

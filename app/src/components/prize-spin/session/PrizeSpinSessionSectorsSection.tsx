@@ -34,6 +34,8 @@ type PrizeSpinSessionSectorsSectionProps = {
   prizeSpinId: number
   sectors: PrizeSpinSector[]
   readOnly: boolean
+  canMutate?: boolean
+  canAddSector?: boolean
 }
 
 const SectionActions = styled(Stack)({
@@ -132,10 +134,11 @@ export const PrizeSpinSessionSectorsSection = (
   const sectorColumns = useMemo(
     () =>
       buildPrizeSpinSectorColumns(t, {
-        readOnly: props.readOnly,
+        readOnly: props.readOnly || props.canMutate === false,
+        deleteDisabled: props.readOnly,
         onDelete: handleDeleteSector,
       }),
-    [handleDeleteSector, props.readOnly, t],
+    [handleDeleteSector, props.canMutate, props.readOnly, t],
   )
 
   return (
@@ -159,6 +162,7 @@ export const PrizeSpinSessionSectorsSection = (
                   loadingPosition="start"
                   disabled={
                     props.readOnly ||
+                    props.canMutate === false ||
                     props.sectors.length === 0 ||
                     distributeSectorsMutation.isPending
                   }
@@ -171,7 +175,10 @@ export const PrizeSpinSessionSectorsSection = (
                   variant="contained"
                   size="small"
                   startIcon={<AddIcon fontSize="small" aria-hidden />}
-                  disabled={props.readOnly}
+                  disabled={
+                    props.readOnly ||
+                    props.canAddSector === false
+                  }
                   onClick={() => setAddDialogOpen(true)}
                 >
                   Add sector
@@ -191,7 +198,7 @@ export const PrizeSpinSessionSectorsSection = (
               prizeSpinId={props.prizeSpinId}
               existingTotalWinPercent={totalWinPercent}
               sectorsSnapshot={sectorsSnapshot}
-              readOnly={props.readOnly}
+              readOnly={props.readOnly || props.canMutate === false}
             >
               <AppTable
                 columns={sectorColumns}

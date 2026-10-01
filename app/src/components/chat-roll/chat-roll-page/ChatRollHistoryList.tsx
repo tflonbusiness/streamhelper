@@ -28,6 +28,7 @@ type ChatRollHistoryListProps = {
   showGoLiveAction?: boolean
   showSectionTitle?: boolean
   goLivePendingId?: number
+  goLiveDisabled?: boolean
   onArchive: (record: ChatRollRecord) => void
   onGoLive: (record: ChatRollRecord) => void
 }
@@ -143,6 +144,7 @@ export function ChatRollHistoryList({
   showGoLiveAction = true,
   showSectionTitle = true,
   goLivePendingId,
+  goLiveDisabled = false,
   onArchive,
   onGoLive,
 }: ChatRollHistoryListProps) {
@@ -201,6 +203,7 @@ export function ChatRollHistoryList({
                 showArchiveAction={showArchiveAction}
                 showGoLiveAction={showGoLiveAction}
                 goLivePending={goLivePendingId === record.id}
+                goLiveDisabled={goLiveDisabled}
                 onArchive={onArchive}
                 onGoLive={onGoLive}
               />

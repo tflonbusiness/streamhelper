@@ -1,4 +1,5 @@
 import i18n from '@/i18n/init-i18n'
+import type { EntitlementEnvelope } from '@/lib/entitlements'
 const jsonHeaders = {
   'Content-Type': 'application/json',
 }
@@ -30,7 +31,9 @@ export type BonusBuyListResult = {
   total: number
   page: number
   limit: number
-}
+} & Partial<EntitlementEnvelope>
+
+export type BonusBuyRecordResponse = BonusBuyRecord & Partial<EntitlementEnvelope>
 
 export type BonusBuyRecord = {
   id: number
@@ -127,6 +130,7 @@ export type PublicWidgetUnavailableReason =
   | 'no_live_session'
   | 'no_sessions'
   | 'subscription_expired'
+  | 'entitlement_over_limit'
 
 export type BonusBuyWidgetActiveView = {
   status: 'active'
@@ -169,7 +173,7 @@ async function readErrorMessage(response: Response, fallback: string): Promise<s
 export async function fetchBonusBuy(
   accountId: number,
   bonusBuyId: number,
-): Promise<BonusBuyRecord> {
+): Promise<BonusBuyRecordResponse> {
   const response = await fetch(
     `/accounts/${accountId}/bonus-buys/${bonusBuyId}`,
     {
@@ -183,7 +187,7 @@ export async function fetchBonusBuy(
     )
   }
 
-  return response.json() as Promise<BonusBuyRecord>
+  return response.json() as Promise<BonusBuyRecordResponse>
 }
 
 export async function fetchBonusBuys(

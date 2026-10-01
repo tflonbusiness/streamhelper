@@ -4,13 +4,27 @@ import {
   fetchAccountMembers,
   fetchModeratorInviteLink,
   revokeModerator,
+  type AccountMember,
 } from '@/api/auth'
+import {
+  pickEntitlementEnvelope,
+  type EntitlementEnvelope,
+} from '@/lib/entitlements'
 import { authKeys } from '@/queries/keys'
+
+export type AccountMembersQueryData = {
+  members: AccountMember[]
+  envelope?: EntitlementEnvelope
+}
 
 export function useAccountMembers(accountId: number | undefined) {
   return useQuery({
     queryKey: authKeys.members(accountId ?? 0),
-    queryFn: () => fetchAccountMembers(accountId!),
+    queryFn: async (): Promise<AccountMembersQueryData> => {
+      const result = await fetchAccountMembers(accountId!)
+      const { data, envelope } = pickEntitlementEnvelope(result)
+      return { members: data.members, envelope }
+    },
     enabled: accountId !== undefined,
   })
 }

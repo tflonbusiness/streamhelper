@@ -52,7 +52,10 @@ import { ChatRollRollRevealOverlay } from '@/components/chat-roll/session/ChatRo
 import { ChatRollSessionUnsavedLeaveDialog } from '@/components/chat-roll/session/ChatRollSessionUnsavedLeaveDialog'
 import { chatRollModule, getChatRollWinRowBorderColor } from '@/components/chat-roll/session/chat-roll-session-utils'
 import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
+import { EntitlementOverLimitAlert } from '@/components/EntitlementOverLimitAlert'
 import { SectionHeader } from '@/components/SectionHeader'
+import { canMutateWithEntitlements, canGoLiveChatRollSession } from '@/lib/entitlements'
+import type { EntitlementEnvelope } from '@/lib/entitlements'
 import { useAuth } from '@/context/AuthContext'
 import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
 import { useNotification } from '@/context/NotificationContext'
@@ -300,6 +303,7 @@ export function ChatRollSessionPage() {
       record={record}
       participants={session.participants}
       wins={session.wins}
+      envelope={session.envelope}
     />
   )
 }
@@ -310,6 +314,7 @@ type ChatRollSessionWorkspaceProps = {
   record: ChatRollRecord
   participants: ChatRollParticipant[]
   wins: ChatRollWin[]
+  envelope?: EntitlementEnvelope
 }
 
 function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
@@ -322,8 +327,9 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
   const [rollRevealOpen, setRollRevealOpen] = useState(false)
   const [rollRevealWin, setRollRevealWin] = useState<ChatRollWin | null>(null)
 
-  const { record, participants, wins, accountId, chatRollId } = props
+  const { record, participants, wins, accountId, chatRollId, envelope } = props
   const readOnly = isChatRollReadOnly(record)
+  const canMutate = canMutateWithEntitlements(envelope)
 
   const settingsSaveMutation = usePatchChatRollSession(accountId, chatRollId)
   const sessionPatchMutation = usePatchChatRollSession(accountId, chatRollId)
@@ -534,7 +540,8 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
 
   const [settingsExpanded, setSettingsExpanded] = useState(true)
 
-  const settingsDisabled = readOnly || settingsSaveMutation.isPending
+  const settingsDisabled =
+    readOnly || settingsSaveMutation.isPending || !canMutate
   const winnerResponseSecondsError =
     !validateChatRollSettingsDraftWinnerResponseSeconds(draft)
       ? t('chatRoll.winnerResponseSecondsOutOfRange')
@@ -545,15 +552,18 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
     validateChatRollSettingsDraftWinnerResponseSeconds(draft) &&
     validateChatRollSettingsDraftRoleWeights(draft) &&
     !settingsSaveMutation.isPending &&
-    !readOnly
+    !readOnly &&
+    canMutate
 
   return (
     <PageStack>
       <ModuleSessionPageHeader module={chatRollModule} />
+      <EntitlementOverLimitAlert envelope={envelope} />
 
       <ChatRollSessionHeaderSection
         record={record}
         onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
+        goLiveDisabled={!canGoLiveChatRollSession(envelope)}
         onGoLive={() => {
           goLiveMutation.mutate(undefined, {
             onSuccess: (updated) =>
@@ -581,6 +591,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
               startIcon={<ReplayIcon />}
               onClick={handleRoll}
               disabled={
+                !canMutate ||
                 participants.length <= 1 ||
                 rollMutation.isPending ||
                 rollRevealOpen
@@ -602,7 +613,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
                   <PlayArrowIcon fontSize="small" />
                 )
               }
-              disabled={sessionPatchMutation.isPending}
+              disabled={sessionPatchMutation.isPending || !canMutate}
               onClick={() =>
                 patchSession({
                   is_accepting_participants: !record.isAcceptingParticipants,

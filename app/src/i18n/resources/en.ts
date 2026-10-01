@@ -272,6 +272,8 @@ export const en = {
     trialExpiredTitle: "Trial period ended",
     trialExpiredBody:
       "Your team's trial has ended. Open subscription settings to activate a plan, or contact the account owner.",
+    trialExpiredModeratorBody:
+      "Team subscription is inactive — contact the account owner.",
     trialExpiredSubscriptionPageBody:
       "Modules and stream overlays are paused until you activate a subscription. Message us on Telegram — we will help you choose a plan and enable access for your team.",
     currentPlanSection: "Current plan",
@@ -300,23 +302,39 @@ export const en = {
           support: "Standard support in Telegram",
         },
       },
-      studio: {
-        name: "Studio",
-        blurb: "For teams that need priority help and room to scale.",
+      max: {
+        name: "Max",
+        blurb: "No limits on sessions, sectors, slots, or moderators.",
         features: {
           allPro: "Everything in Pro",
-          priority: "Priority support and faster activation",
-          custom: "Custom limits and onboarding help",
+          unlimited: "Trial and Pro quotas removed",
+          priority: "Priority support in Telegram",
         },
       },
       expired: {
         name: "No active plan",
-        blurb: "Modules are paused. Choose Pro or Studio to restore access.",
+        blurb: "Modules are paused. Choose Pro or Max to restore access.",
         features: {
           dashboardOnly: "Dashboard and subscription page only",
           modulesPaused: "Modules and overlays stay off until activation",
         },
       },
+    },
+    entitlements: {
+      overLimitTitle: "Over plan limit",
+      overLimitBody:
+        "You're over your plan limit — some data exceeds what's allowed. Full access returns after you remove the extra items (archive or delete).",
+      overLimitSessionTitle: "Session limit exceeded",
+      overLimitSessionBody:
+        "You have {{usage}} active sessions but your plan allows {{limit}}. You can't create new ones until you archive the extras from the list below.",
+      sessionCap: {
+        title: "Session limit reached",
+        body:
+          "You've reached the limit of {{limit}} active sessions. You can't create new ones until you archive one from the list below.",
+        bodyPrizeSpin:
+          "You've reached the limit of {{limit}} active sessions. New sessions and duplicates are unavailable until you archive one from the list below.",
+      },
+      noticesSectionAria: "Subscription limit notices",
     },
   },
   subscriptionAdmin: {

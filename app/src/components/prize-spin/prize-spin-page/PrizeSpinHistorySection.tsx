@@ -27,7 +27,15 @@ import {
   formatPrizeSpinLiveSessionHint,
   PRIZE_SPIN_HISTORY_PAGE_SIZE,
 } from '@/components/prize-spin/prize-spin-page/prize-spin-page-utils'
+import { EntitlementNoticesSection } from '@/components/EntitlementNoticesSection'
 import { SectionHeader } from '@/components/SectionHeader'
+import {
+  hasEntitlementEnvelope,
+  isAtSessionCap,
+  isOverLimit,
+  canGoLiveModuleSession,
+  type EntitlementEnvelope,
+} from '@/lib/entitlements'
 import { useNotification } from '@/context/NotificationContext'
 import { useGoLivePrizeSpin, usePrizeSpins } from '@/queries/use-prize-spins'
 
@@ -113,6 +121,13 @@ export const PrizeSpinHistorySection = ({
   })
 
   const records = recordsResult?.records ?? []
+  const listEnvelope: EntitlementEnvelope | undefined = hasEntitlementEnvelope(
+    recordsResult,
+  )
+    ? recordsResult
+    : undefined
+  const createSessionDisabled =
+    isOverLimit(listEnvelope) || isAtSessionCap(listEnvelope, 'prizeSpin')
   const recordsTotal =
     typeof recordsResult?.total === 'number'
       ? recordsResult.total
@@ -166,22 +181,29 @@ export const PrizeSpinHistorySection = ({
       <StyledCard elevation={0}>
         <StyledCardContent>
           <StyledContentStack>
-            <SectionHeader
-              title={t('common.sessionsTitle')}
-              description={t('common.sessionsSectionDescription')}
-              icon={SensorsIcon}
-              iconVariant="warning"
-              action={
-                <Button
-                  type="button"
-                  variant="contained"
-                  startIcon={<AddIcon fontSize="small" aria-hidden />}
-                  onClick={() => setCreateDialogOpen(true)}
-                >
-                  {t('common.newSession')}
-                </Button>
-              }
-            />
+            <Stack spacing={0} sx={{ width: '100%' }}>
+              <SectionHeader
+                title={t('common.sessionsTitle')}
+                description={t('common.sessionsSectionDescription')}
+                icon={SensorsIcon}
+                iconVariant="warning"
+                action={
+                  <Button
+                    type="button"
+                    variant="contained"
+                    startIcon={<AddIcon fontSize="small" aria-hidden />}
+                    onClick={() => setCreateDialogOpen(true)}
+                    disabled={createSessionDisabled}
+                  >
+                    {t('common.newSession')}
+                  </Button>
+                }
+              />
+              <EntitlementNoticesSection
+                envelope={listEnvelope}
+                module="prizeSpin"
+              />
+            </Stack>
             {showLiveHero ? (
               <PrizeSpinHistoryLiveHero
                 record={liveRecord}
@@ -195,6 +217,8 @@ export const PrizeSpinHistorySection = ({
               showArchiveAction={archivedFilter !== 'true'}
               showGoLiveAction={archivedFilter !== 'true'}
               showSectionTitle={showLiveHero}
+              copyDisabled={createSessionDisabled}
+              goLiveDisabled={!canGoLiveModuleSession(listEnvelope, 'prizeSpin')}
               goLivePendingId={
                 goLiveMutation.isPending ? goLiveMutation.variables : undefined
               }

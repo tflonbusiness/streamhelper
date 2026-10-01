@@ -9,9 +9,8 @@ describe('account-subscription-access', () => {
     const endsAt = new Date('2026-10-01T12:00:00.000Z');
     const snapshot = resolveAccountSubscriptionAccess(
       {
-        kind: 'trial',
         status: 'active',
-        planTier: 'full',
+        planTier: 'trial',
         startsAt: new Date('2026-09-28T12:00:00.000Z'),
         endsAt,
       },
@@ -25,9 +24,8 @@ describe('account-subscription-access', () => {
   it('denies access after ends_at', () => {
     const snapshot = resolveAccountSubscriptionAccess(
       {
-        kind: 'trial',
         status: 'active',
-        planTier: 'full',
+        planTier: 'trial',
         startsAt: new Date('2026-09-28T12:00:00.000Z'),
         endsAt: new Date('2026-09-30T12:00:00.000Z'),
       },
@@ -40,9 +38,8 @@ describe('account-subscription-access', () => {
 
   it('flags rows that need persistence to expired', () => {
     const row = {
-      kind: 'trial' as const,
       status: 'active' as const,
-      planTier: 'full',
+      planTier: 'trial',
       startsAt: new Date('2026-09-28T12:00:00.000Z'),
       endsAt: new Date('2026-09-30T12:00:00.000Z'),
     };

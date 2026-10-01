@@ -1,5 +1,4 @@
 export type AccountSubscriptionSession = {
-  kind: 'trial' | 'paid';
   status: 'active' | 'expired' | 'cancelled';
   planTier: string;
   endsAt: string;

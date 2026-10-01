@@ -27,6 +27,7 @@ type BonusBuySessionAddSlotSectionProps = {
   accountId: number
   bonusBuyId: number
   record: BonusBuyRecord
+  canAddSlot?: boolean
 }
 
 const defaultValues: CreateBonusBuySlotFormValues = {
@@ -60,7 +61,8 @@ export const BonusBuySessionAddSlotSection = (
     props.accountId,
     props.bonusBuyId,
   )
-  const active = !isBonusBuyReadOnly(props.record)
+  const active =
+    !isBonusBuyReadOnly(props.record) && (props.canAddSlot ?? true)
 
   const {
     control,

@@ -20,6 +20,8 @@ type PrizeSpinHistorySessionCardProps = {
   showArchiveAction?: boolean
   showGoLiveAction?: boolean
   goLivePending?: boolean
+  copyDisabled?: boolean
+  goLiveDisabled?: boolean
   onArchive: (record: PrizeSpinRecord) => void
   onCopy: (record: PrizeSpinRecord) => void
   onGoLive: (record: PrizeSpinRecord) => void
@@ -162,6 +164,8 @@ export function PrizeSpinHistorySessionCard({
   showArchiveAction = true,
   showGoLiveAction = true,
   goLivePending = false,
+  copyDisabled = false,
+  goLiveDisabled = false,
   onArchive,
   onCopy,
   onGoLive,
@@ -221,14 +225,17 @@ export function PrizeSpinHistorySessionCard({
             </Tooltip>
           ) : null}
           <Tooltip title={t('table.copySession')}>
-            <StyledActionIconButton
-              type="button"
-              aria-label={t('table.copySessionAria', { title: record.title })}
-              size="small"
-              onClick={() => onCopy(record)}
-            >
-              <ContentCopyIcon sx={actionIconSx} aria-hidden />
-            </StyledActionIconButton>
+            <span>
+              <StyledActionIconButton
+                type="button"
+                aria-label={t('table.copySessionAria', { title: record.title })}
+                size="small"
+                disabled={copyDisabled}
+                onClick={() => onCopy(record)}
+              >
+                <ContentCopyIcon sx={actionIconSx} aria-hidden />
+              </StyledActionIconButton>
+            </span>
           </Tooltip>
         </StyledSecondaryActions>
         <StyledPrimaryActions>
@@ -238,7 +245,7 @@ export function PrizeSpinHistorySessionCard({
               variant="contained"
               color="primary"
               size="small"
-              disabled={goLivePending}
+              disabled={goLivePending || goLiveDisabled}
               onClick={() => onGoLive(record)}
             >
               {t('prizeSpin.goLive')}

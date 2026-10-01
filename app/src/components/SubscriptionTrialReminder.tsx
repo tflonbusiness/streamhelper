@@ -67,7 +67,9 @@ export function SubscriptionExpiredNotice({
         <span>
           {isSubscriptionPage
             ? t('subscription.trialExpiredSubscriptionPageBody')
-            : t('subscription.trialExpiredBody')}
+            : user.role === 'moderator'
+              ? t('subscription.trialExpiredModeratorBody')
+              : t('subscription.trialExpiredBody')}
         </span>
         {user.role === 'owner' && !isSubscriptionPage ? (
           <Button
@@ -80,7 +82,7 @@ export function SubscriptionExpiredNotice({
             {t('subscription.activateSubscriptionCta')}
           </Button>
         ) : null}
-        {!isSubscriptionPage && user.role !== 'owner' ? (
+        {!isSubscriptionPage && user.role !== 'owner' && user.role !== 'moderator' ? (
           <Button
             href={getTelegramSupportUrl()}
             target="_blank"

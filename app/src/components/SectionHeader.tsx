@@ -11,7 +11,7 @@ export const SectionDivider = styled(Divider)(({ theme }) => ({
   marginLeft: theme.spacing(-3),
   marginRight: theme.spacing(-3),
   marginTop: theme.spacing(2),
-  marginBottom: theme.spacing(2),
+  marginBottom: 0,
 }))
 
 const StyledHeaderRow = styled(Stack, {

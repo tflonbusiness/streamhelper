@@ -48,7 +48,7 @@ function accessKind(
   if (!accountHasAccess(account.subscription)) {
     return 'none'
   }
-  if (account.subscription.kind === 'trial') {
+  if (account.subscription.planTier === 'trial') {
     return 'active-trial'
   }
   return 'active-paid'
@@ -70,7 +70,7 @@ export function SubscriptionAdminPage() {
   })
   const [selected, setSelected] = useState<SubscriptionAdminAccountDetail | null>(null)
   const [mode, setMode] = useState<AdminMode>('trial')
-  const [paidPlan, setPaidPlan] = useState<'pro' | 'studio'>('pro')
+  const [paidPlan, setPaidPlan] = useState<'pro' | 'max'>('pro')
   const [endsAtLocal, setEndsAtLocal] = useState(defaultEndsAtLocal)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -162,11 +162,11 @@ export function SubscriptionAdminPage() {
       setSelected(detail)
       if (!accountHasAccess(detail.subscription)) {
         setMode('revoked')
-      } else if (detail.subscription.kind === 'trial') {
+      } else if (detail.subscription.planTier === 'trial') {
         setMode('trial')
       } else {
         setMode('paid')
-        setPaidPlan(detail.subscriptionPlan === 'studio' ? 'studio' : 'pro')
+        setPaidPlan(detail.subscriptionPlan === 'max' ? 'max' : 'pro')
       }
       if (detail.subscription.endsAt) {
         const parsed = new Date(detail.subscription.endsAt)

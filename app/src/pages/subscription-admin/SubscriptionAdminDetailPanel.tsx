@@ -29,12 +29,12 @@ export type SubscriptionAdminDetailMode = 'revoked' | 'trial' | 'paid'
 type SubscriptionAdminDetailPanelProps = {
   selected: SubscriptionAdminAccountDetail | null
   mode: SubscriptionAdminDetailMode
-  paidPlan: 'pro' | 'studio'
+  paidPlan: 'pro' | 'max'
   endsAtLocal: string
   saving: boolean
   accessChip: (account: SubscriptionAdminAccountDetail) => ReactNode
   onModeChange: (mode: SubscriptionAdminDetailMode) => void
-  onPaidPlanChange: (plan: 'pro' | 'studio') => void
+  onPaidPlanChange: (plan: 'pro' | 'max') => void
   onEndsAtChange: (value: string) => void
   onSave: () => void
 }
@@ -232,11 +232,11 @@ export function SubscriptionAdminDetailPanel({
                     value={paidPlan}
                     size="small"
                     onChange={(event) =>
-                      onPaidPlanChange(event.target.value as 'pro' | 'studio')
+                      onPaidPlanChange(event.target.value as 'pro' | 'max')
                     }
                   >
                     <MenuItem value="pro">Pro</MenuItem>
-                    <MenuItem value="studio">Studio</MenuItem>
+                    <MenuItem value="max">Max</MenuItem>
                   </Select>
                 </FormControl>
               ) : null}

@@ -16,7 +16,7 @@ export type SubscriptionAdminAccountDetail = SubscriptionAdminSearchItem & {
 
 export type SubscriptionAdminUpdatePayload = {
   mode: 'revoked' | 'trial' | 'paid'
-  paidPlan?: 'pro' | 'studio'
+  paidPlan?: 'pro' | 'max'
   endsAt?: string
 }
 

@@ -23,6 +23,8 @@ export const widgetUiCopy = {
     'No chat roll session available. Create a session, then go live.',
   subscriptionExpired:
     'Team subscription inactive. Renew in the dashboard to restore this overlay.',
+  entitlementOverLimit:
+    'Plan limits exceeded. Remove extra records in the dashboard, then refresh this overlay.',
   live: 'Live',
   prizeSpinAddSectors: 'Add sectors in dashboard',
   prizeSpinSpinning: 'Spinning',

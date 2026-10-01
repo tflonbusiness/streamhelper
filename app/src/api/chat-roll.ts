@@ -1,4 +1,5 @@
 import i18n from '@/i18n/init-i18n'
+import type { EntitlementEnvelope } from '@/lib/entitlements'
 import type {
   ChatRollRoleId,
   ChatRollRoleSetting,
@@ -39,7 +40,9 @@ export type ChatRollListResult = {
   total: number
   page: number
   limit: number
-}
+} & Partial<EntitlementEnvelope>
+
+export type ChatRollRecordResponse = ChatRollRecord & Partial<EntitlementEnvelope>
 
 export type ChatRollParticipant = {
   id: number
@@ -128,7 +131,7 @@ async function readErrorMessage(response: Response, fallback: string): Promise<s
 export async function fetchChatRoll(
   accountId: number,
   chatRollId: number,
-): Promise<ChatRollRecord> {
+): Promise<ChatRollRecordResponse> {
   const response = await fetch(
     `/accounts/${accountId}/chat-rolls/${chatRollId}`,
     { credentials: 'include' },
@@ -138,7 +141,7 @@ export async function fetchChatRoll(
     throw new Error(await readErrorMessage(response, i18n.t('errors.api.loadChatRoll')))
   }
 
-  return response.json() as Promise<ChatRollRecord>
+  return response.json() as Promise<ChatRollRecordResponse>
 }
 
 export async function fetchChatRolls(
@@ -431,6 +434,7 @@ export type ChatRollPublicWidgetUnavailableReason =
   | 'no_live_session'
   | 'no_sessions'
   | 'subscription_expired'
+  | 'entitlement_over_limit'
 
 export type ChatRollPublicWidgetActiveRecord = {
   id: number

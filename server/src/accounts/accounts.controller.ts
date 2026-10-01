@@ -125,11 +125,7 @@ export class AccountsController {
   ) {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
-    const members = await this.authService.getAccountMembers(
-      accountId,
-      user.id,
-    );
-    return { members };
+    return this.authService.getAccountMembers(accountId, user.id);
   }
 
   @Post(':accountId/moderators')

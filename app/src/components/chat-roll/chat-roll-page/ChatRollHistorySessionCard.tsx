@@ -19,6 +19,7 @@ type ChatRollHistorySessionCardProps = {
   showArchiveAction?: boolean
   showGoLiveAction?: boolean
   goLivePending?: boolean
+  goLiveDisabled?: boolean
   onArchive: (record: ChatRollRecord) => void
   onGoLive: (record: ChatRollRecord) => void
 }
@@ -165,6 +166,7 @@ export function ChatRollHistorySessionCard({
   showArchiveAction = true,
   showGoLiveAction = true,
   goLivePending = false,
+  goLiveDisabled = false,
   onArchive,
   onGoLive,
 }: ChatRollHistorySessionCardProps) {
@@ -241,7 +243,7 @@ export function ChatRollHistorySessionCard({
               variant="contained"
               color="primary"
               size="small"
-              disabled={goLivePending}
+              disabled={goLivePending || goLiveDisabled}
               onClick={() => onGoLive(record)}
             >
               {t('chatRoll.goLive')}

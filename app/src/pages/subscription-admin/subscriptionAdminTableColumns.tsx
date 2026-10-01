@@ -79,7 +79,7 @@ function AccessChip({
       />
     )
   }
-  if (row.subscription.kind === 'trial') {
+  if (row.subscription.planTier === 'trial') {
     return (
       <Chip
         label={t('subscriptionAdmin.chipTrial')}

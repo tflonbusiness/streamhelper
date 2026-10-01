@@ -25,8 +25,13 @@ import { type AccountMember } from '@/api/auth'
 import { AppTable, type AppTableColumn } from '@/components/AppTable'
 import { PageHeader } from '@/components/PageHeader'
 import { SectionHeader } from '@/components/SectionHeader'
+import { EntitlementOverLimitAlert } from '@/components/EntitlementOverLimitAlert'
 import { RowActionsMenu } from '@/components/RowActionsMenu'
 import { StatusAlert } from '@/components/StatusAlert'
+import {
+  canMutateWithEntitlements,
+  isAtModeratorCap,
+} from '@/lib/entitlements'
 import { useAuth } from '@/context/AuthContext'
 import { useNotification } from '@/context/NotificationContext'
 import {
@@ -87,10 +92,16 @@ export function TeamPage() {
   const [copyingMemberId, setCopyingMemberId] = useState<number | null>(null)
 
   const {
-    data: members = [],
+    data: membersResult,
     isLoading: loadingMembers,
     error: membersQueryError,
   } = useAccountMembers(user?.accountId)
+
+  const members = membersResult?.members ?? []
+  const membersEnvelope = membersResult?.envelope
+  const createModeratorDisabled =
+    !canMutateWithEntitlements(membersEnvelope) ||
+    isAtModeratorCap(membersEnvelope)
 
   const createMutation = useCreateModerator(user?.accountId)
   const revokeMutation = useRevokeModerator(user?.accountId)
@@ -283,6 +294,7 @@ export function TeamPage() {
                   variant="contained"
                   startIcon={<PersonAddIcon fontSize="small" aria-hidden />}
                   onClick={() => setCreateDialogOpen(true)}
+                  disabled={createModeratorDisabled}
                 >
                   {t('common.add')}
                 </Button>
@@ -291,6 +303,7 @@ export function TeamPage() {
           />
 
           <Stack spacing={2}>
+            <EntitlementOverLimitAlert envelope={membersEnvelope} />
             {loadingMembers ? (
               <Stack spacing={1.5}>
                 <Skeleton variant="rounded" height={40} />

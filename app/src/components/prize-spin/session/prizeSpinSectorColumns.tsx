@@ -26,6 +26,7 @@ const DeleteButton = styled(IconButton)(({ theme }) => ({
 
 type BuildPrizeSpinSectorColumnsOptions = {
   readOnly: boolean
+  deleteDisabled?: boolean
   onDelete: (sectorId: number) => void
 }
 
@@ -33,6 +34,7 @@ export function buildPrizeSpinSectorColumns(
   t: TFunction,
   {
     readOnly,
+    deleteDisabled,
     onDelete,
   }: BuildPrizeSpinSectorColumnsOptions,
 ): AppTableColumn<PrizeSpinSector>[] {
@@ -73,7 +75,7 @@ export function buildPrizeSpinSectorColumns(
             type="button"
             size="small"
             aria-label={t('table.deleteSectorAria', { label: sector.label })}
-            disabled={readOnly}
+            disabled={deleteDisabled ?? readOnly}
             onClick={() => void onDelete(sector.id)}
           >
             <DeleteIcon fontSize="small" aria-hidden />

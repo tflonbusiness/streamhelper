@@ -35,7 +35,7 @@ export function SubscriptionPlanOfferingCard({
   const isExpired = planId === 'expired'
   const accent = isExpired
     ? theme.palette.error.main
-    : planId === 'studio'
+    : planId === 'max'
       ? theme.palette.secondary.main
       : theme.palette.primary.main
 

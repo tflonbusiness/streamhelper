@@ -32,6 +32,18 @@ import { KickChannelService } from './kick-channel.service.js';
 import type { KickChannelDto } from './kick-channel.types.js';
 import { KickOAuthService } from './kick-oauth.service.js';
 import type { CreateModeratorResult, KickProfile, SessionUser } from './auth.types.js';
+import {
+  buildEntitlementEnvelope,
+  normalizePlanTier,
+  type EntitlementComplianceScope,
+  type EntitlementEnvelope,
+} from '../subscriptions/plan-entitlements.js';
+
+type EntitlementRequestContext = {
+  bonusBuyId?: number;
+  prizeSpinId?: number;
+  complianceScope?: EntitlementComplianceScope;
+};
 
 @Injectable()
 export class AuthService {
@@ -41,6 +53,33 @@ export class AuthService {
     private readonly kickChannel: KickChannelService,
     private readonly kickEvents: KickEventsService,
   ) {}
+
+  private async entitlementEnvelopeForAccount(
+    accountId: number,
+    context: EntitlementRequestContext = {},
+  ): Promise<EntitlementEnvelope | null> {
+    const subscription =
+      await this.database.loadAccountSubscriptionSnapshot(accountId);
+    if (!subscription.hasAccess) {
+      return null;
+    }
+    const planTier = normalizePlanTier(subscription.planTier);
+    const usage = await this.database.loadEntitlementUsage(accountId, context);
+    const scope = context.complianceScope ?? { kind: 'account' as const };
+    return buildEntitlementEnvelope(planTier, usage, scope);
+  }
+
+  private async withEntitlementEnvelope<T extends Record<string, unknown>>(
+    accountId: number,
+    payload: T,
+    context?: EntitlementRequestContext,
+  ): Promise<T & Partial<EntitlementEnvelope>> {
+    const envelope = await this.entitlementEnvelopeForAccount(
+      accountId,
+      context ?? {},
+    );
+    return envelope ? { ...payload, ...envelope } : payload;
+  }
 
   getAppBaseUrl(): string {
     return process.env.APP_URL ?? 'http://localhost:5173';
@@ -254,7 +293,10 @@ export class AuthService {
       throw new NotFoundException('Bonus buy not found');
     }
 
-    return this.formatBonusBuy(row);
+    return this.withEntitlementEnvelope(accountId, this.formatBonusBuy(row), {
+      bonusBuyId,
+      complianceScope: { kind: 'module', module: 'bonusBuy' },
+    });
   }
 
   async listBonusBuys(
@@ -295,12 +337,14 @@ export class AuthService {
       limitNumber,
     );
 
-    return {
+    return this.withEntitlementEnvelope(accountId, {
       records: result.records.map((row) => this.formatBonusBuy(row)),
       total: result.total,
       page: result.page,
       limit: result.limit,
-    };
+    }, {
+      complianceScope: { kind: 'module', module: 'bonusBuy' },
+    });
   }
 
   async createBonusBuy(
@@ -940,6 +984,16 @@ export class AuthService {
       };
     }
 
+    const blockReason = await this.widgetBlockReason(accountId, {
+      bonusBuyId: view.record.id,
+    });
+    if (blockReason === 'entitlement_over_limit') {
+      return {
+        status: 'unavailable' as const,
+        reason: 'entitlement_over_limit' as const,
+      };
+    }
+
     return {
       status: 'active' as const,
       record: {
@@ -986,6 +1040,14 @@ export class AuthService {
       };
     }
 
+    const blockReason = await this.widgetBlockReason(accountId);
+    if (blockReason === 'entitlement_over_limit') {
+      return {
+        status: 'unavailable' as const,
+        reason: 'entitlement_over_limit' as const,
+      };
+    }
+
     return {
       status: 'active' as const,
       record: {
@@ -1026,6 +1088,16 @@ export class AuthService {
       return {
         status: 'unavailable' as const,
         reason: view.reason,
+      };
+    }
+
+    const blockReason = await this.widgetBlockReason(accountId, {
+      prizeSpinId: view.record.id,
+    });
+    if (blockReason === 'entitlement_over_limit') {
+      return {
+        status: 'unavailable' as const,
+        reason: 'entitlement_over_limit' as const,
       };
     }
 
@@ -1138,9 +1210,30 @@ export class AuthService {
     return this.formatPublicPrizeSpinWidgetView(view);
   }
 
+  private async widgetBlockReason(
+    accountId: number,
+    context: { bonusBuyId?: number; prizeSpinId?: number } = {},
+  ): Promise<'subscription_expired' | 'entitlement_over_limit' | null> {
+    const hasAccess = await this.database.accountHasSubscriptionAccess(accountId);
+    if (!hasAccess) {
+      return 'subscription_expired';
+    }
+    const envelope = await this.entitlementEnvelopeForAccount(accountId, {
+      ...context,
+      complianceScope: { kind: 'account' },
+    });
+    if (envelope?.compliance === 'over_limit') {
+      return 'entitlement_over_limit';
+    }
+    return null;
+  }
+
   async getAccountMembers(accountId: number, callerUserId: number) {
     await this.requireAccountMember(accountId, callerUserId);
-    return this.database.listAccountMembers(accountId);
+    const members = await this.database.listAccountMembers(accountId);
+    return this.withEntitlementEnvelope(accountId, { members }, {
+      complianceScope: { kind: 'team' },
+    });
   }
 
   async getKickChannel(
@@ -1219,7 +1312,7 @@ export class AuthService {
       throw new NotFoundException('Prize spin not found');
     }
 
-    return {
+    return this.withEntitlementEnvelope(accountId, {
       id: row.id,
       accountId: row.accountId,
       title: row.title,
@@ -1227,7 +1320,10 @@ export class AuthService {
       createdAt: row.createdAt.toISOString(),
       createdByUserId: row.createdByUserId,
       createdByName: row.createdByName,
-    };
+    }, {
+      prizeSpinId,
+      complianceScope: { kind: 'module', module: 'prizeSpin' },
+    });
   }
 
   async listPrizeSpins(
@@ -1268,12 +1364,14 @@ export class AuthService {
       limitNumber,
     );
 
-    return {
+    return this.withEntitlementEnvelope(accountId, {
       records: result.records.map((row) => this.formatPrizeSpinRecord(row)),
       total: result.total,
       page: result.page,
       limit: result.limit,
-    };
+    }, {
+      complianceScope: { kind: 'module', module: 'prizeSpin' },
+    });
   }
 
   async createPrizeSpin(
@@ -1721,7 +1819,9 @@ export class AuthService {
       throw new NotFoundException('Chat roll not found');
     }
 
-    return this.formatChatRollRecord(row);
+    return this.withEntitlementEnvelope(accountId, this.formatChatRollRecord(row), {
+      complianceScope: { kind: 'module', module: 'chatRoll' },
+    });
   }
 
   async listChatRolls(
@@ -1756,12 +1856,14 @@ export class AuthService {
       limitNumber,
     );
 
-    return {
+    return this.withEntitlementEnvelope(accountId, {
       records: result.records.map((row) => this.formatChatRollRecord(row)),
       total: result.total,
       page: result.page,
       limit: result.limit,
-    };
+    }, {
+      complianceScope: { kind: 'module', module: 'chatRoll' },
+    });
   }
 
   async createChatRoll(

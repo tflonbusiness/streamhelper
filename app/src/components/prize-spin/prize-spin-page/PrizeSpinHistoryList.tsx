@@ -28,6 +28,8 @@ type PrizeSpinHistoryListProps = {
   showGoLiveAction?: boolean
   showSectionTitle?: boolean
   goLivePendingId?: number
+  copyDisabled?: boolean
+  goLiveDisabled?: boolean
   onArchive: (record: PrizeSpinRecord) => void
   onCopy: (record: PrizeSpinRecord) => void
   onGoLive: (record: PrizeSpinRecord) => void
@@ -144,6 +146,8 @@ export function PrizeSpinHistoryList({
   showGoLiveAction = true,
   showSectionTitle = false,
   goLivePendingId,
+  copyDisabled = false,
+  goLiveDisabled = false,
   onArchive,
   onCopy,
   onGoLive,
@@ -203,6 +207,8 @@ export function PrizeSpinHistoryList({
               showArchiveAction={showArchiveAction}
               showGoLiveAction={showGoLiveAction}
               goLivePending={goLivePendingId === record.id}
+              copyDisabled={copyDisabled}
+              goLiveDisabled={goLiveDisabled}
               onArchive={onArchive}
               onCopy={onCopy}
               onGoLive={onGoLive}

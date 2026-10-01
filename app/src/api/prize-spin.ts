@@ -1,4 +1,5 @@
 import i18n from '@/i18n/init-i18n'
+import type { EntitlementEnvelope } from '@/lib/entitlements'
 const jsonHeaders = {
   'Content-Type': 'application/json',
 }
@@ -12,7 +13,9 @@ export type PrizeSpinListResult = {
   total: number
   page: number
   limit: number
-}
+} & Partial<EntitlementEnvelope>
+
+export type PrizeSpinRecordResponse = PrizeSpinRecord & Partial<EntitlementEnvelope>
 
 export type PrizeSpinRecord = {
   id: number
@@ -86,7 +89,7 @@ async function readErrorMessage(response: Response, fallback: string): Promise<s
 export async function fetchPrizeSpin(
   accountId: number,
   prizeSpinId: number,
-): Promise<PrizeSpinRecord> {
+): Promise<PrizeSpinRecordResponse> {
   const response = await fetch(
     `/accounts/${accountId}/prize-spins/${prizeSpinId}`,
     {
@@ -100,7 +103,7 @@ export async function fetchPrizeSpin(
     )
   }
 
-  return response.json() as Promise<PrizeSpinRecord>
+  return response.json() as Promise<PrizeSpinRecordResponse>
 }
 
 export async function fetchPrizeSpins(
@@ -432,7 +435,7 @@ export type PrizeSpinWidgetActivePayload = {
 
 export type PrizeSpinWidgetUnavailableView = {
   status: 'unavailable'
-  reason: 'no_live_session' | 'no_sessions' | 'subscription_expired'
+  reason: 'no_live_session' | 'no_sessions' | 'subscription_expired' | 'entitlement_over_limit'
 }
 
 export type PrizeSpinPublicWidgetResponse =

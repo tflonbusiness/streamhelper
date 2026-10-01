@@ -24,7 +24,15 @@ import { ChatRollHistoryList } from '@/components/chat-roll/chat-roll-page/ChatR
 import { ChatRollHistoryLiveHero } from '@/components/chat-roll/chat-roll-page/ChatRollHistoryLiveHero'
 import { formatChatRollLiveSessionHint } from '@/components/chat-roll/chat-roll-page/chat-roll-page-utils'
 import { CHAT_ROLL_HISTORY_PAGE_SIZE } from '@/components/chat-roll/chat-roll-page/chat-roll-page-utils'
+import { EntitlementNoticesSection } from '@/components/EntitlementNoticesSection'
 import { SectionHeader } from '@/components/SectionHeader'
+import {
+  hasEntitlementEnvelope,
+  isAtSessionCap,
+  isOverLimit,
+  canGoLiveModuleSession,
+  type EntitlementEnvelope,
+} from '@/lib/entitlements'
 import { useNotification } from '@/context/NotificationContext'
 import { useChatRolls, useGoLiveChatRoll } from '@/queries/use-chat-rolls'
 
@@ -108,6 +116,13 @@ export const ChatRollHistorySection = ({
   })
 
   const records = recordsResult?.records ?? []
+  const listEnvelope: EntitlementEnvelope | undefined = hasEntitlementEnvelope(
+    recordsResult,
+  )
+    ? recordsResult
+    : undefined
+  const createSessionDisabled =
+    isOverLimit(listEnvelope) || isAtSessionCap(listEnvelope, 'chatRoll')
   const recordsTotal =
     typeof recordsResult?.total === 'number'
       ? recordsResult.total
@@ -160,22 +175,29 @@ export const ChatRollHistorySection = ({
       <StyledCard elevation={0}>
         <StyledCardContent>
           <StyledContentStack>
-            <SectionHeader
-              title={t('common.sessionsTitle')}
-              description={t('common.sessionsSectionDescription')}
-              icon={SensorsIcon}
-              iconVariant="warning"
-              action={
-                <Button
-                  type="button"
-                  variant="contained"
-                  startIcon={<AddIcon fontSize="small" aria-hidden />}
-                  onClick={() => setCreateDialogOpen(true)}
-                >
-                  {t('common.newSession')}
-                </Button>
-              }
-            />
+            <Stack spacing={0} sx={{ width: '100%' }}>
+              <SectionHeader
+                title={t('common.sessionsTitle')}
+                description={t('common.sessionsSectionDescription')}
+                icon={SensorsIcon}
+                iconVariant="warning"
+                action={
+                  <Button
+                    type="button"
+                    variant="contained"
+                    startIcon={<AddIcon fontSize="small" aria-hidden />}
+                    onClick={() => setCreateDialogOpen(true)}
+                    disabled={createSessionDisabled}
+                  >
+                    {t('common.newSession')}
+                  </Button>
+                }
+              />
+              <EntitlementNoticesSection
+                envelope={listEnvelope}
+                module="chatRoll"
+              />
+            </Stack>
             {showLiveHero ? (
               <ChatRollHistoryLiveHero
                 record={liveRecord}
@@ -189,6 +211,7 @@ export const ChatRollHistorySection = ({
               showArchiveAction={archivedFilter !== 'true'}
               showGoLiveAction={archivedFilter !== 'true'}
               showSectionTitle={showLiveHero}
+              goLiveDisabled={!canGoLiveModuleSession(listEnvelope, 'chatRoll')}
               onArchive={setArchiveDialogRecord}
               goLivePendingId={
                 goLiveMutation.isPending ? goLiveMutation.variables : undefined

@@ -8,7 +8,9 @@ export function accountHasSubscriptionAccess(user: AuthUser | null | undefined):
 }
 
 export function isTrialSubscription(user: AuthUser | null | undefined): boolean {
-  return user?.subscription?.kind === 'trial' && user.subscription.hasAccess
+  return (
+    user?.subscription?.planTier === 'trial' && user.subscription.hasAccess
+  )
 }
 
 export function subscriptionEndsAt(user: AuthUser | null | undefined): Date | null {

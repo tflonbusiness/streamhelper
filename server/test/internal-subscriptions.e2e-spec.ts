@@ -112,7 +112,7 @@ describe('Internal subscriptions admin (e2e)', () => {
             subscriptionPlan: 'pro',
             channelSlug: 'demo',
             subscription: activeTrialSubscriptionFixture({
-              kind: 'paid',
+              planTier: 'pro',
               hasAccess: true,
             }),
             owners: [{ userId: 1, name: 'demo_streamer' }],

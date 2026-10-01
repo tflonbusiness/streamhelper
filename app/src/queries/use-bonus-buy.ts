@@ -24,25 +24,29 @@ import {
   type PatchBonusBuySlotInput,
   type PatchBonusBuyWidgetInput,
   type UpsertBonusBuyWidgetCustomPresetInput,
+  type BonusBuyRecord,
 } from '@/api/bonus-buy'
+import { pickEntitlementEnvelope, type EntitlementEnvelope } from '@/lib/entitlements'
 import { bonusBuyKeys, type BonusBuyListParams } from '@/queries/keys'
 
 const WIDGET_POLL_MS = 5000
 
 export type BonusBuySessionData = {
-  record: Awaited<ReturnType<typeof fetchBonusBuy>>
+  record: BonusBuyRecord
   slots: Awaited<ReturnType<typeof fetchBonusBuySlots>>
+  envelope?: EntitlementEnvelope
 }
 
 async function fetchBonusBuySession(
   accountId: number,
   bonusBuyId: number,
 ): Promise<BonusBuySessionData> {
-  const [record, slots] = await Promise.all([
+  const [recordPayload, slots] = await Promise.all([
     fetchBonusBuy(accountId, bonusBuyId),
     fetchBonusBuySlots(accountId, bonusBuyId),
   ])
-  return { record, slots }
+  const { data: record, envelope } = pickEntitlementEnvelope(recordPayload)
+  return { record, slots, envelope }
 }
 
 function sessionQueryKey(accountId: number, bonusBuyId: number) {

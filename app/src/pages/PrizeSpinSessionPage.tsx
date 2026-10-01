@@ -18,6 +18,12 @@ import { prizeSpinModule } from '@/components/prize-spin/session/prize-spin-sess
 import { useAuth } from '@/context/AuthContext'
 import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
 import { useNotification } from '@/context/NotificationContext'
+import { EntitlementOverLimitAlert } from '@/components/EntitlementOverLimitAlert'
+import {
+  canMutateWithEntitlements,
+  canGoLivePrizeSpinSession,
+  isAtPrizeSpinSectorCap,
+} from '@/lib/entitlements'
 import { formatPrizeSpinLiveSessionHint } from '@/components/prize-spin/prize-spin-page/prize-spin-page-utils'
 import {
   useGoLivePrizeSpinSession,
@@ -91,10 +97,15 @@ export const PrizeSpinSessionPage = () => {
 
   const readOnly = isPrizeSpinReadOnly(record)
   const accountId = user.accountId
+  const envelope = session?.envelope
+  const canMutate = canMutateWithEntitlements(envelope)
+  const canAddSector = canMutate && !isAtPrizeSpinSectorCap(envelope)
+  const editingDisabled = readOnly || !canMutate
 
   return (
     <PageStack>
       <ModuleSessionPageHeader module={prizeSpinModule} />
+      <EntitlementOverLimitAlert envelope={envelope} />
       <ContentGrid container spacing={3}>
         <Grid size={{ xs: 12, lg: 9 }}>
           <MainColumnStack>
@@ -104,6 +115,7 @@ export const PrizeSpinSessionPage = () => {
               record={record}
               wins={wins}
               liveActionPending={goLiveMutation.isPending}
+              goLiveDisabled={!canGoLivePrizeSpinSession(envelope)}
               onGoLive={() => {
                 goLiveMutation.mutate(undefined, {
                   onSuccess: () =>
@@ -125,13 +137,15 @@ export const PrizeSpinSessionPage = () => {
                     accountId={accountId}
                     prizeSpinId={prizeSpinId}
                     sectors={sectors}
-                    readOnly={readOnly}
+                    readOnly={editingDisabled}
                   />
                   <PrizeSpinSessionSectorsSection
                     accountId={accountId}
                     prizeSpinId={prizeSpinId}
                     sectors={sectors}
                     readOnly={readOnly}
+                    canMutate={canMutate}
+                    canAddSector={canAddSector}
                   />
                 </WorkspaceColumnStack>
               </Grid>

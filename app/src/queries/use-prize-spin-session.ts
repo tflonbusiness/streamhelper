@@ -14,12 +14,17 @@ import {
   updatePrizeSpinSector,
   type PatchPrizeSpinSectorInput,
 } from '@/api/prize-spin'
+import type { PrizeSpinRecord } from '@/api/prize-spin'
+import { pickEntitlementEnvelope, type EntitlementEnvelope } from '@/lib/entitlements'
 import { prizeSpinKeys } from '@/queries/keys'
 
+const WIDGET_POLL_MS = 5000
+
 export type PrizeSpinSessionData = {
-  record: Awaited<ReturnType<typeof fetchPrizeSpin>>
+  record: PrizeSpinRecord
   sectors: Awaited<ReturnType<typeof fetchPrizeSpinSectors>>
   wins: Awaited<ReturnType<typeof fetchPrizeSpinWins>>
+  envelope?: EntitlementEnvelope
 }
 
 function sessionQueryKey(accountId: number, prizeSpinId: number) {
@@ -30,12 +35,13 @@ async function fetchPrizeSpinSession(
   accountId: number,
   prizeSpinId: number,
 ): Promise<PrizeSpinSessionData> {
-  const [record, sectors, wins] = await Promise.all([
+  const [recordPayload, sectors, wins] = await Promise.all([
     fetchPrizeSpin(accountId, prizeSpinId),
     fetchPrizeSpinSectors(accountId, prizeSpinId),
     fetchPrizeSpinWins(accountId, prizeSpinId),
   ])
-  return { record, sectors, wins }
+  const { data: record, envelope } = pickEntitlementEnvelope(recordPayload)
+  return { record, sectors, wins, envelope }
 }
 
 export function usePrizeSpinSession(

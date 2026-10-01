@@ -4,7 +4,7 @@ export type SubscriptionAdminMode = 'revoked' | 'trial' | 'paid';
 
 export type SubscriptionAdminUpdateBody = {
   mode: SubscriptionAdminMode;
-  paidPlan?: 'pro' | 'studio';
+  paidPlan?: 'pro' | 'max';
   endsAt?: string;
   planTier?: string;
 };

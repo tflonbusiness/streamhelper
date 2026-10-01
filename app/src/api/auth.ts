@@ -1,7 +1,7 @@
 import i18n from '@/i18n/init-i18n'
+import type { EntitlementEnvelope } from '@/lib/entitlements'
 
 export type AccountSubscriptionSession = {
-  kind: 'trial' | 'paid'
   status: 'active' | 'expired' | 'cancelled'
   planTier: string
   endsAt: string
@@ -132,9 +132,13 @@ export async function createModerator(
   return parseJson<CreateModeratorResult>(response)
 }
 
+export type AccountMembersResult = {
+  members: AccountMember[]
+} & Partial<EntitlementEnvelope>
+
 export async function fetchAccountMembers(
   accountId: number,
-): Promise<AccountMember[]> {
+): Promise<AccountMembersResult> {
   const response = await fetch(`/accounts/${accountId}/members`, {
     credentials: 'include',
   })
@@ -143,8 +147,7 @@ export async function fetchAccountMembers(
     throw new Error(await readErrorMessage(response, i18n.t('errors.api.loadTeam')))
   }
 
-  const data = await parseJson<{ members: AccountMember[] }>(response)
-  return data.members
+  return parseJson<AccountMembersResult>(response)
 }
 
 export async function fetchModeratorInviteLink(

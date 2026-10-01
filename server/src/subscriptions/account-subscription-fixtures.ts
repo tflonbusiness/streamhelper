@@ -4,9 +4,8 @@ export function activeTrialSubscriptionFixture(
   overrides: Partial<AccountSubscriptionSnapshot> = {},
 ): AccountSubscriptionSnapshot {
   return {
-    kind: 'trial',
     status: 'active',
-    planTier: 'full',
+    planTier: 'trial',
     endsAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
     hasAccess: true,
     ...overrides,

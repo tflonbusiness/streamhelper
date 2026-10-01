@@ -107,7 +107,7 @@ export class InternalSubscriptionsService {
 
   private normalizeUpdateBody(body: SubscriptionAdminUpdateBody): {
     mode: SubscriptionAdminUpdateBody['mode'];
-    paidPlan?: 'pro' | 'studio';
+    paidPlan?: 'pro' | 'max';
     endsAt?: Date;
     planTier: string;
   } {
@@ -119,10 +119,9 @@ export class InternalSubscriptionsService {
       throw new BadRequestException('Invalid mode');
     }
 
-    const planTier = body.planTier?.trim() || 'full';
-
+    const planTierFromBody = body.planTier?.trim();
     if (body.mode === 'revoked') {
-      return { mode: 'revoked', planTier };
+      return { mode: 'revoked', planTier: planTierFromBody || 'trial' };
     }
 
     if (!body.endsAt?.trim()) {
@@ -139,14 +138,19 @@ export class InternalSubscriptionsService {
     }
 
     if (body.mode === 'trial') {
-      return { mode: 'trial', endsAt, planTier };
+      return { mode: 'trial', endsAt, planTier: planTierFromBody || 'trial' };
     }
 
     const paidPlan = body.paidPlan;
-    if (paidPlan !== 'pro' && paidPlan !== 'studio') {
-      throw new BadRequestException('paidPlan must be pro or studio');
+    if (paidPlan !== 'pro' && paidPlan !== 'max') {
+      throw new BadRequestException('paidPlan must be pro or max');
     }
 
-    return { mode: 'paid', paidPlan, endsAt, planTier };
+    return {
+      mode: 'paid',
+      paidPlan,
+      endsAt,
+      planTier: planTierFromBody || paidPlan,
+    };
   }
 }

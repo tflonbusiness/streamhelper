@@ -28,6 +28,7 @@ type BonusBuyHistoryListProps = {
   showGoLiveAction?: boolean
   showSectionTitle?: boolean
   goLivePendingId?: number
+  goLiveDisabled?: boolean
   onArchive: (record: BonusBuyRecord) => void
   onGoLive: (record: BonusBuyRecord) => void
 }
@@ -143,6 +144,7 @@ export function BonusBuyHistoryList({
   showGoLiveAction = true,
   showSectionTitle = true,
   goLivePendingId,
+  goLiveDisabled = false,
   onArchive,
   onGoLive,
 }: BonusBuyHistoryListProps) {
@@ -201,6 +203,7 @@ export function BonusBuyHistoryList({
               showArchiveAction={showArchiveAction}
               showGoLiveAction={showGoLiveAction}
               goLivePending={goLivePendingId === record.id}
+              goLiveDisabled={goLiveDisabled}
               onArchive={onArchive}
               onGoLive={onGoLive}
             />

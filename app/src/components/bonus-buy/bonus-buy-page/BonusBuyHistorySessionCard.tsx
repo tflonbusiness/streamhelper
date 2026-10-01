@@ -22,6 +22,7 @@ type BonusBuyHistorySessionCardProps = {
   showArchiveAction?: boolean
   showGoLiveAction?: boolean
   goLivePending?: boolean
+  goLiveDisabled?: boolean
   onArchive: (record: BonusBuyRecord) => void
   onGoLive: (record: BonusBuyRecord) => void
 }
@@ -168,6 +169,7 @@ export function BonusBuyHistorySessionCard({
   showArchiveAction = true,
   showGoLiveAction = true,
   goLivePending = false,
+  goLiveDisabled = false,
   onArchive,
   onGoLive,
 }: BonusBuyHistorySessionCardProps) {
@@ -242,7 +244,7 @@ export function BonusBuyHistorySessionCard({
               variant="contained"
               color="primary"
               size="small"
-              disabled={goLivePending}
+              disabled={goLivePending || goLiveDisabled}
               onClick={() => onGoLive(record)}
             >
               {t('bonusBuy.goLive')}

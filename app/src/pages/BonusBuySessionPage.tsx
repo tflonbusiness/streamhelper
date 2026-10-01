@@ -16,6 +16,12 @@ import { BonusBuySessionLoadingState } from '@/components/bonus-buy/session/Bonu
 import { BonusBuySessionSlotsSection } from '@/components/bonus-buy/session/BonusBuySessionSlotsSection'
 import { BonusBuySessionStatsSection } from '@/components/bonus-buy/session/BonusBuySessionStatsSection'
 import { BonusBuyWidgetStyleDialog } from '@/components/bonus-buy/session/BonusBuyWidgetStyleDialog'
+import { EntitlementOverLimitAlert } from '@/components/EntitlementOverLimitAlert'
+import {
+  canMutateWithEntitlements,
+  canGoLiveBonusBuySession,
+  isAtBonusBuySlotCap,
+} from '@/lib/entitlements'
 import { bonusBuyModule } from '@/components/bonus-buy/session/bonus-buy-session-utils'
 import { useAuth } from '@/context/AuthContext'
 import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
@@ -110,16 +116,21 @@ export const BonusBuySessionPage = () => {
   }
 
   const accountId = user.accountId
+  const envelope = session?.envelope
+  const canMutate = canMutateWithEntitlements(envelope)
+  const canAddSlot = canMutate && !isAtBonusBuySlotCap(envelope)
 
   return (
     <PageStack>
       <ModuleSessionPageHeader module={bonusBuyModule} />
+      <EntitlementOverLimitAlert envelope={envelope} />
       <ContentGrid container spacing={3}>
         <Grid size={{ xs: 12, lg: 9 }}>
           <MainColumnStack>
             <BonusBuySessionHeaderSection
               record={record}
               liveActionPending={goLiveMutation.isPending}
+              goLiveDisabled={!canGoLiveBonusBuySession(envelope)}
               onGoLive={() => {
                 goLiveMutation.mutate(undefined, {
                   onSuccess: () =>
@@ -144,6 +155,7 @@ export const BonusBuySessionPage = () => {
               accountId={accountId}
               bonusBuyId={bonusBuyId}
               record={record}
+              canAddSlot={canAddSlot}
             />
             <BonusBuySessionSlotsSection
               accountId={accountId}

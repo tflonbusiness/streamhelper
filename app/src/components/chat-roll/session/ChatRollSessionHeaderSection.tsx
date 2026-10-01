@@ -22,6 +22,7 @@ type ChatRollSessionHeaderSectionProps = {
   onOpenArchiveDialog: () => void
   onGoLive?: () => void
   liveActionPending?: boolean
+  goLiveDisabled?: boolean
   primaryActions?: ReactNode
   centerAction?: ReactNode
 }
@@ -154,7 +155,7 @@ export const ChatRollSessionHeaderSection = (
                   variant="contained"
                   size="small"
                   color="primary"
-                  disabled={props.liveActionPending}
+                  disabled={props.liveActionPending || props.goLiveDisabled}
                   onClick={props.onGoLive}
                 >
                   {t('chatRoll.goLive')}

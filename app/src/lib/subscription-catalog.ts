@@ -6,7 +6,7 @@ import {
   subscriptionEndsAt,
 } from '@/lib/account-subscription'
 
-export type PaidPlanId = 'pro' | 'studio'
+export type PaidPlanId = 'pro' | 'max'
 
 export type SubscriptionPlanId = 'trial' | PaidPlanId | 'expired'
 
@@ -17,7 +17,7 @@ export type SubscriptionPlanDefinition = {
   featureKeys: string[]
 }
 
-export const PAID_PLAN_IDS: PaidPlanId[] = ['pro', 'studio']
+export const PAID_PLAN_IDS: PaidPlanId[] = ['pro', 'max']
 
 export const SUBSCRIPTION_PLAN_DEFINITIONS: Record<
   SubscriptionPlanId,
@@ -43,14 +43,14 @@ export const SUBSCRIPTION_PLAN_DEFINITIONS: Record<
       'subscription.plans.pro.features.support',
     ],
   },
-  studio: {
-    id: 'studio',
-    nameKey: 'subscription.plans.studio.name',
-    blurbKey: 'subscription.plans.studio.blurb',
+  max: {
+    id: 'max',
+    nameKey: 'subscription.plans.max.name',
+    blurbKey: 'subscription.plans.max.blurb',
     featureKeys: [
-      'subscription.plans.studio.features.allPro',
-      'subscription.plans.studio.features.priority',
-      'subscription.plans.studio.features.custom',
+      'subscription.plans.max.features.allPro',
+      'subscription.plans.max.features.unlimited',
+      'subscription.plans.max.features.priority',
     ],
   },
   expired: {
@@ -80,8 +80,8 @@ export function resolveCurrentSubscriptionPlanId(
   }
 
   const plan = user.subscriptionPlan?.trim().toLowerCase()
-  if (plan === 'studio') {
-    return 'studio'
+  if (plan === 'max' || plan === 'studio') {
+    return 'max'
   }
   if (plan === 'pro' || plan === 'full') {
     return 'pro'
@@ -93,11 +93,11 @@ export function resolveCurrentSubscriptionPlanId(
 export function resolveAlternativePlanIds(
   current: SubscriptionPlanId,
 ): PaidPlanId[] {
-  if (current === 'studio') {
+  if (current === 'max') {
     return []
   }
   if (current === 'pro') {
-    return ['studio']
+    return ['max']
   }
   return PAID_PLAN_IDS
 }

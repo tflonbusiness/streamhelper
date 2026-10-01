@@ -4,6 +4,7 @@ export type PublicWidgetUnavailableReason =
   | 'no_live_session'
   | 'no_sessions'
   | 'subscription_expired'
+  | 'entitlement_over_limit'
 
 export type PublicWidgetModule = 'bonusBuy' | 'prizeSpin' | 'chatRoll'
 
@@ -23,6 +24,10 @@ export function publicWidgetUnavailableMessage(
 
   if (reason === 'subscription_expired') {
     return widgetUiCopy.subscriptionExpired
+  }
+
+  if (reason === 'entitlement_over_limit') {
+    return widgetUiCopy.entitlementOverLimit
   }
 
   if (module === 'bonusBuy') {

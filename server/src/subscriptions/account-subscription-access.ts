@@ -1,8 +1,6 @@
-export type AccountSubscriptionKind = 'trial' | 'paid';
 export type AccountSubscriptionStatus = 'active' | 'expired' | 'cancelled';
 
 export type AccountSubscriptionRow = {
-  kind: AccountSubscriptionKind;
   status: AccountSubscriptionStatus;
   planTier: string;
   startsAt: Date;
@@ -10,7 +8,6 @@ export type AccountSubscriptionRow = {
 };
 
 export type AccountSubscriptionSnapshot = {
-  kind: AccountSubscriptionKind;
   status: AccountSubscriptionStatus;
   planTier: string;
   endsAt: string;
@@ -23,9 +20,8 @@ export function resolveAccountSubscriptionAccess(
 ): AccountSubscriptionSnapshot {
   if (!row) {
     return {
-      kind: 'trial',
       status: 'expired',
-      planTier: 'full',
+      planTier: 'trial',
       endsAt: now.toISOString(),
       hasAccess: false,
     };
@@ -33,7 +29,6 @@ export function resolveAccountSubscriptionAccess(
 
   const hasAccess = row.status === 'active' && row.endsAt > now;
   return {
-    kind: row.kind,
     status: hasAccess ? row.status : 'expired',
     planTier: row.planTier,
     endsAt: row.endsAt.toISOString(),
