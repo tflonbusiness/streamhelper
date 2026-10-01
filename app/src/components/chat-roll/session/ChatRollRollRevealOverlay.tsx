@@ -89,11 +89,6 @@ const ResponseBanner = styled(Box, {
   }
 })
 
-function secondsRemaining(deadlineIso: string): number {
-  const ms = new Date(deadlineIso).getTime() - Date.now()
-  return Math.max(0, Math.ceil(ms / 1000))
-}
-
 function formatResponseCountdown(totalSeconds: number): string {
   const minutes = Math.floor(totalSeconds / 60)
   const seconds = totalSeconds % 60
@@ -106,12 +101,14 @@ function formatResponseCountdown(totalSeconds: number): string {
 type ChatRollRollRevealOverlayProps = {
   open: boolean
   win: ChatRollWin | null
+  winnerResponseSeconds: number
   onClose: () => void
 }
 
 export function ChatRollRollRevealOverlay({
   open,
   win,
+  winnerResponseSeconds,
   onClose,
 }: ChatRollRollRevealOverlayProps) {
   const { t } = useTranslation()
@@ -119,9 +116,9 @@ export function ChatRollRollRevealOverlay({
   const hasWinner = Boolean(winnerName)
   const responseStatus = win?.responseStatus
   const showResponseCountdown =
-    responseStatus === 'pending' && Boolean(win?.responseDeadlineAt)
+    responseStatus === 'pending' && winnerResponseSeconds > 0
 
-  const [remaining, setRemaining] = useState(0)
+  const [remaining, setRemaining] = useState(winnerResponseSeconds)
 
   function renderResponseFeedback() {
     if (!win || responseStatus === 'not_required') {
@@ -164,18 +161,17 @@ export function ChatRollRollRevealOverlay({
   }
 
   useEffect(() => {
-    if (!open || !showResponseCountdown || !win?.responseDeadlineAt) {
+    if (!open || !showResponseCountdown || win?.id === undefined) {
       return
     }
 
-    const deadline = win.responseDeadlineAt
-    setRemaining(secondsRemaining(deadline))
+    setRemaining(winnerResponseSeconds)
     const timer = window.setInterval(() => {
-      setRemaining(secondsRemaining(deadline))
+      setRemaining((prev) => Math.max(0, prev - 1))
     }, 1000)
 
     return () => window.clearInterval(timer)
-  }, [open, showResponseCountdown, win?.responseDeadlineAt])
+  }, [open, showResponseCountdown, win?.id, winnerResponseSeconds])
 
   return (
     <Dialog

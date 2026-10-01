@@ -795,6 +795,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
       <ChatRollRollRevealOverlay
         open={rollRevealOpen}
         win={rollRevealWinSynced}
+        winnerResponseSeconds={record.winnerResponseSeconds}
         onClose={handleRollRevealClose}
       />
     </PageStack>
