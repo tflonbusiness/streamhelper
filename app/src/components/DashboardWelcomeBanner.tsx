@@ -12,23 +12,22 @@ import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium'
 import { alpha, useTheme } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import { KickChannelNotFoundError } from '@/api/kick-channel'
+import { DashboardTariffCard } from '@/components/DashboardTariffCard'
 import { IconTile } from '@/components/IconTile'
+import type { AuthUser } from '@/api/auth'
 import { useKickChannel } from '@/queries/use-kick-channel'
 import { cardSx } from '@/theme/colors'
 
 type DashboardWelcomeBannerProps = {
-  accountId: number
-  accountName?: string
-  role?: 'owner' | 'moderator'
+  user: AuthUser
 }
 
-export function DashboardWelcomeBanner({
-  accountId,
-  accountName,
-  role,
-}: DashboardWelcomeBannerProps) {
+export function DashboardWelcomeBanner({ user }: DashboardWelcomeBannerProps) {
   const { t } = useTranslation()
   const theme = useTheme()
+  const accountId = user.accountId!
+  const accountName = user.accountName
+  const role = user.role
   const { data: channel, isLoading: loading, error } = useKickChannel(accountId)
 
   const slug = channel?.slug ?? null
@@ -154,6 +153,8 @@ export function DashboardWelcomeBanner({
               </Box>
             </Box>
           </Box>
+
+          <DashboardTariffCard user={user} />
         </Box>
       </CardContent>
     </Card>

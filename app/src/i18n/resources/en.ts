@@ -181,6 +181,7 @@ export const en = {
     couldNotLoadChannel: "Could not load channel",
     watchingNow: "watching now",
     manageSubscription: "Manage subscription",
+    manageSubscriptionShort: "Manage",
     planTitle: "Plan",
     currentPlan: "Current plan",
     planBlurbCompact: "Your team's current subscription plan",

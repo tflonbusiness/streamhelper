@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import { DashboardModuleQuickAccess } from '@/components/DashboardModuleQuickAccess'
 import { DashboardSubscriptionBanner } from '@/components/DashboardSubscriptionBanner'
-import { DashboardTariffCard } from '@/components/DashboardTariffCard'
 import { DashboardWelcomeBanner } from '@/components/DashboardWelcomeBanner'
 import { accountHasSubscriptionAccess } from '@/lib/account-subscription'
 import { KickChannelStatsSection } from '@/components/KickChannelStatsSection'
@@ -41,18 +40,13 @@ export function DashboardHomePage() {
           }}
         >
           <Stack spacing={3} sx={{ minWidth: 0 }}>
-            <DashboardWelcomeBanner
-              accountId={user.accountId}
-              accountName={user.accountName}
-              role={user.role}
-            />
+            <DashboardWelcomeBanner user={user} />
             <DashboardModuleQuickAccess />
           </Stack>
 
-          <Stack spacing={2.5} sx={{ minWidth: 0 }}>
+          <Box sx={{ minWidth: 0 }}>
             <KickChannelStatsSection accountId={user.accountId} layout="sidebar" />
-            <DashboardTariffCard subscriptionPlan={user?.subscriptionPlan} />
-          </Stack>
+          </Box>
         </Box>
       ) : null}
     </Stack>

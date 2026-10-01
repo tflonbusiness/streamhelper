@@ -181,6 +181,7 @@ export const ru = {
     couldNotLoadChannel: "Не удалось загрузить канал",
     watchingNow: "смотрят сейчас",
     manageSubscription: "Управление подпиской",
+    manageSubscriptionShort: "Управить",
     planTitle: "Тариф",
     currentPlan: "Текущий тариф",
     planBlurbCompact: "Текущий тариф вашей команды",
