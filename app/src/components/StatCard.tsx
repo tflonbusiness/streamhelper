@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography'
 import { alpha, useTheme } from '@mui/material/styles'
 import type { SvgIconComponent } from '@mui/icons-material'
 import { IconTile } from '@/components/IconTile'
+import { cardSx } from '@/theme/colors'
 
 type StatCardProps = {
   value: string
@@ -30,7 +31,9 @@ export function StatCard({
   return (
     <Card
       className={className}
+      elevation={0}
       sx={{
+        ...cardSx,
         overflow: 'hidden',
         transition: 'background-color 0.2s, border-color 0.2s',
         ...(highlight && {

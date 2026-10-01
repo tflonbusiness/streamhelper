@@ -10,8 +10,8 @@ const DEFAULTS = {
   glowRadius: 160,
   sparkle: false,
   waveAmplitude: 0,
-  gradientFrom: 'rgba(167, 139, 250, 0.8)',
-  gradientTo: 'rgba(196, 181, 253, 0.7)',
+  gradientFrom: 'rgba(167, 139, 250, 0.38)',
+  gradientTo: 'rgba(196, 181, 253, 0.3)',
   glowColor: '#0B0B0F',
 }
 
@@ -86,7 +86,7 @@ function initDotField(container, options = {}) {
     if (glowEl) {
       glowEl.setAttribute('cx', String(mouse.x))
       glowEl.setAttribute('cy', String(mouse.y))
-      glowEl.style.opacity = String(glowOpacity)
+      glowEl.style.opacity = String(glowOpacity * 0.55)
     }
 
     ctx.clearRect(0, 0, w, h)

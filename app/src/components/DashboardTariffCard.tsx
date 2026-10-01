@@ -6,6 +6,10 @@ type DashboardTariffCardProps = {
 
 export function DashboardTariffCard({ subscriptionPlan }: DashboardTariffCardProps) {
   return (
-    <SubscriptionPlanCard subscriptionPlan={subscriptionPlan} variant="compact" />
+    <SubscriptionPlanCard
+      subscriptionPlan={subscriptionPlan}
+      variant="compact"
+      sx={{ height: '100%' }}
+    />
   )
 }

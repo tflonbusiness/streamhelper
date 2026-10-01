@@ -22,9 +22,14 @@ export function subscriptionEndsAt(user: AuthUser | null | undefined): Date | nu
   return Number.isNaN(parsed.getTime()) ? null : parsed
 }
 
-export function trialDaysRemaining(user: AuthUser | null | undefined): number | null {
+export function subscriptionDaysRemaining(
+  user: AuthUser | null | undefined,
+): number | null {
+  if (!accountHasSubscriptionAccess(user)) {
+    return null
+  }
   const endsAt = subscriptionEndsAt(user)
-  if (!endsAt || !isTrialSubscription(user)) {
+  if (!endsAt) {
     return null
   }
   const ms = endsAt.getTime() - Date.now()
@@ -32,4 +37,11 @@ export function trialDaysRemaining(user: AuthUser | null | undefined): number | 
     return 0
   }
   return Math.ceil(ms / (24 * 60 * 60 * 1000))
+}
+
+export function trialDaysRemaining(user: AuthUser | null | undefined): number | null {
+  if (!isTrialSubscription(user)) {
+    return null
+  }
+  return subscriptionDaysRemaining(user)
 }

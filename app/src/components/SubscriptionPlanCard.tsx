@@ -3,19 +3,21 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import CardActions from '@mui/material/CardActions'
 import Typography from '@mui/material/Typography'
-import { alpha, useTheme } from '@mui/material/styles'
+import { alpha, useTheme, type SxProps, type Theme } from '@mui/material/styles'
 import CheckIcon from '@mui/icons-material/Check'
 import CreditCardIcon from '@mui/icons-material/CreditCard'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PlanBadge } from '@/components/PlanBadge'
 import { getPlanFeatures, isFreePlan } from '@/lib/subscription-plan'
+import { cardSx } from '@/theme/colors'
 
 type SubscriptionPlanCardProps = {
   subscriptionPlan?: string
   variant?: 'compact' | 'full'
   footer?: ReactNode
   className?: string
+  sx?: SxProps<Theme>
 }
 
 export function SubscriptionPlanCard({
@@ -23,6 +25,7 @@ export function SubscriptionPlanCard({
   variant = 'full',
   footer,
   className,
+  sx,
 }: SubscriptionPlanCardProps) {
   const { t } = useTranslation()
   const theme = useTheme()
@@ -33,16 +36,25 @@ export function SubscriptionPlanCard({
   return (
     <Card
       className={className}
-      sx={{
-        overflow: 'hidden',
-        borderLeft: 4,
-        borderLeftStyle: 'solid',
-        borderLeftColor: free
-          ? alpha(theme.palette.text.secondary, 0.4)
-          : theme.palette.primary.main,
-      }}
+      sx={[
+        cardSx,
+        {
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          borderLeft: 4,
+          borderLeftStyle: 'solid',
+          borderLeftColor: free
+            ? alpha(theme.palette.text.secondary, 0.4)
+            : theme.palette.primary.main,
+          background: compact
+            ? `linear-gradient(160deg, ${alpha(theme.palette.primary.main, 0.06)} 0%, ${theme.palette.background.paper} 50%)`
+            : undefined,
+        },
+        ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+      ]}
     >
-      <CardContent sx={{ pb: compact ? 1.5 : 2 }}>
+      <CardContent sx={{ pb: compact ? 1.5 : 2, flex: compact ? 1 : undefined }}>
         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
           <Box
             sx={{

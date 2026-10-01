@@ -13,7 +13,6 @@ import { PrizeSpinSessionSectorsSection } from '@/components/prize-spin/session/
 import { PrizeSpinSessionSpinSection } from '@/components/prize-spin/session/PrizeSpinSessionSpinSection'
 import { PrizeSpinSessionStatsCard } from '@/components/prize-spin/session/PrizeSpinSessionStatsCard'
 import { PrizeSpinSessionWinnersSection } from '@/components/prize-spin/session/PrizeSpinSessionWinnersSection'
-import { PrizeSpinStreamWidgetSection } from '@/components/prize-spin/prize-spin-page/PrizeSpinStreamWidgetSection'
 import { prizeSpinModule } from '@/components/prize-spin/session/prize-spin-session-utils'
 import { useAuth } from '@/context/AuthContext'
 import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
@@ -33,10 +32,6 @@ import {
 const PageStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(4),
 }))
-
-const ContentGrid = styled(Grid)({
-  alignItems: 'stretch',
-})
 
 const MainColumnStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(3),
@@ -106,9 +101,7 @@ export const PrizeSpinSessionPage = () => {
     <PageStack>
       <ModuleSessionPageHeader module={prizeSpinModule} />
       <EntitlementOverLimitAlert envelope={envelope} />
-      <ContentGrid container spacing={3}>
-        <Grid size={{ xs: 12, lg: 9 }}>
-          <MainColumnStack>
+      <MainColumnStack>
             <PrizeSpinSessionHeaderSection
               accountId={accountId}
               prizeSpinId={prizeSpinId}
@@ -161,15 +154,7 @@ export const PrizeSpinSessionPage = () => {
                 </WorkspaceColumnStack>
               </Grid>
             </Grid>
-          </MainColumnStack>
-        </Grid>
-        <Grid size={{ xs: 12, lg: 3 }}>
-          <PrizeSpinStreamWidgetSection
-            accountId={accountId}
-            accountUcid={user.accountUcid}
-          />
-        </Grid>
-      </ContentGrid>
+      </MainColumnStack>
       <PrizeSpinSessionArchiveDialog
         accountId={accountId}
         prizeSpinId={prizeSpinId}

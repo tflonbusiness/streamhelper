@@ -175,6 +175,8 @@ export const en = {
     title: "Home",
     description: "Team overview and activity",
     channel: "Channel",
+    team: "Team",
+    teamFallback: "Your team",
     kickNotConnected: "Kick channel not connected",
     couldNotLoadChannel: "Could not load channel",
     watchingNow: "watching now",
@@ -183,7 +185,7 @@ export const en = {
     currentPlan: "Current plan",
     planBlurbCompact: "Your team's current subscription plan",
     planBlurbFull: "Your team's subscription plan",
-    kickStatsTitle: "Kick channel",
+    kickStatsTitle: "Kick statistics",
     kickStatsDescription: "Live stats from your connected Kick channel",
     role: "Role",
     offAir: "off air",
@@ -192,7 +194,10 @@ export const en = {
     viewers: "Viewers",
     subscribers: "Subscribers",
     gifted: "Gifted",
-    matureBadge: "18+"
+    matureBadge: "18+",
+    modulesQuickAccessTitle: "Widgets",
+    modulesQuickAccessDescription: "Open a streamer module in one click",
+    viewAllModules: "All widgets"
   },
   team: {
     title: "Team",
@@ -265,6 +270,11 @@ export const en = {
       "Less than a day left in your trial — full access to all modules.",
     trialDaysRemaining_one: "{{count}} day left in your trial — full access to all modules.",
     trialDaysRemaining_other: "{{count}} days left in your trial — full access to all modules.",
+    planActiveEndingTitle: "Subscription period",
+    planEndingSoonTitle: "Subscription ending soon",
+    planLastDayBody: "Less than a day left on your {{plan}} plan.",
+    planDaysRemaining_one: "{{count}} day left on your {{plan}} plan.",
+    planDaysRemaining_other: "{{count}} days left on your {{plan}} plan.",
     manageSubscriptionCta: "Manage subscription",
     activateSubscriptionCta: "Activate subscription",
     descriptionExpired:
@@ -286,16 +296,16 @@ export const en = {
     plans: {
       trial: {
         name: "Trial",
-        blurb: "Full access to every module while your trial is active.",
+        blurb: "Explore every module and overlay before upgrading to Pro or Max.",
         features: {
-          allModules: "Bonus Buy, Prize Spin, Chat Roll, and stream overlays",
-          team: "Owner and moderators on one team account",
-          overlays: "OBS widgets for live sessions",
+          allModules: "All platform modules for the duration of your trial",
+          team: "One team account for owner and moderators",
+          overlays: "OBS widgets ready for live sessions",
         },
       },
       pro: {
         name: "Pro",
-        blurb: "For growing streamers who run giveaways and bonus buys every week.",
+        blurb: "For streamers who run regular giveaways and live engagement on stream.",
         features: {
           allModules: "All streamer modules without trial time limit",
           limits: "Comfortable limits for sessions and team size",
@@ -304,11 +314,12 @@ export const en = {
       },
       max: {
         name: "Max",
-        blurb: "No limits on sessions, sectors, slots, or moderators.",
+        blurb: "For high-volume streams and teams that have outgrown Pro.",
         features: {
           allPro: "Everything in Pro",
-          unlimited: "Trial and Pro quotas removed",
+          unlimited: "All limits removed",
           priority: "Priority support in Telegram",
+          custom: "Custom features on request for your channel",
         },
       },
       expired: {

@@ -51,6 +51,7 @@ export const SUBSCRIPTION_PLAN_DEFINITIONS: Record<
       'subscription.plans.max.features.allPro',
       'subscription.plans.max.features.unlimited',
       'subscription.plans.max.features.priority',
+      'subscription.plans.max.features.custom',
     ],
   },
   expired: {

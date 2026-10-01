@@ -175,6 +175,8 @@ export const ru = {
     title: "Главная",
     description: "Обзор команды и активность",
     channel: "Канал",
+    team: "Команда",
+    teamFallback: "Ваша команда",
     kickNotConnected: "Канал Kick не подключён",
     couldNotLoadChannel: "Не удалось загрузить канал",
     watchingNow: "смотрят сейчас",
@@ -183,7 +185,7 @@ export const ru = {
     currentPlan: "Текущий тариф",
     planBlurbCompact: "Текущий тариф вашей команды",
     planBlurbFull: "Тариф подписки вашей команды",
-    kickStatsTitle: "Канал Kick",
+    kickStatsTitle: "Статистика Kick",
     kickStatsDescription: "Живая статистика подключённого канала Kick",
     role: "Роль",
     offAir: "не в эфире",
@@ -192,7 +194,10 @@ export const ru = {
     viewers: "Зрители",
     subscribers: "Подписчики",
     gifted: "Подарки",
-    matureBadge: "18+"
+    matureBadge: "18+",
+    modulesQuickAccessTitle: "Виджеты",
+    modulesQuickAccessDescription: "Быстрый переход к модулям для стрима",
+    viewAllModules: "Все виджеты"
   },
   team: {
     title: "Команда",
@@ -275,6 +280,13 @@ export const ru = {
       "Осталось {{count}} дней пробного периода — доступны все модули.",
     trialDaysRemaining_other:
       "Осталось {{count}} дней пробного периода — доступны все модули.",
+    planActiveEndingTitle: "Срок подписки",
+    planEndingSoonTitle: "Подписка скоро закончится",
+    planLastDayBody: "До конца тарифа «{{plan}}» осталось меньше суток.",
+    planDaysRemaining_one: "Остался {{count}} день тарифа «{{plan}}».",
+    planDaysRemaining_few: "Осталось {{count}} дня тарифа «{{plan}}».",
+    planDaysRemaining_many: "Осталось {{count}} дней тарифа «{{plan}}».",
+    planDaysRemaining_other: "Осталось {{count}} дней тарифа «{{plan}}».",
     manageSubscriptionCta: "Управление подпиской",
     activateSubscriptionCta: "Активировать подписку",
     descriptionExpired:
@@ -296,16 +308,16 @@ export const ru = {
     plans: {
       trial: {
         name: "Пробный период",
-        blurb: "Полный доступ ко всем модулям, пока активен пробный период.",
+        blurb: "Оцените все модули и оверлеи до перехода на Pro или Max.",
         features: {
-          allModules: "Bonus Buy, Prize Spin, Chat Roll и оверлеи для стрима",
-          team: "Владелец и модераторы в одной команде",
-          overlays: "Виджеты OBS для live-сессий",
+          allModules: "Все модули платформы на время пробного периода",
+          team: "Один аккаунт для владельца и модераторов",
+          overlays: "Виджеты OBS для сессий в эфире",
         },
       },
       pro: {
         name: "Pro",
-        blurb: "Для стримеров с регулярными розыгрышами и bonus buy.",
+        blurb: "Для стримеров с регулярными розыгрышами и активным чатом в эфире.",
         features: {
           allModules: "Все модули без ограничения по времени trial",
           limits: "Комфортные лимиты на сессии и размер команды",
@@ -323,11 +335,12 @@ export const ru = {
       },
       max: {
         name: "Max",
-        blurb: "Без лимитов на сессии, секторы, слоты и модераторов.",
+        blurb: "Для интенсивного эфира и команд, которым Pro уже тесен.",
         features: {
           allPro: "Всё из тарифа Pro",
-          unlimited: "Сняты лимиты trial и Pro",
+          unlimited: "Сняты любые лимиты",
           priority: "Приоритетная поддержка в Telegram",
+          custom: "Уникальные фичи по запросу под ваш канал",
         },
       },
       expired: {

@@ -37,7 +37,7 @@ import {
 type BonusBuyWidgetStyleDialogProps = {
   accountId: number
   accountUcid: string
-  record: BonusBuyRecord
+  record: BonusBuyRecord | null
   slots: BonusBuySlot[]
   open: boolean
   onClose: () => void

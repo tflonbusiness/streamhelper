@@ -1,4 +1,4 @@
-import { Grid, Stack } from '@mui/material'
+import { Stack } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -11,11 +11,9 @@ import { BonusBuyArchiveSessionDialog } from '@/components/bonus-buy/session/Bon
 import { BonusBuySessionAddSlotSection } from '@/components/bonus-buy/session/BonusBuySessionAddSlotSection'
 import { BonusBuySessionErrorState } from '@/components/bonus-buy/session/BonusBuySessionErrorState'
 import { BonusBuySessionHeaderSection } from '@/components/bonus-buy/session/BonusBuySessionHeaderSection'
-import { BonusBuyStreamWidgetSection } from '@/components/bonus-buy/session/BonusBuyStreamWidgetSection'
 import { BonusBuySessionLoadingState } from '@/components/bonus-buy/session/BonusBuySessionLoadingState'
 import { BonusBuySessionSlotsSection } from '@/components/bonus-buy/session/BonusBuySessionSlotsSection'
 import { BonusBuySessionStatsSection } from '@/components/bonus-buy/session/BonusBuySessionStatsSection'
-import { BonusBuyWidgetStyleDialog } from '@/components/bonus-buy/session/BonusBuyWidgetStyleDialog'
 import { EntitlementOverLimitAlert } from '@/components/EntitlementOverLimitAlert'
 import {
   canMutateWithEntitlements,
@@ -36,10 +34,6 @@ const PageStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(4),
 }))
 
-const ContentGrid = styled(Grid)({
-  alignItems: 'stretch',
-})
-
 const MainColumnStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(3),
 }))
@@ -54,8 +48,6 @@ export const BonusBuySessionPage = () => {
 
   const [editSessionDialogOpen, setEditSessionDialogOpen] = useState(false)
   const [archiveSessionDialogOpen, setArchiveSessionDialogOpen] = useState(false)
-  const [widgetDialogOpen, setWidgetDialogOpen] = useState(false)
-
   const {
     data: session,
     isLoading: loading,
@@ -124,9 +116,7 @@ export const BonusBuySessionPage = () => {
     <PageStack>
       <ModuleSessionPageHeader module={bonusBuyModule} />
       <EntitlementOverLimitAlert envelope={envelope} />
-      <ContentGrid container spacing={3}>
-        <Grid size={{ xs: 12, lg: 9 }}>
-          <MainColumnStack>
+      <MainColumnStack>
             <BonusBuySessionHeaderSection
               record={record}
               liveActionPending={goLiveMutation.isPending}
@@ -165,15 +155,7 @@ export const BonusBuySessionPage = () => {
               widgetPositiveColor={widgetSettings?.positiveColor}
               widgetNegativeColor={widgetSettings?.negativeColor}
             />
-          </MainColumnStack>
-        </Grid>
-        <Grid size={{ xs: 12, lg: 3 }}>
-          <BonusBuyStreamWidgetSection
-            accountUcid={user.accountUcid}
-            onOpenWidgetDialog={() => setWidgetDialogOpen(true)}
-          />
-        </Grid>
-      </ContentGrid>
+      </MainColumnStack>
       <BonusBuyEditSessionDialog
         accountId={accountId}
         bonusBuyId={bonusBuyId}
@@ -187,14 +169,6 @@ export const BonusBuySessionPage = () => {
         record={record}
         open={archiveSessionDialogOpen}
         onClose={() => setArchiveSessionDialogOpen(false)}
-      />
-      <BonusBuyWidgetStyleDialog
-        accountId={accountId}
-        accountUcid={user.accountUcid}
-        record={record}
-        slots={slots}
-        open={widgetDialogOpen}
-        onClose={() => setWidgetDialogOpen(false)}
       />
     </PageStack>
   )

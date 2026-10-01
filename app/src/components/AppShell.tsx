@@ -603,6 +603,7 @@ export function AppShell() {
     return t(item.labelKey)
   }
   const wideMainContent =
+    location.pathname === '/dashboard' ||
     /^\/modules\/(?:bonus-buy|chat-roll|prize-spin)(?:\/\d+)?(?:\/|$)/.test(
       location.pathname,
     )
