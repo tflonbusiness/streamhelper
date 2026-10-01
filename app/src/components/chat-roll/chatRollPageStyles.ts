@@ -13,6 +13,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { alpha, styled } from '@mui/material/styles'
 
 export const PageStack = styled(Stack)(({ theme }) => ({
@@ -233,6 +234,47 @@ export const SettingsGroupTitle = styled(Typography)(({ theme }) => ({
     fontSize: '1rem',
     opacity: 0.85,
   },
+}))
+
+export const SettingsGroupTitleButton = styled('button', {
+  shouldForwardProp: (prop) => prop !== 'expanded',
+})<{ expanded: boolean }>(({ theme, expanded }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: theme.spacing(1),
+  width: '100%',
+  margin: 0,
+  marginBottom: expanded ? theme.spacing(1.25) : 0,
+  padding: 0,
+  border: 'none',
+  background: 'transparent',
+  cursor: 'pointer',
+  textAlign: 'left',
+  color: 'inherit',
+  borderRadius: theme.shape.borderRadius,
+  '&:focus-visible': {
+    outline: `2px solid ${theme.palette.primary.main}`,
+    outlineOffset: 2,
+  },
+}))
+
+export const SettingsGroupTitleMain = styled(SettingsGroupTitle)({
+  marginBottom: 0,
+  flex: 1,
+  minWidth: 0,
+})
+
+export const SettingsGroupExpandIcon = styled(ExpandMoreIcon, {
+  shouldForwardProp: (prop) => prop !== 'expanded',
+})<{ expanded: boolean }>(({ theme, expanded }) => ({
+  flexShrink: 0,
+  fontSize: '1.25rem',
+  color: theme.palette.text.secondary,
+  transition: theme.transitions.create('transform', {
+    duration: theme.transitions.duration.shorter,
+  }),
+  transform: expanded ? 'rotate(0deg)' : 'rotate(-90deg)',
 }))
 
 export const SettingsToggleCard = styled(Box)(({ theme }) => ({

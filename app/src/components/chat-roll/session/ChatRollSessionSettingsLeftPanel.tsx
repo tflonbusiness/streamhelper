@@ -8,7 +8,7 @@ import {
   Typography,
 } from '@mui/material'
 import GroupIcon from '@mui/icons-material/Group'
-import TagIcon from '@mui/icons-material/Tag'
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined'
 import TuneIcon from '@mui/icons-material/Tune'
 import { useTranslation } from 'react-i18next'
 import type { ChatRollRoleId, WeightCombineMode } from '@/lib/chat-roll'
@@ -20,8 +20,6 @@ import {
   RoleLabel,
   RoleRowStack,
   RoleWeightField,
-  SettingsGroupPanel,
-  SettingsGroupTitle,
   SettingsLeftPanel,
   SettingsToggleCard,
   SettingsToggleCardColumn,
@@ -29,6 +27,7 @@ import {
   SettingsToggleCopy,
   SettingsToggleNestedField,
 } from '@/components/chat-roll/chatRollPageStyles'
+import { ChatRollSettingsCollapsibleGroup } from '@/components/chat-roll/session/ChatRollSettingsCollapsibleGroup'
 
 type ChatRollRoleMeta = {
   id: ChatRollRoleId
@@ -58,18 +57,17 @@ export function ChatRollSessionSettingsLeftPanel(
 
   return (
     <SettingsLeftPanel>
-      <SettingsGroupPanel>
-        <SettingsGroupTitle>
-          <TagIcon fontSize="inherit" aria-hidden />
-          {t('chatRoll.chatKeyword')}
-        </SettingsGroupTitle>
+      <ChatRollSettingsCollapsibleGroup
+        title={t('chatRoll.mainSettings')}
+        titleIcon={<SettingsOutlinedIcon fontSize="inherit" aria-hidden />}
+      >
         <KeywordField
           label={t('chatRoll.keywordLabel')}
           size="small"
           value={props.draft.keyword}
           onChange={(event) => props.onKeywordChange(event.target.value)}
           error={Boolean(props.keywordError)}
-          helperText={props.keywordError ?? t('chatRoll.keywordHelp')}
+          helperText={props.keywordError ?? undefined}
           fullWidth
           disabled={props.settingsDisabled}
           slotProps={{
@@ -78,13 +76,53 @@ export function ChatRollSessionSettingsLeftPanel(
             },
           }}
         />
-      </SettingsGroupPanel>
+        <SettingsToggleCardColumn sx={{ mt: 2 }}>
+          <SettingsToggleCardRow>
+            <Switch
+              size="small"
+              checked={props.draft.winnerResponseEnabled}
+              disabled={props.settingsDisabled}
+              onChange={(event) =>
+                props.onWinnerResponseEnabledChange(event.target.checked)
+              }
+            />
+            <SettingsToggleCopy>
+              <ExclusionToggleLabel variant="body2">
+                {t('chatRoll.requireWinnerChatResponse')}
+              </ExclusionToggleLabel>
+            </SettingsToggleCopy>
+          </SettingsToggleCardRow>
 
-      <SettingsGroupPanel>
-        <SettingsGroupTitle>
-          <GroupIcon fontSize="inherit" aria-hidden />
-          {t('chatRoll.eligibleRoles')}
-        </SettingsGroupTitle>
+          {props.draft.winnerResponseEnabled ? (
+            <SettingsToggleNestedField>
+              <TextField
+                label={t('chatRoll.winnerResponseSecondsLabel')}
+                type="number"
+                size="small"
+                fullWidth
+                disabled={props.settingsDisabled}
+                value={props.draft.winnerResponseSeconds}
+                error={Boolean(props.winnerResponseSecondsError)}
+                slotProps={{
+                  htmlInput: { step: 1 },
+                }}
+                onChange={(event) => {
+                  props.onWinnerResponseSecondsChange(event.target.value)
+                }}
+                helperText={
+                  props.winnerResponseSecondsError ??
+                  t('chatRoll.winnerResponseSecondsHelp')
+                }
+              />
+            </SettingsToggleNestedField>
+          ) : null}
+        </SettingsToggleCardColumn>
+      </ChatRollSettingsCollapsibleGroup>
+
+      <ChatRollSettingsCollapsibleGroup
+        title={t('chatRoll.eligibleRoles')}
+        titleIcon={<GroupIcon fontSize="inherit" aria-hidden />}
+      >
         <Stack spacing={1}>
           {props.roleMeta.map((role) => {
             const setting = props.draft.roleSettings[role.id]
@@ -127,14 +165,13 @@ export function ChatRollSessionSettingsLeftPanel(
             )
           })}
         </Stack>
-      </SettingsGroupPanel>
+      </ChatRollSettingsCollapsibleGroup>
 
-      <SettingsGroupPanel>
-        <SettingsGroupTitle>
-          <TuneIcon fontSize="inherit" aria-hidden />
-          {t('chatRoll.rollOptions')}
-        </SettingsGroupTitle>
-
+      <ChatRollSettingsCollapsibleGroup
+        title={t('chatRoll.rollOptions')}
+        titleIcon={<TuneIcon fontSize="inherit" aria-hidden />}
+        defaultExpanded={false}
+      >
         <Box sx={{ mt: 0.5 }}>
           <Typography
             variant="caption"
@@ -178,51 +215,6 @@ export function ChatRollSessionSettingsLeftPanel(
         </Box>
 
         <Stack spacing={1} sx={{ mt: 2 }}>
-          <SettingsToggleCardColumn>
-            <SettingsToggleCardRow>
-              <Switch
-                size="small"
-                checked={props.draft.winnerResponseEnabled}
-                disabled={props.settingsDisabled}
-                onChange={(event) =>
-                  props.onWinnerResponseEnabledChange(event.target.checked)
-                }
-              />
-              <SettingsToggleCopy>
-                <ExclusionToggleLabel variant="body2">
-                  {t('chatRoll.requireWinnerChatResponse')}
-                </ExclusionToggleLabel>
-                <Typography variant="caption" color="text.secondary">
-                  {t('chatRoll.requireWinnerChatResponseHelp')}
-                </Typography>
-              </SettingsToggleCopy>
-            </SettingsToggleCardRow>
-
-            {props.draft.winnerResponseEnabled ? (
-              <SettingsToggleNestedField>
-                <TextField
-                  label={t('chatRoll.winnerResponseSecondsLabel')}
-                  type="number"
-                  size="small"
-                  fullWidth
-                  disabled={props.settingsDisabled}
-                  value={props.draft.winnerResponseSeconds}
-                  error={Boolean(props.winnerResponseSecondsError)}
-                  slotProps={{
-                    htmlInput: { step: 1 },
-                  }}
-                  onChange={(event) => {
-                    props.onWinnerResponseSecondsChange(event.target.value)
-                  }}
-                  helperText={
-                    props.winnerResponseSecondsError ??
-                    t('chatRoll.winnerResponseSecondsHelp')
-                  }
-                />
-              </SettingsToggleNestedField>
-            ) : null}
-          </SettingsToggleCardColumn>
-
           <SettingsToggleCard>
             <Switch
               size="small"
@@ -259,7 +251,7 @@ export function ChatRollSessionSettingsLeftPanel(
             </SettingsToggleCopy>
           </SettingsToggleCard>
         </Stack>
-      </SettingsGroupPanel>
+      </ChatRollSettingsCollapsibleGroup>
     </SettingsLeftPanel>
   )
 }

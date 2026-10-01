@@ -701,7 +701,7 @@ export const ru = {
     couldNotGoLive: "Не удалось вывести сессию в эфир.",
     couldNotDeactivate: "Не удалось снять сессию с эфира.",
     sessionArchivedViewOnly: "Сессия в архиве. Только просмотр.",
-    chatKeyword: "Ключевое слово в чате",
+    mainSettings: "Основные настройки",
     rollOptions: "Параметры розыгрыша",
     weightCombine: "Объединение весов",
     combineHighestShort: "Максимум",

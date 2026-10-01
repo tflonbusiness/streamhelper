@@ -685,7 +685,7 @@ export const en = {
     couldNotGoLive: "Could not go live.",
     couldNotDeactivate: "Could not take session off air.",
     sessionArchivedViewOnly: "This session is archived. View only.",
-    chatKeyword: "Chat keyword",
+    mainSettings: "Main settings",
     rollOptions: "Roll options",
     weightCombine: "Weight combine",
     combineHighestShort: "Highest",
