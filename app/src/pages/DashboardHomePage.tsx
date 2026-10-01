@@ -35,8 +35,8 @@ export function DashboardHomePage() {
               xs: '1fr',
               lg: 'minmax(0, 1fr) minmax(300px, 400px)',
             },
-            gap: 2.5,
-            alignItems: 'start',
+            gap: 3,
+            alignItems: 'stretch',
           }}
         >
           <Stack spacing={3} sx={{ minWidth: 0 }}>
@@ -44,7 +44,7 @@ export function DashboardHomePage() {
             <DashboardModuleQuickAccess />
           </Stack>
 
-          <Box sx={{ minWidth: 0 }}>
+          <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
             <KickChannelStatsSection accountId={user.accountId} layout="sidebar" />
           </Box>
         </Box>

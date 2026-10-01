@@ -77,7 +77,7 @@ export function KickChannelStatsSection({
           gridTemplateColumns: sidebar
             ? 'repeat(2, 1fr)'
             : { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-          gap: 2,
+          gap: sidebar ? 1.5 : 2,
         }}
       >
         {loading ? (
