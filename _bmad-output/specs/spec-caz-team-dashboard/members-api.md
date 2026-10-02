@@ -21,20 +21,30 @@ Returns all `account_members` for the account joined with user name.
       "userId": 1,
       "name": "streamer_kick",
       "role": "owner",
-      "isActive": true
-    },
-    {
-      "userId": 3,
-      "name": "demo_moderator",
-      "role": "moderator",
-      "isActive": true
+      "isActive": true,
+      "createdAt": "2026-01-10T10:00:00.000Z"
     }
-  ]
+  ],
+  "total": 2,
+  "page": 1,
+  "limit": 10
 }
 ```
 
-- Include both owner and moderator rows.
-- Order: owner first, then moderators by name ascending.
+### Query parameters
+
+| Param | Default | Values |
+|-------|---------|--------|
+| `page` | `1` | positive integer |
+| `limit` | `10` | 1–50 |
+| `role` | `all` | `all`, `owner`, `moderator` |
+| `status` | `true` | `true` (active), `false` (inactive), `all` |
+| `sortBy` | `role` | `name`, `role`, `status`, `createdAt` |
+| `sortOrder` | `asc` | `asc`, `desc` |
+
+- Include both owner and moderator rows matching filters.
+- Default `status=true` returns only active members.
+- Order follows `sortBy` / `sortOrder`; secondary tie-breaker is name ascending.
 - `isActive` reflects `account_members.is_active`.
 
 ### Errors

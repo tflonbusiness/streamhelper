@@ -18,6 +18,7 @@ const MEMBERS = [
     role: 'owner' as const,
     isActive: true,
     hasInviteLink: false,
+    createdAt: '2026-01-10T10:00:00.000Z',
   },
   {
     userId: 3,
@@ -25,6 +26,7 @@ const MEMBERS = [
     role: 'moderator' as const,
     isActive: true,
     hasInviteLink: true,
+    createdAt: '2026-02-15T14:30:00.000Z',
   },
 ];
 
@@ -137,7 +139,61 @@ describe('AccountsController (e2e)', () => {
           accountId === 10 && members.some((m) => m.userId === userId && m.isActive),
         isAccountOwner: async (accountId: number, userId: number) =>
           accountId === 10 && userId === 1,
-        listAccountMembers: async () => members,
+        listAccountMembers: async (
+          _accountId: number,
+          input: {
+            role?: 'all' | 'owner' | 'moderator';
+            status?: 'true' | 'false' | 'all';
+            page?: number;
+            limit?: number;
+            sortBy?: 'name' | 'role' | 'status' | 'createdAt';
+            sortOrder?: 'asc' | 'desc';
+          } = {},
+        ) => {
+          const roleFilter = input.role ?? 'all';
+          const statusFilter = input.status ?? 'true';
+          const page = input.page ?? 1;
+          const limit = input.limit ?? 10;
+          const sortBy = input.sortBy ?? 'role';
+          const sortOrder = input.sortOrder ?? 'asc';
+
+          let filtered = members.filter((member) => {
+            if (roleFilter !== 'all' && member.role !== roleFilter) {
+              return false;
+            }
+            if (statusFilter === 'true' && !member.isActive) {
+              return false;
+            }
+            if (statusFilter === 'false' && member.isActive) {
+              return false;
+            }
+            return true;
+          });
+
+          filtered = [...filtered].sort((left, right) => {
+            const direction = sortOrder === 'desc' ? -1 : 1;
+            if (sortBy === 'name') {
+              return left.name.localeCompare(right.name) * direction;
+            }
+            if (sortBy === 'role') {
+              return left.role.localeCompare(right.role) * direction;
+            }
+            if (sortBy === 'createdAt') {
+              return left.createdAt.localeCompare(right.createdAt) * direction;
+            }
+            return (Number(left.isActive) - Number(right.isActive)) * direction;
+          });
+
+          const total = filtered.length;
+          const offset = (page - 1) * limit;
+
+          return {
+            members: filtered.slice(offset, offset + limit),
+            total,
+            page,
+            limit,
+          };
+        },
         createModeratorWithAccessLink: async () => ({
           userId: 99,
           name: 'New Moderator',
@@ -441,6 +497,8 @@ describe('AccountsController (e2e)', () => {
       .expect(200)
       .expect(({ body }) => {
         expect(body.members).toHaveLength(2);
+        expect(body.total).toBe(2);
+        expect(body.page).toBe(1);
         expect(body.members[0].name).toBe('demo_streamer');
       });
   });

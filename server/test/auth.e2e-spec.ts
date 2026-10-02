@@ -91,7 +91,12 @@ describe('AuthController (e2e)', () => {
         },
         isAccountOwner: async () => true,
         hasActiveMembership: async () => true,
-        listAccountMembers: async () => [],
+        listAccountMembers: async () => ({
+          members: [],
+          total: 0,
+          page: 1,
+          limit: 10,
+        }),
         createModeratorWithAccessLink: async () => ({
           userId: 99,
           name: 'New Moderator',

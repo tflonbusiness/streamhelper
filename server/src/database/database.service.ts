@@ -84,6 +84,7 @@ export type DbAccountMember = {
   role: 'owner' | 'moderator';
   isActive: boolean;
   hasInviteLink: boolean;
+  createdAt: string;
 };
 
 export type BonusBuyArchivedFilter = 'false' | 'true' | 'all';
@@ -872,13 +873,74 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     return { channelId: row.channel_id, channelSlug: row.channel_slug };
   }
 
-  async listAccountMembers(accountId: number): Promise<DbAccountMember[]> {
+  async listAccountMembers(
+    accountId: number,
+    input: {
+      role?: 'all' | 'owner' | 'moderator';
+      status?: 'true' | 'false' | 'all';
+      page?: number;
+      limit?: number;
+      sortBy?: 'name' | 'role' | 'status' | 'createdAt';
+      sortOrder?: 'asc' | 'desc';
+    } = {},
+  ): Promise<{
+    members: DbAccountMember[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const roleFilter = input.role ?? 'all';
+    const statusFilter = input.status ?? 'true';
+    const page = input.page ?? 1;
+    const limit = input.limit ?? 10;
+    const sortBy = input.sortBy ?? 'role';
+    const sortOrder = input.sortOrder ?? 'asc';
+    const offset = (page - 1) * limit;
+
+    const sortColumns = {
+      name: 'u.name',
+      role: 'am.role',
+      status: 'am.is_active',
+      createdAt: 'am.created_at',
+    } as const;
+    const sortColumn = sortColumns[sortBy] ?? sortColumns.role;
+    const sortDirection = sortOrder === 'desc' ? 'DESC' : 'ASC';
+
+    const filters: string[] = ['am.account_id = $1'];
+    const filterParams: (number | string | boolean)[] = [accountId];
+
+    if (roleFilter !== 'all') {
+      filterParams.push(roleFilter);
+      filters.push(`am.role = $${filterParams.length}`);
+    }
+
+    if (statusFilter === 'true') {
+      filters.push('am.is_active = true');
+    } else if (statusFilter === 'false') {
+      filters.push('am.is_active = false');
+    }
+
+    const whereClause = filters.join(' AND ');
+
+    const countResult = await this.pool.query<{ count: string | number }>(
+      `
+        SELECT COUNT(*)::text AS count
+        FROM account_members am
+        JOIN users u ON u.id = am.user_id
+        WHERE ${whereClause}
+      `,
+      filterParams,
+    );
+    const total = toInt(countResult.rows[0]?.count ?? 0);
+
+    const listParams = [...filterParams, limit, offset];
     const result = await this.pool.query<{
       user_id: string | number;
       name: string;
       role: 'owner' | 'moderator';
       is_active: boolean;
       has_invite_link: boolean;
+      created_at: Date;
     }>(
       `
         SELECT
@@ -886,6 +948,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           u.name,
           am.role,
           am.is_active,
+          am.created_at,
           EXISTS (
             SELECT 1
             FROM auth_credentials ac
@@ -895,19 +958,26 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           ) AS has_invite_link
         FROM account_members am
         JOIN users u ON u.id = am.user_id
-        WHERE am.account_id = $1
-        ORDER BY CASE WHEN am.role = 'owner' THEN 0 ELSE 1 END, u.name
+        WHERE ${whereClause}
+        ORDER BY ${sortColumn} ${sortDirection}, u.name ASC
+        LIMIT $${listParams.length - 1} OFFSET $${listParams.length}
       `,
-      [accountId],
+      listParams,
     );
 
-    return result.rows.map((row) => ({
-      userId: toInt(row.user_id),
-      name: row.name,
-      role: row.role,
-      isActive: row.is_active,
-      hasInviteLink: row.has_invite_link,
-    }));
+    return {
+      members: result.rows.map((row) => ({
+        userId: toInt(row.user_id),
+        name: row.name,
+        role: row.role,
+        isActive: row.is_active,
+        hasInviteLink: row.has_invite_link,
+        createdAt: row.created_at.toISOString(),
+      })),
+      total,
+      page,
+      limit,
+    };
   }
 
   async rotateModeratorInviteLink(

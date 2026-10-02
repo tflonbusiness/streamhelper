@@ -5,7 +5,7 @@ import {
   Menu,
   MenuItem,
 } from '@mui/material'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
 import { useId, useState } from 'react'
 
 export type RowAction = {
@@ -44,17 +44,14 @@ export function RowActionsMenu({
         aria-expanded={open ? 'true' : undefined}
         onClick={(event) => setAnchorEl(event.currentTarget)}
         sx={{
-          bgcolor: 'primary.main',
-          color: 'primary.contrastText',
-          borderRadius: 1,
-          width: 28,
-          height: 28,
+          color: 'primary.main',
           '&:hover': {
-            bgcolor: 'primary.dark',
+            color: 'primary.light',
+            bgcolor: 'action.hover',
           },
         }}
       >
-        <ExpandMoreIcon sx={{ fontSize: 14 }} aria-hidden />
+        <MoreVertIcon sx={{ fontSize: 20 }} aria-hidden />
       </IconButton>
       <Menu
         id={menuId}

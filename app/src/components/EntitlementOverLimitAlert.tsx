@@ -9,6 +9,7 @@ import {
   getEntitlementOverLimitIssues,
   isOverLimit,
   type EntitlementOverLimitIssue,
+  type EntitlementOverLimitIssueKind,
 } from '@/lib/entitlements'
 
 export type EntitlementOverLimitAlertContext = 'moduleList' | 'sessionDetail'
@@ -17,6 +18,8 @@ type EntitlementOverLimitAlertProps = {
   envelope: EntitlementEnvelope | undefined
   module?: keyof EntitlementUsage['sessions']
   context?: EntitlementOverLimitAlertContext
+  /** When set, only matching issue kinds are shown (e.g. team page → moderators only). */
+  issueKinds?: EntitlementOverLimitIssueKind[]
 }
 
 function resolveIssueCopy(
@@ -104,6 +107,7 @@ export function EntitlementOverLimitAlert({
   envelope,
   module,
   context = 'moduleList',
+  issueKinds,
 }: EntitlementOverLimitAlertProps) {
   const { t } = useTranslation()
 
@@ -111,7 +115,10 @@ export function EntitlementOverLimitAlert({
     return null
   }
 
-  const issues = getEntitlementOverLimitIssues(envelope, module)
+  let issues = getEntitlementOverLimitIssues(envelope, module)
+  if (issueKinds !== undefined) {
+    issues = issues.filter((issue) => issueKinds.includes(issue.kind))
+  }
   const limitedNotice = t(
     context === 'sessionDetail'
       ? 'subscription.entitlements.overLimitIssues.functionalityLimitedSessionDetail'

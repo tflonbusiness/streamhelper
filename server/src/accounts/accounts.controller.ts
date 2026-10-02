@@ -122,11 +122,26 @@ export class AccountsController {
   @Get(':accountId/members')
   async listMembers(
     @Param('accountId', ParseIntPipe) accountId: number,
+    @Query('role') role: string | undefined,
+    @Query('status') status: string | undefined,
+    @Query('page') page: string | undefined,
+    @Query('limit') limit: string | undefined,
+    @Query('sortBy') sortBy: string | undefined,
+    @Query('sortOrder') sortOrder: string | undefined,
     @Req() req: Request,
   ) {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
-    return this.authService.getAccountMembers(accountId, user.id);
+    return this.authService.getAccountMembers(
+      accountId,
+      user.id,
+      role,
+      status,
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+    );
   }
 
   @Post(':accountId/moderators')

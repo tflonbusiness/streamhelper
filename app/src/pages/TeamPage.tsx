@@ -9,25 +9,38 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   Skeleton,
   Stack,
+  TableSortLabel,
   TextField,
   Typography,
 } from '@mui/material'
-import { useTheme, type Theme } from '@mui/material/styles'
+import { styled, useTheme, type Theme } from '@mui/material/styles'
 import GroupIcon from '@mui/icons-material/Group'
 import LinkIcon from '@mui/icons-material/Link'
 import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove'
 import type { RowAction } from '@/components/RowActionsMenu'
-import { type FormEvent, useState } from 'react'
-import { type AccountMember } from '@/api/auth'
+import { type FormEvent, useMemo, useState } from 'react'
+import {
+  TEAM_MEMBERS_PAGE_SIZE,
+  type AccountMember,
+  type AccountMemberRoleFilter,
+  type AccountMemberSortField,
+  type AccountMemberSortOrder,
+  type AccountMemberStatusFilter,
+} from '@/api/auth'
 import { AppTable, type AppTableColumn } from '@/components/AppTable'
 import { PageHeader } from '@/components/PageHeader'
 import { SectionHeader } from '@/components/SectionHeader'
-import { EntitlementOverLimitAlert } from '@/components/EntitlementOverLimitAlert'
+import { EntitlementNoticesSection } from '@/components/EntitlementNoticesSection'
 import { RowActionsMenu } from '@/components/RowActionsMenu'
 import { StatusAlert } from '@/components/StatusAlert'
+import { formatDateTime } from '@/lib/format-date-time'
 import {
   canMutateWithEntitlements,
   isAtModeratorCap,
@@ -41,6 +54,62 @@ import {
   useRevokeModerator,
 } from '@/queries/use-team'
 import { cardSx, inputFieldSx, mutedChipSx, toneChipSx } from '@/theme/colors'
+
+const StyledFilterFormControl = styled(FormControl)({
+  minWidth: 140,
+})
+
+const StyledFilterSelect = styled(Select)(({ theme }) => ({
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: theme.palette.background.default,
+  },
+}))
+
+const StyledFilterToolbar = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  width: '100%',
+  flexWrap: 'wrap',
+  justifyContent: 'flex-end',
+  alignItems: 'center',
+  gap: theme.spacing(1.5),
+}))
+
+const sortableHeaderIconSx = (theme: Theme, active: boolean) => ({
+  color: 'inherit',
+  '& .MuiTableSortLabel-icon': {
+    opacity: active ? 1 : 0.45,
+    color: theme.palette.text.secondary,
+  },
+  '&:hover .MuiTableSortLabel-icon': {
+    opacity: active ? 1 : 0.7,
+  },
+})
+
+type MemberSortState = {
+  field: AccountMemberSortField
+  direction: AccountMemberSortOrder
+}
+
+function sortableMemberHeader(
+  label: string,
+  field: AccountMemberSortField,
+  sort: MemberSortState,
+  onSortField: (field: AccountMemberSortField) => void,
+  theme: Theme,
+) {
+  const active = sort.field === field
+
+  return (
+    <TableSortLabel
+      active={active}
+      direction={active ? sort.direction : 'asc'}
+      onClick={() => onSortField(field)}
+      sx={sortableHeaderIconSx(theme, active)}
+    >
+      {label}
+    </TableSortLabel>
+  )
+}
 
 function memberRoleChip(
   role: AccountMember['role'],
@@ -89,16 +158,51 @@ export function TeamPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [moderatorName, setModeratorName] = useState('')
   const [createError, setCreateError] = useState<string | null>(null)
-  const [copyingMemberId, setCopyingMemberId] = useState<number | null>(null)
+  const [generateLinkMember, setGenerateLinkMember] =
+    useState<AccountMember | null>(null)
+  const [generateLinkError, setGenerateLinkError] = useState<string | null>(
+    null,
+  )
+  const [revokeMember, setRevokeMember] = useState<AccountMember | null>(null)
+  const [revokeError, setRevokeError] = useState<string | null>(null)
+  const [membersPage, setMembersPage] = useState(1)
+  const [roleFilter, setRoleFilter] = useState<AccountMemberRoleFilter>('all')
+  const [statusFilter, setStatusFilter] =
+    useState<AccountMemberStatusFilter>('true')
+  const [sort, setSort] = useState<MemberSortState>({
+    field: 'role',
+    direction: 'asc',
+  })
+
+  const listParams = useMemo(
+    () => ({
+      page: membersPage,
+      limit: TEAM_MEMBERS_PAGE_SIZE,
+      role: roleFilter,
+      status: statusFilter,
+      sortBy: sort.field,
+      sortOrder: sort.direction,
+    }),
+    [
+      membersPage,
+      roleFilter,
+      statusFilter,
+      sort.field,
+      sort.direction,
+    ],
+  )
 
   const {
     data: membersResult,
     isLoading: loadingMembers,
+    isFetching: fetchingMembers,
     error: membersQueryError,
-  } = useAccountMembers(user?.accountId)
+  } = useAccountMembers(user?.accountId, listParams)
 
   const members = membersResult?.members ?? []
+  const membersTotal = membersResult?.total ?? 0
   const membersEnvelope = membersResult?.envelope
+  const isInitialMembersLoading = loadingMembers && !membersResult
   const createModeratorDisabled =
     !canMutateWithEntitlements(membersEnvelope) ||
     isAtModeratorCap(membersEnvelope)
@@ -146,41 +250,67 @@ export function TeamPage() {
     }
   }
 
-  async function handleCopyInviteLink(member: AccountMember) {
-    if (!user?.accountId || user.role !== 'owner' || !member.hasInviteLink) {
-      return
-    }
-
-    setCopyingMemberId(member.userId)
-
-    try {
-      const joinUrl = await inviteLinkMutation.mutateAsync(member.userId)
-      await navigator.clipboard.writeText(joinUrl)
-      showSuccess(t('team.linkCopied', { name: member.name }))
-    } catch (error) {
-      showError(
-        error instanceof Error ? error.message : t('team.couldNotCopyLink'),
-      )
-    } finally {
-      setCopyingMemberId(null)
+  function handleGenerateLinkDialogChange(open: boolean) {
+    if (!open) {
+      setGenerateLinkMember(null)
+      setGenerateLinkError(null)
     }
   }
 
-  async function handleRevokeModerator(member: AccountMember) {
+  function openGenerateLinkDialog(member: AccountMember) {
+    setGenerateLinkMember(member)
+    setGenerateLinkError(null)
+  }
+
+  async function handleConfirmGenerateLink() {
+    if (!generateLinkMember || !user?.accountId || user.role !== 'owner') {
+      return
+    }
+
+    setGenerateLinkError(null)
+
+    try {
+      const joinUrl = await inviteLinkMutation.mutateAsync(
+        generateLinkMember.userId,
+      )
+      try {
+        await navigator.clipboard.writeText(joinUrl)
+      } catch {
+        setGenerateLinkError(t('team.couldNotCopyLink'))
+        return
+      }
+      showSuccess(
+        t('team.linkCopied', { name: generateLinkMember.name }),
+      )
+      handleGenerateLinkDialogChange(false)
+    } catch (error) {
+      setGenerateLinkError(
+        error instanceof Error
+          ? error.message
+          : t('team.couldNotGenerateLink'),
+      )
+    }
+  }
+
+  async function handleConfirmRevoke() {
     if (
+      !revokeMember ||
       !user?.accountId ||
       user.role !== 'owner' ||
-      member.role !== 'moderator' ||
-      !member.isActive
+      revokeMember.role !== 'moderator' ||
+      !revokeMember.isActive
     ) {
       return
     }
 
+    setRevokeError(null)
+
     try {
-      await revokeMutation.mutateAsync(member.userId)
+      await revokeMutation.mutateAsync(revokeMember.userId)
       showSuccess(t('team.moderatorRevoked'))
+      setRevokeMember(null)
     } catch (error) {
-      showError(
+      setRevokeError(
         error instanceof Error ? error.message : t('team.couldNotRevoke'),
       )
     }
@@ -195,14 +325,10 @@ export function TeamPage() {
 
     if (user?.role === 'owner' && member.hasInviteLink) {
       actions.push({
-        id: 'copy-link',
-        label:
-          copyingMemberId === member.userId
-            ? t('common.copying')
-            : t('team.copyLink'),
+        id: 'generate-link',
+        label: t('team.generateLink'),
         icon: <LinkIcon fontSize="small" aria-hidden />,
-        disabled: copyingMemberId === member.userId,
-        onClick: () => void handleCopyInviteLink(member),
+        onClick: () => openGenerateLinkDialog(member),
       })
     }
 
@@ -212,18 +338,41 @@ export function TeamPage() {
         label: t('team.revoke'),
         icon: <PersonRemoveIcon fontSize="small" aria-hidden />,
         destructive: true,
-        onClick: () => void handleRevokeModerator(member),
+        onClick: () => {
+          setRevokeMember(member)
+          setRevokeError(null)
+        },
       })
     }
 
     return actions
   }
 
+  function handleSortField(field: AccountMemberSortField) {
+    setSort((previous) => {
+      if (previous.field === field) {
+        return {
+          field,
+          direction: previous.direction === 'asc' ? 'desc' : 'asc',
+        }
+      }
+      return { field, direction: 'asc' }
+    })
+    setMembersPage(1)
+  }
+
   const memberColumns: AppTableColumn<AccountMember>[] = [
     {
       id: 'name',
-      header: t('common.name'),
-      width: '100%',
+      header: sortableMemberHeader(
+        t('common.name'),
+        'name',
+        sort,
+        handleSortField,
+        theme,
+      ),
+      width: '40%',
+      minWidth: 120,
       sx: {
         fontWeight: 500,
         minWidth: 0,
@@ -235,7 +384,13 @@ export function TeamPage() {
     },
     {
       id: 'role',
-      header: t('common.role'),
+      header: sortableMemberHeader(
+        t('common.role'),
+        'role',
+        sort,
+        handleSortField,
+        theme,
+      ),
       width: 140,
       minWidth: 140,
       sx: { px: 1.5, whiteSpace: 'nowrap' },
@@ -243,12 +398,34 @@ export function TeamPage() {
     },
     {
       id: 'status',
-      header: t('common.status'),
+      header: sortableMemberHeader(
+        t('common.status'),
+        'status',
+        sort,
+        handleSortField,
+        theme,
+      ),
       width: 100,
       minWidth: 100,
       sx: { px: 1.5, whiteSpace: 'nowrap' },
       render: (member) =>
         memberStatusChip(member.isActive, theme.palette, theme, t),
+    },
+    {
+      id: 'createdAt',
+      header: sortableMemberHeader(
+        t('common.created'),
+        'createdAt',
+        sort,
+        handleSortField,
+        theme,
+      ),
+      width: 168,
+      minWidth: 168,
+      sx: { px: 1.5, whiteSpace: 'nowrap', color: 'text.secondary' },
+      render: (member) => (
+        <time dateTime={member.createdAt}>{formatDateTime(member.createdAt)}</time>
+      ),
     },
     {
       id: 'action',
@@ -280,6 +457,11 @@ export function TeamPage() {
         icon={GroupIcon}
         iconVariant="info"
       />
+      <EntitlementNoticesSection
+        envelope={membersEnvelope}
+        variant="team"
+        placement="standalone"
+      />
       <Card elevation={0} sx={cardSx}>
         <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
           <SectionHeader
@@ -303,8 +485,7 @@ export function TeamPage() {
           />
 
           <Stack spacing={2}>
-            <EntitlementOverLimitAlert envelope={membersEnvelope} />
-            {loadingMembers ? (
+            {isInitialMembersLoading ? (
               <Stack spacing={1.5}>
                 <Skeleton variant="rounded" height={40} />
                 <Skeleton variant="rounded" height={40} />
@@ -314,15 +495,66 @@ export function TeamPage() {
             {membersError ? (
               <StatusAlert tone="error">{membersError}</StatusAlert>
             ) : null}
-            {!loadingMembers && members.length > 0 ? (
+            {!isInitialMembersLoading && !membersError ? (
               <AppTable
                 columns={memberColumns}
                 rows={members}
                 getRowKey={(member) => member.userId}
+                loading={fetchingMembers}
+                emptyMessage={t('team.noMembersMatchFilters')}
+                toolbar={
+                  <StyledFilterToolbar>
+                    <StyledFilterFormControl size="small">
+                      <InputLabel id="team-role-filter-label">
+                        {t('common.role')}
+                      </InputLabel>
+                      <StyledFilterSelect
+                        labelId="team-role-filter-label"
+                        label={t('common.role')}
+                        value={roleFilter}
+                        onChange={(event) => {
+                          setRoleFilter(
+                            event.target.value as AccountMemberRoleFilter,
+                          )
+                          setMembersPage(1)
+                        }}
+                      >
+                        <MenuItem value="all">{t('common.all')}</MenuItem>
+                        <MenuItem value="owner">{t('auth.owner')}</MenuItem>
+                        <MenuItem value="moderator">
+                          {t('team.roleModerator')}
+                        </MenuItem>
+                      </StyledFilterSelect>
+                    </StyledFilterFormControl>
+                    <StyledFilterFormControl size="small">
+                      <InputLabel id="team-status-filter-label">
+                        {t('common.status')}
+                      </InputLabel>
+                      <StyledFilterSelect
+                        labelId="team-status-filter-label"
+                        label={t('common.status')}
+                        value={statusFilter}
+                        onChange={(event) => {
+                          setStatusFilter(
+                            event.target.value as AccountMemberStatusFilter,
+                          )
+                          setMembersPage(1)
+                        }}
+                      >
+                        <MenuItem value="true">{t('common.active')}</MenuItem>
+                        <MenuItem value="false">{t('common.inactive')}</MenuItem>
+                        <MenuItem value="all">{t('common.all')}</MenuItem>
+                      </StyledFilterSelect>
+                    </StyledFilterFormControl>
+                  </StyledFilterToolbar>
+                }
+                pagination={{
+                  count: membersTotal,
+                  page: membersPage,
+                  onPageChange: setMembersPage,
+                  rowsPerPage: TEAM_MEMBERS_PAGE_SIZE,
+                }}
               />
-            ) : null}
-            {!loadingMembers && !membersError && members.length === 1 ? (
-              <StatusAlert tone="info">{t('team.onlyOwnerSoFar')}</StatusAlert>
             ) : null}
           </Stack>
         </CardContent>
@@ -393,6 +625,97 @@ export function TeamPage() {
             disabled={createMutation.isPending}
           >
             {createMutation.isPending ? t('common.adding') : t('common.add')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={generateLinkMember !== null}
+        onClose={() => handleGenerateLinkDialogChange(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          {generateLinkMember
+            ? t('team.generateLinkDialogTitle', { name: generateLinkMember.name })
+            : t('team.generateLink')}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2.5} sx={{ pt: 0.5 }}>
+            <StatusAlert tone="warning">
+              {t('team.generateLinkWarning')}
+            </StatusAlert>
+            {generateLinkError ? (
+              <StatusAlert tone="error">{generateLinkError}</StatusAlert>
+            ) : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={() => handleGenerateLinkDialogChange(false)}
+            disabled={inviteLinkMutation.isPending}
+          >
+            {t('common.cancel')}
+          </Button>
+          <Button
+            type="button"
+            variant="contained"
+            onClick={() => void handleConfirmGenerateLink()}
+            disabled={inviteLinkMutation.isPending}
+          >
+            {inviteLinkMutation.isPending
+              ? t('team.generatingLink')
+              : t('team.generateLinkAction')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={revokeMember !== null}
+        onClose={() => {
+          if (!revokeMutation.isPending) {
+            setRevokeMember(null)
+            setRevokeError(null)
+          }
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          {revokeMember
+            ? t('team.revokeDialogTitle', { name: revokeMember.name })
+            : t('team.revoke')}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2.5} sx={{ pt: 0.5 }}>
+            <StatusAlert tone="warning">{t('team.revokeDialogWarning')}</StatusAlert>
+            {revokeError ? (
+              <StatusAlert tone="error">{revokeError}</StatusAlert>
+            ) : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={() => {
+              setRevokeMember(null)
+              setRevokeError(null)
+            }}
+            disabled={revokeMutation.isPending}
+          >
+            {t('common.cancel')}
+          </Button>
+          <Button
+            type="button"
+            variant="contained"
+            color="error"
+            onClick={() => void handleConfirmRevoke()}
+            disabled={revokeMutation.isPending}
+          >
+            {revokeMutation.isPending ? t('team.revoking') : t('team.revoke')}
           </Button>
         </DialogActions>
       </Dialog>

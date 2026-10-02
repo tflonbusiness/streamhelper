@@ -1236,12 +1236,75 @@ export class AuthService {
     return null;
   }
 
-  async getAccountMembers(accountId: number, callerUserId: number) {
+  async getAccountMembers(
+    accountId: number,
+    callerUserId: number,
+    role?: string,
+    status?: string,
+    page?: string,
+    limit?: string,
+    sortBy?: string,
+    sortOrder?: string,
+  ) {
     await this.requireAccountMember(accountId, callerUserId);
-    const members = await this.database.listAccountMembers(accountId);
-    return this.withEntitlementEnvelope(accountId, { members }, {
-      complianceScope: { kind: 'team' },
+
+    const roleFilter = role ?? 'all';
+    if (roleFilter !== 'all' && roleFilter !== 'owner' && roleFilter !== 'moderator') {
+      throw new BadRequestException('Invalid role filter');
+    }
+
+    const statusFilter = status ?? 'true';
+    if (statusFilter !== 'true' && statusFilter !== 'false' && statusFilter !== 'all') {
+      throw new BadRequestException('Invalid status filter');
+    }
+
+    const pageNumber = page === undefined ? 1 : Number.parseInt(page, 10);
+    const limitNumber = limit === undefined ? 10 : Number.parseInt(limit, 10);
+
+    if (!Number.isFinite(pageNumber) || pageNumber < 1) {
+      throw new BadRequestException('Invalid page');
+    }
+
+    if (!Number.isFinite(limitNumber) || limitNumber < 1 || limitNumber > 50) {
+      throw new BadRequestException('Invalid limit');
+    }
+
+    const sortField = sortBy ?? 'role';
+    if (
+      sortField !== 'name' &&
+      sortField !== 'role' &&
+      sortField !== 'status' &&
+      sortField !== 'createdAt'
+    ) {
+      throw new BadRequestException('Invalid sort field');
+    }
+
+    const order = sortOrder ?? 'asc';
+    if (order !== 'asc' && order !== 'desc') {
+      throw new BadRequestException('Invalid sort order');
+    }
+
+    const result = await this.database.listAccountMembers(accountId, {
+      role: roleFilter as 'all' | 'owner' | 'moderator',
+      status: statusFilter as 'true' | 'false' | 'all',
+      page: pageNumber,
+      limit: limitNumber,
+      sortBy: sortField as 'name' | 'role' | 'status' | 'createdAt',
+      sortOrder: order as 'asc' | 'desc',
     });
+
+    return this.withEntitlementEnvelope(
+      accountId,
+      {
+        members: result.members,
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+      },
+      {
+        complianceScope: { kind: 'team' },
+      },
+    );
   }
 
   async getKickChannel(

@@ -34,6 +34,7 @@ export type AccountMember = {
   role: 'owner' | 'moderator'
   isActive: boolean
   hasInviteLink: boolean
+  createdAt: string
 }
 
 export type CreateModeratorResult = {
@@ -132,16 +133,47 @@ export async function createModerator(
   return parseJson<CreateModeratorResult>(response)
 }
 
+export type AccountMemberRoleFilter = 'all' | 'owner' | 'moderator'
+export type AccountMemberStatusFilter = 'true' | 'false' | 'all'
+export type AccountMemberSortField = 'name' | 'role' | 'status' | 'createdAt'
+export type AccountMemberSortOrder = 'asc' | 'desc'
+
+export const TEAM_MEMBERS_PAGE_SIZE = 10
+
+export type AccountMembersListParams = {
+  page?: number
+  limit?: number
+  role?: AccountMemberRoleFilter
+  status?: AccountMemberStatusFilter
+  sortBy?: AccountMemberSortField
+  sortOrder?: AccountMemberSortOrder
+}
+
 export type AccountMembersResult = {
   members: AccountMember[]
+  total: number
+  page: number
+  limit: number
 } & Partial<EntitlementEnvelope>
 
 export async function fetchAccountMembers(
   accountId: number,
+  params: AccountMembersListParams = {},
 ): Promise<AccountMembersResult> {
-  const response = await fetch(`/accounts/${accountId}/members`, {
-    credentials: 'include',
-  })
+  const search = new URLSearchParams()
+  search.set('page', String(params.page ?? 1))
+  search.set('limit', String(params.limit ?? TEAM_MEMBERS_PAGE_SIZE))
+  search.set('role', params.role ?? 'all')
+  search.set('status', params.status ?? 'true')
+  search.set('sortBy', params.sortBy ?? 'role')
+  search.set('sortOrder', params.sortOrder ?? 'asc')
+
+  const response = await fetch(
+    `/accounts/${accountId}/members?${search.toString()}`,
+    {
+      credentials: 'include',
+    },
+  )
 
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, i18n.t('errors.api.loadTeam')))

@@ -2,11 +2,31 @@ import type { BonusBuyArchivedFilter } from '@/api/bonus-buy'
 import type { ChatRollArchivedFilter } from '@/api/chat-roll'
 import type { PrizeSpinArchivedFilter } from '@/api/prize-spin'
 
+import type {
+  AccountMemberRoleFilter,
+  AccountMemberSortField,
+  AccountMemberSortOrder,
+  AccountMemberStatusFilter,
+} from '@/api/auth'
+
 export const authKeys = {
   all: ['auth'] as const,
   currentUser: () => [...authKeys.all, 'currentUser'] as const,
-  members: (accountId: number) =>
+  membersRoot: (accountId: number) =>
     [...authKeys.all, 'members', accountId] as const,
+  members: (
+    accountId: number,
+    params: AccountMembersListParams,
+  ) => [...authKeys.membersRoot(accountId), params] as const,
+}
+
+export type AccountMembersListParams = {
+  page: number
+  limit: number
+  role: AccountMemberRoleFilter
+  status: AccountMemberStatusFilter
+  sortBy: AccountMemberSortField
+  sortOrder: AccountMemberSortOrder
 }
 
 export type PrizeSpinListParams = {

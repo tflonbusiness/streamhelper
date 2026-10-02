@@ -10,22 +10,35 @@ import {
   pickEntitlementEnvelope,
   type EntitlementEnvelope,
 } from '@/lib/entitlements'
-import { authKeys } from '@/queries/keys'
+import { authKeys, type AccountMembersListParams } from '@/queries/keys'
 
 export type AccountMembersQueryData = {
   members: AccountMember[]
+  total: number
+  page: number
+  limit: number
   envelope?: EntitlementEnvelope
 }
 
-export function useAccountMembers(accountId: number | undefined) {
+export function useAccountMembers(
+  accountId: number | undefined,
+  params: AccountMembersListParams,
+) {
   return useQuery({
-    queryKey: authKeys.members(accountId ?? 0),
+    queryKey: authKeys.members(accountId ?? 0, params),
     queryFn: async (): Promise<AccountMembersQueryData> => {
-      const result = await fetchAccountMembers(accountId!)
+      const result = await fetchAccountMembers(accountId!, params)
       const { data, envelope } = pickEntitlementEnvelope(result)
-      return { members: data.members, envelope }
+      return {
+        members: data.members,
+        total: data.total,
+        page: data.page,
+        limit: data.limit,
+        envelope,
+      }
     },
     enabled: accountId !== undefined,
+    placeholderData: (previous) => previous,
   })
 }
 
@@ -37,7 +50,7 @@ export function useCreateModerator(accountId: number | undefined) {
     onSuccess: () => {
       if (accountId !== undefined) {
         void queryClient.invalidateQueries({
-          queryKey: authKeys.members(accountId),
+          queryKey: authKeys.membersRoot(accountId),
         })
       }
     },
@@ -52,7 +65,7 @@ export function useRevokeModerator(accountId: number | undefined) {
     onSuccess: () => {
       if (accountId !== undefined) {
         void queryClient.invalidateQueries({
-          queryKey: authKeys.members(accountId),
+          queryKey: authKeys.membersRoot(accountId),
         })
       }
     },

@@ -210,8 +210,20 @@ export const en = {
     couldNotCreateModerator: "Could not create moderator",
     couldNotCopyLink: "Could not copy link",
     copyLink: "Copy link",
+    generateLink: "Generate link",
+    generateLinkDialogTitle: "Link for {{name}}",
+    generateLinkWarning:
+      "Generating a new link replaces the current one — the old link will stop working. Share only the new link with the moderator.",
+    generateLinkAction: "Generate and copy",
+    generatingLink: "Generating…",
+    couldNotGenerateLink: "Could not generate link",
+    linkGeneratedHint: "Copy the link and share it with the moderator.",
     couldNotRevoke: "Could not revoke access",
     revoke: "Revoke",
+    revoking: "Revoking…",
+    revokeDialogTitle: "Revoke access for {{name}}?",
+    revokeDialogWarning:
+      "The moderator will lose access to the team dashboard. Their invite link will stop working — to bring them back, add them as a moderator again.",
     revoked: "Revoked",
     addModerator: "Add moderator",
     membersTitle: "Members",
@@ -226,7 +238,8 @@ export const en = {
       "Enter a name and share the link — they will join the team through it.",
     linkCopied: "Link for {{name}} copied.",
     actionsFor: "Actions for {{name}}",
-    activeStatus: "Active"
+    activeStatus: "Active",
+    noMembersMatchFilters: "No members match the selected filters."
   },
   modules: {
     pageTitle: "Widgets",
@@ -390,6 +403,11 @@ export const en = {
           "You've reached the limit of {{limit}} active sessions. You can't create new ones until you archive one from the list below.",
         bodyPrizeSpin:
           "You've reached the limit of {{limit}} active sessions. New sessions and duplicates are unavailable until you archive one from the list below.",
+      },
+      moderatorCap: {
+        title: "Moderator limit reached",
+        body:
+          "Your plan allows {{limit}} moderators and that limit is full. You can't add new ones until you revoke access for someone in the list below.",
       },
       noticesSectionAria: "Subscription limit notices",
     },
