@@ -12,7 +12,9 @@ import {
   StyledSessionHeaderTitle,
   StyledSessionHeaderTitleRow,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
-import { StatusAlert } from '@/components/StatusAlert'
+import { SessionCardInlineNotice } from '@/components/session/SessionCardInlineNotice'
+import { SessionHeaderEntitlementNotices } from '@/components/session/SessionHeaderEntitlementNotices'
+import type { EntitlementEnvelope } from '@/lib/entitlements'
 import { ChatRollLiveStatusChip } from '@/components/chat-roll/ChatRollLiveStatusChip'
 import { ChatRollSessionIdBadge } from '@/components/chat-roll/session/ChatRollSessionIdBadge'
 import { mutedChipSx } from '@/theme/colors'
@@ -25,6 +27,7 @@ type ChatRollSessionHeaderSectionProps = {
   goLiveDisabled?: boolean
   primaryActions?: ReactNode
   centerAction?: ReactNode
+  envelope?: EntitlementEnvelope
 }
 
 const HeaderLayout = styled(Box, {
@@ -88,9 +91,7 @@ const ActionsStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(1),
 }))
 
-const ReadOnlyAlert = styled(StatusAlert)(({ theme }) => ({
-  marginTop: theme.spacing(2),
-}))
+const ReadOnlyAlert = SessionCardInlineNotice
 
 export const ChatRollSessionHeaderSection = (
   props: ChatRollSessionHeaderSectionProps,
@@ -175,10 +176,12 @@ export const ChatRollSessionHeaderSection = (
             </ActionsStack>
           </ActionsArea>
         </HeaderLayout>
+        <SessionHeaderEntitlementNotices
+          envelope={props.envelope}
+          module="chatRoll"
+        />
         {readOnly ? (
-          <ReadOnlyAlert tone="info">
-            {t('chatRoll.sessionArchivedViewOnly')}
-          </ReadOnlyAlert>
+          <ReadOnlyAlert>{t('chatRoll.sessionArchivedViewOnly')}</ReadOnlyAlert>
         ) : null}
       </StyledCompactSessionCardContent>
     </StyledSessionCard>

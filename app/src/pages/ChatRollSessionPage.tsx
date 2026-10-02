@@ -53,7 +53,6 @@ import { ChatRollSessionUnsavedLeaveDialog } from '@/components/chat-roll/sessio
 import { chatRollModule, getChatRollWinRowBorderColor } from '@/components/chat-roll/session/chat-roll-session-utils'
 import { ModulePageShell } from '@/components/ModulePageShell'
 import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
-import { EntitlementOverLimitAlert } from '@/components/EntitlementOverLimitAlert'
 import { SectionHeader } from '@/components/SectionHeader'
 import { canMutateWithEntitlements, canGoLiveChatRollSession } from '@/lib/entitlements'
 import type { EntitlementEnvelope } from '@/lib/entitlements'
@@ -555,10 +554,10 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
   return (
     <ModulePageShell moduleId="chat-roll">
       <ModuleSessionPageHeader module={chatRollModule} />
-      <EntitlementOverLimitAlert envelope={envelope} />
 
       <ChatRollSessionHeaderSection
         record={record}
+        envelope={envelope}
         onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
         goLiveDisabled={!canGoLiveChatRollSession(envelope)}
         onGoLive={() => {

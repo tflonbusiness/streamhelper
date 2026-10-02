@@ -18,7 +18,6 @@ import { prizeSpinModule } from '@/components/prize-spin/session/prize-spin-sess
 import { useAuth } from '@/context/AuthContext'
 import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
 import { useNotification } from '@/context/NotificationContext'
-import { EntitlementOverLimitAlert } from '@/components/EntitlementOverLimitAlert'
 import {
   canMutateWithEntitlements,
   canGoLivePrizeSpinSession,
@@ -97,13 +96,13 @@ export const PrizeSpinSessionPage = () => {
   return (
     <ModulePageShell moduleId="prize-spin">
       <ModuleSessionPageHeader module={prizeSpinModule} />
-      <EntitlementOverLimitAlert envelope={envelope} />
       <MainColumnStack>
             <PrizeSpinSessionHeaderSection
               accountId={accountId}
               prizeSpinId={prizeSpinId}
               record={record}
               wins={wins}
+              envelope={envelope}
               liveActionPending={goLiveMutation.isPending}
               goLiveDisabled={!canGoLivePrizeSpinSession(envelope)}
               onGoLive={() => {

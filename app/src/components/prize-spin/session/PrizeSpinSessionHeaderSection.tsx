@@ -14,9 +14,11 @@ import {
   StyledSessionHeaderTitle,
   StyledSessionHeaderTitleRow,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
-import { StatusAlert } from '@/components/StatusAlert'
-import { useNotification } from '@/context/NotificationContext'
+import { SessionCardInlineNotice } from '@/components/session/SessionCardInlineNotice'
+import { SessionHeaderEntitlementNotices } from '@/components/session/SessionHeaderEntitlementNotices'
+import type { EntitlementEnvelope } from '@/lib/entitlements'
 import { downloadWinnersXlsx } from '@/lib/prize-spin-winners-export'
+import { useNotification } from '@/context/NotificationContext'
 import { useArchivePrizeSpinSession } from '@/queries/use-prize-spin-session'
 
 type PrizeSpinSessionHeaderSectionProps = {
@@ -28,6 +30,7 @@ type PrizeSpinSessionHeaderSectionProps = {
   onGoLive?: () => void
   liveActionPending?: boolean
   goLiveDisabled?: boolean
+  envelope?: EntitlementEnvelope
 }
 
 const HeaderStack = styled(Stack)(({ theme }) => ({
@@ -47,9 +50,7 @@ const ActionsStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(1),
 }))
 
-const ReadOnlyAlert = styled(StatusAlert)(({ theme }) => ({
-  marginTop: theme.spacing(2),
-}))
+const ReadOnlyAlert = SessionCardInlineNotice
 
 export const PrizeSpinSessionHeaderSection = (
   props: PrizeSpinSessionHeaderSectionProps,
@@ -135,10 +136,12 @@ export const PrizeSpinSessionHeaderSection = (
             ) : null}
           </ActionsStack>
         </HeaderStack>
+        <SessionHeaderEntitlementNotices
+          envelope={props.envelope}
+          module="prizeSpin"
+        />
         {readOnly ? (
-          <ReadOnlyAlert tone="info">
-            {t('prizeSpin.sessionArchivedViewOnly')}
-          </ReadOnlyAlert>
+          <ReadOnlyAlert>{t('prizeSpin.sessionArchivedViewOnly')}</ReadOnlyAlert>
         ) : null}
       </StyledCompactSessionCardContent>
     </StyledSessionCard>

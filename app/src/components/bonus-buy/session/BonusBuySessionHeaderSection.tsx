@@ -13,7 +13,9 @@ import {
   StyledSessionHeaderTitle,
   StyledSessionHeaderTitleRow,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
-import { StatusAlert } from '@/components/StatusAlert'
+import { SessionCardInlineNotice } from '@/components/session/SessionCardInlineNotice'
+import { SessionHeaderEntitlementNotices } from '@/components/session/SessionHeaderEntitlementNotices'
+import type { EntitlementEnvelope } from '@/lib/entitlements'
 
 type BonusBuySessionHeaderSectionProps = {
   record: BonusBuyRecord
@@ -22,6 +24,7 @@ type BonusBuySessionHeaderSectionProps = {
   onGoLive?: () => void
   liveActionPending?: boolean
   goLiveDisabled?: boolean
+  envelope?: EntitlementEnvelope
 }
 
 const HeaderStack = styled(Stack)(({ theme }) => ({
@@ -41,9 +44,7 @@ const ActionsStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(1),
 }))
 
-const ReadOnlyAlert = styled(StatusAlert)(({ theme }) => ({
-  marginTop: theme.spacing(2),
-}))
+const ReadOnlyAlert = SessionCardInlineNotice
 
 export const BonusBuySessionHeaderSection = (
   props: BonusBuySessionHeaderSectionProps,
@@ -99,10 +100,12 @@ export const BonusBuySessionHeaderSection = (
             ) : null}
           </ActionsStack>
         </HeaderStack>
+        <SessionHeaderEntitlementNotices
+          envelope={props.envelope}
+          module="bonusBuy"
+        />
         {readOnly ? (
-          <ReadOnlyAlert tone="info">
-            {t('bonusBuy.sessionArchivedViewOnly')}
-          </ReadOnlyAlert>
+          <ReadOnlyAlert>{t('bonusBuy.sessionArchivedViewOnly')}</ReadOnlyAlert>
         ) : null}
       </StyledCompactSessionCardContent>
     </StyledSessionCard>

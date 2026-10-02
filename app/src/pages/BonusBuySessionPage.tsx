@@ -15,7 +15,6 @@ import { BonusBuySessionHeaderSection } from '@/components/bonus-buy/session/Bon
 import { BonusBuySessionLoadingState } from '@/components/bonus-buy/session/BonusBuySessionLoadingState'
 import { BonusBuySessionSlotsSection } from '@/components/bonus-buy/session/BonusBuySessionSlotsSection'
 import { BonusBuySessionStatsSection } from '@/components/bonus-buy/session/BonusBuySessionStatsSection'
-import { EntitlementOverLimitAlert } from '@/components/EntitlementOverLimitAlert'
 import {
   canMutateWithEntitlements,
   canGoLiveBonusBuySession,
@@ -112,10 +111,10 @@ export const BonusBuySessionPage = () => {
   return (
     <ModulePageShell moduleId="bonus-buy">
       <ModuleSessionPageHeader module={bonusBuyModule} />
-      <EntitlementOverLimitAlert envelope={envelope} />
       <MainColumnStack>
             <BonusBuySessionHeaderSection
               record={record}
+              envelope={envelope}
               liveActionPending={goLiveMutation.isPending}
               goLiveDisabled={!canGoLiveBonusBuySession(envelope)}
               onGoLive={() => {
