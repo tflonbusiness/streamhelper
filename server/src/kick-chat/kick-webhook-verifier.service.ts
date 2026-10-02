@@ -1,5 +1,10 @@
 import { createPublicKey, verify } from 'node:crypto';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  UnauthorizedException,
+} from '@nestjs/common';
 
 const KICK_PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAq/+l1WnlRrGSolDMA+A8
@@ -12,11 +17,30 @@ twIDAQAB
 -----END PUBLIC KEY-----`;
 
 @Injectable()
-export class KickWebhookVerifierService {
+export class KickWebhookVerifierService implements OnModuleInit {
+  private readonly logger = new Logger(KickWebhookVerifierService.name);
   private readonly publicKey = createPublicKey(KICK_PUBLIC_KEY_PEM);
+
+  onModuleInit(): void {
+    if (!this.isSkipVerify()) {
+      return;
+    }
+    this.logger.warn(
+      'KICK_WEBHOOK_SKIP_VERIFY=true — Kick webhook signature checks are disabled (testing only)',
+    );
+  }
 
   isMockMode(): boolean {
     return process.env.KICK_CHAT_MOCK === 'true';
+  }
+
+  /** Bypass RSA signature verification (e.g. broken proxy relay). Not for production. */
+  isSkipVerify(): boolean {
+    return process.env.KICK_WEBHOOK_SKIP_VERIFY === 'true';
+  }
+
+  bypassesSignatureVerification(): boolean {
+    return this.isMockMode() || this.isSkipVerify();
   }
 
   verifySignature(input: {
@@ -25,7 +49,7 @@ export class KickWebhookVerifierService {
     signature: string;
     rawBody: Buffer;
   }): void {
-    if (this.isMockMode()) {
+    if (this.bypassesSignatureVerification()) {
       return;
     }
 

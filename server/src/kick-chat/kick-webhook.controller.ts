@@ -54,7 +54,7 @@ export class KickWebhookController {
     }
 
     const rawBody = req.rawBody;
-    if (!rawBody && !this.verifier.isMockMode()) {
+    if (!rawBody && !this.verifier.bypassesSignatureVerification()) {
       this.logger.warn(
         `rejected webhook: missing raw body messageId=${messageId}`,
       );
