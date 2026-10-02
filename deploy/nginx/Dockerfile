@@ -1,4 +1,4 @@
-FROM node:22-alpine AS app-builder
+FROM public.ecr.aws/docker/library/node:22-alpine AS app-builder
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ COPY app/ ./
 # Vite build only — tsc is enforced locally via `npm run build`
 RUN npx vite build
 
-FROM nginx:alpine
+FROM public.ecr.aws/docker/library/nginx:alpine
 
 COPY deploy/nginx/proxy-api.conf /etc/nginx/snippets/proxy-api.conf
 COPY deploy/nginx/snippets/app-proxy.conf /etc/nginx/snippets/app-proxy.conf
