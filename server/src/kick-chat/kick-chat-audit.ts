@@ -88,5 +88,11 @@ export function describeIntakePersistence(
     return `${savedEvent}; reason=${result.reason}; messageId=${context.messageId}`;
   }
 
-  return `intake action=${result.action} messageId=${context.messageId}`;
+  return assertNever(result);
+}
+
+function assertNever(value: never): string {
+  throw new Error(
+    `Unhandled ChatRollIntakeResult: ${JSON.stringify(value)}`,
+  );
 }
