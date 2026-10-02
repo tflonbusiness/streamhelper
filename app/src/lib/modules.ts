@@ -8,6 +8,8 @@ import {
   PRIZE_SPIN_ROUTE,
 } from '@/lib/routes'
 
+export type ModulePageId = 'bonus-buy' | 'prize-spin' | 'chat-roll'
+
 export type ModuleCatalogStatus = 'available' | 'coming_soon'
 
 export type ModuleIconVariant =
@@ -61,6 +63,10 @@ export const MODULE_CATALOG: ModuleDefinition[] = [
     hasToggle: false,
   },
 ]
+
+export function getModuleDefinition(moduleId: string): ModuleDefinition | undefined {
+  return MODULE_CATALOG.find((module) => module.id === moduleId)
+}
 
 export function moduleNameKey(moduleId: string): string {
   return `modules.catalog.${moduleId}.name`

@@ -9,6 +9,7 @@ import { formatPrizeSpinDateTime } from '@/components/prize-spin/prize-spin-util
 import { ChatRollSessionIdBadge } from '@/components/chat-roll/session/ChatRollSessionIdBadge'
 import { OpenSessionButton } from '@/components/OpenSessionButton'
 import { prizeSpinSessionRoute } from '@/lib/routes'
+import { moduleLiveHeroCardSx } from '@/lib/module-page-chrome'
 import { colors } from '@/theme/colors'
 
 type PrizeSpinHistoryLiveHeroProps = {
@@ -31,30 +32,14 @@ const StyledSectionLabel = styled(Typography)(({ theme }) => ({
 const StyledHeroCard = styled(Stack, {
   shouldForwardProp: (prop) => prop !== 'empty',
 })<{ empty?: boolean }>(({ theme, empty }) => ({
-  position: 'relative',
-  overflow: 'hidden',
-  border: '1px solid',
-  borderColor: empty
-    ? theme.palette.divider
-    : alpha(colors.warning[500], 0.35),
-  borderRadius: theme.shape.borderRadius,
   padding: theme.spacing(2),
   paddingLeft: empty ? theme.spacing(2) : theme.spacing(2.5),
   gap: theme.spacing(1),
-  backgroundColor: empty
-    ? alpha(colors.neutral[100], 0.02)
-    : alpha(colors.warning[500], 0.05),
-  '&::before': empty
-    ? undefined
-    : {
-        content: '""',
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        bottom: 0,
-        width: 4,
-        backgroundColor: colors.warning[500],
-      },
+  ...(moduleLiveHeroCardSx('purple', theme, empty) as object),
+  '& > *': {
+    position: 'relative',
+    zIndex: 1,
+  },
 }))
 
 const StyledTitleRow = styled(Stack)(({ theme }) => ({

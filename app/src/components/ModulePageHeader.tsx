@@ -1,18 +1,23 @@
 import type { SvgIconComponent } from '@mui/icons-material'
 import { PageHeader } from '@/components/PageHeader'
-import { useModuleLabels } from '@/hooks/use-module-labels'
-import type { ModuleDefinition, ModuleIconVariant } from '@/lib/modules'
+import type { ModulePageId } from '@/lib/modules'
+import { getModuleDefinition } from '@/lib/modules'
+import type { ModuleIconVariant } from '@/lib/modules'
 
-type ModuleSessionPageHeaderProps = {
-  module: ModuleDefinition | undefined
+type ModulePageHeaderProps = {
+  moduleId: ModulePageId
+  title: string
+  description?: string
   action?: React.ReactNode
 }
 
-export function ModuleSessionPageHeader({
-  module,
+export function ModulePageHeader({
+  moduleId,
+  title,
+  description,
   action,
-}: ModuleSessionPageHeaderProps) {
-  const { name, description } = useModuleLabels(module)
+}: ModulePageHeaderProps) {
+  const module = getModuleDefinition(moduleId)
 
   if (!module) {
     return null
@@ -22,7 +27,7 @@ export function ModuleSessionPageHeader({
 
   return (
     <PageHeader
-      title={name}
+      title={title}
       description={description}
       icon={Icon}
       iconVariant={module.iconVariant as ModuleIconVariant}

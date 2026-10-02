@@ -7,12 +7,9 @@ import {
   SettingsCardContent,
 } from '@/components/chat-roll/chatRollPageStyles'
 import { chatRollModule } from '@/components/chat-roll/session/chat-roll-session-utils'
+import { ModulePageShell } from '@/components/ModulePageShell'
 import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { StyledSessionCard } from '@/components/prize-spin/session/prizeSpinSessionStyles'
-
-const PageStack = styled(Stack)(({ theme }) => ({
-  gap: theme.spacing(4),
-}))
 
 const WORKSPACE_MIN_HEIGHT = 680
 
@@ -100,7 +97,7 @@ function ListSectionSkeleton() {
 
 export const ChatRollSessionLoadingState = () => {
   return (
-    <PageStack aria-busy="true">
+    <ModulePageShell moduleId="chat-roll" spacing={4}>
       <ModuleSessionPageHeader module={chatRollModule} />
       <StyledSessionCard elevation={0}>
         <HeaderCardContent direction={{ xs: 'column', lg: 'row' }}>
@@ -126,6 +123,6 @@ export const ChatRollSessionLoadingState = () => {
           <ListSectionSkeleton />
         </Grid>
       </WorkspaceGrid>
-    </PageStack>
+    </ModulePageShell>
   )
 }

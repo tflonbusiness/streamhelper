@@ -1,5 +1,6 @@
 import { alpha, type Theme } from '@mui/material/styles'
 import type { ModuleIconVariant } from '@/lib/modules'
+import { MODULE_CATALOG } from '@/lib/modules'
 import { colors } from '@/theme/colors'
 
 export function moduleAccentColor(
@@ -31,4 +32,11 @@ export function moduleAccentGradient(
 ): string {
   const accent = moduleAccentColor(variant, theme)
   return `linear-gradient(145deg, ${alpha(accent, opacity)} 0%, transparent 55%)`
+}
+
+export function moduleAccentForModuleId(moduleId: string, theme: Theme): string {
+  const variant =
+    MODULE_CATALOG.find((module) => module.id === moduleId)?.iconVariant ??
+    'primary'
+  return moduleAccentColor(variant, theme)
 }

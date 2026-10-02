@@ -1,15 +1,11 @@
 import { Grid, Stack } from '@mui/material'
-import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
 import { styled } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import { BonusBuyHistorySection } from '@/components/bonus-buy/bonus-buy-page/BonusBuyHistorySection'
 import { BonusBuyStreamWidgetSection } from '@/components/bonus-buy/bonus-buy-page/BonusBuyStreamWidgetSection'
-import { PageHeader } from '@/components/PageHeader'
+import { ModulePageHeader } from '@/components/ModulePageHeader'
+import { ModulePageShell } from '@/components/ModulePageShell'
 import { useAuth } from '@/context/AuthContext'
-
-const PageStack = styled(Stack)(({ theme }) => ({
-  gap: theme.spacing(4),
-}))
 
 const ContentGrid = styled(Grid)({
   alignItems: 'flex-start',
@@ -27,12 +23,11 @@ export function BonusBuyPage() {
   const { user } = useAuth()
 
   return (
-    <PageStack>
-      <PageHeader
+    <ModulePageShell moduleId="bonus-buy">
+      <ModulePageHeader
+        moduleId="bonus-buy"
         title={t('bonusBuy.title')}
         description={t('bonusBuy.description')}
-        icon={CardGiftcardIcon}
-        iconVariant="warning"
       />
       {user?.accountId !== undefined && user.accountUcid ? (
         <ContentGrid container spacing={3}>
@@ -49,6 +44,6 @@ export function BonusBuyPage() {
           </Grid>
         </ContentGrid>
       ) : null}
-    </PageStack>
+    </ModulePageShell>
   )
 }

@@ -51,6 +51,7 @@ import { ChatRollSessionLoadingState } from '@/components/chat-roll/session/Chat
 import { ChatRollRollRevealOverlay } from '@/components/chat-roll/session/ChatRollRollRevealOverlay'
 import { ChatRollSessionUnsavedLeaveDialog } from '@/components/chat-roll/session/ChatRollSessionUnsavedLeaveDialog'
 import { chatRollModule, getChatRollWinRowBorderColor } from '@/components/chat-roll/session/chat-roll-session-utils'
+import { ModulePageShell } from '@/components/ModulePageShell'
 import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { EntitlementOverLimitAlert } from '@/components/EntitlementOverLimitAlert'
 import { SectionHeader } from '@/components/SectionHeader'
@@ -86,10 +87,6 @@ import {
   usePatchChatRollSession,
   useRollChatRoll,
 } from '@/queries/use-chat-roll-session'
-
-const PageStack = styled(Stack)(({ theme }) => ({
-  gap: theme.spacing(4),
-}))
 
 const WORKSPACE_MIN_HEIGHT = 680
 
@@ -556,7 +553,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
     canMutate
 
   return (
-    <PageStack>
+    <ModulePageShell moduleId="chat-roll">
       <ModuleSessionPageHeader module={chatRollModule} />
       <EntitlementOverLimitAlert envelope={envelope} />
 
@@ -809,6 +806,6 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
         winnerResponseSeconds={record.winnerResponseSeconds}
         onClose={handleRollRevealClose}
       />
-    </PageStack>
+    </ModulePageShell>
   )
 }

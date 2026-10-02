@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { isPrizeSpinReadOnly } from '@/api/prize-spin'
+import { ModulePageShell } from '@/components/ModulePageShell'
 import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { PrizeSpinSessionArchiveDialog } from '@/components/prize-spin/session/PrizeSpinSessionArchiveDialog'
 import { PrizeSpinSessionErrorState } from '@/components/prize-spin/session/PrizeSpinSessionErrorState'
@@ -28,10 +29,6 @@ import {
   useGoLivePrizeSpinSession,
   usePrizeSpinSession,
 } from '@/queries/use-prize-spin-session'
-
-const PageStack = styled(Stack)(({ theme }) => ({
-  gap: theme.spacing(4),
-}))
 
 const MainColumnStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(3),
@@ -98,7 +95,7 @@ export const PrizeSpinSessionPage = () => {
   const editingDisabled = readOnly || !canMutate
 
   return (
-    <PageStack>
+    <ModulePageShell moduleId="prize-spin">
       <ModuleSessionPageHeader module={prizeSpinModule} />
       <EntitlementOverLimitAlert envelope={envelope} />
       <MainColumnStack>
@@ -162,6 +159,6 @@ export const PrizeSpinSessionPage = () => {
         open={archiveSessionDialogOpen}
         onClose={() => setArchiveSessionDialogOpen(false)}
       />
-    </PageStack>
+    </ModulePageShell>
   )
 }

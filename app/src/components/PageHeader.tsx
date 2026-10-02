@@ -15,7 +15,10 @@ import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { IconTile } from '@/components/IconTile'
 import { useBreadcrumbDynamicLabel } from '@/context/BreadcrumbContext'
 import { getBreadcrumbAncestors } from '@/lib/breadcrumbs'
-import { moduleAccentGradient } from '@/lib/module-accent-color'
+import {
+  moduleHeaderBackground,
+  modulePageHeaderSx,
+} from '@/lib/module-page-chrome'
 import type { ModuleIconVariant } from '@/lib/modules'
 import { cardSx, colors } from '@/theme/colors'
 
@@ -36,6 +39,7 @@ type PageHeaderProps = {
   description?: string
   icon?: SvgIconComponent
   iconVariant?: ModuleIconVariant
+  moduleSurface?: boolean
   action?: React.ReactNode
   showBreadcrumbs?: boolean
   className?: string
@@ -154,6 +158,7 @@ export function PageHeader({
   description,
   icon,
   iconVariant = 'primary',
+  moduleSurface = false,
   action,
   showBreadcrumbs = true,
   className,
@@ -165,6 +170,8 @@ export function PageHeader({
   const hasBreadcrumbs =
     showBreadcrumbs &&
     getBreadcrumbAncestors(pathname, t, dynamicLabel).length > 0
+  const moduleHeaderSx =
+    moduleSurface && icon ? modulePageHeaderSx(iconVariant, theme) : undefined
 
   return (
     <Box
@@ -174,13 +181,17 @@ export function PageHeader({
         ...cardSx,
         position: 'relative',
         overflow: 'hidden',
+        ...(moduleHeaderSx as object | undefined),
         '&::before': {
           content: '""',
           position: 'absolute',
           inset: 0,
-          background: icon
-            ? moduleAccentGradient(iconVariant, theme)
-            : `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 42%)`,
+          background: moduleHeaderBackground(
+            iconVariant,
+            theme,
+            moduleSurface,
+            Boolean(icon),
+          ),
           pointerEvents: 'none',
         },
       }}
@@ -220,7 +231,9 @@ export function PageHeader({
             gap: 1.5,
           }}
         >
-          {icon ? <IconTile icon={icon} variant={iconVariant} size="md" /> : null}
+          {icon ? (
+            <IconTile icon={icon} variant={iconVariant} size={moduleSurface ? 'lg' : 'md'} />
+          ) : null}
           <Box
             sx={{
               minWidth: 0,

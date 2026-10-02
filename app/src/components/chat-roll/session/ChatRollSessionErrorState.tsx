@@ -1,15 +1,14 @@
 import { Button, Stack, Typography } from '@mui/material'
-import CasinoIcon from '@mui/icons-material/Casino'
 import { styled } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { PageHeader } from '@/components/PageHeader'
+import { ModulePageHeader } from '@/components/ModulePageHeader'
+import { ModulePageShell } from '@/components/ModulePageShell'
 import { CHAT_ROLL_ROUTE } from '@/lib/routes'
 
-const PageStack = styled(Stack)(({ theme }) => ({
-  gap: theme.spacing(4),
-  alignItems: 'center',
-  paddingTop: theme.spacing(8),
+const ErrorStack = styled(Stack)(({ theme }) => ({
+  gap: theme.spacing(2),
+  alignItems: 'flex-start',
 }))
 
 type ChatRollSessionErrorStateProps = {
@@ -22,19 +21,20 @@ export const ChatRollSessionErrorState = ({
   const { t } = useTranslation()
 
   return (
-    <PageStack>
-      <PageHeader
+    <ModulePageShell moduleId="chat-roll">
+      <ModulePageHeader
+        moduleId="chat-roll"
         title={t('chatRoll.title')}
         description={t('chatRoll.sessionDescription')}
-        icon={CasinoIcon}
-        iconVariant="info"
       />
-      <Typography variant="body1" color="text.secondary">
-        {message}
-      </Typography>
-      <Button component={Link} to={CHAT_ROLL_ROUTE} variant="outlined">
-        {t('common.backToSessions')}
-      </Button>
-    </PageStack>
+      <ErrorStack>
+        <Typography variant="body1" color="text.secondary">
+          {message}
+        </Typography>
+        <Button component={Link} to={CHAT_ROLL_ROUTE} variant="outlined">
+          {t('common.backToSessions')}
+        </Button>
+      </ErrorStack>
+    </ModulePageShell>
   )
 }

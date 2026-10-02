@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { formatBonusBuyLiveSessionHint } from '@/components/bonus-buy/bonus-buy-page/bonus-buy-page-utils'
 import { useNotification } from '@/context/NotificationContext'
 import { useParams } from 'react-router-dom'
+import { ModulePageShell } from '@/components/ModulePageShell'
 import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { BonusBuyEditSessionDialog } from '@/components/bonus-buy/session/BonusBuyEditSessionDialog'
 import { BonusBuyArchiveSessionDialog } from '@/components/bonus-buy/session/BonusBuyArchiveSessionDialog'
@@ -29,10 +30,6 @@ import {
   useBonusBuyWidget,
   useGoLiveBonusBuySession,
 } from '@/queries/use-bonus-buy'
-
-const PageStack = styled(Stack)(({ theme }) => ({
-  gap: theme.spacing(4),
-}))
 
 const MainColumnStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(3),
@@ -113,7 +110,7 @@ export const BonusBuySessionPage = () => {
   const canAddSlot = canMutate && !isAtBonusBuySlotCap(envelope)
 
   return (
-    <PageStack>
+    <ModulePageShell moduleId="bonus-buy">
       <ModuleSessionPageHeader module={bonusBuyModule} />
       <EntitlementOverLimitAlert envelope={envelope} />
       <MainColumnStack>
@@ -170,6 +167,6 @@ export const BonusBuySessionPage = () => {
         open={archiveSessionDialogOpen}
         onClose={() => setArchiveSessionDialogOpen(false)}
       />
-    </PageStack>
+    </ModulePageShell>
   )
 }

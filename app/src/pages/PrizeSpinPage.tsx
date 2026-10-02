@@ -1,15 +1,11 @@
 import { Grid, Stack } from '@mui/material'
-import AutorenewIcon from '@mui/icons-material/Autorenew'
 import { styled } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import { PrizeSpinHistorySection } from '@/components/prize-spin/prize-spin-page/PrizeSpinHistorySection'
 import { PrizeSpinStreamWidgetSection } from '@/components/prize-spin/prize-spin-page/PrizeSpinStreamWidgetSection'
-import { PageHeader } from '@/components/PageHeader'
+import { ModulePageHeader } from '@/components/ModulePageHeader'
+import { ModulePageShell } from '@/components/ModulePageShell'
 import { useAuth } from '@/context/AuthContext'
-
-const PageStack = styled(Stack)(({ theme }) => ({
-  gap: theme.spacing(4),
-}))
 
 const ContentGrid = styled(Grid)({
   alignItems: 'flex-start',
@@ -27,12 +23,11 @@ export function PrizeSpinPage() {
   const { user } = useAuth()
 
   return (
-    <PageStack>
-      <PageHeader
+    <ModulePageShell moduleId="prize-spin">
+      <ModulePageHeader
+        moduleId="prize-spin"
         title={t('prizeSpin.title')}
         description={t('prizeSpin.description')}
-        icon={AutorenewIcon}
-        iconVariant="purple"
       />
       {user?.accountId !== undefined && user.accountUcid ? (
         <ContentGrid container spacing={3}>
@@ -49,6 +44,6 @@ export function PrizeSpinPage() {
           </Grid>
         </ContentGrid>
       ) : null}
-    </PageStack>
+    </ModulePageShell>
   )
 }
