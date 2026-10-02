@@ -3,19 +3,14 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
-import OpenInNewIcon from '@mui/icons-material/OpenInNew'
-import SendIcon from '@mui/icons-material/Send'
+import { TelegramIcon } from '@/components/TelegramIcon'
 import { alpha, useTheme } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
-import {
-  getTelegramSupportUrl,
-  getTelegramSupportUsername,
-} from '@/lib/subscription-plan'
+import { getTelegramSupportUrl } from '@/lib/subscription-plan'
 
 export function TelegramActivationNotice() {
   const { t } = useTranslation()
   const theme = useTheme()
-  const username = getTelegramSupportUsername()
   const telegramUrl = getTelegramSupportUrl()
 
   return (
@@ -40,7 +35,7 @@ export function TelegramActivationNotice() {
               color: theme.palette.primary.main,
             }}
           >
-            <SendIcon sx={{ fontSize: 20 }} aria-hidden />
+            <TelegramIcon sx={{ fontSize: 20 }} />
           </Box>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             <Typography variant="subtitle1" component="h3">
@@ -62,10 +57,10 @@ export function TelegramActivationNotice() {
           target="_blank"
           rel="noopener noreferrer"
           variant="contained"
-          endIcon={<OpenInNewIcon fontSize="small" aria-hidden />}
+          endIcon={<TelegramIcon fontSize="small" />}
           sx={{ alignSelf: 'flex-start', width: 'auto' }}
         >
-          {t('subscription.telegramMessageCta', { username })}
+          {t('subscription.telegramCta')}
         </Button>
       </CardContent>
     </Card>

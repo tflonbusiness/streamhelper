@@ -153,6 +153,7 @@ export const en = {
     widgets: "Widgets",
     team: "Team",
     subscription: "Subscription",
+    support: "Support",
     bonusBuy: "Bonus Buy",
     prizeSpin: "Prize Wheel",
     chatRoll: "Chat Roll",
@@ -280,7 +281,7 @@ export const en = {
     activationSubtitle: "Contact us on Telegram to upgrade to a paid plan",
     telegramSupportBody:
       "Message our support team — we will help you choose a plan and activate a subscription for your team.",
-    telegramMessageCta: "Message @{{username}}",
+    telegramMessageCta: "Message on Telegram",
     trialActiveTitle: "Trial period",
     trialActiveBody:
       "You have full access to all modules. Trial ends in {{days}} day(s).",

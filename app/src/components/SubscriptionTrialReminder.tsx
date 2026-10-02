@@ -13,6 +13,7 @@ import {
   getPlanDefinition,
   resolveCurrentSubscriptionPlanId,
 } from '@/lib/subscription-catalog'
+import { TelegramIcon } from '@/components/TelegramIcon'
 import { getTelegramSupportUrl } from '@/lib/subscription-plan'
 
 const SUBSCRIPTION_ENDING_SOON_DAYS = 3
@@ -113,11 +114,13 @@ export function SubscriptionExpiredNotice({
         ) : null}
         {!isSubscriptionPage && user.role !== 'owner' && user.role !== 'moderator' ? (
           <Button
+            component="a"
             href={getTelegramSupportUrl()}
             target="_blank"
             rel="noopener noreferrer"
             size="small"
             variant="outlined"
+            endIcon={<TelegramIcon fontSize="small" />}
           >
             {t('subscription.telegramCta')}
           </Button>

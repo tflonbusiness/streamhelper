@@ -27,11 +27,11 @@ export function SubscriptionPage() {
       />
 
       <Stack spacing={3}>
+        <TelegramActivationNotice />
+
         {hasAccess ? <SubscriptionTrialReminder user={user} /> : null}
 
         <SubscriptionPlansOverview user={user} />
-
-        <TelegramActivationNotice />
       </Stack>
     </Stack>
   )

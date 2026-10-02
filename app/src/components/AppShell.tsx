@@ -18,6 +18,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { TelegramIcon } from '@/components/TelegramIcon'
 import { AppLogo } from '@/components/AppLogo'
 import { AppBrandName, appBrandNamePlain } from '@/components/AppBrandName'
 import { IconTile } from '@/components/IconTile'
@@ -30,6 +31,7 @@ import {
 } from '@/lib/modules'
 import { accountHasSubscriptionAccess } from '@/lib/account-subscription'
 import { MODULES_ROUTE } from '@/lib/routes'
+import { getTelegramSupportUrl } from '@/lib/subscription-plan'
 import { colors } from '@/theme/colors'
 
 type NavItem = {
@@ -556,6 +558,77 @@ function SidebarModulesNav({
   )
 }
 
+function SidebarSupportNavLink({
+  href,
+  label,
+  collapsed,
+}: {
+  href: string
+  label: string
+  collapsed: boolean
+}) {
+  const button = (
+    <SidebarNavButton
+      component="a"
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      collapsed={collapsed}
+    >
+      <NavIconSlot>
+        <TelegramIcon aria-hidden />
+      </NavIconSlot>
+      {!collapsed ? <Typography variant="body2">{label}</Typography> : null}
+    </SidebarNavButton>
+  )
+
+  if (collapsed) {
+    return (
+      <Tooltip title={label} placement="right">
+        {button}
+      </Tooltip>
+    )
+  }
+
+  return button
+}
+
+function MobileSupportNavLink({
+  href,
+  label,
+  collapsed,
+}: {
+  href: string
+  label: string
+  collapsed: boolean
+}) {
+  const button = (
+    <MobileNavButton
+      component="a"
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      collapsed={collapsed}
+      sx={{ flex: collapsed ? '0 0 auto' : 1, textDecoration: 'none' }}
+    >
+      <NavIconSlot>
+        <TelegramIcon aria-hidden />
+      </NavIconSlot>
+      {!collapsed ? (
+        <Typography variant="body2" noWrap>
+          {label}
+        </Typography>
+      ) : null}
+    </MobileNavButton>
+  )
+
+  if (collapsed) {
+    return <Tooltip title={label}>{button}</Tooltip>
+  }
+
+  return button
+}
+
 function MobileNavLink({
   to,
   label,
@@ -635,6 +708,8 @@ export function AppShell() {
     return true
   })
   const isNavCollapsed = !isNavExpanded
+  const supportNavLabel = t('nav.support')
+  const telegramSupportUrl = getTelegramSupportUrl()
 
   return (
     <ShellRoot>
@@ -720,6 +795,11 @@ export function AppShell() {
             />
           )
         })}
+        <MobileSupportNavLink
+          href={telegramSupportUrl}
+          label={supportNavLabel}
+          collapsed={isNavCollapsed}
+        />
       </MobileNav>
 
       <Sidebar expanded={isNavExpanded}>
@@ -807,6 +887,13 @@ export function AppShell() {
               />
             )
           })}
+          <Box sx={{ mt: 'auto', pt: 0.5 }}>
+            <SidebarSupportNavLink
+              href={telegramSupportUrl}
+              label={supportNavLabel}
+              collapsed={isNavCollapsed}
+            />
+          </Box>
         </SidebarNavList>
         <SidebarFooter>
           <Box

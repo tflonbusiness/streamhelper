@@ -6,7 +6,7 @@ import Chip from '@mui/material/Chip'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import CheckIcon from '@mui/icons-material/Check'
-import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+import { TelegramIcon } from '@/components/TelegramIcon'
 import { alpha, useTheme } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import type { SubscriptionPlanId } from '@/lib/subscription-catalog'
@@ -38,6 +38,7 @@ export function SubscriptionPlanOfferingCard({
     : planId === 'max'
       ? theme.palette.secondary.main
       : theme.palette.primary.main
+  const currentOutline = theme.palette.warning.main
 
   return (
     <Card
@@ -47,9 +48,11 @@ export function SubscriptionPlanOfferingCard({
         display: 'flex',
         flexDirection: 'column',
         border: 2,
-        borderColor: isCurrent ? accent : 'divider',
-        bgcolor: isCurrent ? alpha(accent, 0.04) : 'background.paper',
-        boxShadow: isCurrent ? `0 0 0 1px ${alpha(accent, 0.15)}` : 'none',
+        borderColor: isCurrent ? currentOutline : 'divider',
+        bgcolor: isCurrent ? alpha(currentOutline, 0.04) : 'background.paper',
+        boxShadow: isCurrent
+          ? `0 0 0 1px ${alpha(currentOutline, 0.15)}`
+          : 'none',
       }}
     >
       <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -70,8 +73,8 @@ export function SubscriptionPlanOfferingCard({
                 size="small"
                 label={t('subscription.planCurrentBadge')}
                 sx={{
-                  bgcolor: alpha(accent, 0.12),
-                  color: accent,
+                  bgcolor: alpha(currentOutline, 0.12),
+                  color: currentOutline,
                   fontWeight: 600,
                 }}
               />
@@ -121,7 +124,7 @@ export function SubscriptionPlanOfferingCard({
             rel="noopener noreferrer"
             variant="outlined"
             size="small"
-            endIcon={<OpenInNewIcon fontSize="small" aria-hidden />}
+            endIcon={<TelegramIcon fontSize="small" />}
             sx={{ alignSelf: 'flex-start', mt: 'auto' }}
           >
             {t('subscription.planUpgradeCta', {

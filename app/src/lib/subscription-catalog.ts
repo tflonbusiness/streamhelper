@@ -95,7 +95,7 @@ export function resolveAlternativePlanIds(
   current: SubscriptionPlanId,
 ): PaidPlanId[] {
   if (current === 'max') {
-    return []
+    return ['pro']
   }
   if (current === 'pro') {
     return ['max']

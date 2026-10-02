@@ -153,6 +153,7 @@ export const ru = {
     widgets: "Виджеты",
     team: "Команда",
     subscription: "Подписка",
+    support: "Поддержка",
     bonusBuy: "Bonus Buy",
     prizeSpin: "Prize Wheel",
     chatRoll: "Chat Roll",
@@ -281,7 +282,7 @@ export const ru = {
     activationSubtitle: "Напишите нам в Telegram, чтобы перейти на платный тариф",
     telegramSupportBody:
       "Напишите в поддержку — поможем выбрать тариф и активировать подписку для вашей команды.",
-    telegramMessageCta: "Написать @{{username}}",
+    telegramMessageCta: "Написать в Telegram",
     trialActiveTitle: "Пробный период",
     trialActiveBody:
       "Доступны все модули. Пробный период закончится через {{days}} дн.",
