@@ -1119,6 +1119,7 @@ export class AuthService {
       width: row.width,
       height: row.height,
       equalSectorSlices: row.equalSectorSlices,
+      showSectorWeightInWinner: row.showSectorWeightInWinner,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };
@@ -1147,7 +1148,12 @@ export class AuthService {
   async patchPrizeSpinWidget(
     accountId: number,
     callerUserId: number,
-    body: { width?: number; height?: number; equalSectorSlices?: boolean },
+    body: {
+      width?: number;
+      height?: number;
+      equalSectorSlices?: boolean;
+      showSectorWeightInWinner?: boolean;
+    },
   ) {
     await this.requireAccountMember(accountId, callerUserId);
 
@@ -1155,6 +1161,7 @@ export class AuthService {
       width: body.width,
       height: body.height,
       equalSectorSlices: body.equalSectorSlices,
+      showSectorWeightInWinner: body.showSectorWeightInWinner,
     };
 
     const defined = Object.entries(input).filter(([, value]) => value !== undefined);
@@ -1195,6 +1202,7 @@ export class AuthService {
         width: view.settings.width,
         height: view.settings.height,
         equalSectorSlices: view.settings.equalSectorSlices,
+        showSectorWeightInWinner: view.settings.showSectorWeightInWinner,
       },
     };
   }

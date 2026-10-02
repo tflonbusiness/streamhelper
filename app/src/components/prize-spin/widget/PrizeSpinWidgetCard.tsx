@@ -20,6 +20,7 @@ import {
   WHEEL_SPIN_START_DELAY_MS,
 } from '@/lib/prize-spin-wheel-overlay-timing'
 import { buildPrizeSpinWidgetTheme, scaledPx } from '@/lib/prize-spin-widget-theme'
+import { formatPrizeSpinWinnerSectorLabel } from '@/lib/prize-spin-winner-display'
 import { PrizeSpinWheelCanvas } from '@/components/prize-spin/widget/PrizeSpinWheelCanvas'
 
 const EXTRA_FULL_ROTATIONS = 8
@@ -31,6 +32,7 @@ type PrizeSpinWidgetCardProps = {
   width: number
   height: number
   equalSectorSlices: boolean
+  showSectorWeightInWinner: boolean
 }
 
 export function PrizeSpinWidgetCard({
@@ -39,6 +41,7 @@ export function PrizeSpinWidgetCard({
   width,
   height,
   equalSectorSlices,
+  showSectorWeightInWinner,
 }: PrizeSpinWidgetCardProps) {
   const theme = useMemo(() => buildPrizeSpinWidgetTheme(width, height), [width, height])
   const scale = theme.scale
@@ -235,6 +238,19 @@ export function PrizeSpinWidgetCard({
     return () => clearSpinTimers()
   }, [latestWin, geometryById, geometries])
 
+  const winnerSectorLabel = useMemo(() => {
+    if (!latestWin) {
+      return ''
+    }
+
+    return formatPrizeSpinWinnerSectorLabel(
+      latestWin.sectorLabel,
+      latestWin.sectorId,
+      sectors,
+      showSectorWeightInWinner,
+    )
+  }, [latestWin, sectors, showSectorWeightInWinner])
+
   const showPlayerPill = Boolean(shouldRender && playerNick)
 
   if (sectors.length < 2) {
@@ -399,7 +415,7 @@ export function PrizeSpinWidgetCard({
                 lineHeight: 1.1,
               }}
             >
-              {latestWin.sectorLabel}
+              {winnerSectorLabel}
             </Typography>
           </Box>
         ) : null}

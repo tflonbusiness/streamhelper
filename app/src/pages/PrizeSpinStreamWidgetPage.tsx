@@ -98,6 +98,10 @@ export function PrizeSpinStreamWidgetPage() {
           view.settings.equalSectorSlices ??
           PRIZE_SPIN_WIDGET_DEFAULTS.equalSectorSlices
         }
+        showSectorWeightInWinner={
+          view.settings.showSectorWeightInWinner ??
+          PRIZE_SPIN_WIDGET_DEFAULTS.showSectorWeightInWinner
+        }
       />
     </Box>
   )

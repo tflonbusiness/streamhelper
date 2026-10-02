@@ -546,6 +546,10 @@ export const en = {
     widgetSettingsTitle: "Widget settings",
     widgetSettingsDescription: "OBS browser source size and wheel layout",
     equalSectorSlices: "Equal sector slices on wheel",
+    equalSectorSlicesDescription:
+      "Example: 40%, 10%, and 50% sectors look the same size on the wheel",
+    showSectorWeightInWinner: "Show sector weight in winner banner",
+    showSectorWeightInWinnerDescription: "Example: Jackpot (25%)",
     streamWidgetTitle: "Stream widget",
     sectorsTitle: "Wheel sectors ({{count}})",
     sectorsDescription:

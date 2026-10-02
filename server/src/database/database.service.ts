@@ -150,6 +150,7 @@ export type DbPrizeSpinWidget = {
   width: number;
   height: number;
   equalSectorSlices: boolean;
+  showSectorWeightInWinner: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -158,6 +159,7 @@ export type PatchPrizeSpinWidgetInput = {
   width?: number;
   height?: number;
   equalSectorSlices?: boolean;
+  showSectorWeightInWinner?: boolean;
 };
 
 export type PatchPrizeSpinSectorInput = {
@@ -3468,6 +3470,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     width: string | number;
     height: string | number;
     equal_sector_slices: boolean;
+    show_sector_weight_in_winner: boolean;
     created_at: Date;
     updated_at: Date;
   }): DbPrizeSpinWidget {
@@ -3477,6 +3480,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       width: toInt(row.width),
       height: toInt(row.height),
       equalSectorSlices: row.equal_sector_slices,
+      showSectorWeightInWinner: row.show_sector_weight_in_winner,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
@@ -3498,6 +3502,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           w.width,
           w.height,
           w.equal_sector_slices,
+          w.show_sector_weight_in_winner,
           w.created_at,
           w.updated_at
         FROM prize_spin_widget w
@@ -3527,6 +3532,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             w.width,
             w.height,
             w.equal_sector_slices,
+            w.show_sector_weight_in_winner,
             w.created_at,
             w.updated_at
         `,
@@ -3568,6 +3574,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         input.equalSectorSlices !== undefined
           ? input.equalSectorSlices
           : existing.equalSectorSlices,
+      showSectorWeightInWinner:
+        input.showSectorWeightInWinner !== undefined
+          ? input.showSectorWeightInWinner
+          : existing.showSectorWeightInWinner,
     };
 
     const result = await this.pool.query(
@@ -3577,6 +3587,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           width = $2,
           height = $3,
           equal_sector_slices = $4,
+          show_sector_weight_in_winner = $5,
           updated_at = now()
         WHERE w.account_id = $1
         RETURNING
@@ -3585,10 +3596,17 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           w.width,
           w.height,
           w.equal_sector_slices,
+          w.show_sector_weight_in_winner,
           w.created_at,
           w.updated_at
       `,
-      [accountId, next.width, next.height, next.equalSectorSlices],
+      [
+        accountId,
+        next.width,
+        next.height,
+        next.equalSectorSlices,
+        next.showSectorWeightInWinner,
+      ],
     );
 
     const row = result.rows[0];

@@ -3,4 +3,5 @@ export const PRIZE_SPIN_WIDGET_DEFAULTS = {
   width: 800,
   height: 800,
   equalSectorSlices: true,
+  showSectorWeightInWinner: false,
 } as const

@@ -564,6 +564,10 @@ export const ru = {
     widgetSettingsTitle: "Настройки виджета",
     widgetSettingsDescription: "Размер browser source в OBS и раскладка колеса",
     equalSectorSlices: "Равные сектора на колесе",
+    equalSectorSlicesDescription:
+      "Пример: сектора 40%, 10% и 50% на колесе выглядят одинаково",
+    showSectorWeightInWinner: "Показывать вес сектора в блоке победителя",
+    showSectorWeightInWinnerDescription: "Пример: Джекпот (25%)",
     streamWidgetTitle: "Виджет для стрима",
     sectorsTitle: "Сектора колеса ({{count}})",
     sectorsDescription:

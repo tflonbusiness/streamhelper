@@ -80,6 +80,7 @@ type PatchPrizeSpinWidgetBody = {
   width?: number;
   height?: number;
   equalSectorSlices?: boolean;
+  showSectorWeightInWinner?: boolean;
 };
 
 type CreateChatRollBody = {

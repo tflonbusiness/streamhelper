@@ -38,6 +38,7 @@ const defaultValues: PrizeSpinWidgetSettingsFormValues = {
   width: PRIZE_SPIN_WIDGET_DEFAULTS.width,
   height: PRIZE_SPIN_WIDGET_DEFAULTS.height,
   equalSectorSlices: PRIZE_SPIN_WIDGET_DEFAULTS.equalSectorSlices,
+  showSectorWeightInWinner: PRIZE_SPIN_WIDGET_DEFAULTS.showSectorWeightInWinner,
 }
 
 const StyledLoadingText = styled(Typography)(({ theme }) => ({
@@ -98,6 +99,9 @@ export const PrizeSpinWidgetSettingsDialog = (
         width: widgetSettings.width,
         height: widgetSettings.height,
         equalSectorSlices: widgetSettings.equalSectorSlices,
+        showSectorWeightInWinner:
+          widgetSettings.showSectorWeightInWinner ??
+          PRIZE_SPIN_WIDGET_DEFAULTS.showSectorWeightInWinner,
       })
     }
   }, [props.open, widgetSettings, reset])
@@ -116,6 +120,9 @@ export const PrizeSpinWidgetSettingsDialog = (
             width: widgetSettings.width,
             height: widgetSettings.height,
             equalSectorSlices: widgetSettings.equalSectorSlices,
+            showSectorWeightInWinner:
+              widgetSettings.showSectorWeightInWinner ??
+              PRIZE_SPIN_WIDGET_DEFAULTS.showSectorWeightInWinner,
           }
         : defaultValues,
     )
@@ -131,6 +138,7 @@ export const PrizeSpinWidgetSettingsDialog = (
         width: values.width,
         height: values.height,
         equalSectorSlices: values.equalSectorSlices,
+        showSectorWeightInWinner: values.showSectorWeightInWinner,
       },
       {
         onSuccess: () => {
@@ -213,13 +221,58 @@ export const PrizeSpinWidgetSettingsDialog = (
                 control={control}
                 render={({ field }) => (
                   <FormControlLabel
+                    sx={{ alignItems: 'flex-start', mx: 0 }}
                     control={
                       <Checkbox
                         checked={field.value}
                         onChange={(_, checked) => field.onChange(checked)}
+                        sx={{ pt: 0.5 }}
                       />
                     }
-                    label={t('prizeSpin.equalSectorSlices')}
+                    label={
+                      <Box>
+                        <Typography component="span" variant="body2">
+                          {t('prizeSpin.equalSectorSlices')}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ display: 'block', mt: 0.25 }}
+                        >
+                          {t('prizeSpin.equalSectorSlicesDescription')}
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                )}
+              />
+              <Controller
+                name="showSectorWeightInWinner"
+                control={control}
+                render={({ field }) => (
+                  <FormControlLabel
+                    sx={{ alignItems: 'flex-start', mx: 0 }}
+                    control={
+                      <Checkbox
+                        checked={field.value}
+                        onChange={(_, checked) => field.onChange(checked)}
+                        sx={{ pt: 0.5 }}
+                      />
+                    }
+                    label={
+                      <Box>
+                        <Typography component="span" variant="body2">
+                          {t('prizeSpin.showSectorWeightInWinner')}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ display: 'block', mt: 0.25 }}
+                        >
+                          {t('prizeSpin.showSectorWeightInWinnerDescription')}
+                        </Typography>
+                      </Box>
+                    }
                   />
                 )}
               />

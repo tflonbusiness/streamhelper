@@ -132,6 +132,7 @@ export type PrizeSpinWidgetSettingsFormValues = {
   width: number
   height: number
   equalSectorSlices: boolean
+  showSectorWeightInWinner: boolean
 }
 
 function widgetDimensionSchema(t: TFunction, label: string) {
@@ -151,5 +152,6 @@ export function createPrizeSpinWidgetSettingsFormSchema(t: TFunction) {
     width: widgetDimensionSchema(t, widthLabel),
     height: widgetDimensionSchema(t, heightLabel),
     equalSectorSlices: yup.boolean().required(),
+    showSectorWeightInWinner: yup.boolean().required(),
   })
 }

@@ -406,6 +406,7 @@ export type PrizeSpinWidgetSettings = {
   width: number
   height: number
   equalSectorSlices: boolean
+  showSectorWeightInWinner: boolean
   createdAt: string
   updatedAt: string
 }
@@ -430,6 +431,7 @@ export type PrizeSpinWidgetActivePayload = {
     width: number
     height: number
     equalSectorSlices: boolean
+    showSectorWeightInWinner: boolean
   }
 }
 
@@ -449,6 +451,7 @@ export type PatchPrizeSpinWidgetInput = {
   width?: number
   height?: number
   equalSectorSlices?: boolean
+  showSectorWeightInWinner?: boolean
 }
 
 export async function fetchPrizeSpinWidget(
