@@ -42,24 +42,43 @@ export class KickWebhookController {
     @Headers('kick-event-type') eventType: string | undefined,
     @Body() body: unknown,
   ): Promise<{ ok: true }> {
+    this.logger.log(
+      `ingress POST /webhooks/kick eventType=${eventType ?? 'missing'} messageId=${messageId ?? 'missing'} hasRawBody=${Boolean(req.rawBody)}`,
+    );
+
     if (!messageId || !timestamp || !signature || !eventType) {
+      this.logger.warn(
+        `rejected webhook: missing headers messageId=${messageId ?? 'missing'} eventType=${eventType ?? 'missing'}`,
+      );
       throw new BadRequestException('Missing Kick webhook headers');
     }
 
     const rawBody = req.rawBody;
     if (!rawBody && !this.verifier.isMockMode()) {
+      this.logger.warn(
+        `rejected webhook: missing raw body messageId=${messageId}`,
+      );
       throw new BadRequestException('Missing raw request body');
     }
 
     const rawBodyForVerify =
       rawBody ?? Buffer.from(JSON.stringify(body ?? {}));
 
-    this.verifier.verifySignature({
-      messageId,
-      timestamp,
-      signature,
-      rawBody: rawBodyForVerify,
-    });
+    try {
+      this.verifier.verifySignature({
+        messageId,
+        timestamp,
+        signature,
+        rawBody: rawBodyForVerify,
+      });
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        this.logger.warn(
+          `rejected webhook: invalid signature messageId=${messageId} eventType=${eventType} rawBodyBytes=${rawBodyForVerify.length}`,
+        );
+      }
+      throw error;
+    }
 
     let parsedBody: unknown = body;
     if (rawBody) {
