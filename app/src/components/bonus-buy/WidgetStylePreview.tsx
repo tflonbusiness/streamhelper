@@ -43,7 +43,7 @@ export function WidgetStylePreview({
     return (
       <Box
         sx={{
-          minHeight: 280,
+          minHeight: 400,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -62,7 +62,15 @@ export function WidgetStylePreview({
     dimensionLabel ?? `${previewTheme.width} × ${previewTheme.height}`
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, minHeight: 0 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1,
+        flex: 1,
+        minHeight: 440,
+      }}
+    >
       <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
         Live preview · {label}
       </Typography>
@@ -70,8 +78,8 @@ export function WidgetStylePreview({
         sx={{
           position: 'relative',
           flex: 1,
-          minHeight: 320,
-          maxHeight: 480,
+          minHeight: 460,
+          maxHeight: 680,
           bgcolor: '#050506',
           borderRadius: 2,
           border: '1px solid',

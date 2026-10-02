@@ -55,8 +55,10 @@ const StyledContentGrid = styled(Grid)(({ theme }) => ({
 const StyledPreviewGrid = styled(Grid)(({ theme }) => ({
   display: 'none',
   flexDirection: 'column',
+  minHeight: 0,
   [theme.breakpoints.up('md')]: {
     display: 'flex',
+    minHeight: 520,
   },
 }))
 
