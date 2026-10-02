@@ -36,7 +36,8 @@ export class KickWebhookVerifierService implements OnModuleInit {
 
   /** Bypass RSA signature verification (e.g. broken proxy relay). Not for production. */
   isSkipVerify(): boolean {
-    return process.env.KICK_WEBHOOK_SKIP_VERIFY === 'true';
+    const value = process.env.KICK_WEBHOOK_SKIP_VERIFY?.trim().toLowerCase();
+    return value === 'true' || value === '1' || value === 'yes';
   }
 
   bypassesSignatureVerification(): boolean {

@@ -73,8 +73,9 @@ export class KickWebhookController {
       });
     } catch (error) {
       if (error instanceof UnauthorizedException) {
+        const skipEnv = process.env.KICK_WEBHOOK_SKIP_VERIFY ?? '(unset)';
         this.logger.warn(
-          `rejected webhook: invalid signature messageId=${messageId} eventType=${eventType} rawBodyBytes=${rawBodyForVerify.length}`,
+          `rejected webhook: invalid signature messageId=${messageId} eventType=${eventType} rawBodyBytes=${rawBodyForVerify.length} KICK_WEBHOOK_SKIP_VERIFY=${skipEnv} skipActive=${this.verifier.isSkipVerify()}`,
         );
       }
       throw error;
