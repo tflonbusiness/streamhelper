@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next'
 import type { PrizeSpinArchivedFilter } from '@/api/prize-spin'
 
-export const PRIZE_SPIN_DEFAULT_TITLE = 'Prize Spin'
+export const PRIZE_SPIN_DEFAULT_TITLE = 'Prize Wheel'
 export const PRIZE_SPIN_HISTORY_PAGE_SIZE = 10
 const PRIZE_SPIN_TITLE_MAX_LENGTH = 200
 const PRIZE_SPIN_COPY_TITLE_SUFFIX = ' (copy)'
@@ -29,5 +29,5 @@ export function historyEmptyMessage(filter: PrizeSpinArchivedFilter): string {
     return 'No archived sessions'
   }
 
-  return 'No prize spin sessions yet'
+  return 'No prize wheel sessions yet'
 }

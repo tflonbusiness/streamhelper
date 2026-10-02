@@ -14,9 +14,9 @@ export const widgetUiCopy = {
   bonusBuyNoSessions:
     'No bonus buy session available. Create a session, then go live.',
   prizeSpinNoLive:
-    'No prize spin is live. Open the dashboard and tap Go live.',
+    'No prize wheel is live. Open the dashboard and tap Go live.',
   prizeSpinNoSessions:
-    'No prize spin session available. Create a session, then go live.',
+    'No prize wheel session available. Create a session, then go live.',
   chatRollNoLive:
     'No chat roll is live. Open the dashboard and tap Go live.',
   chatRollNoSessions:

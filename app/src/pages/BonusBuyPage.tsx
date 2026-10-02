@@ -32,7 +32,7 @@ export function BonusBuyPage() {
         title={t('bonusBuy.title')}
         description={t('bonusBuy.description')}
         icon={CardGiftcardIcon}
-        iconVariant="info"
+        iconVariant="warning"
       />
       {user?.accountId !== undefined && user.accountUcid ? (
         <ContentGrid container spacing={3}>

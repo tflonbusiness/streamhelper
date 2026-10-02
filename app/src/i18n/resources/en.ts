@@ -152,7 +152,7 @@ export const en = {
     team: "Team",
     subscription: "Subscription",
     bonusBuy: "Bonus Buy",
-    prizeSpin: "Prize Spin",
+    prizeSpin: "Prize Wheel",
     chatRoll: "Chat Roll",
     subscriptionAdmin: "Subscriptions (admin)"
   },
@@ -232,15 +232,18 @@ export const en = {
     catalog: {
       'bonus-buy': {
         name: "Bonus Buy",
-        description: "Slot bonus-buy rounds for stream engagement — viewers trigger bonus features during live play."
+        description:
+          "When the stream runs for hours, help chat stay on your pace — engaged, not guessing from fragments."
       },
       'prize-spin': {
-        name: "Prize Spin",
-        description: "Spin a weighted prize wheel for a viewer — enter their chat nick, set prize sectors and odds, show the result on stream."
+        name: "Prize Wheel",
+        description:
+          "Thank one viewer where everyone can see it — a shared highlight, not a private pick in chat."
       },
       'chat-roll': {
         name: "Chat Roll",
-        description: "Weighted chat giveaway — viewers join with a keyword; pick a random winner with VIP and subscriber boost."
+        description:
+          "Giveaways your audience can believe in — open tension for viewers, less pressure on your team."
       }
     }
   },
@@ -494,13 +497,13 @@ export const en = {
     slotStatusPending: "Pending"
   },
   prizeSpin: {
-    title: "Prize Spin",
-    description: "Weighted prize wheel for your stream",
+    title: "Prize Wheel",
+    description: "Prize wheel with sector coefficients for your stream",
     historyTitle: "History",
-    historyDescription: "Prize spin sessions for this account",
-    historyDescriptionPast: "Past and active prize spin sessions",
+    historyDescription: "Prize Wheel sessions for this account",
+    historyDescriptionPast: "Past and active prize wheel sessions",
     noArchivedSessions: "No archived sessions",
-    noSessions: "No prize spin sessions yet",
+    noSessions: "No prize wheel sessions yet",
     historyCardMeta: "{{author}} · {{created}}",
     historyCardIndex: "#{{index}}",
     historyListItemAria:
@@ -516,15 +519,15 @@ export const en = {
     createSession: "Create session",
     createDialogTitle: "New Session",
     createDialogIntro:
-      "Create a prize spin session with a title for your stream.",
-    sessionCreated: "Prize spin session created.",
-    couldNotCreateSession: "Could not create prize spin session.",
-    couldNotLoadSession: "Could not load prize spin session",
+      "Create a prize wheel session with a title for your stream.",
+    sessionCreated: "Prize Wheel session created.",
+    couldNotCreateSession: "Could not create prize wheel session.",
+    couldNotLoadSession: "Could not load prize wheel session",
     sessionNotFound: "Session not found",
     sessionArchived: "Session archived.",
     couldNotArchiveSession: "Could not archive session.",
     sessionCopied: "Session copied.",
-    couldNotCopySession: "Could not copy prize spin session.",
+    couldNotCopySession: "Could not copy prize wheel session.",
     copySessionTitle: "Copy session",
     copySessionDescription:
       "Creates a new session with wheel sectors copied from the source. Spin history and winners are not copied. The source session stays unchanged.",
@@ -543,10 +546,11 @@ export const en = {
     widgetSettingsDescription: "OBS browser source size and wheel layout",
     equalSectorSlices: "Equal sector slices on wheel",
     streamWidgetTitle: "Stream widget",
-    streamWidgetDescription: "Настройки OBS-оверлея и ссылки для этой сессии prize spin",
+    streamWidgetDescription:
+      "OBS overlay settings and links for this Prize Wheel session",
     sectorsTitle: "Wheel sectors ({{count}})",
     sectorsDescription:
-      "Labels, colors, and win weights — total must equal 100%",
+      "Labels, colors, and win coefficients — total must equal 100%",
     addSector: "Add sector",
     sectorsEmptyHint:
       "No sectors yet. Use Add sector to create at least two.",
@@ -559,8 +563,8 @@ export const en = {
     couldNotDeleteSector: "Could not delete sector",
     split100: "Split 100%",
     splitting: "Splitting…",
-    sectorWeightsSplit: "Sector weights split evenly to 100%.",
-    couldNotDistributeWeights: "Could not distribute sector weights",
+    sectorWeightsSplit: "Sector coefficients split evenly to 100%.",
+    couldNotDistributeWeights: "Could not distribute sector coefficients",
     spinTitle: "Spin wheel",
     enterNickToSpin: "Enter a participant nick to enable spin.",
     readyToSpin: "Ready to spin for this viewer.",
@@ -585,9 +589,9 @@ export const en = {
     couldNotSpin: "Could not spin prize wheel",
     spinResult: "Winner: {{nick}} — {{label}}",
     spunBy: "Spun by",
-    couldNotLoadHistory: "Could not load prize spin history.",
+    couldNotLoadHistory: "Could not load prize wheel history.",
     statsTitle: "Stats",
-    statsDescription: "How often each sector has won compared to its weight",
+    statsDescription: "How often each sector has won compared to its coefficient",
     statsTotalRolls_one: "{{count}} total roll",
     statsTotalRolls_other: "{{count}} total rolls",
     statsEmpty: "Add wheel sectors to see drop statistics.",
@@ -804,15 +808,15 @@ export const en = {
       saveWidgetPreset: "Could not save custom widget preset",
       deleteWidgetPreset: "Could not delete custom widget preset",
       loadWidget: "Could not load widget",
-      loadPrizeSpin: "Could not load prize spin",
-      loadPrizeSpinHistory: "Could not load prize spin history",
-      createPrizeSpin: "Could not create prize spin",
-      copyPrizeSpin: "Could not copy prize spin session",
+      loadPrizeSpin: "Could not load prize wheel",
+      loadPrizeSpinHistory: "Could not load prize wheel history",
+      createPrizeSpin: "Could not create prize wheel",
+      copyPrizeSpin: "Could not copy prize wheel session",
       archiveSession: "Could not archive session",
       loadWheelSectors: "Could not load wheel sectors",
       addSector: "Could not add sector",
       updateSector: "Could not update sector",
-      distributeSectorWeights: "Could not distribute sector weights",
+      distributeSectorWeights: "Could not distribute sector coefficients",
       deleteSector: "Could not delete sector",
       loadWinners: "Could not load winners",
       removeWinner: "Could not remove winner",

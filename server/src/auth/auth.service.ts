@@ -608,7 +608,7 @@ export class AuthService {
   private mapPrizeSpinMutationError(error: unknown): never {
     if (error instanceof Error) {
       if (error.message === 'NOT_FOUND') {
-        throw new NotFoundException('Prize spin resource not found');
+        throw new NotFoundException('Prize Wheel resource not found');
       }
       if (error.message === 'INVALID_LABEL') {
         throw new BadRequestException('Label must be 1-100 characters');
@@ -1127,7 +1127,7 @@ export class AuthService {
   private mapPrizeSpinWidgetMutationError(error: unknown): never {
     if (error instanceof Error) {
       if (error.message === 'NOT_FOUND') {
-        throw new NotFoundException('Prize spin widget settings not found');
+        throw new NotFoundException('Prize Wheel widget settings not found');
       }
     }
     throw error;
@@ -1204,7 +1204,7 @@ export class AuthService {
       await this.database.getPublicPrizeSpinWidgetViewForPublic(prizeSpinId);
 
     if (view === 'NOT_FOUND') {
-      throw new NotFoundException('Prize spin not found');
+      throw new NotFoundException('Prize Wheel not found');
     }
 
     return this.formatPublicPrizeSpinWidgetView(view);
@@ -1309,7 +1309,7 @@ export class AuthService {
 
     const row = await this.database.getPrizeSpinById(accountId, prizeSpinId);
     if (!row) {
-      throw new NotFoundException('Prize spin not found');
+      throw new NotFoundException('Prize Wheel not found');
     }
 
     return this.withEntitlementEnvelope(accountId, {
@@ -1449,7 +1449,7 @@ export class AuthService {
         throw new BadRequestException('Title must be 1-200 characters');
       }
       if (error instanceof Error && error.message === 'NOT_FOUND') {
-        throw new NotFoundException('Prize spin not found');
+        throw new NotFoundException('Prize Wheel not found');
       }
       throw error;
     }
@@ -1472,7 +1472,7 @@ export class AuthService {
       await this.database.archivePrizeSpin(accountId, prizeSpinId);
     } catch (error) {
       if (error instanceof Error && error.message === 'NOT_FOUND') {
-        throw new NotFoundException('Prize spin not found');
+        throw new NotFoundException('Prize Wheel not found');
       }
       throw error;
     }
@@ -1496,7 +1496,7 @@ export class AuthService {
       return this.formatPrizeSpinRecord(row);
     } catch (error) {
       if (error instanceof Error && error.message === 'NOT_FOUND') {
-        throw new NotFoundException('Prize spin not found');
+        throw new NotFoundException('Prize Wheel not found');
       }
       throw error;
     }
@@ -1517,7 +1517,7 @@ export class AuthService {
       return { sectors: rows.map((row) => this.formatPrizeSpinSector(row)) };
     } catch (error) {
       if (error instanceof Error && error.message === 'NOT_FOUND') {
-        throw new NotFoundException('Prize spin not found');
+        throw new NotFoundException('Prize Wheel not found');
       }
       throw error;
     }
@@ -1544,7 +1544,7 @@ export class AuthService {
       return this.formatPrizeSpinSector(row);
     } catch (error) {
       if (error instanceof Error && error.message === 'NOT_FOUND') {
-        throw new NotFoundException('Prize spin not found');
+        throw new NotFoundException('Prize Wheel not found');
       }
       this.mapPrizeSpinMutationError(error);
     }
@@ -1628,7 +1628,7 @@ export class AuthService {
       return { sectors: rows.map((row) => this.formatPrizeSpinSector(row)) };
     } catch (error) {
       if (error instanceof Error && error.message === 'NOT_FOUND') {
-        throw new NotFoundException('Prize spin not found');
+        throw new NotFoundException('Prize Wheel not found');
       }
       this.mapPrizeSpinMutationError(error);
     }
@@ -1646,7 +1646,7 @@ export class AuthService {
       return { wins: rows.map((row) => this.formatPrizeSpinWin(row)) };
     } catch (error) {
       if (error instanceof Error && error.message === 'NOT_FOUND') {
-        throw new NotFoundException('Prize spin not found');
+        throw new NotFoundException('Prize Wheel not found');
       }
       throw error;
     }
@@ -1678,7 +1678,7 @@ export class AuthService {
       await this.database.archiveAllPrizeSpinWins(accountId, prizeSpinId);
     } catch (error) {
       if (error instanceof Error && error.message === 'NOT_FOUND') {
-        throw new NotFoundException('Prize spin not found');
+        throw new NotFoundException('Prize Wheel not found');
       }
       throw error;
     }
@@ -1702,7 +1702,7 @@ export class AuthService {
       return this.formatPrizeSpinWin(row);
     } catch (error) {
       if (error instanceof Error && error.message === 'NOT_FOUND') {
-        throw new NotFoundException('Prize spin not found');
+        throw new NotFoundException('Prize Wheel not found');
       }
       this.mapPrizeSpinMutationError(error);
     }

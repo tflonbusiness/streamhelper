@@ -1,4 +1,4 @@
-/** Prize spin overlay — soft casino wheel tick + two-note win bell (Web Audio, no files). */
+/** Prize spin overlay — soft wheel tick + two-note win bell (Web Audio, no files). */
 class PrizeSpinWheelAudio {
   private ctx: AudioContext | null = null
   private outputDest: MediaStreamAudioDestinationNode | null = null

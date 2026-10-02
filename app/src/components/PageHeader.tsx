@@ -15,6 +15,7 @@ import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { IconTile } from '@/components/IconTile'
 import { useBreadcrumbDynamicLabel } from '@/context/BreadcrumbContext'
 import { getBreadcrumbAncestors } from '@/lib/breadcrumbs'
+import { moduleAccentGradient } from '@/lib/module-accent-color'
 import type { ModuleIconVariant } from '@/lib/modules'
 import { cardSx, colors } from '@/theme/colors'
 
@@ -171,13 +172,23 @@ export function PageHeader({
       className={className}
       sx={{
         ...cardSx,
+        position: 'relative',
         overflow: 'hidden',
-        backgroundImage: `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 42%)`,
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          inset: 0,
+          background: icon
+            ? moduleAccentGradient(iconVariant, theme)
+            : `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 42%)`,
+          pointerEvents: 'none',
+        },
       }}
     >
       {hasBreadcrumbs ? (
         <Box
           sx={{
+            position: 'relative',
             px: 2,
             py: 1.25,
             borderBottom: '1px solid',
@@ -192,6 +203,7 @@ export function PageHeader({
 
       <Box
         sx={{
+          position: 'relative',
           display: 'flex',
           alignItems: description ? 'flex-start' : 'center',
           justifyContent: 'space-between',

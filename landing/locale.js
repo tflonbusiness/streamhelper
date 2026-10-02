@@ -34,7 +34,7 @@
       moduleBonusBuyTitle: 'Bonus Buy',
       moduleBonusBuyBody:
         'Run slot bonus-buy sessions on stream. Track balance, open rounds, and show live stats on your overlay while viewers follow the action.',
-      modulePrizeSpinTitle: 'Prize Spin',
+      modulePrizeSpinTitle: 'Prize Wheel',
       modulePrizeSpinBody:
         'Spin a weighted prize wheel for any viewer nick. Set sectors, odds, and colors — then reveal the winner on stream in seconds.',
       moduleChatRollTitle: 'Chat Roll',
@@ -119,7 +119,7 @@
       moduleBonusBuyTitle: 'Bonus Buy',
       moduleBonusBuyBody:
         'Ведите сессии bonus buy в эфире. Следите за балансом, открывайте раунды и показывайте статистику на оверлее.',
-      modulePrizeSpinTitle: 'Prize Spin',
+      modulePrizeSpinTitle: 'Prize Wheel',
       modulePrizeSpinBody:
         'Крутите взвешенное колесо призов для любого ника. Задайте сектора, шансы и цвета — покажите победителя за секунды.',
       moduleChatRollTitle: 'Chat Roll',

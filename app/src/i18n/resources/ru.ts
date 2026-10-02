@@ -152,7 +152,7 @@ export const ru = {
     team: "Команда",
     subscription: "Подписка",
     bonusBuy: "Bonus Buy",
-    prizeSpin: "Prize Spin",
+    prizeSpin: "Prize Wheel",
     chatRoll: "Chat Roll",
     subscriptionAdmin: "Подписки (admin)"
   },
@@ -233,17 +233,17 @@ export const ru = {
       'bonus-buy': {
         name: "Bonus Buy",
         description:
-          "Раунды bonus buy на слотах для вовлечения зрителей — бонусные функции во время лайва."
+          "На длинном эфире — чтобы чат шёл в вашем ритме и не терял нить, а не догадывался по обрывкам."
       },
       'prize-spin': {
-        name: "Prize Spin",
+        name: "Prize Wheel",
         description:
-          "Взвешенное колесо призов для зрителя — ник в чате, сектора, шансы и результат на стриме."
+          "Поблагодарить зрителя на глазах у всех — общий момент на стриме, а не личная отметка в чате."
       },
       'chat-roll': {
         name: "Chat Roll",
         description:
-          "Розыгрыш в чате по ключевому слову"
+          "Розыгрыш, которому верит чат — прозрачное напряжение для зрителей, меньше нагрузки на команду."
       }
     }
   },
@@ -514,13 +514,13 @@ export const ru = {
     slotStatusPending: "Ожидание"
   },
   prizeSpin: {
-    title: "Prize Spin",
-    description: "Взвешенное колесо призов для вашего стрима",
+    title: "Prize Wheel",
+    description: "Колесо призов с коэффициентами секторов для вашего стрима",
     historyTitle: "История",
-    historyDescription: "Сессии prize spin для этого аккаунта",
-    historyDescriptionPast: "Активные и прошлые сессии prize spin",
+    historyDescription: "Сессии Prize Wheel для этого аккаунта",
+    historyDescriptionPast: "Активные и прошлые сессии Prize Wheel",
     noArchivedSessions: "Нет сессий в архиве",
-    noSessions: "Сессий prize spin пока нет",
+    noSessions: "Сессий Prize Wheel пока нет",
     historyCardMeta: "{{author}} · {{created}}",
     historyCardIndex: "#{{index}}",
     historyListItemAria:
@@ -537,15 +537,15 @@ export const ru = {
     createSession: "Создать сессию",
     createDialogTitle: "Новая сессия",
     createDialogIntro:
-      "Создайте сессию prize spin с названием для вашего стрима.",
-    sessionCreated: "Сессия prize spin создана.",
-    couldNotCreateSession: "Не удалось создать сессию prize spin.",
-    couldNotLoadSession: "Не удалось загрузить сессию prize spin",
+      "Создайте сессию Prize Wheel с названием для вашего стрима.",
+    sessionCreated: "Сессия Prize Wheel создана.",
+    couldNotCreateSession: "Не удалось создать сессию Prize Wheel.",
+    couldNotLoadSession: "Не удалось загрузить сессию Prize Wheel",
     sessionNotFound: "Сессия не найдена",
     sessionArchived: "Сессия отправлена в архив.",
     couldNotArchiveSession: "Не удалось архивировать сессию.",
     sessionCopied: "Сессия скопирована.",
-    couldNotCopySession: "Не удалось скопировать сессию prize spin.",
+    couldNotCopySession: "Не удалось скопировать сессию Prize Wheel.",
     copySessionTitle: "Копировать сессию",
     copySessionDescription:
       "Создаётся новая сессия с секторами колеса, скопированными из исходной. История вращений и победители не копируются. Исходная сессия не изменяется.",
@@ -564,10 +564,11 @@ export const ru = {
     widgetSettingsDescription: "Размер browser source в OBS и раскладка колеса",
     equalSectorSlices: "Равные сектора на колесе",
     streamWidgetTitle: "Виджет для стрима",
-    streamWidgetDescription: "Настройки OBS-оверлея и ссылки для этой сессии prize spin",
+    streamWidgetDescription:
+      "Настройки OBS-оверлея и ссылки для этой сессии Prize Wheel",
     sectorsTitle: "Сектора колеса ({{count}})",
     sectorsDescription:
-      "Подписи, цвета и веса — сумма должна быть 100%",
+      "Подписи, цвета и коэффициенты — сумма должна быть 100%",
     addSector: "Добавить сектор",
     sectorsEmptyHint:
       "Секторов пока нет. Нажмите «Добавить сектор», чтобы создать минимум два.",
@@ -580,8 +581,8 @@ export const ru = {
     couldNotDeleteSector: "Не удалось удалить сектор",
     split100: "Разделить 100%",
     splitting: "Разделение…",
-    sectorWeightsSplit: "Веса секторов равномерно распределены до 100%.",
-    couldNotDistributeWeights: "Не удалось распределить веса секторов",
+    sectorWeightsSplit: "Коэффициенты секторов равномерно распределены до 100%.",
+    couldNotDistributeWeights: "Не удалось распределить коэффициенты секторов",
     spinTitle: "Крутить колесо",
     enterNickToSpin: "Введите ник участника, чтобы крутить колесо.",
     readyToSpin: "Готово к вращению для этого зрителя.",
@@ -606,9 +607,9 @@ export const ru = {
     couldNotSpin: "Не удалось крутить колесо",
     spinResult: "Победитель: {{nick}} — {{label}}",
     spunBy: "Крутил",
-    couldNotLoadHistory: "Не удалось загрузить историю prize spin.",
+    couldNotLoadHistory: "Не удалось загрузить историю Prize Wheel.",
     statsTitle: "Статистика",
-    statsDescription: "Как часто выигрывал каждый сектор относительно его веса",
+    statsDescription: "Как часто выигрывал каждый сектор относительно его коэффициента",
     statsTotalRolls_one: "{{count}} розыгрыш",
     statsTotalRolls_few: "{{count}} розыгрыша",
     statsTotalRolls_many: "{{count}} розыгрышей",
@@ -831,15 +832,15 @@ export const ru = {
       saveWidgetPreset: "Не удалось сохранить пользовательский пресет",
       deleteWidgetPreset: "Не удалось удалить пользовательский пресет",
       loadWidget: "Не удалось загрузить виджет",
-      loadPrizeSpin: "Не удалось загрузить prize spin",
-      loadPrizeSpinHistory: "Не удалось загрузить историю prize spin",
-      createPrizeSpin: "Не удалось создать prize spin",
-      copyPrizeSpin: "Не удалось скопировать сессию prize spin",
+      loadPrizeSpin: "Не удалось загрузить Prize Wheel",
+      loadPrizeSpinHistory: "Не удалось загрузить историю Prize Wheel",
+      createPrizeSpin: "Не удалось создать Prize Wheel",
+      copyPrizeSpin: "Не удалось скопировать сессию Prize Wheel",
       archiveSession: "Не удалось архивировать сессию",
       loadWheelSectors: "Не удалось загрузить сектора колеса",
       addSector: "Не удалось добавить сектор",
       updateSector: "Не удалось обновить сектор",
-      distributeSectorWeights: "Не удалось распределить веса секторов",
+      distributeSectorWeights: "Не удалось распределить коэффициенты секторов",
       deleteSector: "Не удалось удалить сектор",
       loadWinners: "Не удалось загрузить победителей",
       removeWinner: "Не удалось удалить победителя",

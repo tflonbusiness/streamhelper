@@ -32,7 +32,7 @@ export function PrizeSpinPage() {
         title={t('prizeSpin.title')}
         description={t('prizeSpin.description')}
         icon={AutorenewIcon}
-        iconVariant="info"
+        iconVariant="purple"
       />
       {user?.accountId !== undefined && user.accountUcid ? (
         <ContentGrid container spacing={3}>

@@ -22,7 +22,7 @@ export function KickLoginButton({ className, surface = 'streamer' }: KickLoginBu
         height: 52,
         gap: 1.25,
         px: 2.5,
-        borderRadius: 3,
+        borderRadius: 2,
         bgcolor: '#53FC18',
         color: '#0e0e10',
         fontSize: '1rem',
