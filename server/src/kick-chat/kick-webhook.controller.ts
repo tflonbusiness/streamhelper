@@ -65,7 +65,7 @@ export class KickWebhookController {
       rawBody ?? Buffer.from(JSON.stringify(body ?? {}));
 
     try {
-      this.verifier.verifySignature({
+      await this.verifier.verifySignature({
         messageId,
         timestamp,
         signature,

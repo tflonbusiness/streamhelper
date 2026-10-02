@@ -16,28 +16,28 @@ describe('KickWebhookVerifierService', () => {
     }
   });
 
-  it('rejects invalid signature when verification is enabled', () => {
+  it('rejects invalid signature when verification is enabled', async () => {
     const service = new KickWebhookVerifierService();
-    expect(() =>
+    await expect(
       service.verifySignature({
         messageId: 'msg-1',
         timestamp: '123',
         signature: Buffer.from('not-a-valid-sig').toString('base64'),
         rawBody: Buffer.from('{}'),
       }),
-    ).toThrow('Invalid Kick webhook signature');
+    ).rejects.toThrow('Invalid Kick webhook signature');
   });
 
-  it('skips verification when KICK_WEBHOOK_SKIP_VERIFY=true', () => {
+  it('skips verification when KICK_WEBHOOK_SKIP_VERIFY=true', async () => {
     process.env.KICK_WEBHOOK_SKIP_VERIFY = 'true';
     const service = new KickWebhookVerifierService();
-    expect(() =>
+    await expect(
       service.verifySignature({
         messageId: 'msg-1',
         timestamp: '123',
         signature: 'invalid',
         rawBody: Buffer.from('{}'),
       }),
-    ).not.toThrow();
+    ).resolves.toBeUndefined();
   });
 });
