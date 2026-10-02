@@ -4,6 +4,7 @@ import {
   Controller,
   Headers,
   HttpCode,
+  Logger,
   Post,
   Req,
   UnauthorizedException,
@@ -12,10 +13,13 @@ import type { RawBodyRequest } from '@nestjs/common';
 import type { Request } from 'express';
 import { KickCommandRouter } from './kick-command.router.js';
 import { KickWebhookVerifierService } from './kick-webhook-verifier.service.js';
+import { kickMessageAuditFields, formatKickRouteAudit } from './kick-chat-audit.js';
 import type { KickChatMessageEvent } from './kick-chat.types.js';
 
 @Controller()
 export class KickWebhookController {
+  private readonly logger = new Logger(KickWebhookController.name);
+
   constructor(
     private readonly verifier: KickWebhookVerifierService,
     private readonly router: KickCommandRouter,
@@ -77,15 +81,29 @@ export class KickWebhookController {
     });
 
     if (eventType !== 'chat.message.sent') {
+      this.logger.debug(
+        `ignored event type=${eventType} messageId=${messageId ?? 'unknown'}`,
+      );
       return { ok: true };
     }
 
-    const event = this.parseChatMessageEvent(parsedBody, messageId);
-    if (!event) {
+    const parseResult = this.parseChatMessageEvent(parsedBody, messageId);
+    if (!parseResult.event) {
+      this.logger.warn(
+        `rejected chat.message.sent: ${parseResult.reason} messageId=${messageId ?? 'unknown'}`,
+      );
       throw new BadRequestException('Invalid chat.message.sent payload');
     }
 
-    await this.router.routeChatMessage(event);
+    const event = parseResult.event;
+    this.logger.log(
+      `received chat.message.sent ${JSON.stringify(kickMessageAuditFields(event))}`,
+    );
+
+    const routeResult = await this.router.routeChatMessage(event);
+    this.logger.log(
+      `handled chat.message.sent messageId=${event.message_id} ${formatKickRouteAudit(routeResult)}`,
+    );
     return { ok: true };
   }
 
@@ -105,31 +123,51 @@ export class KickWebhookController {
     }
 
     const result = await this.router.routeChatMessage(body);
+    this.logger.log(
+      `mock chat handled messageId=${body.message_id} ${formatKickRouteAudit(result)}`,
+    );
     return { ok: true, result };
   }
 
   private parseChatMessageEvent(
     body: unknown,
     messageIdFromHeader?: string,
-  ): KickChatMessageEvent | null {
+  ):
+    | { event: KickChatMessageEvent; reason?: undefined }
+    | { event: null; reason: string } {
     if (!body || typeof body !== 'object') {
-      return null;
+      return { event: null, reason: 'body is not an object' };
     }
 
     const event = body as KickChatMessageEvent;
     if (!event.message_id && messageIdFromHeader) {
       event.message_id = messageIdFromHeader;
     }
-    if (
-      !event.message_id ||
-      !event.broadcaster?.user_id ||
-      !event.sender?.user_id ||
-      !event.sender.username ||
-      typeof event.content !== 'string'
-    ) {
-      return null;
+
+    const missing: string[] = [];
+    if (!event.message_id) {
+      missing.push('message_id');
+    }
+    if (event.broadcaster?.user_id === undefined || event.broadcaster?.user_id === null) {
+      missing.push('broadcaster.user_id');
+    }
+    if (event.sender?.user_id === undefined || event.sender?.user_id === null) {
+      missing.push('sender.user_id');
+    }
+    if (!event.sender?.username) {
+      missing.push('sender.username');
+    }
+    if (typeof event.content !== 'string') {
+      missing.push('content (string)');
     }
 
-    return event;
+    if (missing.length > 0) {
+      return {
+        event: null,
+        reason: `missing or invalid fields: ${missing.join(', ')}`,
+      };
+    }
+
+    return { event };
   }
 }

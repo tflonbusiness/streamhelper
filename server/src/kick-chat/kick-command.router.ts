@@ -21,6 +21,7 @@ export class KickCommandRouter {
       winnerResponse.action === 'confirmed'
         ? { action: 'ignored' as const, reason: 'winner_response_confirmed' }
         : await this.chatRollIntake.handle(event);
+
     return { winnerResponse, intake };
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service.js';
 import type {
   KickChatMessageEvent,
@@ -7,6 +7,8 @@ import type {
 
 @Injectable()
 export class WinnerResponseHandler {
+  private readonly logger = new Logger(WinnerResponseHandler.name);
+
   constructor(private readonly database: DatabaseService) {}
 
   async handle(event: KickChatMessageEvent): Promise<WinnerResponseResult> {
@@ -49,6 +51,10 @@ export class WinnerResponseHandler {
       return { action: 'ignored', reason: 'no_pending_win' };
     }
 
-    return { action: 'confirmed', winId: confirmed };
+    const result = { action: 'confirmed' as const, winId: confirmed };
+    this.logger.log(
+      `saved winner response winId=${confirmed} messageId=${event.message_id} accountId=${accountId} chatRollId=${session.id} providerUserId=${providerUserId}`,
+    );
+    return result;
   }
 }
