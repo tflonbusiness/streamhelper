@@ -344,6 +344,46 @@ export const en = {
       overLimitSessionTitle: "Session limit exceeded",
       overLimitSessionBody:
         "You have {{usage}} active sessions but your plan allows {{limit}}. You can't create new ones until you archive the extras from the list below.",
+      overLimitIssues: {
+        functionalityLimited:
+          "Features stay limited until you're within your plan limits. Archive or remove the extras in the list below.",
+        functionalityLimitedSessionDetail:
+          "Features stay limited until you're within your plan limits. Fix the issue above (archive sessions or remove extras in this session).",
+        moduleSessions: {
+          title: "Too many active sessions",
+          bodyList: {
+            bonusBuy:
+              "Active Bonus Buy sessions: {{usage}} (plan limit {{limit}}). Blocked: new sessions, duplicates, editing sessions, adding slots, and going live.",
+            prizeSpin:
+              "Active Prize Wheel sessions: {{usage}} (plan limit {{limit}}). Blocked: new sessions, duplicates, editing, adding sectors, spins, and going live.",
+            chatRoll:
+              "Active Chat Roll sessions: {{usage}} (plan limit {{limit}}). Blocked: new sessions, duplicates, editing sessions, and going live.",
+          },
+          bodySession: {
+            bonusBuy:
+              "Active Bonus Buy sessions: {{usage}} (plan limit {{limit}}). Blocked: editing sessions, adding slots, and going live until you archive extras on the module page.",
+            prizeSpin:
+              "Active Prize Wheel sessions: {{usage}} (plan limit {{limit}}). Blocked: editing, adding sectors, spins, and going live until you archive extras on the module page.",
+            chatRoll:
+              "Active Chat Roll sessions: {{usage}} (plan limit {{limit}}). Blocked: editing sessions and going live until you archive extras on the module page.",
+          },
+        },
+        bonusBuySlots: {
+          title: "Too many slots in this session",
+          body:
+            "Slots in this session: {{usage}} (plan limit {{limit}} per session). Blocked: adding slots and editing slot data.",
+        },
+        prizeSpinSectors: {
+          title: "Too many sectors in this session",
+          body:
+            "Sectors in this session: {{usage}} (plan limit {{limit}} per session). Blocked: adding sectors, editing sectors, and spins.",
+        },
+        moderatorMembers: {
+          title: "Too many moderators",
+          body:
+            "Your team has {{usage}} moderators; your plan allows {{limit}}. Revoke access for extras on the Team page.",
+        },
+      },
       sessionCap: {
         title: "Session limit reached",
         body:

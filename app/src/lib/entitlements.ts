@@ -53,6 +53,118 @@ function exceedsNumericLimit(
   return limit !== null && limit !== undefined && usage > limit
 }
 
+export type EntitlementOverLimitIssueKind =
+  | 'moduleSessions'
+  | 'bonusBuySlots'
+  | 'prizeSpinSectors'
+  | 'moderatorMembers'
+
+export type EntitlementOverLimitIssue = {
+  kind: EntitlementOverLimitIssueKind
+  usage: number
+  limit: number
+  module?: keyof EntitlementUsage['sessions']
+}
+
+/** Which limits are exceeded (mirrors server compliance checks for UI copy). */
+export function getEntitlementOverLimitIssues(
+  envelope: EntitlementEnvelope | undefined,
+  module?: keyof EntitlementUsage['sessions'],
+): EntitlementOverLimitIssue[] {
+  if (!envelope || !isOverLimit(envelope)) {
+    return []
+  }
+
+  const { limits } = envelope.entitlements
+  const { usage } = envelope
+  const issues: EntitlementOverLimitIssue[] = []
+
+  const pushModuleSessions = (mod: keyof EntitlementUsage['sessions']) => {
+    const limit = limits.sessionsPerModule
+    const sessionUsage = usage.sessions[mod]
+    if (exceedsNumericLimit(sessionUsage, limit)) {
+      issues.push({
+        kind: 'moduleSessions',
+        module: mod,
+        usage: sessionUsage,
+        limit: limit as number,
+      })
+    }
+  }
+
+  if (module !== undefined) {
+    pushModuleSessions(module)
+    if (
+      module === 'bonusBuy' &&
+      usage.bonusBuySlots !== null &&
+      exceedsNumericLimit(
+        usage.bonusBuySlots,
+        limits.bonusBuySlotsPerSession,
+      )
+    ) {
+      issues.push({
+        kind: 'bonusBuySlots',
+        usage: usage.bonusBuySlots,
+        limit: limits.bonusBuySlotsPerSession as number,
+      })
+    }
+    if (
+      module === 'prizeSpin' &&
+      usage.prizeSpinSectors !== null &&
+      exceedsNumericLimit(
+        usage.prizeSpinSectors,
+        limits.prizeSpinSectorsPerSession,
+      )
+    ) {
+      issues.push({
+        kind: 'prizeSpinSectors',
+        usage: usage.prizeSpinSectors,
+        limit: limits.prizeSpinSectorsPerSession as number,
+      })
+    }
+    return issues
+  }
+
+  pushModuleSessions('bonusBuy')
+  pushModuleSessions('prizeSpin')
+  pushModuleSessions('chatRoll')
+
+  if (
+    usage.bonusBuySlots !== null &&
+    exceedsNumericLimit(usage.bonusBuySlots, limits.bonusBuySlotsPerSession)
+  ) {
+    issues.push({
+      kind: 'bonusBuySlots',
+      usage: usage.bonusBuySlots,
+      limit: limits.bonusBuySlotsPerSession as number,
+    })
+  }
+
+  if (
+    usage.prizeSpinSectors !== null &&
+    exceedsNumericLimit(
+      usage.prizeSpinSectors,
+      limits.prizeSpinSectorsPerSession,
+    )
+  ) {
+    issues.push({
+      kind: 'prizeSpinSectors',
+      usage: usage.prizeSpinSectors,
+      limit: limits.prizeSpinSectorsPerSession as number,
+    })
+  }
+
+  if (exceedsNumericLimit(usage.moderatorMembers, limits.moderatorMembers)) {
+    issues.push({
+      kind: 'moderatorMembers',
+      usage: usage.moderatorMembers,
+      limit: limits.moderatorMembers as number,
+    })
+  }
+
+  return issues
+}
+
 /** Excess non-archived sessions in one module (usage > limit), not "at cap" (usage === limit). */
 export function isModuleSessionsOverLimit(
   envelope: EntitlementEnvelope | undefined,

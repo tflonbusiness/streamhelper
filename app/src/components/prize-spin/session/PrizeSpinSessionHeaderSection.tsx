@@ -15,8 +15,6 @@ import {
   StyledSessionHeaderTitleRow,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { SessionCardInlineNotice } from '@/components/session/SessionCardInlineNotice'
-import { SessionHeaderEntitlementNotices } from '@/components/session/SessionHeaderEntitlementNotices'
-import type { EntitlementEnvelope } from '@/lib/entitlements'
 import { downloadWinnersXlsx } from '@/lib/prize-spin-winners-export'
 import { useNotification } from '@/context/NotificationContext'
 import { useArchivePrizeSpinSession } from '@/queries/use-prize-spin-session'
@@ -30,7 +28,6 @@ type PrizeSpinSessionHeaderSectionProps = {
   onGoLive?: () => void
   liveActionPending?: boolean
   goLiveDisabled?: boolean
-  envelope?: EntitlementEnvelope
 }
 
 const HeaderStack = styled(Stack)(({ theme }) => ({
@@ -136,10 +133,6 @@ export const PrizeSpinSessionHeaderSection = (
             ) : null}
           </ActionsStack>
         </HeaderStack>
-        <SessionHeaderEntitlementNotices
-          envelope={props.envelope}
-          module="prizeSpin"
-        />
         {readOnly ? (
           <ReadOnlyAlert>{t('prizeSpin.sessionArchivedViewOnly')}</ReadOnlyAlert>
         ) : null}

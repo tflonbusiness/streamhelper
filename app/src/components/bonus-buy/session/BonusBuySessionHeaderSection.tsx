@@ -14,8 +14,6 @@ import {
   StyledSessionHeaderTitleRow,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { SessionCardInlineNotice } from '@/components/session/SessionCardInlineNotice'
-import { SessionHeaderEntitlementNotices } from '@/components/session/SessionHeaderEntitlementNotices'
-import type { EntitlementEnvelope } from '@/lib/entitlements'
 
 type BonusBuySessionHeaderSectionProps = {
   record: BonusBuyRecord
@@ -24,7 +22,6 @@ type BonusBuySessionHeaderSectionProps = {
   onGoLive?: () => void
   liveActionPending?: boolean
   goLiveDisabled?: boolean
-  envelope?: EntitlementEnvelope
 }
 
 const HeaderStack = styled(Stack)(({ theme }) => ({
@@ -100,10 +97,6 @@ export const BonusBuySessionHeaderSection = (
             ) : null}
           </ActionsStack>
         </HeaderStack>
-        <SessionHeaderEntitlementNotices
-          envelope={props.envelope}
-          module="bonusBuy"
-        />
         {readOnly ? (
           <ReadOnlyAlert>{t('bonusBuy.sessionArchivedViewOnly')}</ReadOnlyAlert>
         ) : null}

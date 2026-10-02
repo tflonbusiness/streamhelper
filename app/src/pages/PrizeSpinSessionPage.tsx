@@ -9,6 +9,7 @@ import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { PrizeSpinSessionArchiveDialog } from '@/components/prize-spin/session/PrizeSpinSessionArchiveDialog'
 import { PrizeSpinSessionErrorState } from '@/components/prize-spin/session/PrizeSpinSessionErrorState'
 import { PrizeSpinSessionHeaderSection } from '@/components/prize-spin/session/PrizeSpinSessionHeaderSection'
+import { SessionEntitlementNoticesSection } from '@/components/session/SessionEntitlementNoticesSection'
 import { PrizeSpinSessionLoadingState } from '@/components/prize-spin/session/PrizeSpinSessionLoadingState'
 import { PrizeSpinSessionSectorsSection } from '@/components/prize-spin/session/PrizeSpinSessionSectorsSection'
 import { PrizeSpinSessionSpinSection } from '@/components/prize-spin/session/PrizeSpinSessionSpinSection'
@@ -102,7 +103,6 @@ export const PrizeSpinSessionPage = () => {
               prizeSpinId={prizeSpinId}
               record={record}
               wins={wins}
-              envelope={envelope}
               liveActionPending={goLiveMutation.isPending}
               goLiveDisabled={!canGoLivePrizeSpinSession(envelope)}
               onGoLive={() => {
@@ -118,6 +118,10 @@ export const PrizeSpinSessionPage = () => {
                 })
               }}
               onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
+            />
+            <SessionEntitlementNoticesSection
+              envelope={envelope}
+              module="prizeSpin"
             />
             <Grid container spacing={3} sx={{ alignItems: 'stretch' }}>
               <Grid size={{ xs: 12, lg: 7 }}>

@@ -13,8 +13,6 @@ import {
   StyledSessionHeaderTitleRow,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { SessionCardInlineNotice } from '@/components/session/SessionCardInlineNotice'
-import { SessionHeaderEntitlementNotices } from '@/components/session/SessionHeaderEntitlementNotices'
-import type { EntitlementEnvelope } from '@/lib/entitlements'
 import { ChatRollLiveStatusChip } from '@/components/chat-roll/ChatRollLiveStatusChip'
 import { ChatRollSessionIdBadge } from '@/components/chat-roll/session/ChatRollSessionIdBadge'
 import { mutedChipSx } from '@/theme/colors'
@@ -27,7 +25,6 @@ type ChatRollSessionHeaderSectionProps = {
   goLiveDisabled?: boolean
   primaryActions?: ReactNode
   centerAction?: ReactNode
-  envelope?: EntitlementEnvelope
 }
 
 const HeaderLayout = styled(Box, {
@@ -176,10 +173,6 @@ export const ChatRollSessionHeaderSection = (
             </ActionsStack>
           </ActionsArea>
         </HeaderLayout>
-        <SessionHeaderEntitlementNotices
-          envelope={props.envelope}
-          module="chatRoll"
-        />
         {readOnly ? (
           <ReadOnlyAlert>{t('chatRoll.sessionArchivedViewOnly')}</ReadOnlyAlert>
         ) : null}

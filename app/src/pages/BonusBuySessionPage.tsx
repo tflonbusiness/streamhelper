@@ -12,6 +12,7 @@ import { BonusBuyArchiveSessionDialog } from '@/components/bonus-buy/session/Bon
 import { BonusBuySessionAddSlotSection } from '@/components/bonus-buy/session/BonusBuySessionAddSlotSection'
 import { BonusBuySessionErrorState } from '@/components/bonus-buy/session/BonusBuySessionErrorState'
 import { BonusBuySessionHeaderSection } from '@/components/bonus-buy/session/BonusBuySessionHeaderSection'
+import { SessionEntitlementNoticesSection } from '@/components/session/SessionEntitlementNoticesSection'
 import { BonusBuySessionLoadingState } from '@/components/bonus-buy/session/BonusBuySessionLoadingState'
 import { BonusBuySessionSlotsSection } from '@/components/bonus-buy/session/BonusBuySessionSlotsSection'
 import { BonusBuySessionStatsSection } from '@/components/bonus-buy/session/BonusBuySessionStatsSection'
@@ -114,7 +115,6 @@ export const BonusBuySessionPage = () => {
       <MainColumnStack>
             <BonusBuySessionHeaderSection
               record={record}
-              envelope={envelope}
               liveActionPending={goLiveMutation.isPending}
               goLiveDisabled={!canGoLiveBonusBuySession(envelope)}
               onGoLive={() => {
@@ -131,6 +131,10 @@ export const BonusBuySessionPage = () => {
               }}
               onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
               onOpenEditDialog={() => setEditSessionDialogOpen(true)}
+            />
+            <SessionEntitlementNoticesSection
+              envelope={envelope}
+              module="bonusBuy"
             />
             <BonusBuySessionStatsSection
               record={record}
