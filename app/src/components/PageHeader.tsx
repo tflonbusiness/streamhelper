@@ -13,13 +13,14 @@ import GroupIcon from '@mui/icons-material/Group'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { IconTile } from '@/components/IconTile'
+import { ModuleIllustrationCrop } from '@/components/modules/ModuleIllustrationCrop'
 import { useBreadcrumbDynamicLabel } from '@/context/BreadcrumbContext'
 import { getBreadcrumbAncestors } from '@/lib/breadcrumbs'
 import {
   moduleHeaderBackground,
   modulePageHeaderSx,
 } from '@/lib/module-page-chrome'
-import type { ModuleIconVariant } from '@/lib/modules'
+import type { ModuleIconVariant, ModulePageId } from '@/lib/modules'
 import { cardSx, colors } from '@/theme/colors'
 
 const ICON_TILE_HEIGHT = 40
@@ -40,6 +41,7 @@ type PageHeaderProps = {
   icon?: SvgIconComponent
   iconVariant?: ModuleIconVariant
   moduleSurface?: boolean
+  moduleId?: ModulePageId
   action?: React.ReactNode
   showBreadcrumbs?: boolean
   className?: string
@@ -159,6 +161,7 @@ export function PageHeader({
   icon,
   iconVariant = 'primary',
   moduleSurface = false,
+  moduleId,
   action,
   showBreadcrumbs = true,
   className,
@@ -172,6 +175,7 @@ export function PageHeader({
     getBreadcrumbAncestors(pathname, t, dynamicLabel).length > 0
   const moduleHeaderSx =
     moduleSurface && icon ? modulePageHeaderSx(iconVariant, theme) : undefined
+  const showModuleIllustration = moduleSurface && moduleId
 
   return (
     <Box
@@ -221,14 +225,32 @@ export function PageHeader({
           gap: 2,
           px: 2,
           py: hasBreadcrumbs ? 2 : 2.25,
+          pr: showModuleIllustration ? { sm: 20, md: 24 } : 2,
         }}
       >
+        {showModuleIllustration ? (
+          <ModuleIllustrationCrop
+            moduleId={moduleId}
+            variant={iconVariant}
+            viewportSx={{
+              right: 0,
+              bottom: 0,
+              width: { sm: 128, md: 160 },
+              height: { sm: 96, md: 120 },
+              display: { xs: 'none', sm: 'block' },
+              zIndex: 0,
+            }}
+          />
+        ) : null}
         <Box
           sx={{
             display: 'flex',
             minWidth: 0,
             alignItems: description ? 'flex-start' : 'center',
             gap: 1.5,
+            flex: 1,
+            position: 'relative',
+            zIndex: 1,
           }}
         >
           {icon ? (
@@ -278,7 +300,9 @@ export function PageHeader({
             ) : null}
           </Box>
         </Box>
-        {action ? <Box sx={{ flexShrink: 0 }}>{action}</Box> : null}
+        {action ? (
+          <Box sx={{ flexShrink: 0, position: 'relative', zIndex: 1 }}>{action}</Box>
+        ) : null}
       </Box>
     </Box>
   )

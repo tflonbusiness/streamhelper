@@ -1,7 +1,7 @@
 import type { SvgIconComponent } from '@mui/icons-material'
 import { PageHeader } from '@/components/PageHeader'
 import { useModuleLabels } from '@/hooks/use-module-labels'
-import type { ModuleDefinition, ModuleIconVariant } from '@/lib/modules'
+import type { ModuleDefinition, ModuleIconVariant, ModulePageId } from '@/lib/modules'
 
 type ModuleSessionPageHeaderProps = {
   module: ModuleDefinition | undefined
@@ -27,6 +27,7 @@ export function ModuleSessionPageHeader({
       icon={Icon}
       iconVariant={module.iconVariant as ModuleIconVariant}
       moduleSurface
+      moduleId={module.id as ModulePageId}
       action={action}
     />
   )
