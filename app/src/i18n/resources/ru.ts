@@ -767,8 +767,8 @@ export const ru = {
     widgetKeywordPrefixRequired:
       "Укажите текст для оверлея (не более 120 символов)",
     widgetKeywordPrefixHelp: "Как на стриме: {{preview}}",
-    streamWidgetSettingsButton: "Настройки оверлея",
-    streamWidgetSettingsTitle: "Настройки оверлея",
+    streamWidgetSettingsButton: "Настройки виджета",
+    streamWidgetSettingsTitle: "Настройки виджета",
     streamWidgetSettingsNoSession:
       "Сначала создайте сессию Chat Roll, затем настройте оверлей.",
     streamWidgetSettingsOffAirHint:

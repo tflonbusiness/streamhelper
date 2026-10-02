@@ -221,7 +221,7 @@ export const BonusBuyWidgetStyleDialog = (
             onClick={() => setWidgetPreviewDialogOpen(true)}
             disabled={!widgetDraft}
           >
-            Preview
+            {t('common.widgetPreview')}
           </StyledMobilePreviewButton>
           <Button
             component={Link}
@@ -229,17 +229,17 @@ export const BonusBuyWidgetStyleDialog = (
             target="_blank"
             rel="noopener noreferrer"
           >
-            Preview overlay
+            {t('chatRoll.openOverlay')}
           </Button>
-          <Button onClick={props.onClose} disabled={isPending}>
-            Cancel
+          <Button variant="outlined" onClick={props.onClose} disabled={isPending}>
+            {t('common.cancel')}
           </Button>
           <Button
             variant="contained"
             onClick={() => void saveWidgetStyle()}
             disabled={isPending || isLoadingWidget || !widgetDraft}
           >
-            {isPending ? 'Saving…' : 'Save'}
+            {isPending ? t('common.saving') : t('common.save')}
           </Button>
         </StyledDialogActions>
       </Dialog>

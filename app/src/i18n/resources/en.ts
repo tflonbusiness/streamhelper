@@ -744,8 +744,8 @@ export const en = {
     widgetKeywordPrefixLabel: "Overlay text before keyword",
     widgetKeywordPrefixRequired: "Overlay text is required (max 120 characters)",
     widgetKeywordPrefixHelp: "Stream overlay preview: {{preview}}",
-    streamWidgetSettingsButton: "Overlay settings",
-    streamWidgetSettingsTitle: "Stream overlay settings",
+    streamWidgetSettingsButton: "Widget settings",
+    streamWidgetSettingsTitle: "Widget settings",
     streamWidgetSettingsNoSession:
       "Create a chat roll session first, then configure the overlay.",
     streamWidgetSettingsOffAirHint:
