@@ -10,8 +10,10 @@ import {
   fetchPrizeSpinSectors,
   fetchPrizeSpinWins,
   goLivePrizeSpin,
+  patchPrizeSpin,
   spinPrizeSpin,
   updatePrizeSpinSector,
+  type PatchPrizeSpinInput,
   type PatchPrizeSpinSectorInput,
 } from '@/api/prize-spin'
 import type { PrizeSpinRecord } from '@/api/prize-spin'
@@ -185,6 +187,23 @@ export function useDeleteAllPrizeSpinWins(
   return useMutation({
     mutationFn: () => deleteAllPrizeSpinWins(accountId!, prizeSpinId),
     onSuccess: () => invalidateSession(prizeSpinId),
+  })
+}
+
+export function usePatchPrizeSpinSession(
+  accountId: number | undefined,
+  prizeSpinId: number,
+) {
+  const invalidateSession = useInvalidatePrizeSpinSession(accountId)
+  const invalidateLists = useInvalidatePrizeSpinLists()
+
+  return useMutation({
+    mutationFn: (body: PatchPrizeSpinInput) =>
+      patchPrizeSpin(accountId!, prizeSpinId, body),
+    onSuccess: () => {
+      invalidateSession(prizeSpinId)
+      invalidateLists()
+    },
   })
 }
 

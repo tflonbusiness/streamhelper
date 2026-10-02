@@ -38,6 +38,7 @@ import {
   RollButton,
   SettingsStack,
 } from '@/components/chat-roll/chatRollPageStyles'
+import { ChatRollEditSessionDialog } from '@/components/chat-roll/session/ChatRollEditSessionDialog'
 import { ChatRollSessionArchiveDialog } from '@/components/chat-roll/session/ChatRollSessionArchiveDialog'
 import { ChatRollSessionErrorState } from '@/components/chat-roll/session/ChatRollSessionErrorState'
 import { ChatRollSessionHeaderSection } from '@/components/chat-roll/session/ChatRollSessionHeaderSection'
@@ -321,6 +322,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
   const [keywordError, setKeywordError] = useState<string | null>(null)
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false)
   const [archiveSessionDialogOpen, setArchiveSessionDialogOpen] = useState(false)
+  const [editSessionDialogOpen, setEditSessionDialogOpen] = useState(false)
   const [rollRevealOpen, setRollRevealOpen] = useState(false)
   const [rollRevealWin, setRollRevealWin] = useState<ChatRollWin | null>(null)
 
@@ -559,6 +561,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
       <ChatRollSessionHeaderSection
         record={record}
         onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
+        onOpenEditDialog={() => setEditSessionDialogOpen(true)}
         goLiveDisabled={!canGoLiveChatRollSession(envelope)}
         onGoLive={() => {
           goLiveMutation.mutate(undefined, {
@@ -790,6 +793,13 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
         </Grid>
       </WorkspaceGrid>
 
+      <ChatRollEditSessionDialog
+        accountId={accountId}
+        chatRollId={chatRollId}
+        record={record}
+        open={editSessionDialogOpen}
+        onClose={() => setEditSessionDialogOpen(false)}
+      />
       <ChatRollSessionArchiveDialog
         accountId={accountId}
         chatRollId={chatRollId}

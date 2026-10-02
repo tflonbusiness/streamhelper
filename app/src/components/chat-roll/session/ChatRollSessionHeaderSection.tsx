@@ -1,6 +1,7 @@
 import { Box, Button, Chip, Stack } from '@mui/material'
 import type { ReactNode } from 'react'
 import ArchiveIcon from '@mui/icons-material/Archive'
+import EditIcon from '@mui/icons-material/Edit'
 import { styled, useTheme } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import type { ChatRollRecord } from '@/api/chat-roll'
@@ -20,6 +21,7 @@ import { mutedChipSx } from '@/theme/colors'
 type ChatRollSessionHeaderSectionProps = {
   record: ChatRollRecord
   onOpenArchiveDialog: () => void
+  onOpenEditDialog: () => void
   onGoLive?: () => void
   liveActionPending?: boolean
   goLiveDisabled?: boolean
@@ -168,6 +170,17 @@ export const ChatRollSessionHeaderSection = (
                   onClick={props.onOpenArchiveDialog}
                 >
                   {t('common.archive')}
+                </Button>
+              ) : null}
+              {!readOnly ? (
+                <Button
+                  type="button"
+                  variant="outlined"
+                  size="small"
+                  startIcon={<EditIcon fontSize="small" aria-hidden />}
+                  onClick={props.onOpenEditDialog}
+                >
+                  {t('common.edit')}
                 </Button>
               ) : null}
             </ActionsStack>

@@ -6,6 +6,7 @@ import { useParams } from 'react-router-dom'
 import { isPrizeSpinReadOnly } from '@/api/prize-spin'
 import { ModulePageShell } from '@/components/ModulePageShell'
 import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
+import { PrizeSpinEditSessionDialog } from '@/components/prize-spin/session/PrizeSpinEditSessionDialog'
 import { PrizeSpinSessionArchiveDialog } from '@/components/prize-spin/session/PrizeSpinSessionArchiveDialog'
 import { PrizeSpinSessionErrorState } from '@/components/prize-spin/session/PrizeSpinSessionErrorState'
 import { PrizeSpinSessionHeaderSection } from '@/components/prize-spin/session/PrizeSpinSessionHeaderSection'
@@ -47,6 +48,7 @@ export const PrizeSpinSessionPage = () => {
   const { user } = useAuth()
 
   const [archiveSessionDialogOpen, setArchiveSessionDialogOpen] = useState(false)
+  const [editSessionDialogOpen, setEditSessionDialogOpen] = useState(false)
   const {
     data: session,
     isLoading: loading,
@@ -118,6 +120,7 @@ export const PrizeSpinSessionPage = () => {
                 })
               }}
               onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
+              onOpenEditDialog={() => setEditSessionDialogOpen(true)}
             />
             <SessionEntitlementNoticesSection
               envelope={envelope}
@@ -155,6 +158,13 @@ export const PrizeSpinSessionPage = () => {
               </Grid>
             </Grid>
       </MainColumnStack>
+      <PrizeSpinEditSessionDialog
+        accountId={accountId}
+        prizeSpinId={prizeSpinId}
+        record={record}
+        open={editSessionDialogOpen}
+        onClose={() => setEditSessionDialogOpen(false)}
+      />
       <PrizeSpinSessionArchiveDialog
         accountId={accountId}
         prizeSpinId={prizeSpinId}

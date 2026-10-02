@@ -15,6 +15,7 @@ import {
   type DbMembership,
   type PatchBonusBuySlotInput,
   type PatchBonusBuyWidgetInput,
+  type PatchPrizeSpinInput,
   type PatchPrizeSpinSectorInput,
   type DbPrizeSpinSector,
   type DbPrizeSpinWin,
@@ -643,6 +644,9 @@ export class AuthService {
       }
       if (error.message === 'NO_SECTORS') {
         throw new BadRequestException('Add at least one wheel sector first');
+      }
+      if (error.message === 'INVALID_TITLE') {
+        throw new BadRequestException('Title must be 1-200 characters');
       }
     }
     throw error;
@@ -1546,6 +1550,35 @@ export class AuthService {
         throw new NotFoundException('Prize Wheel not found');
       }
       throw error;
+    }
+  }
+
+  async patchPrizeSpin(
+    accountId: number,
+    callerUserId: number,
+    prizeSpinId: number,
+    body: { title?: string },
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    const input: PatchPrizeSpinInput = {};
+    if (body.title !== undefined) {
+      input.title = body.title;
+    }
+
+    if (Object.keys(input).length === 0) {
+      throw new BadRequestException('At least one field is required');
+    }
+
+    try {
+      const row = await this.database.patchPrizeSpin(
+        accountId,
+        prizeSpinId,
+        input,
+      );
+      return this.formatPrizeSpinRecord(row);
+    } catch (error) {
+      this.mapPrizeSpinMutationError(error);
     }
   }
 

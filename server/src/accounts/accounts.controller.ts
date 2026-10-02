@@ -60,6 +60,10 @@ type CreatePrizeSpinBody = {
   title?: string;
 };
 
+type PatchPrizeSpinBody = {
+  title?: string;
+};
+
 type CreatePrizeSpinSectorBody = {
   label?: string;
   win_percent?: string | number;
@@ -443,6 +447,24 @@ export class AccountsController {
       accountId,
       user.id,
       body.title ?? '',
+    );
+  }
+
+  @Patch(':accountId/prize-spins/:prizeSpinId')
+  async patchPrizeSpin(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('prizeSpinId', ParseIntPipe) prizeSpinId: number,
+    @Body() body: PatchPrizeSpinBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.patchPrizeSpin(
+      accountId,
+      user.id,
+      prizeSpinId,
+      body,
     );
   }
 

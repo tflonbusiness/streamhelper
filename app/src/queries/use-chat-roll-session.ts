@@ -87,11 +87,15 @@ export function usePatchChatRollSession(
   chatRollId: number,
 ) {
   const invalidateSession = useInvalidateChatRollSession(accountId)
+  const invalidateLists = useInvalidateChatRollLists()
 
   return useMutation({
     mutationFn: (body: PatchChatRollInput) =>
       patchChatRoll(accountId!, chatRollId, body),
-    onSuccess: () => invalidateSession(chatRollId),
+    onSuccess: () => {
+      invalidateSession(chatRollId)
+      invalidateLists()
+    },
   })
 }
 

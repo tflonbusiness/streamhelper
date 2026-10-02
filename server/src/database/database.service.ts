@@ -169,6 +169,10 @@ export type PatchPrizeSpinSectorInput = {
   color?: string | null;
 };
 
+export type PatchPrizeSpinInput = {
+  title?: string;
+};
+
 export type ChatRollStatus = 'live' | 'off_air' | 'archived';
 
 export type ChatRollArchivedFilter = 'false' | 'true' | 'all';
@@ -2768,6 +2772,56 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     if (result.rowCount === 0) {
       throw new Error('NOT_FOUND');
     }
+  }
+
+  async patchPrizeSpin(
+    accountId: number,
+    prizeSpinId: number,
+    input: PatchPrizeSpinInput,
+  ): Promise<DbPrizeSpin> {
+    const existing = await this.requireMutablePrizeSpin(accountId, prizeSpinId);
+
+    if (input.title === undefined) {
+      return existing;
+    }
+
+    const trimmedTitle = input.title.trim();
+    if (trimmedTitle.length === 0 || trimmedTitle.length > 200) {
+      throw new Error('INVALID_TITLE');
+    }
+
+    const result = await this.pool.query<{
+      id: string | number;
+      account_id: string | number;
+      title: string;
+      status: string;
+      created_at: Date;
+      created_by_user_id: string | number;
+      created_by_name: string;
+    }>(
+      `
+        UPDATE prize_spin
+        SET title = $3
+        WHERE account_id = $1
+          AND id = $2
+        RETURNING
+          id,
+          account_id,
+          title,
+          status,
+          created_at,
+          created_by_user_id,
+          (SELECT name FROM users WHERE id = created_by_user_id) AS created_by_name
+      `,
+      [accountId, prizeSpinId, trimmedTitle],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      throw new Error('NOT_FOUND');
+    }
+
+    return this.mapPrizeSpinRow(row);
   }
 
   async goLivePrizeSpin(

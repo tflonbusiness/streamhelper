@@ -71,6 +71,10 @@ export type PatchPrizeSpinSectorInput = {
   color?: string | null
 }
 
+export type PatchPrizeSpinInput = {
+  title?: string
+}
+
 async function readErrorMessage(response: Response, fallback: string): Promise<string> {
   try {
     const data = await response.json()
@@ -180,6 +184,30 @@ export async function copyPrizeSpin(
   if (!response.ok) {
     throw new Error(
       await readErrorMessage(response, i18n.t('errors.api.copyPrizeSpin')),
+    )
+  }
+
+  return response.json() as Promise<PrizeSpinRecord>
+}
+
+export async function patchPrizeSpin(
+  accountId: number,
+  prizeSpinId: number,
+  body: PatchPrizeSpinInput,
+): Promise<PrizeSpinRecord> {
+  const response = await fetch(
+    `/accounts/${accountId}/prize-spins/${prizeSpinId}`,
+    {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: jsonHeaders,
+      body: JSON.stringify(body),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, i18n.t('errors.api.updatePrizeSpinSession')),
     )
   }
 

@@ -1,6 +1,7 @@
 import { Button, Stack } from '@mui/material'
 import ArchiveIcon from '@mui/icons-material/Archive'
 import DownloadIcon from '@mui/icons-material/Download'
+import EditIcon from '@mui/icons-material/Edit'
 import { styled } from '@mui/material/styles'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -25,6 +26,7 @@ type PrizeSpinSessionHeaderSectionProps = {
   record: PrizeSpinRecord
   wins: PrizeSpinWin[]
   onOpenArchiveDialog: () => void
+  onOpenEditDialog: () => void
   onGoLive?: () => void
   liveActionPending?: boolean
   goLiveDisabled?: boolean
@@ -129,6 +131,17 @@ export const PrizeSpinSessionHeaderSection = (
                 onClick={props.onOpenArchiveDialog}
               >
                 {t('common.archive')}
+              </Button>
+            ) : null}
+            {!readOnly ? (
+              <Button
+                type="button"
+                variant="outlined"
+                size="small"
+                startIcon={<EditIcon fontSize="small" aria-hidden />}
+                onClick={props.onOpenEditDialog}
+              >
+                {t('common.edit')}
               </Button>
             ) : null}
           </ActionsStack>
