@@ -7,7 +7,6 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle,
   FormControlLabel,
   Stack,
   TextField,
@@ -18,6 +17,7 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useNotification } from '@/context/NotificationContext'
+import { WidgetSettingsDialogTitle } from '@/components/widget/WidgetSettingsPaletteIcon'
 import {
   type PrizeSpinWidgetSettingsFormValues,
   createPrizeSpinWidgetSettingsFormSchema,
@@ -147,7 +147,7 @@ export const PrizeSpinWidgetSettingsDialog = (
 
   return (
     <Dialog open={props.open} onClose={handleClose} maxWidth="xs" fullWidth>
-      <DialogTitle>{t('prizeSpin.widgetSettingsTitle')}</DialogTitle>
+      <WidgetSettingsDialogTitle>{t('prizeSpin.widgetSettingsTitle')}</WidgetSettingsDialogTitle>
       <DialogContent>
         {isLoading ? (
           <StyledLoadingText>{t('common.loading')}</StyledLoadingText>

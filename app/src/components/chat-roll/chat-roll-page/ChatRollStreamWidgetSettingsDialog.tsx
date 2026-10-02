@@ -6,7 +6,6 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle,
   Stack,
   TextField,
   Typography,
@@ -17,6 +16,7 @@ import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { isChatRollArchived, type ChatRollRecord } from '@/api/chat-roll'
 import { useNotification } from '@/context/NotificationContext'
+import { WidgetSettingsDialogTitle } from '@/components/widget/WidgetSettingsPaletteIcon'
 import { formatChatRollWidgetLine } from '@/lib/format-chat-roll-widget-line'
 import {
   type ChatRollStreamWidgetSettingsFormValues,
@@ -158,7 +158,7 @@ export const ChatRollStreamWidgetSettingsDialog = (
 
   return (
     <Dialog open={props.open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{t('chatRoll.streamWidgetSettingsTitle')}</DialogTitle>
+      <WidgetSettingsDialogTitle>{t('chatRoll.streamWidgetSettingsTitle')}</WidgetSettingsDialogTitle>
       <DialogContent>
         {listLoading ? (
           <StyledBodyText variant="body2">{t('common.loadingSettings')}</StyledBodyText>

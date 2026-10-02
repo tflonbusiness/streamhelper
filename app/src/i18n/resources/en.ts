@@ -110,7 +110,9 @@ export const en = {
     size: "Size",
     colors: "Colors",
     shape: "Shape",
-    typography: "Typography"
+    typography: "Typography",
+    streamWidgetDescription:
+      "Widget settings, OBS browser source link, and overlay preview."
   },
   table: {
     title: "Title",
@@ -473,10 +475,9 @@ export const en = {
     nowPlayingCleared: "Now playing cleared.",
     couldNotUpdatePlaying: "Could not update playing state",
     streamWidgetTitle: "Stream Widget",
-    streamWidgetDescription: "OBS overlay settings and links for this bonus buy session",
-    widgetStyle: "Widget style",
+    widgetStyle: "Widget settings",
     obsLinkCopied: "OBS link copied.",
-    widgetStyleSaved: "Widget style saved",
+    widgetStyleSaved: "Widget settings saved",
     couldNotLoadWidgetSettings: "Could not load widget settings.",
     couldNotSaveWidgetSettings: "Could not save widget settings.",
     couldNotLoadHistory: "Could not load bonus buy history.",
@@ -546,8 +547,6 @@ export const en = {
     widgetSettingsDescription: "OBS browser source size and wheel layout",
     equalSectorSlices: "Equal sector slices on wheel",
     streamWidgetTitle: "Stream widget",
-    streamWidgetDescription:
-      "OBS overlay settings and links for this Prize Wheel session",
     sectorsTitle: "Wheel sectors ({{count}})",
     sectorsDescription:
       "Labels, colors, and win coefficients — total must equal 100%",
@@ -682,8 +681,6 @@ export const en = {
     widgetKeywordPrefixLabel: "Overlay text before keyword",
     widgetKeywordPrefixRequired: "Overlay text is required (max 120 characters)",
     widgetKeywordPrefixHelp: "Stream overlay preview: {{preview}}",
-    streamWidgetDescription:
-      "OBS overlay for your live chat roll. Configure the on-stream message with Settings.",
     streamWidgetSettingsButton: "Overlay settings",
     streamWidgetSettingsTitle: "Stream overlay settings",
     streamWidgetSettingsNoSession:

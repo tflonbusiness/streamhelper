@@ -18,6 +18,7 @@ import type {
 } from '@/api/bonus-buy'
 import { BonusBuyWidgetStyleForm } from '@/components/bonus-buy/BonusBuyWidgetStyleForm'
 import { WidgetStylePreview } from '@/components/bonus-buy/WidgetStylePreview'
+import { WidgetSettingsDialogTitle } from '@/components/widget/WidgetSettingsPaletteIcon'
 import { WidgetThemePresetPicker } from '@/components/bonus-buy/WidgetThemePresetPicker'
 import { StatusAlert } from '@/components/StatusAlert'
 import { useNotification } from '@/context/NotificationContext'
@@ -179,7 +180,7 @@ export const BonusBuyWidgetStyleDialog = (
         maxWidth="lg"
         fullWidth
       >
-        <DialogTitle>{t('bonusBuy.widgetStyle')}</DialogTitle>
+        <WidgetSettingsDialogTitle>{t('bonusBuy.widgetStyle')}</WidgetSettingsDialogTitle>
         <DialogContent>
           {isLoadingWidget ? (
             <StyledStatusAlert tone="info">

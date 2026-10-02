@@ -110,7 +110,9 @@ export const ru = {
     size: "Размер",
     colors: "Цвета",
     shape: "Форма",
-    typography: "Типографика"
+    typography: "Типографика",
+    streamWidgetDescription:
+      "Настройки виджета, ссылка для OBS и предпросмотр оверлея."
   },
   table: {
     title: "Название",
@@ -485,10 +487,9 @@ export const ru = {
     nowPlayingCleared: "«Сейчас играет» сброшено.",
     couldNotUpdatePlaying: "Не удалось обновить статус «сейчас играет»",
     streamWidgetTitle: "Виджет для стрима",
-    streamWidgetDescription: "Настройки OBS-оверлея и ссылки для этой сессии bonus buy",
-    widgetStyle: "Стиль виджета",
+    widgetStyle: "Настройки виджета",
     obsLinkCopied: "Ссылка для OBS скопирована.",
-    widgetStyleSaved: "Стиль виджета сохранён",
+    widgetStyleSaved: "Настройки виджета сохранены",
     couldNotLoadWidgetSettings: "Не удалось загрузить настройки виджета.",
     couldNotSaveWidgetSettings: "Не удалось сохранить настройки виджета.",
     createDialogIntro: "Создайте сессию bonus buy с названием и стартовым балансом.",
@@ -564,8 +565,6 @@ export const ru = {
     widgetSettingsDescription: "Размер browser source в OBS и раскладка колеса",
     equalSectorSlices: "Равные сектора на колесе",
     streamWidgetTitle: "Виджет для стрима",
-    streamWidgetDescription:
-      "Настройки OBS-оверлея и ссылки для этой сессии Prize Wheel",
     sectorsTitle: "Сектора колеса ({{count}})",
     sectorsDescription:
       "Подписи, цвета и коэффициенты — сумма должна быть 100%",
@@ -705,8 +704,6 @@ export const ru = {
     widgetKeywordPrefixRequired:
       "Укажите текст для оверлея (не более 120 символов)",
     widgetKeywordPrefixHelp: "Как на стриме: {{preview}}",
-    streamWidgetDescription:
-      "OBS-оверлей для live-сессии Chat Roll. Текст на стриме — в «Настройках оверлея».",
     streamWidgetSettingsButton: "Настройки оверлея",
     streamWidgetSettingsTitle: "Настройки оверлея",
     streamWidgetSettingsNoSession:
