@@ -131,6 +131,7 @@
         left: 0;
         right: 0;
         z-index: 20;
+        overflow: visible;
         border-bottom: 1px solid var(--border);
         background: rgba(11, 11, 15, 0.82);
         backdrop-filter: blur(14px);
@@ -150,6 +151,7 @@
         min-height: 3.75rem;
         padding-top: 0.5rem;
         padding-bottom: 0.5rem;
+        overflow: visible;
       }
 
       .brand-title {
@@ -239,6 +241,9 @@
         align-items: center;
         gap: 0.5rem;
         flex-shrink: 0;
+        position: relative;
+        z-index: 2;
+        overflow: visible;
       }
 
       .cta-header {

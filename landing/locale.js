@@ -331,6 +331,8 @@
     preserveLangInLinks(locale)
   }
 
+  var langMenuOpen = false
+
   function setLangMenuOpen(open) {
     var root = document.getElementById('lang-select')
     var trigger = document.getElementById('lang-select-trigger')
@@ -338,6 +340,7 @@
     if (!root || !trigger || !menu) {
       return
     }
+    langMenuOpen = open
     root.classList.toggle('is-open', open)
     trigger.setAttribute('aria-expanded', open ? 'true' : 'false')
     if (open) {
@@ -375,13 +378,15 @@
       return
     }
 
-    trigger.addEventListener('click', function () {
-      var open = trigger.getAttribute('aria-expanded') !== 'true'
+    trigger.addEventListener('click', function (event) {
+      event.stopPropagation()
+      var open = !langMenuOpen
       setLangMenuOpen(open)
     })
 
     menu.querySelectorAll('.lang-select__option[data-locale]').forEach(function (option) {
-      option.addEventListener('click', function () {
+      option.addEventListener('click', function (event) {
+        event.stopPropagation()
         var next = option.getAttribute('data-locale')
         if (!next || LOCALES.indexOf(next) < 0) {
           return
@@ -392,11 +397,18 @@
       })
     })
 
-    document.addEventListener('click', function (event) {
-      if (!root.contains(event.target)) {
-        setLangMenuOpen(false)
-      }
-    })
+    document.addEventListener(
+      'click',
+      function (event) {
+        if (!langMenuOpen) {
+          return
+        }
+        if (!root.contains(event.target)) {
+          setLangMenuOpen(false)
+        }
+      },
+      true,
+    )
 
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') {
