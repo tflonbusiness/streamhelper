@@ -88,7 +88,7 @@
       rel="stylesheet"
     />
     <link rel="icon" type="image/svg+xml" href="logo.svg" />
-    <link rel="stylesheet" href="lang-selector.css" />
+    <link rel="stylesheet" href="lang-selector.css?v=3" />
     <style>
       :root {
         --background: #0a0a0c;
@@ -130,7 +130,7 @@
         top: 0;
         left: 0;
         right: 0;
-        z-index: 20;
+        z-index: 100;
         overflow: visible;
         border-bottom: 1px solid var(--border);
         background: rgba(11, 11, 15, 0.82);
@@ -1005,47 +1005,35 @@
           <a href="#contact" data-i18n="navContact">Contact</a>
         </nav>
         <div class="site-header-actions">
-          <div class="lang-select" id="lang-select">
-            <button
-              type="button"
-              class="lang-select__trigger"
-              id="lang-select-trigger"
-              aria-haspopup="listbox"
-              aria-expanded="false"
-              aria-controls="lang-select-menu"
-              aria-label="Choose language"
-            >
+          <details class="lang-select" id="lang-select">
+            <summary class="lang-select__trigger" id="lang-select-trigger" aria-label="Choose language">
               <span class="lang-select__flag" id="lang-select-flag" aria-hidden="true">🇬🇧</span>
               <span class="lang-select__code" id="lang-select-code">EN</span>
               <span class="lang-select__chevron" aria-hidden="true">▾</span>
-            </button>
-            <ul class="lang-select__menu" id="lang-select-menu" role="listbox" hidden>
-              <li>
-                <button
-                  type="button"
-                  class="lang-select__option"
-                  role="option"
-                  data-locale="en"
-                  aria-selected="true"
-                >
-                  <span class="lang-select__flag" aria-hidden="true">🇬🇧</span>
-                  <span data-i18n="langNameEn">English</span>
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  class="lang-select__option"
-                  role="option"
-                  data-locale="ru"
-                  aria-selected="false"
-                >
-                  <span class="lang-select__flag" aria-hidden="true">🇷🇺</span>
-                  <span data-i18n="langNameRu">Русский</span>
-                </button>
-              </li>
-            </ul>
-          </div>
+            </summary>
+            <div class="lang-select__menu" id="lang-select-menu" role="listbox">
+              <button
+                type="button"
+                class="lang-select__option"
+                role="option"
+                data-locale="en"
+                aria-selected="true"
+              >
+                <span class="lang-select__flag" aria-hidden="true">🇬🇧</span>
+                <span data-i18n="langNameEn">English</span>
+              </button>
+              <button
+                type="button"
+                class="lang-select__option"
+                role="option"
+                data-locale="ru"
+                aria-selected="false"
+              >
+                <span class="lang-select__flag" aria-hidden="true">🇷🇺</span>
+                <span data-i18n="langNameRu">Русский</span>
+              </button>
+            </div>
+          </details>
           <a class="cta cta-header" href="/login" rel="nofollow" data-i18n="signInKick">Sign in with Kick</a>
         </div>
       </div>
@@ -1326,7 +1314,7 @@
         </p>
       </div>
     </footer>
-    <script src="locale.js"></script>
+    <script src="locale.js?v=2"></script>
     <script src="dot-field.js"></script>
     <script>
       (function () {

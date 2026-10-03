@@ -331,22 +331,10 @@
     preserveLangInLinks(locale)
   }
 
-  var langMenuOpen = false
-
-  function setLangMenuOpen(open) {
+  function closeLangSelect() {
     var root = document.getElementById('lang-select')
-    var trigger = document.getElementById('lang-select-trigger')
-    var menu = document.getElementById('lang-select-menu')
-    if (!root || !trigger || !menu) {
-      return
-    }
-    langMenuOpen = open
-    root.classList.toggle('is-open', open)
-    trigger.setAttribute('aria-expanded', open ? 'true' : 'false')
-    if (open) {
-      menu.removeAttribute('hidden')
-    } else {
-      menu.setAttribute('hidden', '')
+    if (root) {
+      root.removeAttribute('open')
     }
   }
 
@@ -370,49 +358,26 @@
     })
   }
 
-  function initLangSelect(getLocale, setLocale) {
+  function initLangSelect(setLocale) {
     var root = document.getElementById('lang-select')
-    var trigger = document.getElementById('lang-select-trigger')
-    var menu = document.getElementById('lang-select-menu')
-    if (!root || !trigger || !menu) {
+    if (!root) {
       return
     }
 
-    trigger.addEventListener('click', function (event) {
-      event.stopPropagation()
-      var open = !langMenuOpen
-      setLangMenuOpen(open)
-    })
-
-    menu.querySelectorAll('.lang-select__option[data-locale]').forEach(function (option) {
-      option.addEventListener('click', function (event) {
-        event.stopPropagation()
+    root.querySelectorAll('.lang-select__option[data-locale]').forEach(function (option) {
+      option.addEventListener('click', function () {
         var next = option.getAttribute('data-locale')
         if (!next || LOCALES.indexOf(next) < 0) {
           return
         }
         setLocale(next)
-        setLangMenuOpen(false)
-        trigger.focus()
+        root.removeAttribute('open')
       })
     })
 
-    document.addEventListener(
-      'click',
-      function (event) {
-        if (!langMenuOpen) {
-          return
-        }
-        if (!root.contains(event.target)) {
-          setLangMenuOpen(false)
-        }
-      },
-      true,
-    )
-
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') {
-        setLangMenuOpen(false)
+        closeLangSelect()
       }
     })
   }
@@ -422,16 +387,11 @@
     writeStored(locale)
     apply(locale)
 
-    initLangSelect(
-      function () {
-        return locale
-      },
-      function (next) {
-        locale = next
-        writeStored(locale)
-        apply(locale)
-      },
-    )
+    initLangSelect(function (next) {
+      locale = next
+      writeStored(locale)
+      apply(locale)
+    })
   }
 
   if (document.readyState === 'loading') {
