@@ -51,17 +51,6 @@ body {
   color: var(--foreground);
 }
 
-#lang-toggle {
-  padding: 0.4rem 0.75rem;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: #18181c;
-  color: var(--foreground);
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
 .legal-main {
   flex: 1;
   padding: 2.5rem 0 3rem;

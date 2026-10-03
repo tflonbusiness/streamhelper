@@ -13,12 +13,53 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="legal.css" />
+    <link rel="stylesheet" href="lang-selector.css" />
   </head>
   <body>
     <div class="page">
       <header class="legal-header">
-        <a href="/" data-i18n="legalBackHome">← Home</a>
-        <button type="button" id="lang-toggle" aria-label="Switch language">RU</button>
+        <a href="/" data-lang-link data-i18n="legalBackHome">← Home</a>
+        <div class="lang-select" id="lang-select">
+          <button
+            type="button"
+            class="lang-select__trigger"
+            id="lang-select-trigger"
+            aria-haspopup="listbox"
+            aria-expanded="false"
+            aria-controls="lang-select-menu"
+            aria-label="Choose language"
+          >
+            <span class="lang-select__flag" id="lang-select-flag" aria-hidden="true">🇬🇧</span>
+            <span class="lang-select__code" id="lang-select-code">EN</span>
+            <span class="lang-select__chevron" aria-hidden="true">▾</span>
+          </button>
+          <ul class="lang-select__menu" id="lang-select-menu" role="listbox" hidden>
+            <li>
+              <button
+                type="button"
+                class="lang-select__option"
+                role="option"
+                data-locale="en"
+                aria-selected="true"
+              >
+                <span class="lang-select__flag" aria-hidden="true">🇬🇧</span>
+                <span data-i18n="langNameEn">English</span>
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                class="lang-select__option"
+                role="option"
+                data-locale="ru"
+                aria-selected="false"
+              >
+                <span class="lang-select__flag" aria-hidden="true">🇷🇺</span>
+                <span data-i18n="langNameRu">Русский</span>
+              </button>
+            </li>
+          </ul>
+        </div>
       </header>
     </div>
     <main class="legal-main">
@@ -60,8 +101,8 @@
       <div class="page site-footer-inner">
         <nav class="site-footer-nav" aria-label="Footer">
           <a href="#" data-telegram-support data-i18n="footerSupport">Support</a>
-          <a href="/privacy.html" data-i18n="footerPrivacy">Privacy</a>
-          <a href="/terms.html" data-i18n="footerTerms">Terms of use</a>
+          <a href="/privacy" data-lang-link data-i18n="footerPrivacy">Privacy</a>
+          <a href="/terms" data-lang-link data-i18n="footerTerms">Terms of use</a>
         </nav>
         <p class="site-footer-meta">
           <span data-i18n="footerCopyright">© 2026</span>

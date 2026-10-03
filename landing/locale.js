@@ -5,10 +5,16 @@
   var TELEGRAM_SUPPORT_USERNAME = 'jirni_otec'
   var TELEGRAM_SUPPORT_URL = 'https://t.me/' + TELEGRAM_SUPPORT_USERNAME
 
+  var LOCALE_META = {
+    en: { flag: '🇬🇧', code: 'EN' },
+    ru: { flag: '🇷🇺', code: 'RU' },
+  }
+
   var copy = {
     en: {
-      langToggle: 'RU',
-      langToggleAria: 'Switch to Russian',
+      langSelectAria: 'Choose language',
+      langNameEn: 'English',
+      langNameRu: 'Русский',
       documentTitle: 'Stream Helper — Kick stream engagement tools',
       appNameStream: 'Stream',
       appNameHelper: 'Helper',
@@ -130,8 +136,9 @@
         'For terms or billing questions, contact us on Telegram (link in the site footer).',
     },
     ru: {
-      langToggle: 'EN',
-      langToggleAria: 'Switch to English',
+      langSelectAria: 'Выберите язык',
+      langNameEn: 'English',
+      langNameRu: 'Русский',
       documentTitle: 'Stream Helper — инструменты вовлечения для стримов на Kick',
       appNameStream: 'Stream',
       appNameHelper: 'Helper',
@@ -281,12 +288,33 @@
     return lang.indexOf('ru') === 0 ? 'ru' : 'en'
   }
 
+  function preserveLangInLinks(locale) {
+    document.querySelectorAll('[data-lang-link]').forEach(function (anchor) {
+      var raw = anchor.getAttribute('href')
+      if (!raw || raw.charAt(0) === '#') {
+        return
+      }
+      if (raw.indexOf('http:') === 0 || raw.indexOf('https:') === 0) {
+        return
+      }
+      try {
+        var url = new URL(raw, window.location.href)
+        url.searchParams.set('lang', locale)
+        anchor.setAttribute('href', url.pathname + url.search + url.hash)
+      } catch {
+        /* ignore */
+      }
+    })
+  }
+
   function apply(locale) {
     var strings = copy[locale] || copy.en
     document.documentElement.lang = locale
     var titleKey = document.documentElement.getAttribute('data-i18n-title')
-    if (titleKey && strings[titleKey]) {
-      document.title = strings[titleKey]
+    if (titleKey) {
+      if (strings[titleKey]) {
+        document.title = strings[titleKey]
+      }
     } else if (strings.documentTitle) {
       document.title = strings.documentTitle
     }
@@ -296,13 +324,84 @@
         node.textContent = strings[key]
       }
     })
-    var toggle = document.getElementById('lang-toggle')
-    if (toggle) {
-      toggle.textContent = strings.langToggle
-      toggle.setAttribute('aria-label', strings.langToggleAria)
-    }
+    updateLangSelect(locale, strings)
     document.querySelectorAll('[data-telegram-support]').forEach(function (node) {
       node.href = TELEGRAM_SUPPORT_URL
+    })
+    preserveLangInLinks(locale)
+  }
+
+  function setLangMenuOpen(open) {
+    var root = document.getElementById('lang-select')
+    var trigger = document.getElementById('lang-select-trigger')
+    var menu = document.getElementById('lang-select-menu')
+    if (!root || !trigger || !menu) {
+      return
+    }
+    root.classList.toggle('is-open', open)
+    trigger.setAttribute('aria-expanded', open ? 'true' : 'false')
+    if (open) {
+      menu.removeAttribute('hidden')
+    } else {
+      menu.setAttribute('hidden', '')
+    }
+  }
+
+  function updateLangSelect(locale, strings) {
+    var meta = LOCALE_META[locale] || LOCALE_META.en
+    var trigger = document.getElementById('lang-select-trigger')
+    var flagEl = document.getElementById('lang-select-flag')
+    var codeEl = document.getElementById('lang-select-code')
+    if (trigger && strings.langSelectAria) {
+      trigger.setAttribute('aria-label', strings.langSelectAria)
+    }
+    if (flagEl) {
+      flagEl.textContent = meta.flag
+    }
+    if (codeEl) {
+      codeEl.textContent = meta.code
+    }
+    document.querySelectorAll('.lang-select__option[data-locale]').forEach(function (option) {
+      var active = option.getAttribute('data-locale') === locale
+      option.setAttribute('aria-selected', active ? 'true' : 'false')
+    })
+  }
+
+  function initLangSelect(getLocale, setLocale) {
+    var root = document.getElementById('lang-select')
+    var trigger = document.getElementById('lang-select-trigger')
+    var menu = document.getElementById('lang-select-menu')
+    if (!root || !trigger || !menu) {
+      return
+    }
+
+    trigger.addEventListener('click', function () {
+      var open = trigger.getAttribute('aria-expanded') !== 'true'
+      setLangMenuOpen(open)
+    })
+
+    menu.querySelectorAll('.lang-select__option[data-locale]').forEach(function (option) {
+      option.addEventListener('click', function () {
+        var next = option.getAttribute('data-locale')
+        if (!next || LOCALES.indexOf(next) < 0) {
+          return
+        }
+        setLocale(next)
+        setLangMenuOpen(false)
+        trigger.focus()
+      })
+    })
+
+    document.addEventListener('click', function (event) {
+      if (!root.contains(event.target)) {
+        setLangMenuOpen(false)
+      }
+    })
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        setLangMenuOpen(false)
+      }
     })
   }
 
@@ -311,14 +410,16 @@
     writeStored(locale)
     apply(locale)
 
-    var toggle = document.getElementById('lang-toggle')
-    if (toggle) {
-      toggle.addEventListener('click', function () {
-        locale = locale === 'en' ? 'ru' : 'en'
+    initLangSelect(
+      function () {
+        return locale
+      },
+      function (next) {
+        locale = next
         writeStored(locale)
         apply(locale)
-      })
-    }
+      },
+    )
   }
 
   if (document.readyState === 'loading') {
