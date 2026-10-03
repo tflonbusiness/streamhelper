@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Stream Helper | Kick Stream Overlays — Bonus Buy, Prize Wheel &amp; Chat Giveaways</title>
+    <title>Stream Helper | Kick Stream Overlays — Bonus Buy, Prize Wheel &amp; Chat Roll</title>
     <meta
       name="description"
-      content="Stream Helper helps Kick casino streamers run bonus buys, prize wheels, and weighted chat giveaways with OBS browser-source overlays, team access, and one dashboard."
+      content="Stream Helper helps Kick streamers run Bonus Buy, Prize Wheel, and Chat Roll with OBS browser-source overlays, team access, and one dashboard."
     />
     <meta
       name="robots"
@@ -14,7 +14,7 @@
     />
     <meta
       name="keywords"
-      content="Kick stream overlay, Kick bonus buy, casino stream tools, OBS browser source, chat giveaway, prize wheel, stream engagement"
+      content="Kick stream overlay, Kick stream tools, OBS browser source, Bonus Buy, Prize Wheel, Chat Roll, stream engagement"
     />
     <link rel="canonical" href="https://streamhelper.best/" />
     <meta name="theme-color" content="#0b0b0f" />
@@ -23,11 +23,11 @@
     <meta property="og:url" content="https://streamhelper.best/" />
     <meta
       property="og:title"
-      content="Stream Helper | Kick Stream Overlays — Bonus Buy, Prize Wheel &amp; Chat Giveaways"
+      content="Stream Helper | Kick Stream Overlays — Bonus Buy, Prize Wheel &amp; Chat Roll"
     />
     <meta
       property="og:description"
-      content="Interactive modules and OBS-ready overlays for Kick casino streamers: Bonus Buy, Prize Wheel, and Chat Roll. Sign in with Kick to start free."
+      content="Interactive stream widgets and OBS-ready overlays for Kick streamers: Bonus Buy, Prize Wheel, and Chat Roll. Sign in with Kick to start free."
     />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://streamhelper.best/og-image.png" />
@@ -37,11 +37,11 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta
       name="twitter:title"
-      content="Stream Helper | Kick Stream Overlays — Bonus Buy, Prize Wheel &amp; Chat Giveaways"
+      content="Stream Helper | Kick Stream Overlays — Bonus Buy, Prize Wheel &amp; Chat Roll"
     />
     <meta
       name="twitter:description"
-      content="Bonus buys, prize wheels, and chat giveaways on Kick with OBS overlays. Trial and Pro/Max plans."
+      content="Bonus Buy, Prize Wheel, and Chat Roll on Kick with OBS overlays. Trial and Pro/Max plans."
     />
     <meta name="twitter:image" content="https://streamhelper.best/og-image.png" />
     <script type="application/ld+json">
@@ -53,7 +53,7 @@
             "@id": "https://streamhelper.best/#website",
             "url": "https://streamhelper.best/",
             "name": "Stream Helper",
-            "description": "Kick stream engagement tools with OBS overlays for bonus buys, prize wheels, and chat giveaways.",
+            "description": "Kick stream engagement tools with OBS overlays for Bonus Buy, Prize Wheel, and Chat Roll.",
             "inLanguage": "en"
           },
           {
@@ -63,7 +63,7 @@
             "applicationCategory": "MultimediaApplication",
             "operatingSystem": "Web",
             "url": "https://streamhelper.best/",
-            "description": "Dashboard and OBS widgets for Kick streamers: Bonus Buy, Prize Wheel, and Chat Roll modules.",
+            "description": "Dashboard and OBS widgets for Kick streamers: Bonus Buy, Prize Wheel, and Chat Roll.",
             "offers": {
               "@type": "Offer",
               "price": "0",
@@ -72,8 +72,8 @@
             },
             "featureList": [
               "Bonus Buy sessions with live overlay",
-              "Weighted prize wheel",
-              "Chat Roll giveaways with keyword entry",
+              "Prize Wheel",
+              "Chat Roll with keyword entry",
               "OBS browser-source widgets",
               "Team owner and moderator access"
             ]
@@ -379,6 +379,20 @@
         background: var(--primary-hover);
       }
 
+      .cta--with-icon {
+        gap: 0.5rem;
+      }
+
+      .cta__icon {
+        width: 1.125rem;
+        height: 1.125rem;
+        flex-shrink: 0;
+      }
+
+      .cta__icon path {
+        fill: currentColor;
+      }
+
       .cta:focus-visible {
         outline: 2px solid #f59e0b;
         outline-offset: 2px;
@@ -515,12 +529,18 @@
       }
 
       .module-preview {
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: center;
+        height: 8.5rem;
         border-radius: calc(var(--radius) - 2px);
         border: 1px solid var(--border);
         background: linear-gradient(180deg, #141418 0%, #0e0e12 100%);
         padding: 0.75rem;
-        min-height: 7.5rem;
         overflow: hidden;
+        flex-shrink: 0;
       }
 
       .module-preview--bonus .mp-stat-row {
@@ -567,10 +587,8 @@
       }
 
       .module-preview--wheel {
-        display: flex;
         align-items: center;
         justify-content: center;
-        min-height: 7.5rem;
       }
 
       .module-preview--wheel .mp-wheel {
@@ -610,11 +628,7 @@
       }
 
       .module-preview--roll {
-        display: flex;
-        flex-direction: column;
         gap: 0.5rem;
-        justify-content: center;
-        min-height: 7.5rem;
       }
 
       .module-preview--roll .mp-keyword {
@@ -903,9 +917,19 @@
       }
 
       .footer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.35rem;
         padding-top: 2rem;
         border-top: 1px solid var(--border);
         font-size: 0.8rem;
+        color: var(--muted-foreground);
+      }
+
+      .brand-title--footer {
+        font-size: inherit;
         color: var(--muted-foreground);
       }
 
@@ -951,7 +975,7 @@
           </span>
         </a>
         <nav class="site-nav" aria-label="Page sections">
-          <a href="#modules" data-i18n="navModules">Modules</a>
+          <a href="#widgets" data-i18n="navModules">Widgets</a>
           <a href="#pricing" data-i18n="navPricing">Pricing</a>
           <a href="#how-it-works" data-i18n="navHowItWorks">How it works</a>
           <a href="#contact" data-i18n="navContact">Contact</a>
@@ -979,29 +1003,26 @@
               <span data-i18n="appNameStream">Stream</span
               ><span class="brand-title-helper" data-i18n="appNameHelper">Helper</span>
             </span>
-            <h1 data-i18n="heroTitle">Turn your Kick chat into a live game show</h1>
+            <h1 data-i18n="heroTitle">Engage your Kick chat on every stream</h1>
             <p class="lead" data-i18n="heroLead">
-              Stream Helper gives casino streamers ready-to-run engagement modules —
-              bonus buys, prize wheels, and weighted giveaways — with OBS
-              overlays your viewers see on stream.
+              Stream Helper gives streamers ready-to-run engagement widgets —
+              Bonus Buy, Prize Wheel, Chat Roll, and more — with OBS overlays
+              your viewers see on stream.
             </p>
             <div class="hero-actions">
               <a class="cta" href="/login" rel="nofollow" data-i18n="signInKick">Sign in with Kick</a>
-              <a class="cta-secondary" href="#contact" data-i18n="heroSecondary"
-                >Get access via Telegram</a
-              >
             </div>
           </div>
         </div>
       </section>
 
-      <section id="modules">
+      <section id="widgets">
         <div class="page">
           <div class="section-header">
-            <h2 data-i18n="modulesTitle">Everything you need to engage chat</h2>
+            <h2 data-i18n="modulesTitle">Widgets for chat engagement</h2>
             <p class="lead" data-i18n="modulesLead">
-              Pick a module, configure it in the dashboard, and drop the
-              browser-source widget into OBS.
+              Each widget ships with its own OBS overlay. Configure once in the
+              dashboard, paste the browser-source URL, and go live.
             </p>
           </div>
           <div class="card-grid">
@@ -1016,9 +1037,9 @@
               </div>
               <h3 data-i18n="moduleBonusBuyTitle">Bonus Buy</h3>
               <p class="card-body" data-i18n="moduleBonusBuyBody">
-                Run slot bonus-buy sessions on stream. Track balance, open
-                rounds, and show live stats on your overlay while viewers
-                follow the action.
+                Structured on-stream sessions with a live budget and round
+                tracker. The overlay stays in sync so chat always sees where the
+                run stands.
               </p>
             </article>
             <article class="card">
@@ -1030,8 +1051,9 @@
               </div>
               <h3 data-i18n="modulePrizeSpinTitle">Prize Wheel</h3>
               <p class="card-body" data-i18n="modulePrizeSpinBody">
-                Spin a weighted prize wheel for any viewer nick. Set sectors,
-                odds, and colors — then reveal the winner on stream in seconds.
+                Pick a chat nick and spin sectors you define — weights, colors,
+                and prizes included. The result appears on your overlay in one
+                reveal.
               </p>
             </article>
             <article class="card">
@@ -1045,8 +1067,8 @@
               </div>
               <h3 data-i18n="moduleChatRollTitle">Chat Roll</h3>
               <p class="card-body" data-i18n="moduleChatRollBody">
-                Weighted chat giveaways with a keyword. Boost odds for VIPs,
-                mods, and subscribers — fair rolls, instant winner on overlay.
+                Giveaways driven by a chat keyword, with custom weights for roles
+                and perks. One fair roll picks a winner and shows it on stream.
               </p>
             </article>
           </div>
@@ -1063,24 +1085,24 @@
               <div class="card-icon purple" aria-hidden="true">📺</div>
               <h3 data-i18n="platformObsTitle">OBS-ready widgets</h3>
               <p class="card-body" data-i18n="platformObsBody">
-                Browser-source URLs for each module. Styled to match your dark
-                stream layout.
+                A dedicated browser-source link per widget. Dark overlays
+                designed to sit cleanly on a typical stream layout.
               </p>
             </div>
             <div class="tile">
               <div class="card-icon blue" aria-hidden="true">👥</div>
               <h3 data-i18n="platformTeamTitle">Team access</h3>
               <p class="card-body" data-i18n="platformTeamBody">
-                Owners and moderators share one account. Control who runs games
-                during your stream.
+                One account for the channel owner and moderators. Choose who can
+                start sessions and run widgets while you are live.
               </p>
             </div>
             <div class="tile">
               <div class="card-icon green" aria-hidden="true">⚡</div>
               <h3 data-i18n="platformKickTitle">Kick-native</h3>
               <p class="card-body" data-i18n="platformKickBody">
-                Sign in with Kick OAuth. No extra passwords — start from the
-                channel you already stream on.
+                Log in with Kick — the same channel you stream on. No separate
+                sign-up or extra passwords.
               </p>
             </div>
           </div>
@@ -1100,11 +1122,11 @@
               <span class="plan-badge muted" data-i18n="planTrialBadge">Trial</span>
               <h3 data-i18n="planTrialTitle">Trial</h3>
               <p class="plan-tagline" data-i18n="planTrialTagline">
-                Explore every module and overlay before upgrading to Pro or Max.
+                Explore every widget and overlay before upgrading to Pro or Max.
               </p>
               <ul class="plan-features">
                 <li data-i18n="planTrialFeature1">
-                  All platform modules for the duration of your trial
+                  All platform widgets for the duration of your trial
                 </li>
                 <li data-i18n="planTrialFeature2">One team account for owner and moderators</li>
                 <li data-i18n="planTrialFeature3">OBS widgets ready for live sessions</li>
@@ -1120,7 +1142,7 @@
                 For streamers who run regular giveaways and live engagement on stream.
               </p>
               <ul class="plan-features">
-                <li data-i18n="planProFeature1">All streamer modules without trial time limit</li>
+                <li data-i18n="planProFeature1">All streamer widgets without trial time limit</li>
                 <li data-i18n="planProFeature2">Comfortable limits for sessions and team size</li>
                 <li data-i18n="planProFeature3">Standard support in Telegram</li>
               </ul>
@@ -1167,7 +1189,7 @@
               <div class="step-number" aria-hidden="true">2</div>
               <h3 data-i18n="step2Title">Configure</h3>
               <p class="card-body" data-i18n="step2Body">
-                Open a module, set prizes, keywords, or sectors in the dashboard.
+                Open a widget, set prizes, keywords, or sectors in the dashboard.
               </p>
             </div>
             <div class="step">
@@ -1203,17 +1225,29 @@
           </p>
           <div class="contact-actions">
             <a
-              class="cta"
+              class="cta cta--with-icon"
               href="https://t.me/jirni_otec"
               target="_blank"
               rel="noopener noreferrer"
-              data-i18n="contactTelegram"
               data-telegram-support
-              >Message @jirni_otec</a
             >
+              <svg class="cta__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  fill="currentColor"
+                  d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"
+                />
+              </svg>
+              <span data-i18n="contactTelegram">Message on Telegram</span>
+            </a>
             <a class="cta-secondary" href="/login" rel="nofollow" data-i18n="contactOrSignIn">Or sign in with Kick</a>
           </div>
-          <p class="footer" data-i18n="footer">© 2026 Stream Helper</p>
+          <p class="footer">
+            <span data-i18n="footerCopyright">© 2026</span>
+            <span class="brand-title brand-title--footer">
+              <span data-i18n="appNameStream">Stream</span
+              ><span class="brand-title-helper" data-i18n="appNameHelper">Helper</span>
+            </span>
+          </p>
         </div>
       </section>
     </main>

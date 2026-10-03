@@ -5,12 +5,6 @@
   var TELEGRAM_SUPPORT_USERNAME = 'jirni_otec'
   var TELEGRAM_SUPPORT_URL = 'https://t.me/' + TELEGRAM_SUPPORT_USERNAME
 
-  function telegramMessageCta(locale) {
-    return locale === 'ru'
-      ? 'Написать @' + TELEGRAM_SUPPORT_USERNAME
-      : 'Message @' + TELEGRAM_SUPPORT_USERNAME
-  }
-
   var copy = {
     en: {
       langToggle: 'RU',
@@ -19,44 +13,43 @@
       appNameStream: 'Stream',
       appNameHelper: 'Helper',
       brandName: 'Stream Helper',
-      heroTitle: 'Turn your Kick chat into a live game show',
+      heroTitle: 'Engage your Kick chat on every stream',
       heroLead:
-        'Stream Helper gives casino streamers ready-to-run engagement modules — bonus buys, prize wheels, and weighted giveaways — with OBS overlays your viewers see on stream.',
+        'Stream Helper gives streamers ready-to-run engagement widgets — Bonus Buy, Prize Wheel, Chat Roll, and more — with OBS overlays your viewers see on stream.',
       signInKick: 'Sign in with Kick',
-      heroSecondary: 'Get access via Telegram',
-      navModules: 'Modules',
+      navModules: 'Widgets',
       navPricing: 'Pricing',
       navHowItWorks: 'How it works',
       navContact: 'Contact',
-      modulesTitle: 'Everything you need to engage chat',
+      modulesTitle: 'Widgets for chat engagement',
       modulesLead:
-        'Pick a module, configure it in the dashboard, and drop the browser-source widget into OBS.',
+        'Each widget ships with its own OBS overlay. Configure once in the dashboard, paste the browser-source URL, and go live.',
       moduleBonusBuyTitle: 'Bonus Buy',
       moduleBonusBuyBody:
-        'Run slot bonus-buy sessions on stream. Track balance, open rounds, and show live stats on your overlay while viewers follow the action.',
+        'Structured on-stream sessions with a live budget and round tracker. The overlay stays in sync so chat always sees where the run stands.',
       modulePrizeSpinTitle: 'Prize Wheel',
       modulePrizeSpinBody:
-        'Spin a weighted prize wheel for any viewer nick. Set sectors, odds, and colors — then reveal the winner on stream in seconds.',
+        'Pick a chat nick and spin sectors you define — weights, colors, and prizes included. The result appears on your overlay in one reveal.',
       moduleChatRollTitle: 'Chat Roll',
       moduleChatRollBody:
-        'Weighted chat giveaways with a keyword. Boost odds for VIPs, mods, and subscribers — fair rolls, instant winner on overlay.',
+        'Giveaways driven by a chat keyword, with custom weights for roles and perks. One fair roll picks a winner and shows it on stream.',
       platformTitle: 'Built for stream production',
       platformObsTitle: 'OBS-ready widgets',
       platformObsBody:
-        'Browser-source URLs for each module. Styled to match your dark stream layout.',
+        'A dedicated browser-source link per widget. Dark overlays designed to sit cleanly on a typical stream layout.',
       platformTeamTitle: 'Team access',
       platformTeamBody:
-        'Owners and moderators share one account. Control who runs games during your stream.',
+        'One account for the channel owner and moderators. Choose who can start sessions and run widgets while you are live.',
       platformKickTitle: 'Kick-native',
       platformKickBody:
-        'Sign in with Kick OAuth. No extra passwords — start from the channel you already stream on.',
+        'Log in with Kick — the same channel you stream on. No separate sign-up or extra passwords.',
       pricingTitle: 'Plans for every stream size',
       pricingLead:
         'Sign in with Kick for a full-access trial. Pro and Max are activated via Telegram — no checkout on this page.',
       planTrialBadge: 'Trial',
       planTrialTitle: 'Trial',
-      planTrialTagline: 'Explore every module and overlay before upgrading to Pro or Max.',
-      planTrialFeature1: 'All platform modules for the duration of your trial',
+      planTrialTagline: 'Explore every widget and overlay before upgrading to Pro or Max.',
+      planTrialFeature1: 'All platform widgets for the duration of your trial',
       planTrialFeature2: 'One team account for owner and moderators',
       planTrialFeature3: 'OBS widgets ready for live sessions',
       planTrialNote: 'Activates when you sign in with Kick',
@@ -64,7 +57,7 @@
       planProBadge: 'Pro',
       planProTitle: 'Pro',
       planProTagline: 'For streamers who run regular giveaways and live engagement on stream.',
-      planProFeature1: 'All streamer modules without trial time limit',
+      planProFeature1: 'All streamer widgets without trial time limit',
       planProFeature2: 'Comfortable limits for sessions and team size',
       planProFeature3: 'Standard support in Telegram',
       planProNote: 'Contact us to activate',
@@ -84,7 +77,7 @@
       step1Title: 'Sign in',
       step1Body: 'Connect with Kick and pick your team.',
       step2Title: 'Configure',
-      step2Body: 'Open a module, set prizes, keywords, or sectors in the dashboard.',
+      step2Body: 'Open a widget, set prizes, keywords, or sectors in the dashboard.',
       step3Title: 'Go live',
       step3Body: 'Add the widget URL to OBS and run your session while you stream.',
       ctaTitle: 'Ready to engage your chat?',
@@ -93,9 +86,9 @@
       contactTitle: 'Activate your plan',
       contactLead:
         "Sign in with Kick to start your trial. For Pro or Max, message us on Telegram and we'll set up your team.",
-      contactTelegram: telegramMessageCta('en'),
+      contactTelegram: 'Message on Telegram',
       contactOrSignIn: 'Or sign in with Kick',
-      footer: '© 2026 Stream Helper',
+      footerCopyright: '© 2026',
     },
     ru: {
       langToggle: 'EN',
@@ -104,44 +97,43 @@
       appNameStream: 'Stream',
       appNameHelper: 'Helper',
       brandName: 'Stream Helper',
-      heroTitle: 'Превратите чат Kick в живое шоу',
+      heroTitle: 'Вовлекайте чат Kick в каждом стриме',
       heroLead:
-        'Stream Helper — готовые модули для казино-стримеров: bonus buy, колесо призов и розыгрыши в чате с OBS-оверлеями для зрителей.',
+        'Stream Helper — готовые виджеты для стримеров: Bonus Buy, Prize Wheel, Chat Roll и многое другое — с OBS-оверлеями для зрителей.',
       signInKick: 'Войти через Kick',
-      heroSecondary: 'Получить доступ в Telegram',
-      navModules: 'Модули',
+      navModules: 'Виджеты',
       navPricing: 'Тарифы',
       navHowItWorks: 'Как это работает',
       navContact: 'Контакты',
-      modulesTitle: 'Всё для вовлечения чата',
+      modulesTitle: 'Виджеты для вовлечения чата',
       modulesLead:
-        'Выберите модуль, настройте его в панели и добавьте browser source в OBS.',
+        'У каждого виджета — свой оверлей для OBS. Настройте в панели, вставьте ссылку browser source и выходите в эфир.',
       moduleBonusBuyTitle: 'Bonus Buy',
       moduleBonusBuyBody:
-        'Ведите сессии bonus buy в эфире. Следите за балансом, открывайте раунды и показывайте статистику на оверлее.',
+        'Структурированные сессии в эфире с бюджетом и счётчиком раундов. Оверлей синхронизируется с панелью — чат видит актуальный прогресс.',
       modulePrizeSpinTitle: 'Prize Wheel',
       modulePrizeSpinBody:
-        'Крутите взвешенное колесо призов для любого ника. Задайте сектора, шансы и цвета — покажите победителя за секунды.',
+        'Выберите ник из чата и крутите сектора с вашими весами, цветами и призами. Итог — одним показом на оверлее для зрителей.',
       moduleChatRollTitle: 'Chat Roll',
       moduleChatRollBody:
-        'Взвешенные розыгрыши в чате по ключевому слову. Бонусы для VIP, модов и подписчиков — честный ролл и мгновенный результат на стриме.',
+        'Розыгрыш по ключевому слову в чате и настраиваемые веса для ролей и привилегий. Один честный ролл — победитель сразу на стриме.',
       platformTitle: 'Создано для продакшена стрима',
       platformObsTitle: 'Виджеты для OBS',
       platformObsBody:
-        'Browser source для каждого модуля. Оформление под тёмный стрим.',
+        'Отдельная ссылка browser source на виджет. Тёмные оверлеи, которые не перебивают оформление стрима.',
       platformTeamTitle: 'Доступ команды',
       platformTeamBody:
-        'Владелец и модераторы в одном аккаунте. Контролируйте, кто ведёт игры в эфире.',
+        'Один аккаунт для владельца канала и модераторов. Решайте, кто запускает сессии и виджеты, пока вы в эфире.',
       platformKickTitle: 'Нативно для Kick',
       platformKickBody:
-        'Вход через Kick OAuth. Без лишних паролей — с канала, на котором вы уже стримите.',
+        'Вход через Kick — тот же канал, с которого вы стримите. Без отдельной регистрации и лишних паролей.',
       pricingTitle: 'Тарифы для любого масштаба',
       pricingLead:
         'Войдите через Kick и получите пробный период с полным доступом. Тарифы Pro и Max подключаются в Telegram — оплаты на этой странице нет.',
       planTrialBadge: 'Пробный',
       planTrialTitle: 'Пробный период',
-      planTrialTagline: 'Оцените все модули и оверлеи до перехода на Pro или Max.',
-      planTrialFeature1: 'Все модули платформы на время пробного периода',
+      planTrialTagline: 'Оцените все виджеты и оверлеи до перехода на Pro или Max.',
+      planTrialFeature1: 'Все виджеты платформы на время пробного периода',
       planTrialFeature2: 'Один аккаунт для владельца и модераторов',
       planTrialFeature3: 'Виджеты OBS для сессий в эфире',
       planTrialNote: 'Активируется при входе через Kick',
@@ -149,7 +141,7 @@
       planProBadge: 'Pro',
       planProTitle: 'Pro',
       planProTagline: 'Для стримеров с регулярными розыгрышами и активным чатом в эфире.',
-      planProFeature1: 'Все модули без ограничения по времени trial',
+      planProFeature1: 'Все виджеты без ограничения по времени trial',
       planProFeature2: 'Комфортные лимиты на сессии и размер команды',
       planProFeature3: 'Стандартная поддержка в Telegram',
       planProNote: 'Напишите нам для активации',
@@ -169,7 +161,7 @@
       step1Title: 'Войти',
       step1Body: 'Подключите Kick и выберите команду.',
       step2Title: 'Настроить',
-      step2Body: 'Откройте модуль, задайте призы, ключевые слова или сектора в панели.',
+      step2Body: 'Откройте виджет, задайте призы, ключевые слова или сектора в панели.',
       step3Title: 'В эфир',
       step3Body: 'Добавьте URL виджета в OBS и ведите сессию во время стрима.',
       ctaTitle: 'Готовы вовлечь чат?',
@@ -178,9 +170,9 @@
       contactTitle: 'Активируйте тариф',
       contactLead:
         'Войдите через Kick, чтобы начать пробный период. Для Pro или Max напишите в Telegram — настроим команду.',
-      contactTelegram: telegramMessageCta('ru'),
+      contactTelegram: 'Написать в telegram',
       contactOrSignIn: 'Или войти через Kick',
-      footer: '© 2026 Stream Helper',
+      footerCopyright: '© 2026',
     },
   }
 
