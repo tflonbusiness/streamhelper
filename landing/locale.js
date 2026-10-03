@@ -89,6 +89,45 @@
       contactTelegram: 'Message on Telegram',
       contactOrSignIn: 'Or sign in with Kick',
       footerCopyright: '© 2026',
+      footerSupport: 'Support',
+      footerPrivacy: 'Privacy',
+      footerTerms: 'Terms of use',
+      footerRights: 'All rights reserved.',
+      legalBackHome: '← Home',
+      privacyDocumentTitle: 'Privacy — Stream Helper',
+      privacyHeading: 'Privacy policy',
+      privacyUpdated: 'Last updated: 3 October 2026',
+      privacyIntro:
+        'This policy describes how Stream Helper (“we”, “the service”) handles information when you use our website and dashboard.',
+      privacyDataTitle: 'Data we process',
+      privacyDataBody:
+        'When you sign in with Kick, we receive account identifiers and profile data needed to run your team and stream widgets. Session and widget configuration are stored to provide the service. We do not sell your personal data.',
+      privacyCookiesTitle: 'Cookies and local storage',
+      privacyCookiesBody:
+        'The marketing site may store your language preference in local storage. The app uses cookies for authentication and security. You can clear them in your browser settings.',
+      privacyContactTitle: 'Contact',
+      privacyContactBody:
+        'Questions about privacy: message us on Telegram (link in the site footer).',
+      termsDocumentTitle: 'Terms of use — Stream Helper',
+      termsHeading: 'Terms of use',
+      termsUpdated: 'Last updated: 3 October 2026',
+      termsIntro:
+        'By using Stream Helper you agree to these terms. If you do not agree, do not use the service.',
+      termsServiceTitle: 'The service',
+      termsServiceBody:
+        'Stream Helper provides dashboards and OBS widgets for stream engagement. Features may change; we aim to give reasonable notice for material changes affecting paid plans.',
+      termsAccountsTitle: 'Accounts and Kick',
+      termsAccountsBody:
+        'Access is tied to Kick OAuth and team roles you configure. You are responsible for activity under your account and for who you invite as moderators.',
+      termsPlansTitle: 'Plans and payment',
+      termsPlansBody:
+        'Trial access starts when you sign in with Kick. Pro and Max are activated manually via Telegram; pricing and limits are agreed individually. Refunds are handled case by case via support.',
+      termsAcceptableTitle: 'Acceptable use',
+      termsAcceptableBody:
+        'Do not abuse the service, attempt unauthorized access, or use widgets in a way that violates Kick’s rules or applicable law.',
+      termsContactTitle: 'Contact',
+      termsContactBody:
+        'For terms or billing questions, contact us on Telegram (link in the site footer).',
     },
     ru: {
       langToggle: 'EN',
@@ -173,6 +212,45 @@
       contactTelegram: 'Написать в telegram',
       contactOrSignIn: 'Или войти через Kick',
       footerCopyright: '© 2026',
+      footerSupport: 'Поддержка',
+      footerPrivacy: 'Конфиденциальность',
+      footerTerms: 'Условия использования',
+      footerRights: 'Все права защищены.',
+      legalBackHome: '← На главную',
+      privacyDocumentTitle: 'Конфиденциальность — Stream Helper',
+      privacyHeading: 'Политика конфиденциальности',
+      privacyUpdated: 'Обновлено: 3 октября 2026',
+      privacyIntro:
+        'Здесь описано, как Stream Helper («мы», «сервис») обрабатывает информацию при использовании сайта и панели.',
+      privacyDataTitle: 'Какие данные обрабатываем',
+      privacyDataBody:
+        'При входе через Kick мы получаем идентификаторы и данные профиля, нужные для команды и виджетов. Настройки сессий и виджетов хранятся для работы сервиса. Мы не продаём персональные данные.',
+      privacyCookiesTitle: 'Cookies и local storage',
+      privacyCookiesBody:
+        'На лендинге может сохраняться выбранный язык в local storage. В приложении используются cookies для входа и безопасности. Их можно удалить в настройках браузера.',
+      privacyContactTitle: 'Контакты',
+      privacyContactBody:
+        'Вопросы по конфиденциальности — напишите нам в Telegram (ссылка в футере сайта).',
+      termsDocumentTitle: 'Условия использования — Stream Helper',
+      termsHeading: 'Условия использования',
+      termsUpdated: 'Обновлено: 3 октября 2026',
+      termsIntro:
+        'Используя Stream Helper, вы соглашаетесь с этими условиями. Если не согласны — не пользуйтесь сервисом.',
+      termsServiceTitle: 'Сервис',
+      termsServiceBody:
+        'Stream Helper предоставляет панель и OBS-виджеты для вовлечения на стриме. Функции могут меняться; о существенных изменениях для платных тарифов стараемся предупреждать заранее.',
+      termsAccountsTitle: 'Аккаунты и Kick',
+      termsAccountsBody:
+        'Доступ привязан к Kick OAuth и ролям в команде. Вы отвечаете за действия под своим аккаунтом и за приглашённых модераторов.',
+      termsPlansTitle: 'Тарифы и оплата',
+      termsPlansBody:
+        'Пробный доступ начинается после входа через Kick. Pro и Max подключаются вручную в Telegram; цена и лимиты согласуются индивидуально. Возвраты — по согласованию с поддержкой.',
+      termsAcceptableTitle: 'Допустимое использование',
+      termsAcceptableBody:
+        'Не злоупотребляйте сервисом, не пытайтесь получить несанкционированный доступ и не используйте виджеты с нарушением правил Kick или закона.',
+      termsContactTitle: 'Контакты',
+      termsContactBody:
+        'По условиям и оплате — Telegram (ссылка в футере сайта).',
     },
   }
 
@@ -206,7 +284,10 @@
   function apply(locale) {
     var strings = copy[locale] || copy.en
     document.documentElement.lang = locale
-    if (strings.documentTitle) {
+    var titleKey = document.documentElement.getAttribute('data-i18n-title')
+    if (titleKey && strings[titleKey]) {
+      document.title = strings[titleKey]
+    } else if (strings.documentTitle) {
       document.title = strings.documentTitle
     }
     document.querySelectorAll('[data-i18n]').forEach(function (node) {

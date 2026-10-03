@@ -1,6 +1,8 @@
-# Only the homepage is meant for search indexing. App, API, and widgets are private product surfaces.
+# Index: marketing homepage and legal pages. App, API, and widgets stay out of search.
 User-agent: *
 Disallow: /
 Allow: /$
+Allow: /privacy.html
+Allow: /terms.html
 
 Sitemap: https://streamhelper.best/sitemap.xml

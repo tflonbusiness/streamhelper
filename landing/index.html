@@ -913,17 +913,55 @@
         flex-direction: column;
         align-items: center;
         gap: 1rem;
-        margin-bottom: 3rem;
       }
 
-      .footer {
+      .site-footer {
+        border-top: 1px solid var(--border);
+        padding: 2rem 0 2.5rem;
+        margin-top: 1rem;
+      }
+
+      .site-footer-inner {
         display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.25rem;
+        text-align: center;
+      }
+
+      .site-footer-nav {
+        display: flex;
+        flex-wrap: wrap;
         align-items: center;
         justify-content: center;
+        gap: 0.75rem 1.25rem;
+      }
+
+      .site-footer-nav a {
+        color: var(--muted-foreground);
+        font-size: 0.8125rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: color 0.15s ease;
+      }
+
+      .site-footer-nav a:hover {
+        color: var(--foreground);
+      }
+
+      .site-footer-nav a:focus-visible {
+        outline: 2px solid #f59e0b;
+        outline-offset: 2px;
+        border-radius: 2px;
+      }
+
+      .site-footer-meta {
+        display: flex;
         flex-wrap: wrap;
-        gap: 0.35rem;
-        padding-top: 2rem;
-        border-top: 1px solid var(--border);
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem 0.5rem;
+        margin: 0;
         font-size: 0.8rem;
         color: var(--muted-foreground);
       }
@@ -1241,16 +1279,27 @@
             </a>
             <a class="cta-secondary" href="/login" rel="nofollow" data-i18n="contactOrSignIn">Or sign in with Kick</a>
           </div>
-          <p class="footer">
-            <span data-i18n="footerCopyright">© 2026</span>
-            <span class="brand-title brand-title--footer">
-              <span data-i18n="appNameStream">Stream</span
-              ><span class="brand-title-helper" data-i18n="appNameHelper">Helper</span>
-            </span>
-          </p>
         </div>
       </section>
     </main>
+    <footer class="site-footer">
+      <div class="page site-footer-inner">
+        <nav class="site-footer-nav" aria-label="Footer">
+          <a href="#" data-telegram-support data-i18n="footerSupport">Support</a>
+          <a href="/privacy.html" data-i18n="footerPrivacy">Privacy</a>
+          <a href="/terms.html" data-i18n="footerTerms">Terms of use</a>
+        </nav>
+        <p class="site-footer-meta">
+          <span data-i18n="footerCopyright">© 2026</span>
+          <span class="brand-title brand-title--footer">
+            <span data-i18n="appNameStream">Stream</span
+            ><span class="brand-title-helper" data-i18n="appNameHelper">Helper</span>
+          </span>
+          <span aria-hidden="true">·</span>
+          <span data-i18n="footerRights">All rights reserved.</span>
+        </p>
+      </div>
+    </footer>
     <script src="locale.js"></script>
     <script src="dot-field.js"></script>
     <script>

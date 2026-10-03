@@ -124,11 +124,13 @@ docker compose --env-file .env.production -f docker-compose.prod.yml up -d --bui
 
 Полный пересбор (`--build` без сервиса) — если менялись `app/` или `server/`.
 
-### SEO (только лендинг в Google)
+### SEO (лендинг и legal в Google)
 
-- **`/`** — индексируется (`robots` + canonical + `sitemap.xml` в `landing/`).
-- **`/login`, `/dashboard`, `/modules/...`, API** — `noindex` (meta в SPA + заголовок `X-Robots-Tag` в nginx).
-- **`/robots.txt`** — `Allow: /$`, остальное `Disallow: /`.
+- **`/`** — главная (`landing/index.html`).
+- **`/privacy.html`, `/terms.html`** — политика и условия (`landing/privacy.html`, `landing/terms.html`, стили `legal.css`).
+- **`/login`, `/dashboard`, `/modules/...`, API** — `noindex` (meta в SPA + `X-Robots-Tag` в nginx для SPA и статики лендинга вроде `locale.js`).
+- **`/robots.txt`** — `Allow: /$`, `/privacy.html`, `/terms.html`; остальное `Disallow: /`.
+- Маршруты заданы в `deploy/nginx/snippets/landing-static.conf` (копируется в образ nginx вместе с каталогом `landing/` → `/usr/share/nginx/html/public/`).
 
 После деплоя: [Google Search Console](https://search.google.com/search-console) → добавить свойство `streamhelper.best` → отправить sitemap `https://streamhelper.best/sitemap.xml`.
 
