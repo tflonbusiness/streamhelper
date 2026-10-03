@@ -4,5 +4,6 @@ Disallow: /
 Allow: /$
 Allow: /privacy
 Allow: /terms
+Allow: /google
 
 Sitemap: https://streamhelper.best/sitemap.xml

@@ -132,7 +132,7 @@ docker compose --env-file .env.production -f docker-compose.prod.yml up -d --bui
 - **`/robots.txt`** — `Allow: /$`, `/privacy`, `/terms`; остальное `Disallow: /`.
 - Маршруты заданы в `deploy/nginx/snippets/landing-static.conf` (копируется в образ nginx вместе с каталогом `landing/` → `/usr/share/nginx/html/public/`).
 
-После деплоя: [Google Search Console](https://search.google.com/search-console) → добавить свойство `streamhelper.best` → отправить sitemap `https://streamhelper.best/sitemap.xml`.
+После деплоя: пошагово — **[google-indexing.md](google-indexing.md)** (Search Console, sitemap, верификация).
 
 Если домен не `streamhelper.best`, обновите абсолютные URL в `landing/index.html`, `landing/sitemap.xml` и `landing/robots.txt`.
 
