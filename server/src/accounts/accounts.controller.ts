@@ -101,6 +101,7 @@ type PatchChatRollBody = {
   reply_in_chat?: boolean;
   winner_response_enabled?: boolean;
   winner_response_seconds?: number;
+  show_winner_response_in_reveal?: boolean;
   role_settings?: unknown;
 };
 

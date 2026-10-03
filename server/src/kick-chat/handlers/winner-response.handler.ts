@@ -45,6 +45,7 @@ export class WinnerResponseHandler {
     const confirmed = await this.database.confirmChatRollWinResponse({
       chatRollId: session.id,
       providerUserId,
+      responseMessage: event.content.trim(),
     });
 
     if (!confirmed) {

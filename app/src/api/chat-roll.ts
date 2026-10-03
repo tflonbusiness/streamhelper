@@ -29,6 +29,7 @@ export type ChatRollRecord = {
   replyInChat: boolean
   winnerResponseEnabled: boolean
   winnerResponseSeconds: number
+  showWinnerResponseInReveal: boolean
   roleSettings: ChatRollRoleSettings
   createdAt: string
   createdByUserId: number
@@ -72,6 +73,7 @@ export type ChatRollWin = {
   responseDeadlineAt: string | null
   respondedAt: string | null
   createdAt: string
+  winnerResponseMessage: string | null
 }
 
 export type ChatRollWidget = {
@@ -93,6 +95,7 @@ export type PatchChatRollInput = {
   reply_in_chat?: boolean
   winner_response_enabled?: boolean
   winner_response_seconds?: number
+  show_winner_response_in_reveal?: boolean
   role_settings?: ChatRollRoleSettings
 }
 

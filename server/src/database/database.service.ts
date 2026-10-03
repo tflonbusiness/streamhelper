@@ -196,6 +196,7 @@ export type DbChatRoll = {
   replyInChat: boolean;
   winnerResponseEnabled: boolean;
   winnerResponseSeconds: number;
+  showWinnerResponseInReveal: boolean;
   roleSettings: ChatRollRoleSettings;
   createdAt: Date;
   createdByUserId: number;
@@ -227,6 +228,7 @@ export type DbChatRollWin = {
   responseDeadlineAt: Date | null;
   respondedAt: Date | null;
   createdAt: Date;
+  winnerResponseMessage: string | null;
 };
 
 export type DbChatRollWidget = {
@@ -248,6 +250,7 @@ export type PatchChatRollInput = {
   replyInChat?: boolean;
   winnerResponseEnabled?: boolean;
   winnerResponseSeconds?: number;
+  showWinnerResponseInReveal?: boolean;
   roleSettings?: ChatRollRoleSettings;
 };
 
@@ -3894,6 +3897,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           cr.reply_in_chat,
           cr.winner_response_enabled,
           cr.winner_response_seconds,
+          cr.show_winner_response_in_reveal,
           cr.role_settings,
           cr.created_at,
           cr.created_by_user_id,
@@ -3932,13 +3936,15 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   async confirmChatRollWinResponse(input: {
     chatRollId: number;
     providerUserId: string;
+    responseMessage: string;
   }): Promise<number | null> {
     const result = await this.pool.query<{ id: string | number }>(
       `
         UPDATE chat_roll_win w
         SET
           response_status = 'confirmed',
-          responded_at = now()
+          responded_at = now(),
+          winner_response_message = $3
         FROM chat_roll_participant p
         WHERE w.participant_id = p.id
           AND w.chat_roll_id = $1
@@ -3960,7 +3966,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           )
         RETURNING w.id
       `,
-      [input.chatRollId, input.providerUserId],
+      [input.chatRollId, input.providerUserId, input.responseMessage],
     );
 
     const row = result.rows[0];
@@ -3996,6 +4002,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     reply_in_chat: boolean;
     winner_response_enabled?: boolean;
     winner_response_seconds?: string | number;
+    show_winner_response_in_reveal?: boolean;
     role_settings: unknown;
     created_at: Date;
     created_by_user_id: string | number;
@@ -4018,6 +4025,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       replyInChat: row.reply_in_chat,
       winnerResponseEnabled: row.winner_response_enabled ?? true,
       winnerResponseSeconds: toInt(row.winner_response_seconds ?? 25),
+      showWinnerResponseInReveal:
+        row.show_winner_response_in_reveal ?? true,
       roleSettings,
       createdAt: row.created_at,
       createdByUserId: toInt(row.created_by_user_id),
@@ -4061,6 +4070,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     response_deadline_at?: Date | null;
     responded_at?: Date | null;
     created_at: Date;
+    winner_response_message?: string | null;
   }): DbChatRollWin {
     return {
       id: toInt(row.id),
@@ -4077,6 +4087,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       responseDeadlineAt: row.response_deadline_at ?? null,
       respondedAt: row.responded_at ?? null,
       createdAt: row.created_at,
+      winnerResponseMessage: row.winner_response_message ?? null,
     };
   }
 
@@ -4131,6 +4142,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           cr.reply_in_chat,
           cr.winner_response_enabled,
           cr.winner_response_seconds,
+          cr.show_winner_response_in_reveal,
           cr.role_settings,
           cr.created_at,
           cr.created_by_user_id,
@@ -4197,6 +4209,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           cr.reply_in_chat,
           cr.winner_response_enabled,
           cr.winner_response_seconds,
+          cr.show_winner_response_in_reveal,
           cr.role_settings,
           cr.created_at,
           cr.created_by_user_id,
@@ -4235,6 +4248,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     const replyInChat = false;
     const winnerResponseEnabled = true;
     const winnerResponseSeconds = 25;
+    const showWinnerResponseInReveal = true;
     const roleSettings = DEFAULT_CHAT_ROLL_ROLE_SETTINGS;
 
     const client = await this.pool.connect();
@@ -4285,9 +4299,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             reply_in_chat,
             winner_response_enabled,
             winner_response_seconds,
+            show_winner_response_in_reveal,
             role_settings
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
           RETURNING
             id,
             account_id,
@@ -4301,6 +4316,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             reply_in_chat,
             winner_response_enabled,
             winner_response_seconds,
+            show_winner_response_in_reveal,
             role_settings,
             created_at,
             created_by_user_id,
@@ -4318,6 +4334,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           replyInChat,
           winnerResponseEnabled,
           winnerResponseSeconds,
+          showWinnerResponseInReveal,
           JSON.stringify(roleSettings),
         ],
       );
@@ -4418,6 +4435,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             cr.reply_in_chat,
             cr.winner_response_enabled,
             cr.winner_response_seconds,
+            cr.show_winner_response_in_reveal,
             cr.role_settings,
             cr.created_at,
             cr.created_by_user_id,
@@ -4466,6 +4484,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           cr.reply_in_chat,
           cr.winner_response_enabled,
           cr.winner_response_seconds,
+          cr.show_winner_response_in_reveal,
           cr.role_settings,
           cr.created_at,
           cr.created_by_user_id,
@@ -4553,7 +4572,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           reply_in_chat = $9,
           winner_response_enabled = $10,
           winner_response_seconds = $11,
-          role_settings = $12
+          show_winner_response_in_reveal = $12,
+          role_settings = $13
         FROM users u
         WHERE cr.created_by_user_id = u.id
           AND cr.account_id = $1
@@ -4572,6 +4592,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           cr.reply_in_chat,
           cr.winner_response_enabled,
           cr.winner_response_seconds,
+          cr.show_winner_response_in_reveal,
           cr.role_settings,
           cr.created_at,
           cr.created_by_user_id,
@@ -4589,6 +4610,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         input.replyInChat ?? existing.replyInChat,
         nextWinnerResponseEnabled,
         nextWinnerResponseSeconds,
+        input.showWinnerResponseInReveal ?? existing.showWinnerResponseInReveal,
         JSON.stringify(nextRoleSettings),
       ],
     );
@@ -4766,7 +4788,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           w.response_status,
           w.response_deadline_at,
           w.responded_at,
-          w.created_at
+          w.created_at,
+          w.winner_response_message
         FROM chat_roll_win w
         JOIN users u ON u.id = w.rolled_by_user_id
         WHERE w.chat_roll_id = $1
@@ -4916,7 +4939,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             response_status,
             response_deadline_at,
             responded_at,
-            created_at
+            created_at,
+            winner_response_message
         `,
         [
           chatRollId,

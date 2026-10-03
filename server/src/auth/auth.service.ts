@@ -1826,6 +1826,7 @@ export class AuthService {
       replyInChat: row.replyInChat,
       winnerResponseEnabled: row.winnerResponseEnabled,
       winnerResponseSeconds: row.winnerResponseSeconds,
+      showWinnerResponseInReveal: row.showWinnerResponseInReveal,
       roleSettings: row.roleSettings,
       createdAt: row.createdAt.toISOString(),
       createdByUserId: row.createdByUserId,
@@ -1858,6 +1859,7 @@ export class AuthService {
       responseDeadlineAt: row.responseDeadlineAt?.toISOString() ?? null,
       respondedAt: row.respondedAt?.toISOString() ?? null,
       createdAt: row.createdAt.toISOString(),
+      winnerResponseMessage: row.winnerResponseMessage,
     };
   }
 
@@ -2047,6 +2049,7 @@ export class AuthService {
       reply_in_chat?: boolean;
       winner_response_enabled?: boolean;
       winner_response_seconds?: number;
+      show_winner_response_in_reveal?: boolean;
       role_settings?: unknown;
     },
   ) {
@@ -2082,6 +2085,9 @@ export class AuthService {
     }
     if (body.winner_response_seconds !== undefined) {
       input.winnerResponseSeconds = body.winner_response_seconds;
+    }
+    if (body.show_winner_response_in_reveal !== undefined) {
+      input.showWinnerResponseInReveal = body.show_winner_response_in_reveal;
     }
     if (body.role_settings !== undefined) {
       input.roleSettings = body.role_settings as PatchChatRollInput['roleSettings'];

@@ -43,6 +43,7 @@ type ChatRollSessionSettingsLeftPanelProps = {
   onKeywordChange: (value: string) => void
   onCombineModeChange: (mode: WeightCombineMode) => void
   onExcludeWinnerChange: (checked: boolean) => void
+  onShowWinnerResponseInRevealChange: (checked: boolean) => void
   onWinnerResponseEnabledChange: (checked: boolean) => void
   onWinnerResponseSecondsChange: (raw: string) => void
   roleMeta: ChatRollRoleMeta[]
@@ -230,6 +231,25 @@ export function ChatRollSessionSettingsLeftPanel(
               </ExclusionToggleLabel>
               <Typography variant="caption" color="text.secondary">
                 {t('chatRoll.excludeWinnerHelp')}
+              </Typography>
+            </SettingsToggleCopy>
+          </SettingsToggleCard>
+
+          <SettingsToggleCard>
+            <Switch
+              size="small"
+              checked={props.draft.showWinnerResponseInReveal}
+              disabled={props.settingsDisabled}
+              onChange={(event) =>
+                props.onShowWinnerResponseInRevealChange(event.target.checked)
+              }
+            />
+            <SettingsToggleCopy>
+              <ExclusionToggleLabel variant="body2">
+                {t('chatRoll.showWinnerResponseInReveal')}
+              </ExclusionToggleLabel>
+              <Typography variant="caption" color="text.secondary">
+                {t('chatRoll.showWinnerResponseInRevealHelp')}
               </Typography>
             </SettingsToggleCopy>
           </SettingsToggleCard>

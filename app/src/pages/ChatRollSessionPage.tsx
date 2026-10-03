@@ -670,6 +670,12 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
                           excludeWinnerAfterRoll: checked,
                         }))
                       }
+                      onShowWinnerResponseInRevealChange={(checked) =>
+                        updateDraft((current) => ({
+                          ...current,
+                          showWinnerResponseInReveal: checked,
+                        }))
+                      }
                       onWinnerResponseEnabledChange={(checked) =>
                         updateDraft((current) => ({
                           ...current,
@@ -817,6 +823,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
       <ChatRollRollRevealOverlay
         open={rollRevealOpen}
         win={rollRevealWinSynced}
+        showWinnerResponseInReveal={record.showWinnerResponseInReveal}
         winnerResponseSeconds={record.winnerResponseSeconds}
         onClose={handleRollRevealClose}
       />

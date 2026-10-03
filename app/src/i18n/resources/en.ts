@@ -761,6 +761,7 @@ export const en = {
     rollRevealRolling: "Rolling",
     rollRevealWinnerLabel: "Winner",
     rollRevealPicking: "Picking a winner…",
+    rollRevealWinnerResponseLabel: "Confirmed in chat with message…",
     rollRevealWaitingForChat: "Waiting for a message in Kick chat…",
     rollRevealConfirmedInChat: "Answered in Kick chat",
     rollRevealNoChatResponse: "No chat response in time",
@@ -784,7 +785,7 @@ export const en = {
     couldNotDeactivate: "Could not take session off air.",
     sessionArchivedViewOnly: "This session is archived. View only.",
     mainSettings: "Main settings",
-    rollOptions: "Roll options",
+    rollOptions: "Additional parameters",
     weightCombine: "Weight combine",
     combineHighestShort: "Highest",
     combineSumShort: "Sum",
@@ -792,7 +793,10 @@ export const en = {
     combineSumAria: "Sum coefficients",
     excludeWinnerAfterRoll: "Exclude winner after roll",
     excludeWinnerHelp:
-      "Rolled winners leave the pool until you remove or clear them.",
+      "Winners cannot enter another roll until you remove them from the Winners section.",
+    showWinnerResponseInReveal: "Show confirmation in winner modal",
+    showWinnerResponseInRevealHelp:
+      "The winner modal shows the Kick chat message the winner sent to confirm the win.",
     replyInKickChat: "Reply in Kick chat",
     replyInKickChatHelp: "Coming soon.",
     requireWinnerChatResponse: "Require winner chat response",

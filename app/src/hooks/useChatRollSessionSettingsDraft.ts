@@ -22,6 +22,7 @@ export function useChatRollSessionSettingsDraft(record: ChatRollRecord) {
       record.replyInChat,
       record.winnerResponseEnabled,
       record.winnerResponseSeconds,
+      record.showWinnerResponseInReveal,
       record.roleSettings,
     ],
   )

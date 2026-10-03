@@ -784,6 +784,7 @@ export const ru = {
     rollRevealRolling: "Розыгрыш",
     rollRevealWinnerLabel: "Победитель",
     rollRevealPicking: "Выбираем победителя…",
+    rollRevealWinnerResponseLabel: "Подтвердил в чате сообщением…",
     rollRevealWaitingForChat: "Ждём сообщение победителя в чате Kick",
     rollRevealConfirmedInChat: "Ответил(а) в чате Kick",
     rollRevealNoChatResponse: "Нет ответа в чате за отведённое время",
@@ -808,7 +809,7 @@ export const ru = {
     couldNotDeactivate: "Не удалось снять сессию с эфира.",
     sessionArchivedViewOnly: "Сессия в архиве. Только просмотр.",
     mainSettings: "Основные настройки",
-    rollOptions: "Параметры розыгрыша",
+    rollOptions: "Дополнительные параметры",
     weightCombine: "Объединение весов",
     combineHighestShort: "Максимум",
     combineSumShort: "Сумма",
@@ -816,7 +817,10 @@ export const ru = {
     combineSumAria: "Суммировать коэффициенты",
     excludeWinnerAfterRoll: "Исключать победителя после розыгрыша",
     excludeWinnerHelp:
-      "Победители выходят из пула, пока вы не удалите или не очистите их.",
+      "Победитель не участвует в следующих розыгрышах, пока вы не удалите его из секции «Победители».",
+    showWinnerResponseInReveal: "Показывать подтверждение в окне победителя",
+    showWinnerResponseInRevealHelp:
+      "В окне выигрыша отображается сообщение из чата Kick, которым победитель подтвердил выигрыш.",
     replyInKickChat: "Отвечать в чате Kick",
     replyInKickChatHelp: "Скоро будет доступно.",
     requireWinnerChatResponse: "Требовать ответ победителя в чате",

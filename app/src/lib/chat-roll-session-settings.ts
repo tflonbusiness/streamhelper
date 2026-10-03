@@ -24,6 +24,7 @@ export type ChatRollSessionSettingsDraft = {
   replyInChat: boolean
   winnerResponseEnabled: boolean
   winnerResponseSeconds: number | ''
+  showWinnerResponseInReveal: boolean
   roleSettings: ChatRollRoleSettingsDraft
 }
 
@@ -63,6 +64,7 @@ export function chatRollSettingsDraftFromRecord(
     replyInChat: record.replyInChat,
     winnerResponseEnabled: record.winnerResponseEnabled,
     winnerResponseSeconds: record.winnerResponseSeconds,
+    showWinnerResponseInReveal: record.showWinnerResponseInReveal,
     roleSettings: cloneRoleSettingsFromRecord(record.roleSettings),
   }
 }
@@ -78,6 +80,7 @@ export function areChatRollSettingsDraftsEqual(
   if (a.replyInChat !== b.replyInChat) return false
   if (a.winnerResponseEnabled !== b.winnerResponseEnabled) return false
   if (a.winnerResponseSeconds !== b.winnerResponseSeconds) return false
+  if (a.showWinnerResponseInReveal !== b.showWinnerResponseInReveal) return false
 
   for (const roleId of Object.keys(a.roleSettings) as ChatRollRoleId[]) {
     const left = a.roleSettings[roleId]
@@ -242,6 +245,11 @@ export function buildChatRollSettingsPatch(
     isWinnerResponseSecondsInRange(draft.winnerResponseSeconds)
   ) {
     body.winner_response_seconds = draft.winnerResponseSeconds
+  }
+  if (
+    draft.showWinnerResponseInReveal !== record.showWinnerResponseInReveal
+  ) {
+    body.show_winner_response_in_reveal = draft.showWinnerResponseInReveal
   }
 
   const roleSettingsChanged = (

@@ -47,6 +47,18 @@ const NameDisplay = styled(Typography)(({ theme }) => ({
   animation: `${glow} 1.2s ease-in-out infinite`,
 }))
 
+const WinnerMessageDisplay = styled(Typography)(({ theme }) => ({
+  fontSize: 'clamp(1rem, 3.5vw, 1.25rem)',
+  lineHeight: 1.45,
+  maxWidth: 'min(90vw, 28rem)',
+  wordBreak: 'break-word',
+  color: 'rgba(255, 255, 255, 0.82)',
+  padding: theme.spacing(1.5, 2),
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  border: '1px solid rgba(255, 255, 255, 0.16)',
+}))
+
 const CountdownDisplay = styled(Typography)({
   fontSize: 'clamp(2.5rem, 12vw, 4.5rem)',
   fontWeight: 700,
@@ -101,6 +113,7 @@ function formatResponseCountdown(totalSeconds: number): string {
 type ChatRollRollRevealOverlayProps = {
   open: boolean
   win: ChatRollWin | null
+  showWinnerResponseInReveal: boolean
   winnerResponseSeconds: number
   onClose: () => void
 }
@@ -108,6 +121,7 @@ type ChatRollRollRevealOverlayProps = {
 export function ChatRollRollRevealOverlay({
   open,
   win,
+  showWinnerResponseInReveal,
   winnerResponseSeconds,
   onClose,
 }: ChatRollRollRevealOverlayProps) {
@@ -115,6 +129,12 @@ export function ChatRollRollRevealOverlay({
   const winnerName = win?.displayName ?? null
   const hasWinner = Boolean(winnerName)
   const responseStatus = win?.responseStatus
+  const winnerResponseText =
+    showWinnerResponseInReveal &&
+    responseStatus === 'confirmed' &&
+    win?.winnerResponseMessage?.trim()
+      ? win.winnerResponseMessage.trim()
+      : null
   const showResponseCountdown =
     responseStatus === 'pending' && winnerResponseSeconds > 0
 
@@ -205,6 +225,27 @@ export function ChatRollRollRevealOverlay({
             <TrophyIcon aria-hidden />
             <NameDisplay>{winnerName}</NameDisplay>
             {renderResponseFeedback()}
+            {winnerResponseText ? (
+              <Box sx={{ maxWidth: 'min(90vw, 28rem)', width: '100%' }}>
+                <Typography
+                  variant="caption"
+                  component="p"
+                  sx={{
+                    m: 0,
+                    mb: 0.75,
+                    color: 'rgba(255,255,255,0.5)',
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    fontWeight: 600,
+                  }}
+                >
+                  {t('chatRoll.rollRevealWinnerResponseLabel')}
+                </Typography>
+                <WinnerMessageDisplay component="p" sx={{ m: 0 }}>
+                  {winnerResponseText}
+                </WinnerMessageDisplay>
+              </Box>
+            ) : null}
             {showResponseCountdown ? (
               <CountdownDisplay>
                 {formatResponseCountdown(remaining)}
