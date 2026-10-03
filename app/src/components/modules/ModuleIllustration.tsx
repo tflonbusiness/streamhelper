@@ -171,87 +171,24 @@ function PrizeWheelIllustration({ accent }: { accent: string }) {
 function ChatRollIllustration({ accent }: { accent: string }) {
   return (
     <IllustrationFrame>
-      <path
-        d="M36 58 H98 a10 10 0 0 1 10 10 V80 a10 10 0 0 1-10 10 H64 L52 102 V92 H36 a10 10 0 0 1-10-10 V68 a10 10 0 0 1 10-10 Z"
-        stroke={accent}
-        strokeWidth="2"
-        fill={accent}
-        fillOpacity="0.13"
-        strokeLinejoin="round"
-      />
-      <circle cx="48" cy="72" r="6" stroke={accent} strokeWidth="1.75" fill={accent} fillOpacity="0.2" />
-      <path
-        d="M62 70 H90 M62 76 H82 M62 82 H86"
-        stroke={accent}
-        strokeWidth="2"
-        strokeLinecap="round"
-        opacity="0.48"
-      />
-
-      <path
-        d="M104 86 L110 68"
-        stroke={accent}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeDasharray="3 4"
-        opacity="0.35"
-      />
-
-      <path
-        d="M104 34 H132 V38 H104 Z"
-        fill={accent}
-        fillOpacity="0.4"
-        stroke={accent}
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M106 38 H130 L126 66 H110 Z"
-        stroke={accent}
-        strokeWidth="2"
-        fill={accent}
-        fillOpacity="0.3"
-        strokeLinejoin="round"
-      />
-      <path d="M110 46 H126 M112 54 H124" stroke={accent} strokeWidth="1.5" opacity="0.35" />
-
-      <path
-        d="M118 48 L121 54 H125 L122 57 L123 62 L118 59 L113 62 L114 57 L111 54 H115 Z"
-        fill={accent}
-        opacity="0.82"
-      />
-
-      <path d="M118 66 V76" stroke={accent} strokeWidth="2.75" strokeLinecap="round" />
-      <rect
-        x="112"
-        y="76"
-        width="12"
-        height="4"
-        fill={accent}
-        fillOpacity="0.38"
-        stroke={accent}
-        strokeWidth="1.25"
-      />
-      <rect
-        x="106"
-        y="80"
-        width="24"
-        height="5"
-        fill={accent}
-        fillOpacity="0.28"
-        stroke={accent}
-        strokeWidth="1.5"
-      />
-      <rect
-        x="100"
-        y="85"
-        width="36"
-        height="6"
-        fill={accent}
-        fillOpacity="0.18"
-        stroke={accent}
-        strokeWidth="1.5"
-      />
+      <g transform="translate(80 60) scale(1.42) translate(-67 -80)">
+        <path
+          d="M36 58 H98 a10 10 0 0 1 10 10 V80 a10 10 0 0 1-10 10 H64 L52 102 V92 H36 a10 10 0 0 1-10-10 V68 a10 10 0 0 1 10-10 Z"
+          stroke={accent}
+          strokeWidth="2"
+          fill={accent}
+          fillOpacity="0.13"
+          strokeLinejoin="round"
+        />
+        <circle cx="48" cy="72" r="6" stroke={accent} strokeWidth="1.75" fill={accent} fillOpacity="0.2" />
+        <path
+          d="M62 70 H90 M62 76 H82 M62 82 H86"
+          stroke={accent}
+          strokeWidth="2"
+          strokeLinecap="round"
+          opacity="0.48"
+        />
+      </g>
     </IllustrationFrame>
   )
 }
