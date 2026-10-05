@@ -386,6 +386,46 @@
         outline-offset: 2px;
       }
 
+      /* Kick OAuth — matches app KickLoginButton */
+      .cta-kick {
+        gap: 0.5rem;
+        background: #53fc18;
+        color: #0e0e10;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        box-shadow: 0 4px 20px rgba(83, 252, 24, 0.35);
+        transition:
+          background-color 0.2s ease,
+          box-shadow 0.2s ease,
+          transform 0.15s ease;
+      }
+
+      .cta-kick:hover {
+        background: #47e014;
+        box-shadow: 0 6px 24px rgba(83, 252, 24, 0.45);
+      }
+
+      .cta-kick:active {
+        transform: translateY(1px);
+      }
+
+      .cta-kick:focus-visible {
+        outline: 2px solid #53fc18;
+        outline-offset: 3px;
+      }
+
+      .cta-kick__logo {
+        width: 20.55px;
+        height: 25px;
+        flex-shrink: 0;
+        display: block;
+      }
+
+      .cta-header.cta-kick .cta-kick__logo {
+        width: 16px;
+        height: 19.5px;
+      }
+
       .cta-secondary {
         display: inline-flex;
         align-items: center;
@@ -1036,7 +1076,17 @@
               </button>
             </div>
           </details>
-          <a class="cta cta-header" href="/login" rel="nofollow" data-i18n="signInKick">Sign in with Kick</a>
+          <a class="cta cta-kick cta-header" href="/login" rel="nofollow">
+            <img
+              class="cta-kick__logo"
+              src="kick-logo-24.png"
+              width="16"
+              height="20"
+              alt=""
+              aria-hidden="true"
+            />
+            <span data-i18n="signInKick">Sign in with Kick</span>
+          </a>
         </div>
       </div>
     </header>
@@ -1064,7 +1114,17 @@
               your viewers see on stream.
             </p>
             <div class="hero-actions">
-              <a class="cta" href="/login" rel="nofollow" data-i18n="signInKick">Sign in with Kick</a>
+              <a class="cta cta-kick" href="/login" rel="nofollow">
+                <img
+                  class="cta-kick__logo"
+                  src="kick-logo-24.png"
+                  width="21"
+                  height="25"
+                  alt=""
+                  aria-hidden="true"
+                />
+                <span data-i18n="signInKick">Sign in with Kick</span>
+              </a>
             </div>
           </div>
         </div>
@@ -1186,7 +1246,17 @@
                 <li data-i18n="planTrialFeature3">OBS widgets ready for live sessions</li>
               </ul>
               <p class="plan-note" data-i18n="planTrialNote">Activates when you sign in with Kick</p>
-              <a class="cta-outline" href="/login" rel="nofollow" data-i18n="signInKick">Sign in with Kick</a>
+              <a class="cta cta-kick" href="/login" rel="nofollow">
+                <img
+                  class="cta-kick__logo"
+                  src="kick-logo-24.png"
+                  width="21"
+                  height="25"
+                  alt=""
+                  aria-hidden="true"
+                />
+                <span data-i18n="signInKick">Sign in with Kick</span>
+              </a>
             </article>
             <article class="plan-card featured">
               <span class="popular-chip" data-i18n="planPopular">Popular</span>
@@ -1265,7 +1335,17 @@
               Sign in with Kick to open your dashboard, or message us to
               activate your subscription.
             </p>
-            <a class="cta" href="/login" rel="nofollow" data-i18n="signInKick">Sign in with Kick</a>
+            <a class="cta cta-kick" href="/login" rel="nofollow">
+              <img
+                class="cta-kick__logo"
+                src="kick-logo-24.png"
+                width="21"
+                height="25"
+                alt=""
+                aria-hidden="true"
+              />
+              <span data-i18n="signInKick">Sign in with Kick</span>
+            </a>
           </div>
         </div>
       </section>
