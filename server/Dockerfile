@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.4
+
 FROM public.ecr.aws/docker/library/node:22-alpine AS builder
 
 WORKDIR /app
@@ -7,7 +9,10 @@ ENV CI=1
 ENV NODE_OPTIONS=--max-old-space-size=1024
 
 COPY package.json package-lock.json ./
-RUN npm ci
+# bcrypt may compile on Alpine; npm cache mount speeds up repeat builds on the VPS.
+RUN --mount=type=cache,target=/root/.npm \
+  apk add --no-cache python3 make g++ \
+  && npm ci --prefer-offline --no-audit --no-fund
 
 COPY . .
 RUN npx tsc -p tsconfig.build.json --declaration false --sourceMap false --incremental false
