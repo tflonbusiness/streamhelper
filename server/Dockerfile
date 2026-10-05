@@ -10,7 +10,7 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
-RUN npx tsc -p tsconfig.docker.json
+RUN npx tsc -p tsconfig.build.json --declaration false --sourceMap false --incremental false
 
 FROM public.ecr.aws/docker/library/node:22-alpine AS runner
 
