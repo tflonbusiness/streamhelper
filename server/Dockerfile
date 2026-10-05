@@ -11,6 +11,7 @@ RUN npm ci
 
 COPY . .
 RUN npx tsc -p tsconfig.build.json --declaration false --sourceMap false --incremental false
+RUN npm prune --omit=dev
 
 FROM public.ecr.aws/docker/library/node:22-alpine AS runner
 
@@ -19,8 +20,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
-
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/migrations ./migrations
 
