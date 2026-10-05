@@ -234,10 +234,11 @@ export function PageHeader({
             variant={iconVariant}
             viewportSx={{
               right: 0,
-              bottom: 0,
+              top: '50%',
+              transform: 'translateY(-50%)',
               width: { sm: 128, md: 160 },
               height: { sm: 96, md: 120 },
-              display: { xs: 'none', sm: 'block' },
+              display: { xs: 'none', sm: 'flex' },
               zIndex: 0,
             }}
           />
