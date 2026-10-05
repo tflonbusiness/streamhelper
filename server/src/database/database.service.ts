@@ -211,6 +211,8 @@ export type DbChatRollParticipant = {
   displayName: string;
   roleIds: string[];
   isArchived: boolean;
+  excludedFromRollPool: boolean;
+  isEligibleForRoll: boolean;
   joinedAt: Date;
 };
 
@@ -4042,8 +4044,13 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     display_name: string;
     role_ids: string[];
     is_archived: boolean;
+    excluded_from_roll_pool: boolean;
+    is_eligible_for_roll?: boolean;
     joined_at: Date;
   }): DbChatRollParticipant {
+    const excludedFromRollPool = row.excluded_from_roll_pool;
+    const isEligibleForRoll =
+      row.is_eligible_for_roll ?? !excludedFromRollPool;
     return {
       id: toInt(row.id),
       chatRollId: toInt(row.chat_roll_id),
@@ -4052,6 +4059,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       displayName: row.display_name,
       roleIds: row.role_ids ?? [],
       isArchived: row.is_archived,
+      excludedFromRollPool,
+      isEligibleForRoll,
       joinedAt: row.joined_at,
     };
   }
@@ -4702,13 +4711,49 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           p.display_name,
           p.role_ids,
           p.is_archived,
-          p.joined_at
+          p.excluded_from_roll_pool,
+          p.joined_at,
+          (
+            NOT p.excluded_from_roll_pool
+            AND NOT (
+              cr.exclude_winner_after_roll
+              AND EXISTS (
+                SELECT 1
+                FROM chat_roll_win w
+                INNER JOIN chat_roll_participant pw ON pw.id = w.participant_id
+                WHERE w.chat_roll_id = p.chat_roll_id
+                  AND w.is_archived = false
+                  AND pw.provider IS NOT DISTINCT FROM p.provider
+                  AND pw.provider_user_id IS NOT DISTINCT FROM p.provider_user_id
+              )
+            )
+          ) AS is_eligible_for_roll
         FROM chat_roll_participant p
         JOIN chat_roll cr ON cr.id = p.chat_roll_id
         WHERE cr.account_id = $1
           AND p.chat_roll_id = $2
           AND p.is_archived = false
-        ORDER BY p.joined_at ASC, p.id ASC
+        ORDER BY
+          CASE
+            WHEN (
+              NOT p.excluded_from_roll_pool
+              AND NOT (
+                cr.exclude_winner_after_roll
+                AND EXISTS (
+                  SELECT 1
+                  FROM chat_roll_win w
+                  INNER JOIN chat_roll_participant pw ON pw.id = w.participant_id
+                  WHERE w.chat_roll_id = p.chat_roll_id
+                    AND w.is_archived = false
+                    AND pw.provider IS NOT DISTINCT FROM p.provider
+                    AND pw.provider_user_id IS NOT DISTINCT FROM p.provider_user_id
+                )
+              )
+            ) THEN 0
+            ELSE 1
+          END,
+          p.joined_at ASC,
+          p.id ASC
       `,
       [accountId, chatRollId],
     );
@@ -4854,10 +4899,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     rolledByUserId: number,
   ): Promise<DbChatRollWin> {
     const session = await this.requireMutableChatRoll(accountId, chatRollId);
-    const participants = await this.listChatRollParticipants(
-      accountId,
-      chatRollId,
-    );
+    const participants = (
+      await this.listChatRollParticipants(accountId, chatRollId)
+    ).filter((participant) => participant.isEligibleForRoll);
 
     const winner = pickWeightedParticipant(
       participants.map((participant) => ({
@@ -4954,17 +4998,15 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         ],
       );
 
-      if (session.excludeWinnerAfterRoll) {
-        await client.query(
-          `
-            UPDATE chat_roll_participant
-            SET is_archived = true
-            WHERE id = $1
-              AND chat_roll_id = $2
-          `,
-          [pickedParticipant.id, chatRollId],
-        );
-      }
+      await client.query(
+        `
+          UPDATE chat_roll_participant
+          SET excluded_from_roll_pool = true
+          WHERE id = $1
+            AND chat_roll_id = $2
+        `,
+        [pickedParticipant.id, chatRollId],
+      );
 
       await client.query('COMMIT');
 
@@ -5124,6 +5166,27 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     return Boolean(result.rows[0]);
   }
 
+  private async chatRollProviderUserHasActiveWin(
+    chatRollId: number,
+    provider: 'kick',
+    providerUserId: string,
+  ): Promise<boolean> {
+    const result = await this.pool.query(
+      `
+        SELECT 1
+        FROM chat_roll_win w
+        INNER JOIN chat_roll_participant p ON p.id = w.participant_id
+        WHERE w.chat_roll_id = $1
+          AND p.provider = $2
+          AND p.provider_user_id = $3
+          AND w.is_archived = false
+        LIMIT 1
+      `,
+      [chatRollId, provider, providerUserId],
+    );
+    return Boolean(result.rows[0]);
+  }
+
   async insertChatRollParticipantFromChat(input: {
     chatRollId: number;
     provider: 'kick';
@@ -5155,28 +5218,12 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       return { status: 'entries_paused' };
     }
 
-    if (session.exclude_winner_after_roll) {
-      const priorWin = await this.pool.query(
-        `
-          SELECT 1
-          FROM chat_roll_win w
-          INNER JOIN chat_roll_participant p ON p.id = w.participant_id
-          WHERE w.chat_roll_id = $1
-            AND p.provider = $2
-            AND p.provider_user_id = $3
-            AND w.is_archived = false
-          LIMIT 1
-        `,
-        [input.chatRollId, input.provider, input.providerUserId],
-      );
-      if (priorWin.rows[0]) {
-        return { status: 'duplicate' };
-      }
-    }
-
-    const existing = await this.pool.query<{ id: number }>(
+    const existing = await this.pool.query<{
+      id: number;
+      excluded_from_roll_pool: boolean;
+    }>(
       `
-        SELECT id
+        SELECT id, excluded_from_roll_pool
         FROM chat_roll_participant
         WHERE chat_roll_id = $1
           AND provider = $2
@@ -5187,6 +5234,51 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       [input.chatRollId, input.provider, input.providerUserId],
     );
     if (existing.rows[0]) {
+      if (existing.rows[0].excluded_from_roll_pool) {
+        if (
+          session.exclude_winner_after_roll &&
+          (await this.chatRollProviderUserHasActiveWin(
+            input.chatRollId,
+            input.provider,
+            input.providerUserId,
+          ))
+        ) {
+          return { status: 'duplicate' };
+        }
+
+        await this.pool.query(
+          `
+            UPDATE chat_roll_participant
+            SET
+              excluded_from_roll_pool = false,
+              display_name = $3,
+              role_ids = $4
+            WHERE id = $1
+              AND chat_roll_id = $2
+          `,
+          [
+            existing.rows[0].id,
+            input.chatRollId,
+            input.displayName,
+            input.roleIds,
+          ],
+        );
+        return {
+          status: 'created',
+          participantId: toInt(existing.rows[0].id),
+        };
+      }
+      return { status: 'duplicate' };
+    }
+
+    if (
+      session.exclude_winner_after_roll &&
+      (await this.chatRollProviderUserHasActiveWin(
+        input.chatRollId,
+        input.provider,
+        input.providerUserId,
+      ))
+    ) {
       return { status: 'duplicate' };
     }
 

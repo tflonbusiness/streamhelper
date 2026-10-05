@@ -15,6 +15,7 @@ import {
   type PatchChatRollInput,
 } from '@/api/chat-roll'
 import type { ChatRollRecord } from '@/api/chat-roll'
+import { sortChatRollParticipantsForDisplay } from '@/lib/chat-roll'
 import { pickEntitlementEnvelope, type EntitlementEnvelope } from '@/lib/entitlements'
 import { chatRollKeys } from '@/queries/keys'
 
@@ -153,11 +154,13 @@ export function useRollChatRoll(
           const wins = current.wins.some((row) => row.id === win.id)
             ? current.wins
             : [...current.wins, win]
-          const participants = current.record.excludeWinnerAfterRoll
-            ? current.participants.filter(
-                (participant) => participant.id !== win.participantId,
-              )
-            : current.participants
+          const participants = sortChatRollParticipantsForDisplay(
+            current.participants.map((participant) =>
+              participant.id === win.participantId
+                ? { ...participant, isEligibleForRoll: false }
+                : participant,
+            ),
+          )
           return { ...current, wins, participants }
         },
       )

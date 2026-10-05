@@ -1843,6 +1843,7 @@ export class AuthService {
       displayName: row.displayName,
       roleIds: row.roleIds,
       joinedAt: row.joinedAt.toISOString(),
+      isEligibleForRoll: row.isEligibleForRoll,
     };
   }
 

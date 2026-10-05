@@ -217,6 +217,23 @@ export function getEligibleParticipants(
   )
 }
 
+/** Active entrants first, then winners excluded from the roll pool (server order). */
+export function sortChatRollParticipantsForDisplay<
+  T extends { id: number; joinedAt?: string; isEligibleForRoll?: boolean },
+>(participants: T[]): T[] {
+  return [...participants].sort((a, b) => {
+    const aRank = a.isEligibleForRoll === false ? 1 : 0
+    const bRank = b.isEligibleForRoll === false ? 1 : 0
+    if (aRank !== bRank) {
+      return aRank - bRank
+    }
+    if (a.joinedAt && b.joinedAt && a.joinedAt !== b.joinedAt) {
+      return a.joinedAt.localeCompare(b.joinedAt)
+    }
+    return a.id - b.id
+  })
+}
+
 export function pickWeightedParticipant(
   participants: ChatRollParticipant[],
   roles: Record<ChatRollRoleId, ChatRollRoleSetting>,

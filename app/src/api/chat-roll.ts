@@ -53,6 +53,7 @@ export type ChatRollParticipant = {
   displayName: string
   roleIds: ChatRollRoleId[]
   joinedAt: string
+  isEligibleForRoll: boolean
 }
 
 export type ChatRollWinResponseStatus =

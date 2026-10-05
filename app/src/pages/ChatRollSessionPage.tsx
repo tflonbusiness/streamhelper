@@ -1,4 +1,12 @@
-import { Button, Grid, IconButton, Stack, Tooltip } from '@mui/material'
+import {
+  Button,
+  Divider,
+  Grid,
+  IconButton,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material'
 import { styled, useTheme } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import DeleteIcon from '@mui/icons-material/Delete'
@@ -8,7 +16,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import GroupIcon from '@mui/icons-material/Group'
 import ReplayIcon from '@mui/icons-material/Replay'
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { useBlocker, useParams } from 'react-router-dom'
 import type {
   ChatRollParticipant,
@@ -51,7 +59,12 @@ import { ChatRollSessionSettingsLeftPanel } from '@/components/chat-roll/session
 import { ChatRollSessionLoadingState } from '@/components/chat-roll/session/ChatRollSessionLoadingState'
 import { ChatRollRollRevealOverlay } from '@/components/chat-roll/session/ChatRollRollRevealOverlay'
 import { ChatRollSessionUnsavedLeaveDialog } from '@/components/chat-roll/session/ChatRollSessionUnsavedLeaveDialog'
-import { chatRollModule, getChatRollWinRowBorderColor } from '@/components/chat-roll/session/chat-roll-session-utils'
+import {
+  chatRollModule,
+  getChatRollWinRowBorderColor,
+  getChatRollWinSectionKey,
+  sortChatRollWinsForDisplay,
+} from '@/components/chat-roll/session/chat-roll-session-utils'
 import { ModulePageShell } from '@/components/ModulePageShell'
 import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { SessionEntitlementNoticesSection } from '@/components/session/SessionEntitlementNoticesSection'
@@ -67,6 +80,7 @@ import {
   getChatRollRoleMeta,
   computeParticipantCoefficient,
   formatCoefficient,
+  sortChatRollParticipantsForDisplay,
 } from '@/lib/chat-roll'
 import { attachChatRollAudioUnlock, chatRollAudio } from '@/lib/chat-roll-audio'
 import { formatTime } from '@/lib/format-date-time'
@@ -142,6 +156,11 @@ function NameListCard({
   onCopyRow,
   copyRowTooltip,
   resolveRowBorderColor,
+  isRowInactive,
+  inactiveSectionLabel,
+  activeSectionLabel,
+  getRowSectionKey,
+  sectionLabels,
   readOnly,
 }: {
   title: string
@@ -157,9 +176,21 @@ function NameListCard({
   onCopyRow?: (row: { id: number; displayName: string }) => void
   copyRowTooltip?: string
   resolveRowBorderColor?: (row: { id: number; displayName: string }) => string
+  isRowInactive?: (row: { id: number; displayName: string }) => boolean
+  inactiveSectionLabel?: string
+  activeSectionLabel?: string
+  getRowSectionKey?: (row: { id: number; displayName: string }) => string
+  sectionLabels?: Record<string, string>
   readOnly: boolean
 }) {
   const { t } = useTranslation()
+
+  const showParticipantSectionLabels =
+    Boolean(isRowInactive && activeSectionLabel && inactiveSectionLabel) &&
+    rows.some((row) => isRowInactive(row)) &&
+    rows.some((row) => !isRowInactive(row))
+
+  const sectionCaptionSx = { m: 0, fontWeight: 600 }
 
   return (
     <ListCard elevation={0}>
@@ -186,15 +217,72 @@ function NameListCard({
           </EmptyListText>
         ) : (
           <ListRowsStack>
-            {rows.map((row) => (
-              <ListRowStack
-                key={row.id}
-                sx={
-                  resolveRowBorderColor
-                    ? { borderColor: resolveRowBorderColor(row) }
-                    : undefined
-                }
-              >
+            {rows.map((row, index) => {
+              const inactive = isRowInactive?.(row) ?? false
+              const showInactiveDivider =
+                inactive &&
+                index > 0 &&
+                !(isRowInactive?.(rows[index - 1]) ?? false)
+              const sectionKey = getRowSectionKey?.(row)
+              const prevSectionKey =
+                index > 0 ? getRowSectionKey?.(rows[index - 1]) : undefined
+              const showGenericSectionHeader =
+                Boolean(getRowSectionKey && sectionLabels && sectionKey) &&
+                (index === 0 || sectionKey !== prevSectionKey)
+
+              return (
+                <Fragment key={row.id}>
+                  {index === 0 && !inactive && showParticipantSectionLabels ? (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      component="p"
+                      sx={{ ...sectionCaptionSx, pb: 0.25 }}
+                    >
+                      {activeSectionLabel}
+                    </Typography>
+                  ) : null}
+                  {showInactiveDivider ? (
+                    <Stack spacing={0.5} sx={{ pt: 0.5, pb: 0.25 }}>
+                      {inactiveSectionLabel ? (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          component="p"
+                          sx={sectionCaptionSx}
+                        >
+                          {inactiveSectionLabel}
+                        </Typography>
+                      ) : null}
+                      <Divider />
+                    </Stack>
+                  ) : null}
+                  {showGenericSectionHeader ? (
+                    <Stack
+                      spacing={0.5}
+                      sx={{ pt: index > 0 ? 0.5 : 0, pb: 0.25 }}
+                    >
+                      {index > 0 ? <Divider /> : null}
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        component="p"
+                        sx={sectionCaptionSx}
+                      >
+                        {sectionLabels![sectionKey!]}
+                      </Typography>
+                    </Stack>
+                  ) : null}
+                  <ListRowStack
+                    sx={{
+                      ...(resolveRowBorderColor
+                        ? { borderColor: resolveRowBorderColor(row) }
+                        : {}),
+                      ...(inactive
+                        ? { opacity: 0.45 }
+                        : {}),
+                    }}
+                  >
                 <ListRowPrimaryStack
                   direction={renderRowSubtitle ? 'row' : 'column'}
                   spacing={renderRowSubtitle ? 1 : 0.25}
@@ -245,7 +333,9 @@ function NameListCard({
                   </span>
                 </Tooltip>
               </ListRowStack>
-            ))}
+                </Fragment>
+              )
+            })}
           </ListRowsStack>
         )}
       </ListCardContent>
@@ -328,6 +418,64 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
 
   const { record, participants, wins, accountId, chatRollId, envelope } = props
   const readOnly = isChatRollReadOnly(record)
+
+  const participantsForDisplay = useMemo(
+    () => sortChatRollParticipantsForDisplay(participants),
+    [participants],
+  )
+
+  const eligibleParticipantCount = useMemo(
+    () =>
+      participants.filter((participant) => participant.isEligibleForRoll !== false)
+        .length,
+    [participants],
+  )
+
+  const isParticipantInactive = (participantId: number) =>
+    participants.find((participant) => participant.id === participantId)
+      ?.isEligibleForRoll === false
+
+  const participantActiveCount = useMemo(
+    () =>
+      participantsForDisplay.filter(
+        (participant) => participant.isEligibleForRoll !== false,
+      ).length,
+    [participantsForDisplay],
+  )
+
+  const participantInactiveCount = useMemo(
+    () => participantsForDisplay.length - participantActiveCount,
+    [participantsForDisplay, participantActiveCount],
+  )
+
+  const winsForDisplay = useMemo(
+    () => sortChatRollWinsForDisplay(wins),
+    [wins],
+  )
+
+  const winnerSectionCounts = useMemo(() => {
+    const counts = { confirmed: 0, pending: 0, no_response: 0 }
+    for (const win of winsForDisplay) {
+      counts[getChatRollWinSectionKey(win.responseStatus)] += 1
+    }
+    return counts
+  }, [winsForDisplay])
+
+  const winnerSectionLabels = useMemo(
+    () => ({
+      confirmed: t('chatRoll.winnersSectionConfirmed', {
+        count: winnerSectionCounts.confirmed,
+      }),
+      pending: t('chatRoll.winnersSectionAwaiting', {
+        count: winnerSectionCounts.pending,
+      }),
+      no_response: t('chatRoll.winnersSectionNoResponse', {
+        count: winnerSectionCounts.no_response,
+      }),
+    }),
+    [t, winnerSectionCounts],
+  )
+
   const canMutate = canMutateWithEntitlements(envelope)
 
   const settingsSaveMutation = usePatchChatRollSession(accountId, chatRollId)
@@ -591,7 +739,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
               onClick={handleRoll}
               disabled={
                 !canMutate ||
-                participants.length <= 1 ||
+                eligibleParticipantCount <= 1 ||
                 rollMutation.isPending ||
                 rollRevealOpen
               }
@@ -724,14 +872,25 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
         </Grid>
         <Grid size={{ xs: 12, lg: 3 }} sx={workspaceMainColumnSx(settingsExpanded)}>
           <NameListCard
-            title={t('chatRoll.participantsTitle', { count: participants.length })}
+            title={t('chatRoll.participantsTitle', {
+              count: participantsForDisplay.length,
+            })}
             icon={GroupIcon}
             emptyLabel={t('chatRoll.noParticipants')}
             removeAriaLabel={t('chatRoll.removeParticipant')}
-            rows={participants}
+            rows={participantsForDisplay}
+            isRowInactive={(row) => isParticipantInactive(row.id)}
+            activeSectionLabel={t('chatRoll.participantsActiveLabel', {
+              count: participantActiveCount,
+            })}
+            inactiveSectionLabel={t('chatRoll.participantsInactiveLabel', {
+              count: participantInactiveCount,
+            })}
             renderRowExtra={(row) =>
               renderParticipantExtra(
-                participants.find((participant) => participant.id === row.id)!,
+                participantsForDisplay.find(
+                  (participant) => participant.id === row.id,
+                )!,
               )
             }
             readOnly={readOnly}
@@ -754,9 +913,16 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
             iconVariant="primary"
             emptyLabel={t('chatRoll.noWinners')}
             removeAriaLabel={t('chatRoll.removeWinner')}
-            rows={wins}
+            rows={winsForDisplay}
+            getRowSectionKey={(row) => {
+              const win = winsForDisplay.find((entry) => entry.id === row.id)
+              return win
+                ? getChatRollWinSectionKey(win.responseStatus)
+                : 'confirmed'
+            }}
+            sectionLabels={winnerSectionLabels}
             renderRowSubtitle={(row) => {
-              const win = wins.find((entry) => entry.id === row.id)
+              const win = winsForDisplay.find((entry) => entry.id === row.id)
               if (!win) {
                 return null
               }
@@ -775,14 +941,14 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
               )
             }}
             renderRowExtra={(row) => {
-              const win = wins.find((entry) => entry.id === row.id)
+              const win = winsForDisplay.find((entry) => entry.id === row.id)
               return win ? <ChatRollWinResponseChip win={win} /> : null
             }}
             readOnly={readOnly}
             copyRowTooltip={t('table.copyNickname')}
             onCopyRow={(row) => handleCopyWinnerNick(row.displayName)}
             resolveRowBorderColor={(row) => {
-              const win = wins.find((entry) => entry.id === row.id)
+              const win = winsForDisplay.find((entry) => entry.id === row.id)
               return win ? getChatRollWinRowBorderColor(win, theme) : theme.palette.divider
             }}
             onClearAll={() =>
