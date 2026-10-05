@@ -9,7 +9,8 @@ import type { SelectChangeEvent } from '@mui/material/Select'
 import TranslateIcon from '@mui/icons-material/Translate'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { APP_LOCALES, LOCALE_FLAG, type AppLocale } from '@/i18n/app-locale'
+import { LocaleFlag } from '@/components/LocaleFlag'
+import { APP_LOCALES, type AppLocale } from '@/i18n/app-locale'
 import { useLocale } from '@/context/LocaleProvider'
 
 function LocaleOption({ code, label }: { code: AppLocale; label: string }) {
@@ -23,17 +24,7 @@ function LocaleOption({ code, label }: { code: AppLocale; label: string }) {
         minWidth: 0,
       }}
     >
-      <Box
-        component="span"
-        aria-hidden
-        sx={{
-          fontSize: '1.125rem',
-          lineHeight: 1,
-          flexShrink: 0,
-        }}
-      >
-        {LOCALE_FLAG[code]}
-      </Box>
+      <LocaleFlag locale={code} />
       <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {label}
       </Box>

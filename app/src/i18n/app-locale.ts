@@ -2,12 +2,6 @@ export const APP_LOCALES = ['en', 'ru'] as const
 
 export type AppLocale = (typeof APP_LOCALES)[number]
 
-/** Regional indicator emoji shown next to language names in the UI. */
-export const LOCALE_FLAG: Record<AppLocale, string> = {
-  en: '🇬🇧',
-  ru: '🇷🇺',
-}
-
 export const LOCALE_STORAGE_KEY = 'caz-locale'
 
 export function isAppLocale(value: unknown): value is AppLocale {

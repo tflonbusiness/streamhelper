@@ -6,8 +6,12 @@
   var TELEGRAM_SUPPORT_URL = 'https://t.me/' + TELEGRAM_SUPPORT_USERNAME
 
   var LOCALE_META = {
-    en: { flag: '🇬🇧', code: 'EN' },
-    ru: { flag: '🇷🇺', code: 'RU' },
+    en: { flagAsset: 'us', code: 'EN' },
+    ru: { flagAsset: 'ru', code: 'RU' },
+  }
+
+  function flagSrc(asset) {
+    return new URL('flags/' + asset + '.svg', window.location.href).href
   }
 
   var copy = {
@@ -347,7 +351,16 @@
       trigger.setAttribute('aria-label', strings.langSelectAria)
     }
     if (flagEl) {
-      flagEl.textContent = meta.flag
+      var img = flagEl.querySelector('img')
+      if (!img) {
+        flagEl.textContent = ''
+        img = document.createElement('img')
+        img.width = 20
+        img.height = 15
+        img.alt = ''
+        flagEl.appendChild(img)
+      }
+      img.src = flagSrc(meta.flagAsset)
     }
     if (codeEl) {
       codeEl.textContent = meta.code
