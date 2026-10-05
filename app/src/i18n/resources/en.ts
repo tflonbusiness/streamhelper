@@ -249,17 +249,17 @@ export const en = {
       'bonus-buy': {
         name: "Bonus Buy",
         description:
-          "When the stream runs for hours, help chat stay on your pace — engaged, not guessing from fragments."
+          "Track purchased slots, analyze multipliers, and pick the best slot by audience vote. Customize an OBS widget to show progress on stream and involve chat in the choice."
       },
       'prize-spin': {
         name: "Prize Wheel",
         description:
-          "Thank one viewer where everyone can see it — a shared highlight, not a private pick in chat."
+          "Interactive prize wheels with your own prize set — customize sectors and coefficients for your stream. Push the wheel via OBS in real time so viewers see every spin and result on overlay."
       },
       'chat-roll': {
         name: "Chat Roll",
         description:
-          "Giveaways your audience can believe in — open tension for viewers, less pressure on your team."
+          "Draw a winner in Kick chat with a keyword viewers type — transparent and live on stream. Flexible settings fit your format without extra work for your team."
       }
     }
   },

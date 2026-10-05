@@ -36,13 +36,13 @@
         'Each widget ships with its own OBS overlay. Configure once in the dashboard, paste the browser-source URL, and go live.',
       moduleBonusBuyTitle: 'Bonus Buy',
       moduleBonusBuyBody:
-        'Structured on-stream sessions with a live budget and round tracker. The overlay stays in sync so chat always sees where the run stands.',
+        'Track purchased slots, analyze multipliers, and pick the best slot by audience vote. Customize an OBS widget to show progress on stream and involve chat in the choice.',
       modulePrizeSpinTitle: 'Prize Wheel',
       modulePrizeSpinBody:
-        'Pick a chat nick and spin sectors you define — weights, colors, and prizes included. The result appears on your overlay in one reveal.',
+        'Interactive prize wheels with your own prize set — customize sectors and coefficients for your stream. Push the wheel via OBS in real time so viewers see every spin and result on overlay.',
       moduleChatRollTitle: 'Chat Roll',
       moduleChatRollBody:
-        'Giveaways driven by a chat keyword, with custom weights for roles and perks. One fair roll picks a winner and shows it on stream.',
+        'Draw a winner in Kick chat with a keyword viewers type — transparent and live on stream. Flexible settings fit your format without extra work for your team.',
       platformTitle: 'Built for stream production',
       platformObsTitle: 'OBS-ready widgets',
       platformObsBody:
@@ -160,13 +160,13 @@
         'У каждого виджета — свой оверлей для OBS. Настройте в панели, вставьте ссылку browser source и выходите в эфир.',
       moduleBonusBuyTitle: 'Bonus Buy',
       moduleBonusBuyBody:
-        'Структурированные сессии в эфире с бюджетом и счётчиком раундов. Оверлей синхронизируется с панелью — чат видит актуальный прогресс.',
+        'Статистика купленных слотов, анализ коэффициентов и выбор лучшего слота по голосованию зрителей. Настраиваемый виджет в OBS выводит прогресс в эфир и вовлекает чат в выбор.',
       modulePrizeSpinTitle: 'Prize Wheel',
       modulePrizeSpinBody:
-        'Выберите ник из чата и крутите сектора с вашими весами, цветами и призами. Итог — одним показом на оверлее для зрителей.',
+        'Интерактивное колёсо фортуны с индивидуальным набором призов — настраивайте сектора и коэффициенты под свой стрим. Выводите колесо через OBS в реальном времени: зрители видят спин и результат в одном кадре.',
       moduleChatRollTitle: 'Chat Roll',
       moduleChatRollBody:
-        'Розыгрыш по ключевому слову в чате и настраиваемые веса для ролей и привилегий. Один честный ролл — победитель сразу на стриме.',
+        'Розыгрыш победителя в чате Kick по заданному кодовому слову — прозрачно и прямо в эфире. Гибкие настройки подстраивают механику под формат стрима без лишней рутины для команды.',
       platformTitle: 'Создано для продакшена стрима',
       platformObsTitle: 'Виджеты для OBS',
       platformObsBody:
