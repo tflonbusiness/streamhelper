@@ -5,6 +5,7 @@ import {
   SettingsCardContent,
   WorkspaceListCard,
   WorkspaceListCardContent,
+  WorkspaceSectionHeader,
 } from '@/components/chat-roll/chatRollPageStyles'
 import { chatRollModule } from '@/components/chat-roll/session/chat-roll-session-utils'
 import {
@@ -18,7 +19,7 @@ import {
   ModulePageSectionChrome,
   ModulePageSections,
 } from '@/components/ModulePageSections'
-import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
+import { SessionPageBreadcrumbBar } from '@/components/session/SessionPageBreadcrumbBar'
 import { StyledSessionCard } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 
 const WorkspaceGrid = styled(Grid)(({ theme }) => chatRollSessionWorkspaceGridSx(theme))
@@ -64,14 +65,15 @@ function ChatSectionSkeleton() {
   return (
     <WorkspaceListCard elevation={0} sx={chatRollSessionWorkspaceCardSx}>
       <WorkspaceListCardContent>
-        <Skeleton variant="rounded" height={40} width="68%" animation="wave" />
+        <WorkspaceSectionHeader>
+          <Skeleton variant="rounded" height={40} width="68%" animation="wave" />
+        </WorkspaceSectionHeader>
         <Skeleton
           variant="rounded"
           animation="wave"
           sx={{
             flex: 1,
             minHeight: { xs: 280, lg: 0 },
-            mt: 2,
           }}
         />
       </WorkspaceListCardContent>
@@ -114,7 +116,7 @@ export const ChatRollSessionLoadingState = () => {
         }}
       >
         <ModulePageSectionChrome>
-          <ModuleSessionPageHeader module={chatRollModule} />
+          <SessionPageBreadcrumbBar module={chatRollModule} />
         </ModulePageSectionChrome>
         <ModulePageSectionChrome>
           <StyledSessionCard elevation={0}>

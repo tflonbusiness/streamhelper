@@ -3,7 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/components/PageHeader'
 import type { ModuleDefinition, ModuleIconVariant, ModulePageId } from '@/lib/modules'
 
-const SESSION_MODULE_PAGE_COPY: Record<
+type ModuleSessionPageHeaderProps = {
+  module: ModuleDefinition | undefined
+  action?: React.ReactNode
+  omitBreadcrumbBar?: boolean
+}
+
+export const MODULE_SESSION_PAGE_COPY: Record<
   ModulePageId,
   { titleKey: string; descriptionKey: string }
 > = {
@@ -21,14 +27,18 @@ const SESSION_MODULE_PAGE_COPY: Record<
   },
 }
 
-type ModuleSessionPageHeaderProps = {
-  module: ModuleDefinition | undefined
-  action?: React.ReactNode
+export function moduleSessionPageTitle(
+  module: ModuleDefinition,
+  t: (key: string) => string,
+) {
+  const copy = MODULE_SESSION_PAGE_COPY[module.id as ModulePageId]
+  return copy ? t(copy.titleKey) : ''
 }
 
 export function ModuleSessionPageHeader({
   module,
   action,
+  omitBreadcrumbBar = false,
 }: ModuleSessionPageHeaderProps) {
   const { t } = useTranslation()
 
@@ -36,7 +46,7 @@ export function ModuleSessionPageHeader({
     return null
   }
 
-  const copy = SESSION_MODULE_PAGE_COPY[module.id as ModulePageId]
+  const copy = MODULE_SESSION_PAGE_COPY[module.id as ModulePageId]
   const title = copy ? t(copy.titleKey) : ''
   const description = copy ? t(copy.descriptionKey) : undefined
 
@@ -51,6 +61,7 @@ export function ModuleSessionPageHeader({
       moduleSurface
       moduleId={module.id as ModulePageId}
       action={action}
+      omitBreadcrumbBar={omitBreadcrumbBar}
     />
   )
 }

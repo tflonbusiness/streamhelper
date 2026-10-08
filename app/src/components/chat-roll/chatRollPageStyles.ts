@@ -102,7 +102,7 @@ export const WorkspaceSectionHeader = styled(Box)(({ theme }) => ({
   paddingLeft: theme.spacing(2),
   paddingRight: theme.spacing(2),
   paddingBottom: theme.spacing(1.5),
-  marginBottom: theme.spacing(0.5),
+  marginBottom: theme.spacing(3),
   backgroundColor: theme.palette.background.paper,
   borderBottom: `1px solid ${theme.palette.divider}`,
   '& > div:first-of-type': {
@@ -131,7 +131,6 @@ export const ListTitle = styled(Typography)({
 })
 
 export const EmptyListText = styled(Typography)(({ theme }) => ({
-  paddingTop: theme.spacing(2),
   paddingBottom: theme.spacing(2),
 }))
 

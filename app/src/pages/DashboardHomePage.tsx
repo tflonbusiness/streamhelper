@@ -9,6 +9,7 @@ import { accountHasSubscriptionAccess } from '@/lib/account-subscription'
 import { KickChannelStatsSection } from '@/components/KickChannelStatsSection'
 import { PageHeader } from '@/components/PageHeader'
 import { useAuth } from '@/context/AuthContext'
+import { MODULE_PAGE_SECTION_SPACING } from '@/lib/module-page-layout'
 
 export function DashboardHomePage() {
   const { t } = useTranslation()
@@ -17,7 +18,7 @@ export function DashboardHomePage() {
   const hasSubscriptionAccess = accountHasSubscriptionAccess(user)
 
   return (
-    <Stack spacing={4} sx={{ pb: 2 }}>
+    <Stack spacing={MODULE_PAGE_SECTION_SPACING} sx={{ pb: 2 }}>
       <PageHeader
         title={t('dashboard.title')}
         description={t('dashboard.description')}

@@ -145,6 +145,8 @@ export const en = {
     clearNowPlayingAria: "Clear now playing for {{name}}",
     expandDetailsAria: "Expand details for {{title}}",
     collapseDetailsAria: "Collapse details for {{title}}",
+    collapseSessionHeader: "Collapse header",
+    expandSessionHeader: "Expand header",
     displayedRows: "{{from}}–{{to}} of {{count}}",
     displayedRowsMoreThan: "more than {{to}}"
   },
@@ -817,7 +819,8 @@ export const en = {
     winnerResponseNotRequired: "Chat response not required",
     winnerNoResponse: "No response",
     kickChatTitle: "Kick chat",
-    kickChatPopout: "Open popout",
+    collapseKickChatPanel: "Hide Kick chat panel",
+    expandKickChatPanel: "Show Kick chat panel",
     kickChatFrameTitle: "Kick chat for {{slug}}",
     kickChatNotConnectedBody:
       "Connect your Kick channel on the dashboard to preview chat here.",

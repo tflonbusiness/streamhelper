@@ -8,12 +8,12 @@ import {
   ModulePageSectionChrome,
   ModulePageSections,
 } from '@/components/ModulePageSections'
-import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { BonusBuyEditSessionDialog } from '@/components/bonus-buy/session/BonusBuyEditSessionDialog'
 import { BonusBuyArchiveSessionDialog } from '@/components/bonus-buy/session/BonusBuyArchiveSessionDialog'
 import { BonusBuySessionAddSlotSection } from '@/components/bonus-buy/session/BonusBuySessionAddSlotSection'
 import { BonusBuySessionErrorState } from '@/components/bonus-buy/session/BonusBuySessionErrorState'
 import { BonusBuySessionHeaderSection } from '@/components/bonus-buy/session/BonusBuySessionHeaderSection'
+import { SessionPageBreadcrumbBar } from '@/components/session/SessionPageBreadcrumbBar'
 import { SessionEntitlementNoticesSection } from '@/components/session/SessionEntitlementNoticesSection'
 import { BonusBuySessionLoadingState } from '@/components/bonus-buy/session/BonusBuySessionLoadingState'
 import { BonusBuySessionSlotsSection } from '@/components/bonus-buy/session/BonusBuySessionSlotsSection'
@@ -111,27 +111,29 @@ export const BonusBuySessionPage = () => {
     <ModulePageShell moduleId="bonus-buy" spacing={0}>
       <ModulePageSections>
         <ModulePageSectionChrome>
-          <ModuleSessionPageHeader module={bonusBuyModule} />
+          <SessionPageBreadcrumbBar module={bonusBuyModule} />
         </ModulePageSectionChrome>
-        <BonusBuySessionHeaderSection
-              record={record}
-              liveActionPending={goLiveMutation.isPending}
-              goLiveDisabled={!canGoLiveBonusBuySession(envelope)}
-              onGoLive={() => {
-                goLiveMutation.mutate(undefined, {
-                  onSuccess: () =>
-                    showSuccess(formatBonusBuyLiveSessionHint(t)),
-                  onError: (error) =>
-                    showError(
-                      error instanceof Error
-                        ? error.message
-                        : t('bonusBuy.couldNotGoLive'),
-                    ),
-                })
-              }}
-              onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
-              onOpenEditDialog={() => setEditSessionDialogOpen(true)}
-        />
+        <ModulePageSectionChrome>
+          <BonusBuySessionHeaderSection
+            record={record}
+            liveActionPending={goLiveMutation.isPending}
+            goLiveDisabled={!canGoLiveBonusBuySession(envelope)}
+            onGoLive={() => {
+              goLiveMutation.mutate(undefined, {
+                onSuccess: () =>
+                  showSuccess(formatBonusBuyLiveSessionHint(t)),
+                onError: (error) =>
+                  showError(
+                    error instanceof Error
+                      ? error.message
+                      : t('bonusBuy.couldNotGoLive'),
+                  ),
+              })
+            }}
+            onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
+            onOpenEditDialog={() => setEditSessionDialogOpen(true)}
+          />
+        </ModulePageSectionChrome>
         <SessionEntitlementNoticesSection
           envelope={envelope}
           module="bonusBuy"

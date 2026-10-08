@@ -53,6 +53,7 @@ import {
   useModeratorInviteLink,
   useRevokeModerator,
 } from '@/queries/use-team'
+import { MODULE_PAGE_SECTION_SPACING } from '@/lib/module-page-layout'
 import { cardSx, inputFieldSx, mutedChipSx, toneChipSx } from '@/theme/colors'
 
 const StyledFilterFormControl = styled(FormControl)({
@@ -450,7 +451,7 @@ export function TeamPage() {
   ]
 
   return (
-    <Stack spacing={4}>
+    <Stack spacing={MODULE_PAGE_SECTION_SPACING}>
       <PageHeader
         title={t('team.title')}
         description={t('team.description')}

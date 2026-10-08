@@ -9,12 +9,12 @@ import {
   ModulePageSectionChrome,
   ModulePageSections,
 } from '@/components/ModulePageSections'
-import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { MODULE_PAGE_SECTION_SPACING } from '@/lib/module-page-layout'
 import { PrizeSpinEditSessionDialog } from '@/components/prize-spin/session/PrizeSpinEditSessionDialog'
 import { PrizeSpinSessionArchiveDialog } from '@/components/prize-spin/session/PrizeSpinSessionArchiveDialog'
 import { PrizeSpinSessionErrorState } from '@/components/prize-spin/session/PrizeSpinSessionErrorState'
 import { PrizeSpinSessionHeaderSection } from '@/components/prize-spin/session/PrizeSpinSessionHeaderSection'
+import { SessionPageBreadcrumbBar } from '@/components/session/SessionPageBreadcrumbBar'
 import { SessionEntitlementNoticesSection } from '@/components/session/SessionEntitlementNoticesSection'
 import { PrizeSpinSessionLoadingState } from '@/components/prize-spin/session/PrizeSpinSessionLoadingState'
 import { PrizeSpinSessionSectorsSection } from '@/components/prize-spin/session/PrizeSpinSessionSectorsSection'
@@ -101,30 +101,32 @@ export const PrizeSpinSessionPage = () => {
     <ModulePageShell moduleId="prize-spin" spacing={0}>
       <ModulePageSections>
         <ModulePageSectionChrome>
-          <ModuleSessionPageHeader module={prizeSpinModule} />
+          <SessionPageBreadcrumbBar module={prizeSpinModule} />
         </ModulePageSectionChrome>
-        <PrizeSpinSessionHeaderSection
-              accountId={accountId}
-              prizeSpinId={prizeSpinId}
-              record={record}
-              wins={wins}
-              liveActionPending={goLiveMutation.isPending}
-              goLiveDisabled={!canGoLivePrizeSpinSession(envelope)}
-              onGoLive={() => {
-                goLiveMutation.mutate(undefined, {
-                  onSuccess: () =>
-                    showSuccess(formatPrizeSpinLiveSessionHint(t)),
-                  onError: (error) =>
-                    showError(
-                      error instanceof Error
-                        ? error.message
-                        : t('prizeSpin.couldNotGoLive'),
-                    ),
-                })
-              }}
-              onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
-              onOpenEditDialog={() => setEditSessionDialogOpen(true)}
-        />
+        <ModulePageSectionChrome>
+          <PrizeSpinSessionHeaderSection
+            accountId={accountId}
+            prizeSpinId={prizeSpinId}
+            record={record}
+            wins={wins}
+            liveActionPending={goLiveMutation.isPending}
+            goLiveDisabled={!canGoLivePrizeSpinSession(envelope)}
+            onGoLive={() => {
+              goLiveMutation.mutate(undefined, {
+                onSuccess: () =>
+                  showSuccess(formatPrizeSpinLiveSessionHint(t)),
+                onError: (error) =>
+                  showError(
+                    error instanceof Error
+                      ? error.message
+                      : t('prizeSpin.couldNotGoLive'),
+                  ),
+              })
+            }}
+            onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
+            onOpenEditDialog={() => setEditSessionDialogOpen(true)}
+          />
+        </ModulePageSectionChrome>
         <SessionEntitlementNoticesSection
           envelope={envelope}
           module="prizeSpin"

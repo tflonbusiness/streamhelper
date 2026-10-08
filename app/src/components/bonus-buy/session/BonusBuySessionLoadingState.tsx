@@ -5,7 +5,7 @@ import {
   ModulePageSectionChrome,
   ModulePageSections,
 } from '@/components/ModulePageSections'
-import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
+import { SessionPageBreadcrumbBar } from '@/components/session/SessionPageBreadcrumbBar'
 import { MODULE_PAGE_SECTION_SPACING } from '@/lib/module-page-layout'
 import { bonusBuyModule } from '@/components/bonus-buy/session/bonus-buy-session-utils'
 
@@ -22,7 +22,7 @@ export const BonusBuySessionLoadingState = () => {
     <ModulePageShell moduleId="bonus-buy" spacing={0}>
       <ModulePageSections>
         <ModulePageSectionChrome>
-          <ModuleSessionPageHeader module={bonusBuyModule} />
+          <SessionPageBreadcrumbBar module={bonusBuyModule} />
         </ModulePageSectionChrome>
         <ContentGrid container spacing={3}>
         <Grid size={{ xs: 12, lg: 9 }}>

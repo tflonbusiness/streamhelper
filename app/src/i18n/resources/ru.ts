@@ -145,6 +145,8 @@ export const ru = {
     clearNowPlayingAria: "Сбросить «сейчас играет» для {{name}}",
     expandDetailsAria: "Развернуть детали: {{title}}",
     collapseDetailsAria: "Свернуть детали: {{title}}",
+    collapseSessionHeader: "Свернуть шапку",
+    expandSessionHeader: "Развернуть шапку",
     displayedRows: "{{from}}–{{to}} из {{count}}",
     displayedRowsMoreThan: "более {{to}}"
   },
@@ -841,7 +843,8 @@ export const ru = {
     winnerResponseNotRequired: "Ответ в чате не требуется",
     winnerNoResponse: "Нет ответа",
     kickChatTitle: "Чат Kick",
-    kickChatPopout: "Открыть popout",
+    collapseKickChatPanel: "Свернуть панель чата Kick",
+    expandKickChatPanel: "Развернуть панель чата Kick",
     kickChatFrameTitle: "Чат Kick: {{slug}}",
     kickChatNotConnectedBody:
       "Подключите канал Kick на главной, чтобы видеть чат здесь.",

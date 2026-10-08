@@ -1,13 +1,17 @@
-import { Link, Skeleton } from '@mui/material'
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChatIcon from '@mui/icons-material/Chat'
-import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+import { Skeleton } from '@mui/material'
+import Tooltip from '@mui/material/Tooltip'
 import { styled } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import { KickChannelNotFoundError } from '@/api/kick-channel'
 import { SectionHeader } from '@/components/SectionHeader'
 import {
+  SettingsExpandButton,
+  SettingsHeaderActions,
   WorkspaceListCard,
   WorkspaceListCardContent,
+  WorkspaceSectionHeader,
 } from '@/components/chat-roll/chatRollPageStyles'
 import { chatRollSessionWorkspaceCardSx } from '@/components/chat-roll/session/chat-roll-session-workspace-layout'
 import { StatusAlert } from '@/components/StatusAlert'
@@ -15,6 +19,7 @@ import { useKickChannel } from '@/queries/use-kick-channel'
 
 type ChatRollKickChatSectionProps = {
   accountId: number
+  onCollapse: () => void
 }
 
 const CHAT_FRAME_MIN_HEIGHT_MOBILE = 280
@@ -42,22 +47,16 @@ const ChatFrame = styled('iframe')({
   border: 'none',
 })
 
-const PopoutLink = styled(Link)(({ theme }) => ({
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: theme.spacing(0.5),
-  fontSize: theme.typography.pxToRem(13),
-  fontWeight: 500,
-}))
-
 function kickPopoutChatUrl(slug: string) {
   return `https://kick.com/popout/${encodeURIComponent(slug)}/chat`
 }
 
 export function ChatRollKickChatSection({
   accountId,
+  onCollapse,
 }: ChatRollKickChatSectionProps) {
   const { t } = useTranslation()
+  const kickChatTitle = t('chatRoll.kickChatTitle')
   const { data: channel, isLoading, error } = useKickChannel(accountId)
 
   const notFound = error instanceof KickChannelNotFoundError
@@ -66,25 +65,29 @@ export function ChatRollKickChatSection({
   return (
     <WorkspaceListCard elevation={0} sx={chatRollSessionWorkspaceCardSx}>
       <WorkspaceListCardContent>
-        <SectionHeader
-          title={t('chatRoll.kickChatTitle')}
-          icon={ChatIcon}
-          iconVariant="info"
-          action={
-            slug ? (
-              <PopoutLink
-                href={kickPopoutChatUrl(slug)}
-                target="_blank"
-                rel="noopener noreferrer"
-                underline="hover"
-                color="primary"
-              >
-                {t('chatRoll.kickChatPopout')}
-                <OpenInNewIcon sx={{ fontSize: 16 }} aria-hidden />
-              </PopoutLink>
-            ) : null
-          }
-        />
+        <WorkspaceSectionHeader>
+          <SectionHeader
+            title={t('chatRoll.kickChatTitle')}
+            icon={ChatIcon}
+            iconVariant="info"
+            showDivider={false}
+            action={
+              <SettingsHeaderActions>
+                <Tooltip title={t('chatRoll.collapseKickChatPanel')}>
+                  <SettingsExpandButton
+                    onClick={onCollapse}
+                    aria-label={t('common.collapseDetailsAria', {
+                      title: kickChatTitle,
+                    })}
+                    aria-expanded={true}
+                  >
+                    <ChevronLeftIcon fontSize="small" aria-hidden />
+                  </SettingsExpandButton>
+                </Tooltip>
+              </SettingsHeaderActions>
+            }
+          />
+        </WorkspaceSectionHeader>
 
         {isLoading ? (
           <Skeleton

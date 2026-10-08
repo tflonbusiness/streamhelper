@@ -5,7 +5,7 @@ import {
   ModulePageSectionChrome,
   ModulePageSections,
 } from '@/components/ModulePageSections'
-import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
+import { SessionPageBreadcrumbBar } from '@/components/session/SessionPageBreadcrumbBar'
 import { MODULE_PAGE_SECTION_SPACING } from '@/lib/module-page-layout'
 import { prizeSpinModule } from '@/components/prize-spin/session/prize-spin-session-utils'
 
@@ -22,7 +22,7 @@ export const PrizeSpinSessionLoadingState = () => {
     <ModulePageShell moduleId="prize-spin" spacing={0}>
       <ModulePageSections>
         <ModulePageSectionChrome>
-          <ModuleSessionPageHeader module={prizeSpinModule} />
+          <SessionPageBreadcrumbBar module={prizeSpinModule} />
         </ModulePageSectionChrome>
         <ContentGrid container spacing={3}>
           <Grid size={{ xs: 12, lg: 9 }}>

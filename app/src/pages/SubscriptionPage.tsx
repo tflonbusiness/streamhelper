@@ -7,6 +7,7 @@ import { SubscriptionTrialReminder } from '@/components/SubscriptionTrialReminde
 import { TelegramActivationNotice } from '@/components/TelegramActivationNotice'
 import { useAuth } from '@/context/AuthContext'
 import { accountHasSubscriptionAccess } from '@/lib/account-subscription'
+import { MODULE_PAGE_SECTION_SPACING } from '@/lib/module-page-layout'
 
 export function SubscriptionPage() {
   const { t } = useTranslation()
@@ -14,7 +15,7 @@ export function SubscriptionPage() {
   const hasAccess = accountHasSubscriptionAccess(user)
 
   return (
-    <Stack spacing={4}>
+    <Stack spacing={MODULE_PAGE_SECTION_SPACING}>
       <PageHeader
         title={t('subscription.title')}
         description={

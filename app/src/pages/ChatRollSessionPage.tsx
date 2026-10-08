@@ -53,6 +53,8 @@ import { ChatRollEditSessionDialog } from '@/components/chat-roll/session/ChatRo
 import { ChatRollSessionArchiveDialog } from '@/components/chat-roll/session/ChatRollSessionArchiveDialog'
 import { ChatRollSessionErrorState } from '@/components/chat-roll/session/ChatRollSessionErrorState'
 import { ChatRollSessionHeaderSection } from '@/components/chat-roll/session/ChatRollSessionHeaderSection'
+import { SessionPageBreadcrumbBar } from '@/components/session/SessionPageBreadcrumbBar'
+import { ChatRollKickChatCollapsedRail } from '@/components/chat-roll/session/ChatRollKickChatCollapsedRail'
 import { ChatRollKickChatSection } from '@/components/chat-roll/session/ChatRollKickChatSection'
 import { ChatRollWinResponseChip } from '@/components/chat-roll/session/ChatRollWinResponseChip'
 import { ChatRollWinnerNickTooltipContent } from '@/components/chat-roll/session/ChatRollWinnerNickTooltipContent'
@@ -79,7 +81,6 @@ import {
   ModulePageSectionChrome,
   ModulePageSections,
 } from '@/components/ModulePageSections'
-import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { SessionEntitlementNoticesSection } from '@/components/session/SessionEntitlementNoticesSection'
 import { SectionHeader } from '@/components/SectionHeader'
 import {
@@ -122,21 +123,25 @@ import {
 
 const WorkspaceGrid = styled(Grid)(({ theme }) => chatRollSessionWorkspaceGridSx(theme))
 
-function workspaceMainColumnSx(settingsExpanded: boolean, theme: Theme) {
+function workspaceMainColumnSx(
+  settingsExpanded: boolean,
+  kickChatExpanded: boolean,
+  theme: Theme,
+) {
   return {
     ...chatRollSessionWorkspaceColumnSx(theme),
-    ...(settingsExpanded
-      ? {}
-      : {
+    ...(!settingsExpanded || !kickChatExpanded
+      ? {
           flex: { lg: 1 },
-        }),
+        }
+      : {}),
   }
 }
 
-function settingsColumnSx(settingsExpanded: boolean, theme: Theme) {
+function collapsedPanelColumnSx(expanded: boolean, theme: Theme) {
   return {
     ...chatRollSessionWorkspaceColumnSx(theme),
-    ...(settingsExpanded
+    ...(expanded
       ? {}
       : {
           width: { lg: SETTINGS_PANEL_COLLAPSED_WIDTH },
@@ -144,6 +149,14 @@ function settingsColumnSx(settingsExpanded: boolean, theme: Theme) {
           flex: { lg: `0 0 ${SETTINGS_PANEL_COLLAPSED_WIDTH}px` },
         }),
   }
+}
+
+function settingsColumnSx(settingsExpanded: boolean, theme: Theme) {
+  return collapsedPanelColumnSx(settingsExpanded, theme)
+}
+
+function kickChatColumnSx(kickChatExpanded: boolean, theme: Theme) {
+  return collapsedPanelColumnSx(kickChatExpanded, theme)
 }
 
 function NameListCard({
@@ -697,6 +710,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
   }
 
   const [settingsExpanded, setSettingsExpanded] = useState(true)
+  const [kickChatExpanded, setKickChatExpanded] = useState(true)
 
   const settingsDisabled =
     readOnly || settingsSaveMutation.isPending || !canMutate
@@ -726,12 +740,12 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
         }}
       >
         <ModulePageSectionChrome>
-          <ModuleSessionPageHeader module={chatRollModule} />
+          <SessionPageBreadcrumbBar module={chatRollModule} />
         </ModulePageSectionChrome>
 
         <ModulePageSectionChrome>
-        <ChatRollSessionHeaderSection
-        record={record}
+          <ChatRollSessionHeaderSection
+            record={record}
         onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
         onOpenEditDialog={() => setEditSessionDialogOpen(true)}
         goLiveDisabled={!canGoLiveChatRollSession(envelope)}
@@ -797,7 +811,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
             </Button>
           ) : undefined
         }
-        />
+          />
         </ModulePageSectionChrome>
 
       {isOverLimit(envelope) ? (
@@ -898,10 +912,25 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
             />
           )}
         </Grid>
-        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceMainColumnSx(settingsExpanded, theme)}>
-          <ChatRollKickChatSection accountId={accountId} />
+        <Grid
+          size={{ xs: 12, lg: kickChatExpanded ? 3 : 'auto' }}
+          sx={kickChatColumnSx(kickChatExpanded, theme)}
+        >
+          {kickChatExpanded ? (
+            <ChatRollKickChatSection
+              accountId={accountId}
+              onCollapse={() => setKickChatExpanded(false)}
+            />
+          ) : (
+            <ChatRollKickChatCollapsedRail
+              onExpand={() => setKickChatExpanded(true)}
+            />
+          )}
         </Grid>
-        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceMainColumnSx(settingsExpanded, theme)}>
+        <Grid
+          size={{ xs: 12, lg: 3 }}
+          sx={workspaceMainColumnSx(settingsExpanded, kickChatExpanded, theme)}
+        >
           <NameListCard
             title={t('chatRoll.participantsTitle', {
               count: participantsForDisplay.length,
@@ -937,7 +966,10 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
             }
           />
         </Grid>
-        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceMainColumnSx(settingsExpanded, theme)}>
+        <Grid
+          size={{ xs: 12, lg: 3 }}
+          sx={workspaceMainColumnSx(settingsExpanded, kickChatExpanded, theme)}
+        >
           <NameListCard
             title={t('chatRoll.winnersTitle', { count: wins.length })}
             icon={EmojiEventsIcon}

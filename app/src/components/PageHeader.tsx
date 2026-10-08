@@ -44,10 +44,12 @@ type PageHeaderProps = {
   moduleId?: ModulePageId
   action?: React.ReactNode
   showBreadcrumbs?: boolean
+  /** When true, breadcrumb row is omitted (e.g. rendered by session chrome). */
+  omitBreadcrumbBar?: boolean
   className?: string
 }
 
-function PageHeaderBreadcrumbs() {
+export function PageHeaderBreadcrumbs() {
   const theme = useTheme()
   const { t } = useTranslation()
   const { pathname } = useLocation()
@@ -164,6 +166,7 @@ export function PageHeader({
   moduleId,
   action,
   showBreadcrumbs = true,
+  omitBreadcrumbBar = false,
   className,
 }: PageHeaderProps) {
   const theme = useTheme()
@@ -171,6 +174,7 @@ export function PageHeader({
   const { pathname } = useLocation()
   const { dynamicLabel } = useBreadcrumbDynamicLabel()
   const hasBreadcrumbs =
+    !omitBreadcrumbBar &&
     showBreadcrumbs &&
     getBreadcrumbAncestors(pathname, t, dynamicLabel).length > 0
   const moduleHeaderSx =
