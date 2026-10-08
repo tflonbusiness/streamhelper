@@ -1,11 +1,13 @@
-import { Stack } from '@mui/material'
-import { styled } from '@mui/material/styles'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatBonusBuyLiveSessionHint } from '@/components/bonus-buy/bonus-buy-page/bonus-buy-page-utils'
 import { useNotification } from '@/context/NotificationContext'
 import { useParams } from 'react-router-dom'
 import { ModulePageShell } from '@/components/ModulePageShell'
+import {
+  ModulePageSectionChrome,
+  ModulePageSections,
+} from '@/components/ModulePageSections'
 import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { BonusBuyEditSessionDialog } from '@/components/bonus-buy/session/BonusBuyEditSessionDialog'
 import { BonusBuyArchiveSessionDialog } from '@/components/bonus-buy/session/BonusBuyArchiveSessionDialog'
@@ -30,10 +32,6 @@ import {
   useBonusBuyWidget,
   useGoLiveBonusBuySession,
 } from '@/queries/use-bonus-buy'
-
-const MainColumnStack = styled(Stack)(({ theme }) => ({
-  gap: theme.spacing(3),
-}))
 
 export const BonusBuySessionPage = () => {
   const { t } = useTranslation()
@@ -110,10 +108,12 @@ export const BonusBuySessionPage = () => {
   const canAddSlot = canMutate && !isAtBonusBuySlotCap(envelope)
 
   return (
-    <ModulePageShell moduleId="bonus-buy">
-      <ModuleSessionPageHeader module={bonusBuyModule} />
-      <MainColumnStack>
-            <BonusBuySessionHeaderSection
+    <ModulePageShell moduleId="bonus-buy" spacing={0}>
+      <ModulePageSections>
+        <ModulePageSectionChrome>
+          <ModuleSessionPageHeader module={bonusBuyModule} />
+        </ModulePageSectionChrome>
+        <BonusBuySessionHeaderSection
               record={record}
               liveActionPending={goLiveMutation.isPending}
               goLiveDisabled={!canGoLiveBonusBuySession(envelope)}
@@ -131,31 +131,31 @@ export const BonusBuySessionPage = () => {
               }}
               onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
               onOpenEditDialog={() => setEditSessionDialogOpen(true)}
-            />
-            <SessionEntitlementNoticesSection
-              envelope={envelope}
-              module="bonusBuy"
-            />
-            <BonusBuySessionStatsSection
+        />
+        <SessionEntitlementNoticesSection
+          envelope={envelope}
+          module="bonusBuy"
+        />
+        <BonusBuySessionStatsSection
               record={record}
               stats={stats}
               averageXPositiveColor={widgetSettings?.positiveColor}
-            />
-            <BonusBuySessionAddSlotSection
+        />
+        <BonusBuySessionAddSlotSection
               accountId={accountId}
               bonusBuyId={bonusBuyId}
               record={record}
               canAddSlot={canAddSlot}
-            />
-            <BonusBuySessionSlotsSection
+        />
+        <BonusBuySessionSlotsSection
               accountId={accountId}
               bonusBuyId={bonusBuyId}
               currencyCode={record.currencyCode}
               slots={slots}
               widgetPositiveColor={widgetSettings?.positiveColor}
               widgetNegativeColor={widgetSettings?.negativeColor}
-            />
-      </MainColumnStack>
+        />
+      </ModulePageSections>
       <BonusBuyEditSessionDialog
         accountId={accountId}
         bonusBuyId={bonusBuyId}

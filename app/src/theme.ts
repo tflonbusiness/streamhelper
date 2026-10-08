@@ -1,5 +1,6 @@
 import { createTheme, alpha } from '@mui/material/styles'
 import { colors } from './theme/colors'
+import { appScrollbarGlobalStyles } from './theme/scrollbar'
 
 export { cardSx, colors, inputFieldSx, mutedChipSx, toneChipSx } from './theme/colors'
 
@@ -60,7 +61,7 @@ export const theme = createTheme({
   },
   components: {
     MuiCssBaseline: {
-      styleOverrides: {
+      styleOverrides: (theme) => ({
         body: {
           backgroundColor: colors.neutral[950],
         },
@@ -73,7 +74,8 @@ export const theme = createTheme({
             filter: 'invert(0.92)',
             opacity: 0.92,
           },
-      },
+        ...appScrollbarGlobalStyles(theme),
+      }),
     },
     MuiCard: {
       defaultProps: {

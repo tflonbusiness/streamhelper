@@ -15,6 +15,7 @@ import {
 } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { alpha, styled } from '@mui/material/styles'
+import { appScrollbarStyles } from '@/theme/scrollbar'
 
 export const PageStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(4),
@@ -75,6 +76,48 @@ export const ListCardContent = styled(CardContent)(({ theme }) => ({
   },
 }))
 
+/** Fills a session workspace column so list bodies can scroll inside a fixed height. */
+export const WorkspaceListCard = styled(ListCard)({
+  flex: 1,
+  width: '100%',
+  minWidth: 0,
+  minHeight: 0,
+  display: 'flex',
+  flexDirection: 'column',
+})
+
+export const WorkspaceListCardContent = styled(ListCardContent)({
+  flex: 1,
+  minHeight: 0,
+})
+
+/** Pinned section title row; stays visible while the body below scrolls. */
+export const WorkspaceSectionHeader = styled(Box)(({ theme }) => ({
+  flexShrink: 0,
+  position: 'sticky',
+  top: 0,
+  zIndex: 1,
+  marginLeft: theme.spacing(-2),
+  marginRight: theme.spacing(-2),
+  paddingLeft: theme.spacing(2),
+  paddingRight: theme.spacing(2),
+  paddingBottom: theme.spacing(1.5),
+  marginBottom: theme.spacing(0.5),
+  backgroundColor: theme.palette.background.paper,
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  '& > div:first-of-type': {
+    marginBottom: 0,
+  },
+}))
+
+export const WorkspaceSectionScrollBody = styled(Box)(({ theme }) => ({
+  flex: 1,
+  minHeight: 0,
+  overflowX: 'hidden',
+  overflowY: 'auto',
+  ...appScrollbarStyles(theme),
+}))
+
 export const ListHeaderStack = styled(Stack)(({ theme }) => ({
   flexDirection: 'row',
   alignItems: 'center',
@@ -96,7 +139,12 @@ export const ListRowsStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(1),
   flex: 1,
   minHeight: 0,
-  overflow: 'auto',
+  overflowX: 'hidden',
+  overflowY: 'auto',
+  ...appScrollbarStyles(theme),
+  [theme.breakpoints.down('lg')]: {
+    maxHeight: 360,
+  },
 }))
 
 export const ListRowStack = styled(Stack)(({ theme }) => ({
@@ -191,8 +239,10 @@ export const SettingsCard = styled(Card)(({ theme }) => ({
 export const SettingsCardContent = styled(CardContent)(({ theme }) => ({
   padding: theme.spacing(2),
   flex: 1,
+  minHeight: 0,
   display: 'flex',
   flexDirection: 'column',
+  overflow: 'hidden',
   '&:last-child': {
     paddingBottom: theme.spacing(2),
   },
@@ -429,7 +479,8 @@ export const SETTINGS_PANEL_COLLAPSED_WIDTH = 52
 
 export const SettingsCollapsedCard = styled(SettingsCard)({
   width: SETTINGS_PANEL_COLLAPSED_WIDTH,
-  flex: `0 0 ${SETTINGS_PANEL_COLLAPSED_WIDTH}px`,
+  maxWidth: SETTINGS_PANEL_COLLAPSED_WIDTH,
+  flex: '1 1 auto',
   alignSelf: 'stretch',
 })
 

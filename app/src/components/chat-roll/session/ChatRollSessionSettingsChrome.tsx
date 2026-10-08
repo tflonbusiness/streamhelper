@@ -8,6 +8,7 @@ import {
   SettingsHeaderActions,
   SettingsSaveButton,
   SettingsUnsavedAlert,
+  WorkspaceSectionHeader,
 } from '@/components/chat-roll/chatRollPageStyles'
 import { SectionHeader } from '@/components/SectionHeader'
 
@@ -27,11 +28,12 @@ export function ChatRollSessionSettingsChrome(
   const settingsTitle = t('chatRoll.settingsTitle')
 
   return (
-    <>
+    <WorkspaceSectionHeader>
       <SectionHeader
         title={settingsTitle}
         icon={SettingsIcon}
         iconVariant="info"
+        showDivider={false}
         action={
           <SettingsHeaderActions>
             <Tooltip title={t('chatRoll.collapseSettingsPanel')}>
@@ -64,6 +66,6 @@ export function ChatRollSessionSettingsChrome(
           {t('chatRoll.settingsUnsavedBanner')}
         </SettingsUnsavedAlert>
       ) : null}
-    </>
+    </WorkspaceSectionHeader>
   )
 }

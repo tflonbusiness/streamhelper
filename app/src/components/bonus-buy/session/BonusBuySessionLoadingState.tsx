@@ -1,7 +1,12 @@
 import { Grid, Skeleton, Stack } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { ModulePageShell } from '@/components/ModulePageShell'
+import {
+  ModulePageSectionChrome,
+  ModulePageSections,
+} from '@/components/ModulePageSections'
 import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
+import { MODULE_PAGE_SECTION_SPACING } from '@/lib/module-page-layout'
 import { bonusBuyModule } from '@/components/bonus-buy/session/bonus-buy-session-utils'
 
 const ContentGrid = styled(Grid)({
@@ -9,14 +14,17 @@ const ContentGrid = styled(Grid)({
 })
 
 const ColumnStack = styled(Stack)(({ theme }) => ({
-  gap: theme.spacing(3),
+  gap: theme.spacing(MODULE_PAGE_SECTION_SPACING),
 }))
 
 export const BonusBuySessionLoadingState = () => {
   return (
-    <ModulePageShell moduleId="bonus-buy">
-      <ModuleSessionPageHeader module={bonusBuyModule} />
-      <ContentGrid container spacing={3}>
+    <ModulePageShell moduleId="bonus-buy" spacing={0}>
+      <ModulePageSections>
+        <ModulePageSectionChrome>
+          <ModuleSessionPageHeader module={bonusBuyModule} />
+        </ModulePageSectionChrome>
+        <ContentGrid container spacing={3}>
         <Grid size={{ xs: 12, lg: 9 }}>
           <ColumnStack>
             <Skeleton variant="rounded" height={64} />
@@ -34,7 +42,8 @@ export const BonusBuySessionLoadingState = () => {
         <Grid size={{ xs: 12, lg: 3 }}>
           <Skeleton variant="rounded" height={180} />
         </Grid>
-      </ContentGrid>
+        </ContentGrid>
+      </ModulePageSections>
     </ModulePageShell>
   )
 }

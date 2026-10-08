@@ -7,6 +7,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
+import type { Theme } from '@mui/material/styles'
 import { styled, useTheme } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import DeleteIcon from '@mui/icons-material/Delete'
@@ -29,8 +30,10 @@ import { formatChatRollLiveSessionHint } from '@/components/chat-roll/chat-roll-
 import {
   CoefficientChip,
   EmptyListText,
-  ListCard,
-  ListCardContent,
+  WorkspaceListCard,
+  WorkspaceListCardContent,
+  WorkspaceSectionHeader,
+  WorkspaceSectionScrollBody,
   ListRowMeta,
   ListRowMetaTooltipWrap,
   ListRowName,
@@ -60,16 +63,30 @@ import { ChatRollSessionLoadingState } from '@/components/chat-roll/session/Chat
 import { ChatRollRollRevealOverlay } from '@/components/chat-roll/session/ChatRollRollRevealOverlay'
 import { ChatRollSessionUnsavedLeaveDialog } from '@/components/chat-roll/session/ChatRollSessionUnsavedLeaveDialog'
 import {
+  chatRollSessionPageShellSx,
+  chatRollSessionWorkspaceCardSx,
+  chatRollSessionWorkspaceColumnSx,
+  chatRollSessionWorkspaceGridSx,
+} from '@/components/chat-roll/session/chat-roll-session-workspace-layout'
+import {
   chatRollModule,
   getChatRollWinRowBorderColor,
   getChatRollWinSectionKey,
   sortChatRollWinsForDisplay,
 } from '@/components/chat-roll/session/chat-roll-session-utils'
 import { ModulePageShell } from '@/components/ModulePageShell'
+import {
+  ModulePageSectionChrome,
+  ModulePageSections,
+} from '@/components/ModulePageSections'
 import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
 import { SessionEntitlementNoticesSection } from '@/components/session/SessionEntitlementNoticesSection'
 import { SectionHeader } from '@/components/SectionHeader'
-import { canMutateWithEntitlements, canGoLiveChatRollSession } from '@/lib/entitlements'
+import {
+  canGoLiveChatRollSession,
+  canMutateWithEntitlements,
+  isOverLimit,
+} from '@/lib/entitlements'
 import type { EntitlementEnvelope } from '@/lib/entitlements'
 import { useAuth } from '@/context/AuthContext'
 import { useSetBreadcrumbLabel } from '@/context/BreadcrumbContext'
@@ -103,24 +120,11 @@ import {
   useRollChatRoll,
 } from '@/queries/use-chat-roll-session'
 
-const WORKSPACE_MIN_HEIGHT = 680
+const WorkspaceGrid = styled(Grid)(({ theme }) => chatRollSessionWorkspaceGridSx(theme))
 
-const WorkspaceGrid = styled(Grid)(({ theme }) => ({
-  alignItems: 'stretch',
-  [theme.breakpoints.up('lg')]: {
-    minHeight: WORKSPACE_MIN_HEIGHT,
-  },
-}))
-
-const workspaceColumnSx = {
-  display: 'flex',
-  minWidth: 0,
-  minHeight: 0,
-}
-
-function workspaceMainColumnSx(settingsExpanded: boolean) {
+function workspaceMainColumnSx(settingsExpanded: boolean, theme: Theme) {
   return {
-    ...workspaceColumnSx,
+    ...chatRollSessionWorkspaceColumnSx(theme),
     ...(settingsExpanded
       ? {}
       : {
@@ -129,9 +133,9 @@ function workspaceMainColumnSx(settingsExpanded: boolean) {
   }
 }
 
-function settingsColumnSx(settingsExpanded: boolean) {
+function settingsColumnSx(settingsExpanded: boolean, theme: Theme) {
   return {
-    ...workspaceColumnSx,
+    ...chatRollSessionWorkspaceColumnSx(theme),
     ...(settingsExpanded
       ? {}
       : {
@@ -193,26 +197,33 @@ function NameListCard({
   const sectionCaptionSx = { m: 0, fontWeight: 600 }
 
   return (
-    <ListCard elevation={0}>
-      <ListCardContent>
-        <SectionHeader
-          title={title}
-          icon={icon}
-          iconVariant={iconVariant}
-          action={
-            <Button
-              size="small"
-              variant="text"
-              onClick={onClearAll}
-              disabled={rows.length === 0 || readOnly}
-            >
-              {t('common.clearAll')}
-            </Button>
-          }
-        />
+    <WorkspaceListCard elevation={0} sx={chatRollSessionWorkspaceCardSx}>
+      <WorkspaceListCardContent>
+        <WorkspaceSectionHeader>
+          <SectionHeader
+            title={title}
+            icon={icon}
+            iconVariant={iconVariant}
+            showDivider={false}
+            action={
+              <Button
+                size="small"
+                variant="text"
+                onClick={onClearAll}
+                disabled={rows.length === 0 || readOnly}
+              >
+                {t('common.clearAll')}
+              </Button>
+            }
+          />
+        </WorkspaceSectionHeader>
 
         {rows.length === 0 ? (
-          <EmptyListText variant="body2" color="text.secondary">
+          <EmptyListText
+            variant="body2"
+            color="text.secondary"
+            sx={{ flex: 1, minHeight: 0 }}
+          >
             {emptyLabel}
           </EmptyListText>
         ) : (
@@ -338,8 +349,8 @@ function NameListCard({
             })}
           </ListRowsStack>
         )}
-      </ListCardContent>
-    </ListCard>
+      </WorkspaceListCardContent>
+    </WorkspaceListCard>
   )
 }
 
@@ -703,10 +714,23 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
     canMutate
 
   return (
-    <ModulePageShell moduleId="chat-roll">
-      <ModuleSessionPageHeader module={chatRollModule} />
+    <ModulePageShell moduleId="chat-roll" spacing={0} sx={chatRollSessionPageShellSx(theme)}>
+      <ModulePageSections
+        sx={{
+          flex: { lg: '1 1 0' },
+          minHeight: 0,
+          minWidth: 0,
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <ModulePageSectionChrome>
+          <ModuleSessionPageHeader module={chatRollModule} />
+        </ModulePageSectionChrome>
 
-      <ChatRollSessionHeaderSection
+        <ModulePageSectionChrome>
+        <ChatRollSessionHeaderSection
         record={record}
         onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
         onOpenEditDialog={() => setEditSessionDialogOpen(true)}
@@ -773,20 +797,25 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
             </Button>
           ) : undefined
         }
-      />
+        />
+        </ModulePageSectionChrome>
 
-      <SessionEntitlementNoticesSection
-        envelope={envelope}
-        module="chatRoll"
-      />
+      {isOverLimit(envelope) ? (
+        <ModulePageSectionChrome>
+          <SessionEntitlementNoticesSection
+            envelope={envelope}
+            module="chatRoll"
+          />
+        </ModulePageSectionChrome>
+      ) : null}
 
       <WorkspaceGrid container spacing={3}>
         <Grid
           size={{ xs: 12, lg: settingsExpanded ? 3 : 'auto' }}
-          sx={settingsColumnSx(settingsExpanded)}
+          sx={settingsColumnSx(settingsExpanded, theme)}
         >
           {settingsExpanded ? (
-            <SettingsCard elevation={0} sx={{ width: '100%', minHeight: 0 }}>
+            <SettingsCard elevation={0} sx={chatRollSessionWorkspaceCardSx}>
                 <SettingsCardContent>
                   <ChatRollSessionSettingsChrome
                     readOnly={readOnly}
@@ -797,8 +826,9 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
                     onCollapse={() => setSettingsExpanded(false)}
                   />
 
-                  <SettingsStack>
-                    <ChatRollSessionSettingsLeftPanel
+                  <WorkspaceSectionScrollBody>
+                    <SettingsStack>
+                      <ChatRollSessionSettingsLeftPanel
                       draft={draft}
                       keywordError={keywordError}
                       winnerResponseSecondsError={winnerResponseSecondsError}
@@ -852,8 +882,9 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
                           updateRoleWeightInDraft(current, roleId, raw),
                         )
                       }
-                    />
-                  </SettingsStack>
+                      />
+                    </SettingsStack>
+                  </WorkspaceSectionScrollBody>
                 </SettingsCardContent>
             </SettingsCard>
           ) : (
@@ -867,10 +898,10 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
             />
           )}
         </Grid>
-        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceMainColumnSx(settingsExpanded)}>
+        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceMainColumnSx(settingsExpanded, theme)}>
           <ChatRollKickChatSection accountId={accountId} />
         </Grid>
-        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceMainColumnSx(settingsExpanded)}>
+        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceMainColumnSx(settingsExpanded, theme)}>
           <NameListCard
             title={t('chatRoll.participantsTitle', {
               count: participantsForDisplay.length,
@@ -906,7 +937,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
             }
           />
         </Grid>
-        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceMainColumnSx(settingsExpanded)}>
+        <Grid size={{ xs: 12, lg: 3 }} sx={workspaceMainColumnSx(settingsExpanded, theme)}>
           <NameListCard
             title={t('chatRoll.winnersTitle', { count: wins.length })}
             icon={EmojiEventsIcon}
@@ -964,6 +995,7 @@ function ChatRollSessionWorkspace(props: ChatRollSessionWorkspaceProps) {
           />
         </Grid>
       </WorkspaceGrid>
+      </ModulePageSections>
 
       <ChatRollEditSessionDialog
         accountId={accountId}

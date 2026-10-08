@@ -6,9 +6,10 @@ import { useTranslation } from 'react-i18next'
 import { KickChannelNotFoundError } from '@/api/kick-channel'
 import { SectionHeader } from '@/components/SectionHeader'
 import {
-  ListCard,
-  ListCardContent,
+  WorkspaceListCard,
+  WorkspaceListCardContent,
 } from '@/components/chat-roll/chatRollPageStyles'
+import { chatRollSessionWorkspaceCardSx } from '@/components/chat-roll/session/chat-roll-session-workspace-layout'
 import { StatusAlert } from '@/components/StatusAlert'
 import { useKickChannel } from '@/queries/use-kick-channel'
 
@@ -16,30 +17,17 @@ type ChatRollKickChatSectionProps = {
   accountId: number
 }
 
-const CHAT_FRAME_MIN_HEIGHT = 680
-
-const ChatListCard = styled(ListCard)({
-  flex: 1,
-  width: '100%',
-  minWidth: 0,
-  minHeight: 0,
-  display: 'flex',
-  flexDirection: 'column',
-})
-
-const ChatListCardContent = styled(ListCardContent)({
-  flex: 1,
-  display: 'flex',
-  flexDirection: 'column',
-  minHeight: 0,
-})
+const CHAT_FRAME_MIN_HEIGHT_MOBILE = 280
 
 const ChatFrameWrap = styled('div')(({ theme }) => ({
   position: 'relative',
   flex: 1,
+  minHeight: 0,
   width: '100%',
-  minHeight: CHAT_FRAME_MIN_HEIGHT,
   maxWidth: '100%',
+  [theme.breakpoints.down('lg')]: {
+    minHeight: CHAT_FRAME_MIN_HEIGHT_MOBILE,
+  },
   borderRadius: theme.spacing(1),
   overflow: 'hidden',
   border: `1px solid ${theme.palette.divider}`,
@@ -76,8 +64,8 @@ export function ChatRollKickChatSection({
   const slug = channel?.slug?.trim() ?? ''
 
   return (
-    <ChatListCard elevation={0}>
-      <ChatListCardContent>
+    <WorkspaceListCard elevation={0} sx={chatRollSessionWorkspaceCardSx}>
+      <WorkspaceListCardContent>
         <SectionHeader
           title={t('chatRoll.kickChatTitle')}
           icon={ChatIcon}
@@ -102,7 +90,10 @@ export function ChatRollKickChatSection({
           <Skeleton
             variant="rounded"
             animation="wave"
-            sx={{ flex: 1, minHeight: CHAT_FRAME_MIN_HEIGHT }}
+            sx={{
+              flex: 1,
+              minHeight: { xs: CHAT_FRAME_MIN_HEIGHT_MOBILE, lg: 0 },
+            }}
           />
         ) : notFound || !slug ? (
           <StatusAlert tone="info" title={t('dashboard.kickNotConnected')}>
@@ -118,7 +109,7 @@ export function ChatRollKickChatSection({
             />
           </ChatFrameWrap>
         )}
-      </ChatListCardContent>
-    </ChatListCard>
+      </WorkspaceListCardContent>
+    </WorkspaceListCard>
   )
 }

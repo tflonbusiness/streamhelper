@@ -11,6 +11,7 @@ import {
   SettingsSaveButton,
 } from '@/components/chat-roll/chatRollPageStyles'
 import { IconTile } from '@/components/IconTile'
+import { chatRollSessionWorkspaceCardSx } from '@/components/chat-roll/session/chat-roll-session-workspace-layout'
 
 type ChatRollSessionSettingsCollapsedRailProps = {
   readOnly: boolean
@@ -28,7 +29,7 @@ export function ChatRollSessionSettingsCollapsedRail(
   const settingsTitle = t('chatRoll.settingsTitle')
 
   return (
-    <SettingsCollapsedCard elevation={0}>
+    <SettingsCollapsedCard elevation={0} sx={chatRollSessionWorkspaceCardSx}>
       <SettingsCollapsedRail>
         <Tooltip title={t('chatRoll.expandSettingsPanel')}>
           <SettingsExpandButton

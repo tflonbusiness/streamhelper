@@ -1,7 +1,12 @@
 import { Grid, Skeleton, Stack } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { ModulePageShell } from '@/components/ModulePageShell'
+import {
+  ModulePageSectionChrome,
+  ModulePageSections,
+} from '@/components/ModulePageSections'
 import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
+import { MODULE_PAGE_SECTION_SPACING } from '@/lib/module-page-layout'
 import { prizeSpinModule } from '@/components/prize-spin/session/prize-spin-session-utils'
 
 const ContentGrid = styled(Grid)({
@@ -9,37 +14,41 @@ const ContentGrid = styled(Grid)({
 })
 
 const ColumnStack = styled(Stack)(({ theme }) => ({
-  gap: theme.spacing(3),
+  gap: theme.spacing(MODULE_PAGE_SECTION_SPACING),
 }))
 
 export const PrizeSpinSessionLoadingState = () => {
   return (
-    <ModulePageShell moduleId="prize-spin">
-      <ModuleSessionPageHeader module={prizeSpinModule} />
-      <ContentGrid container spacing={3}>
-        <Grid size={{ xs: 12, lg: 9 }}>
-          <ColumnStack>
-            <Skeleton variant="rounded" height={64} />
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, lg: 7 }}>
-                <ColumnStack>
-                  <Skeleton variant="rounded" height={120} />
-                  <Skeleton variant="rounded" height={280} />
-                </ColumnStack>
+    <ModulePageShell moduleId="prize-spin" spacing={0}>
+      <ModulePageSections>
+        <ModulePageSectionChrome>
+          <ModuleSessionPageHeader module={prizeSpinModule} />
+        </ModulePageSectionChrome>
+        <ContentGrid container spacing={3}>
+          <Grid size={{ xs: 12, lg: 9 }}>
+            <ColumnStack>
+              <Skeleton variant="rounded" height={64} />
+              <Grid container spacing={3}>
+                <Grid size={{ xs: 12, lg: 7 }}>
+                  <ColumnStack>
+                    <Skeleton variant="rounded" height={120} />
+                    <Skeleton variant="rounded" height={280} />
+                  </ColumnStack>
+                </Grid>
+                <Grid size={{ xs: 12, lg: 5 }}>
+                  <ColumnStack>
+                    <Skeleton variant="rounded" height={160} />
+                    <Skeleton variant="rounded" height={280} />
+                  </ColumnStack>
+                </Grid>
               </Grid>
-              <Grid size={{ xs: 12, lg: 5 }}>
-                <ColumnStack>
-                  <Skeleton variant="rounded" height={160} />
-                  <Skeleton variant="rounded" height={280} />
-                </ColumnStack>
-              </Grid>
-            </Grid>
-          </ColumnStack>
-        </Grid>
-        <Grid size={{ xs: 12, lg: 3 }}>
-          <Skeleton variant="rounded" height={180} />
-        </Grid>
-      </ContentGrid>
+            </ColumnStack>
+          </Grid>
+          <Grid size={{ xs: 12, lg: 3 }}>
+            <Skeleton variant="rounded" height={180} />
+          </Grid>
+        </ContentGrid>
+      </ModulePageSections>
     </ModulePageShell>
   )
 }

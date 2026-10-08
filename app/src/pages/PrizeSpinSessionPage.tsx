@@ -5,7 +5,12 @@ import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { isPrizeSpinReadOnly } from '@/api/prize-spin'
 import { ModulePageShell } from '@/components/ModulePageShell'
+import {
+  ModulePageSectionChrome,
+  ModulePageSections,
+} from '@/components/ModulePageSections'
 import { ModuleSessionPageHeader } from '@/components/ModuleSessionPageHeader'
+import { MODULE_PAGE_SECTION_SPACING } from '@/lib/module-page-layout'
 import { PrizeSpinEditSessionDialog } from '@/components/prize-spin/session/PrizeSpinEditSessionDialog'
 import { PrizeSpinSessionArchiveDialog } from '@/components/prize-spin/session/PrizeSpinSessionArchiveDialog'
 import { PrizeSpinSessionErrorState } from '@/components/prize-spin/session/PrizeSpinSessionErrorState'
@@ -31,12 +36,8 @@ import {
   usePrizeSpinSession,
 } from '@/queries/use-prize-spin-session'
 
-const MainColumnStack = styled(Stack)(({ theme }) => ({
-  gap: theme.spacing(3),
-}))
-
 const WorkspaceColumnStack = styled(Stack)(({ theme }) => ({
-  gap: theme.spacing(3),
+  gap: theme.spacing(MODULE_PAGE_SECTION_SPACING),
 }))
 
 export const PrizeSpinSessionPage = () => {
@@ -97,10 +98,12 @@ export const PrizeSpinSessionPage = () => {
   const editingDisabled = readOnly || !canMutate
 
   return (
-    <ModulePageShell moduleId="prize-spin">
-      <ModuleSessionPageHeader module={prizeSpinModule} />
-      <MainColumnStack>
-            <PrizeSpinSessionHeaderSection
+    <ModulePageShell moduleId="prize-spin" spacing={0}>
+      <ModulePageSections>
+        <ModulePageSectionChrome>
+          <ModuleSessionPageHeader module={prizeSpinModule} />
+        </ModulePageSectionChrome>
+        <PrizeSpinSessionHeaderSection
               accountId={accountId}
               prizeSpinId={prizeSpinId}
               record={record}
@@ -121,12 +124,12 @@ export const PrizeSpinSessionPage = () => {
               }}
               onOpenArchiveDialog={() => setArchiveSessionDialogOpen(true)}
               onOpenEditDialog={() => setEditSessionDialogOpen(true)}
-            />
-            <SessionEntitlementNoticesSection
-              envelope={envelope}
-              module="prizeSpin"
-            />
-            <Grid container spacing={3} sx={{ alignItems: 'stretch' }}>
+        />
+        <SessionEntitlementNoticesSection
+          envelope={envelope}
+          module="prizeSpin"
+        />
+        <Grid container spacing={3} sx={{ alignItems: 'stretch' }}>
               <Grid size={{ xs: 12, lg: 7 }}>
                 <WorkspaceColumnStack>
                   <PrizeSpinSessionSpinSection
@@ -156,8 +159,8 @@ export const PrizeSpinSessionPage = () => {
                   />
                 </WorkspaceColumnStack>
               </Grid>
-            </Grid>
-      </MainColumnStack>
+        </Grid>
+      </ModulePageSections>
       <PrizeSpinEditSessionDialog
         accountId={accountId}
         prizeSpinId={prizeSpinId}
