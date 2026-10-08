@@ -18,9 +18,11 @@ import {
   sumWinPercent,
 } from '@/components/prize-spin/session/prize-spin-session-utils'
 import {
-  StyledSessionCard,
-  StyledSessionCardContent,
   StyledSectionDivider,
+  StyledSessionSectionChrome,
+  StyledSessionSectorsScrollableCard,
+  StyledSessionSectorsScrollableCardContent,
+  StyledSessionSectorsTableScrollBody,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { StatusAlert } from '@/components/StatusAlert'
 import { useNotification } from '@/context/NotificationContext'
@@ -143,76 +145,80 @@ export const PrizeSpinSessionSectorsSection = (
 
   return (
     <>
-      <StyledSessionCard elevation={0}>
-        <StyledSessionCardContent>
-          <SectionHeader
-            title={t('prizeSpin.sectorsTitle', { count: props.sectors.length })}
-            description={t('prizeSpin.sectorsDescription')}
-            icon={PieChartIcon}
-            iconVariant="purple"
-            showDivider={false}
-            action={
-              <SectionActions direction="row" spacing={1}>
-                <DistributeButton
-                  type="button"
-                  variant="outlined"
-                  size="small"
-                  startIcon={<BalanceIcon fontSize="small" aria-hidden />}
-                  loading={distributeSectorsMutation.isPending}
-                  loadingPosition="start"
-                  disabled={
-                    props.readOnly ||
-                    props.canMutate === false ||
-                    props.sectors.length === 0 ||
-                    distributeSectorsMutation.isPending
-                  }
-                  onClick={() => void handleDistributeSectorsEqually()}
-                >
-                  {t('prizeSpin.split100')}
-                </DistributeButton>
-                <Button
-                  type="button"
-                  variant="contained"
-                  size="small"
-                  startIcon={<AddIcon fontSize="small" aria-hidden />}
-                  disabled={
-                    props.readOnly ||
-                    props.canAddSector === false
-                  }
-                  onClick={() => setAddDialogOpen(true)}
-                >
-                  Add sector
-                </Button>
-              </SectionActions>
-            }
-          />
-          {props.sectors.length > 0 ? (
-            <WinPercentTotal variant="body1" $tone={winPercentTotalTone}>
-              {formatActiveWinPercentTotalLabel(totalWinPercent)}
-            </WinPercentTotal>
-          ) : null}
-          <StyledSectionDivider />
-          {props.sectors.length > 0 ? (
-            <PrizeSpinSectorInlineEditProvider
-              accountId={props.accountId}
-              prizeSpinId={props.prizeSpinId}
-              existingTotalWinPercent={totalWinPercent}
-              sectorsSnapshot={sectorsSnapshot}
-              readOnly={props.readOnly || props.canMutate === false}
-            >
-              <AppTable
-                columns={sectorColumns}
-                rows={props.sectors}
-                getRowKey={(sector) => sector.id}
-              />
-            </PrizeSpinSectorInlineEditProvider>
-          ) : (
-            <StatusAlert tone="info">
-              {t('prizeSpin.sectorsEmptyHint')}
-            </StatusAlert>
-          )}
-        </StyledSessionCardContent>
-      </StyledSessionCard>
+      <StyledSessionSectorsScrollableCard elevation={0}>
+        <StyledSessionSectorsScrollableCardContent>
+          <StyledSessionSectionChrome>
+            <SectionHeader
+              title={t('prizeSpin.sectorsTitle', { count: props.sectors.length })}
+              description={t('prizeSpin.sectorsDescription')}
+              icon={PieChartIcon}
+              iconVariant="purple"
+              showDivider={false}
+              action={
+                <SectionActions direction="row" spacing={1}>
+                  <DistributeButton
+                    type="button"
+                    variant="outlined"
+                    size="small"
+                    startIcon={<BalanceIcon fontSize="small" aria-hidden />}
+                    loading={distributeSectorsMutation.isPending}
+                    loadingPosition="start"
+                    disabled={
+                      props.readOnly ||
+                      props.canMutate === false ||
+                      props.sectors.length === 0 ||
+                      distributeSectorsMutation.isPending
+                    }
+                    onClick={() => void handleDistributeSectorsEqually()}
+                  >
+                    {t('prizeSpin.split100')}
+                  </DistributeButton>
+                  <Button
+                    type="button"
+                    variant="contained"
+                    size="small"
+                    startIcon={<AddIcon fontSize="small" aria-hidden />}
+                    disabled={
+                      props.readOnly ||
+                      props.canAddSector === false
+                    }
+                    onClick={() => setAddDialogOpen(true)}
+                  >
+                    Add sector
+                  </Button>
+                </SectionActions>
+              }
+            />
+            {props.sectors.length > 0 ? (
+              <WinPercentTotal variant="body1" $tone={winPercentTotalTone}>
+                {formatActiveWinPercentTotalLabel(totalWinPercent)}
+              </WinPercentTotal>
+            ) : null}
+            <StyledSectionDivider />
+          </StyledSessionSectionChrome>
+          <StyledSessionSectorsTableScrollBody>
+            {props.sectors.length > 0 ? (
+              <PrizeSpinSectorInlineEditProvider
+                accountId={props.accountId}
+                prizeSpinId={props.prizeSpinId}
+                existingTotalWinPercent={totalWinPercent}
+                sectorsSnapshot={sectorsSnapshot}
+                readOnly={props.readOnly || props.canMutate === false}
+              >
+                <AppTable
+                  columns={sectorColumns}
+                  rows={props.sectors}
+                  getRowKey={(sector) => sector.id}
+                />
+              </PrizeSpinSectorInlineEditProvider>
+            ) : (
+              <StatusAlert tone="info">
+                {t('prizeSpin.sectorsEmptyHint')}
+              </StatusAlert>
+            )}
+          </StyledSessionSectorsTableScrollBody>
+        </StyledSessionSectorsScrollableCardContent>
+      </StyledSessionSectorsScrollableCard>
 
       <PrizeSpinAddSectorDialog
         accountId={props.accountId}

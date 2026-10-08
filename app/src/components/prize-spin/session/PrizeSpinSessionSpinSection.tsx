@@ -10,8 +10,8 @@ import {
   sumWinPercent,
 } from '@/components/prize-spin/session/prize-spin-session-utils'
 import {
-  StyledSessionCard,
   StyledSessionCardContent,
+  StyledSessionIntrinsicHeightCard,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { StatusAlert, type StatusAlertTone } from '@/components/StatusAlert'
 import { useNotification } from '@/context/NotificationContext'
@@ -169,7 +169,7 @@ export const PrizeSpinSessionSpinSection = (
   }
 
   return (
-    <StyledSessionCard elevation={0}>
+    <StyledSessionIntrinsicHeightCard elevation={0}>
       <StyledSessionCardContent>
         <SectionHeader
           title={t('prizeSpin.spinForViewer')}
@@ -216,6 +216,6 @@ export const PrizeSpinSessionSpinSection = (
           ) : null}
         </SpinFormStack>
       </StyledSessionCardContent>
-    </StyledSessionCard>
+    </StyledSessionIntrinsicHeightCard>
   )
 }

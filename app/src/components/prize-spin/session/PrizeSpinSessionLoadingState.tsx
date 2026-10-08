@@ -29,17 +29,15 @@ export const PrizeSpinSessionLoadingState = () => {
             <ColumnStack>
               <Skeleton variant="rounded" height={64} />
               <Grid container spacing={3}>
-                <Grid size={{ xs: 12, lg: 7 }}>
-                  <ColumnStack>
-                    <Skeleton variant="rounded" height={120} />
-                    <Skeleton variant="rounded" height={280} />
-                  </ColumnStack>
-                </Grid>
                 <Grid size={{ xs: 12, lg: 5 }}>
                   <ColumnStack>
+                    <Skeleton variant="rounded" height={120} />
+                    <Skeleton variant="rounded" height={480} />
                     <Skeleton variant="rounded" height={160} />
-                    <Skeleton variant="rounded" height={280} />
                   </ColumnStack>
+                </Grid>
+                <Grid size={{ xs: 12, lg: 7 }}>
+                  <Skeleton variant="rounded" height={480} />
                 </Grid>
               </Grid>
             </ColumnStack>

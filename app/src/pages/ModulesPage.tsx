@@ -4,13 +4,14 @@ import SportsEsportsIcon from '@mui/icons-material/SportsEsports'
 import { useTranslation } from 'react-i18next'
 import { ModuleCatalogCard } from '@/components/ModuleCatalogCard'
 import { PageHeader } from '@/components/PageHeader'
+import { MODULE_PAGE_SECTION_SPACING } from '@/lib/module-page-layout'
 import { MODULE_CATALOG } from '@/lib/modules'
 
 export function ModulesPage() {
   const { t } = useTranslation()
 
   return (
-    <Stack spacing={4}>
+    <Stack spacing={MODULE_PAGE_SECTION_SPACING}>
       <PageHeader
         title={t('modules.pageTitle')}
         description={t('modules.pageDescription')}

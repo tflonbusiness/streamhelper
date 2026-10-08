@@ -9,8 +9,8 @@ import { buildWinnerSectorStats } from '@/components/prize-spin/session/prize-sp
 import { PrizeSpinSessionColorSwatch } from '@/components/prize-spin/session/PrizeSpinSessionColorSwatch'
 import { PrizeSpinSessionTruncatedText } from '@/components/prize-spin/session/PrizeSpinSessionTruncatedText'
 import {
-  StyledSessionCard,
   StyledSessionCardContent,
+  StyledSessionIntrinsicHeightCard,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { StatusAlert } from '@/components/StatusAlert'
 import { mutedChipSx } from '@/theme/colors'
@@ -84,7 +84,7 @@ export const PrizeSpinSessionStatsCard = (
   )
 
   return (
-    <StyledSessionCard elevation={0}>
+    <StyledSessionIntrinsicHeightCard elevation={0}>
       <StyledSessionCardContent>
         <SectionHeader
           title={t('prizeSpin.statsTitle')}
@@ -136,6 +136,6 @@ export const PrizeSpinSessionStatsCard = (
           </StatusAlert>
         )}
       </StyledSessionCardContent>
-    </StyledSessionCard>
+    </StyledSessionIntrinsicHeightCard>
   )
 }

@@ -10,8 +10,10 @@ import { PrizeSpinArchiveAllWinnersDialog } from '@/components/prize-spin/sessio
 import { PrizeSpinWinnerExpandedDetails } from '@/components/prize-spin/session/PrizeSpinWinnerExpandedDetails'
 import { buildPrizeSpinWinnerColumns } from '@/components/prize-spin/session/prizeSpinWinnerColumns'
 import {
-  StyledSessionCard,
-  StyledSessionCardContent,
+  StyledSessionScrollableCard,
+  StyledSessionScrollableCardContent,
+  StyledSessionSectionChrome,
+  StyledSessionWinnersTableScrollBody,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { StatusAlert } from '@/components/StatusAlert'
 import { useNotification } from '@/context/NotificationContext'
@@ -81,50 +83,54 @@ export const PrizeSpinSessionWinnersSection = (
 
   return (
     <>
-      <StyledSessionCard elevation={0}>
-        <StyledSessionCardContent>
-          <SectionHeader
-            title={t('prizeSpin.winnersHistoryTitle', { count: props.wins.length })}
-            description={t('prizeSpin.winnersHistoryDescription')}
-            icon={sectionTableIcon}
-            iconVariant="secondary"
-            action={
-              props.wins.length > 0 ? (
-                <Button
-                  type="button"
-                  variant="outlined"
-                  size="small"
-                  startIcon={<ArchiveIcon fontSize="small" aria-hidden />}
-                  disabled={props.readOnly}
-                  onClick={() => setArchiveAllDialogOpen(true)}
-                >
-                  {t('prizeSpin.archiveAll')}
-                </Button>
-              ) : undefined
-            }
-          />
-          {props.wins.length > 0 ? (
-            <AppTable
-              columns={winnerColumns}
-              rows={props.wins}
-              getRowKey={(win) => win.id}
-              expandable={{
-                isExpanded: (win) => expandedWinnerIds.has(win.id),
-                onToggle: (win) => toggleWinnerExpanded(win.id),
-                ariaLabel: (win) =>
-                  expandedWinnerIds.has(win.id)
-                    ? `Collapse details for ${win.participantNick}`
-                    : `Expand details for ${win.participantNick}`,
-                renderDetail: (win) => (
-                  <PrizeSpinWinnerExpandedDetails win={win} />
-                ),
-              }}
+      <StyledSessionScrollableCard elevation={0}>
+        <StyledSessionScrollableCardContent>
+          <StyledSessionSectionChrome>
+            <SectionHeader
+              title={t('prizeSpin.winnersHistoryTitle', { count: props.wins.length })}
+              description={t('prizeSpin.winnersHistoryDescription')}
+              icon={sectionTableIcon}
+              iconVariant="secondary"
+              action={
+                props.wins.length > 0 ? (
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    size="small"
+                    startIcon={<ArchiveIcon fontSize="small" aria-hidden />}
+                    disabled={props.readOnly}
+                    onClick={() => setArchiveAllDialogOpen(true)}
+                  >
+                    {t('prizeSpin.archiveAll')}
+                  </Button>
+                ) : undefined
+              }
             />
-          ) : (
-            <StatusAlert tone="info">{t('prizeSpin.noWinners')}</StatusAlert>
-          )}
-        </StyledSessionCardContent>
-      </StyledSessionCard>
+          </StyledSessionSectionChrome>
+          <StyledSessionWinnersTableScrollBody>
+            {props.wins.length > 0 ? (
+              <AppTable
+                columns={winnerColumns}
+                rows={props.wins}
+                getRowKey={(win) => win.id}
+                expandable={{
+                  isExpanded: (win) => expandedWinnerIds.has(win.id),
+                  onToggle: (win) => toggleWinnerExpanded(win.id),
+                  ariaLabel: (win) =>
+                    expandedWinnerIds.has(win.id)
+                      ? `Collapse details for ${win.participantNick}`
+                      : `Expand details for ${win.participantNick}`,
+                  renderDetail: (win) => (
+                    <PrizeSpinWinnerExpandedDetails win={win} />
+                  ),
+                }}
+              />
+            ) : (
+              <StatusAlert tone="info">{t('prizeSpin.noWinners')}</StatusAlert>
+            )}
+          </StyledSessionWinnersTableScrollBody>
+        </StyledSessionScrollableCardContent>
+      </StyledSessionScrollableCard>
 
       <PrizeSpinArchiveAllWinnersDialog
         accountId={props.accountId}

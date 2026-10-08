@@ -1,5 +1,10 @@
 import { Grid, Stack } from '@mui/material'
-import { styled } from '@mui/material/styles'
+import { styled, useTheme } from '@mui/material/styles'
+import {
+  prizeSpinSessionSectorsColumnSx,
+  prizeSpinSessionWorkspaceColumnSx,
+  prizeSpinSessionWorkspaceGridSx,
+} from '@/components/prize-spin/session/prize-spin-session-workspace-layout'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
@@ -29,6 +34,7 @@ import {
   canMutateWithEntitlements,
   canGoLivePrizeSpinSession,
   isAtPrizeSpinSectorCap,
+  isOverLimit,
 } from '@/lib/entitlements'
 import { formatPrizeSpinLiveSessionHint } from '@/components/prize-spin/prize-spin-page/prize-spin-page-utils'
 import {
@@ -38,6 +44,18 @@ import {
 
 const WorkspaceColumnStack = styled(Stack)(({ theme }) => ({
   gap: theme.spacing(MODULE_PAGE_SECTION_SPACING),
+  width: '100%',
+}))
+
+const SectorsColumnStack = styled(Stack)(({ theme }) => ({
+  gap: theme.spacing(MODULE_PAGE_SECTION_SPACING),
+  width: '100%',
+  flex: 1,
+  minHeight: 0,
+  [theme.breakpoints.up('lg')]: {
+    height: '100%',
+    alignSelf: 'stretch',
+  },
 }))
 
 export const PrizeSpinSessionPage = () => {
@@ -96,10 +114,11 @@ export const PrizeSpinSessionPage = () => {
   const canMutate = canMutateWithEntitlements(envelope)
   const canAddSector = canMutate && !isAtPrizeSpinSectorCap(envelope)
   const editingDisabled = readOnly || !canMutate
+  const theme = useTheme()
 
   return (
     <ModulePageShell moduleId="prize-spin" spacing={0}>
-      <ModulePageSections>
+      <ModulePageSections spacing={MODULE_PAGE_SECTION_SPACING} sx={{ pb: 2, width: '100%' }}>
         <ModulePageSectionChrome>
           <SessionPageBreadcrumbBar module={prizeSpinModule} />
         </ModulePageSectionChrome>
@@ -127,12 +146,19 @@ export const PrizeSpinSessionPage = () => {
             onOpenEditDialog={() => setEditSessionDialogOpen(true)}
           />
         </ModulePageSectionChrome>
-        <SessionEntitlementNoticesSection
-          envelope={envelope}
-          module="prizeSpin"
-        />
-        <Grid container spacing={3} sx={{ alignItems: 'stretch' }}>
-              <Grid size={{ xs: 12, lg: 7 }}>
+        {isOverLimit(envelope) ? (
+          <ModulePageSectionChrome>
+            <SessionEntitlementNoticesSection
+              envelope={envelope}
+              module="prizeSpin"
+            />
+          </ModulePageSectionChrome>
+        ) : null}
+        <Grid container spacing={3} sx={prizeSpinSessionWorkspaceGridSx(theme)}>
+              <Grid
+                size={{ xs: 12, lg: 5 }}
+                sx={prizeSpinSessionWorkspaceColumnSx(theme)}
+              >
                 <WorkspaceColumnStack>
                   <PrizeSpinSessionSpinSection
                     accountId={accountId}
@@ -140,6 +166,20 @@ export const PrizeSpinSessionPage = () => {
                     sectors={sectors}
                     readOnly={editingDisabled}
                   />
+                  <PrizeSpinSessionWinnersSection
+                    accountId={accountId}
+                    prizeSpinId={prizeSpinId}
+                    wins={wins}
+                    readOnly={readOnly}
+                  />
+                  <PrizeSpinSessionStatsCard wins={wins} sectors={sectors} />
+                </WorkspaceColumnStack>
+              </Grid>
+              <Grid
+                size={{ xs: 12, lg: 7 }}
+                sx={prizeSpinSessionSectorsColumnSx(theme)}
+              >
+                <SectorsColumnStack>
                   <PrizeSpinSessionSectorsSection
                     accountId={accountId}
                     prizeSpinId={prizeSpinId}
@@ -148,18 +188,7 @@ export const PrizeSpinSessionPage = () => {
                     canMutate={canMutate}
                     canAddSector={canAddSector}
                   />
-                </WorkspaceColumnStack>
-              </Grid>
-              <Grid size={{ xs: 12, lg: 5 }}>
-                <WorkspaceColumnStack>
-                  <PrizeSpinSessionStatsCard wins={wins} sectors={sectors} />
-                  <PrizeSpinSessionWinnersSection
-                    accountId={accountId}
-                    prizeSpinId={prizeSpinId}
-                    wins={wins}
-                    readOnly={readOnly}
-                  />
-                </WorkspaceColumnStack>
+                </SectorsColumnStack>
               </Grid>
         </Grid>
       </ModulePageSections>
