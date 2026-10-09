@@ -91,7 +91,6 @@ export function BonusBuyWidgetSlotList({
           <BonusBuyWidgetSlotRow
             key={`${autoScrollEnabled ? Math.floor(index / listSlots.length) : 0}-${slot.id}`}
             slot={slot}
-            index={index % listSlots.length}
             theme={theme}
             currencyCode={currencyCode}
           />

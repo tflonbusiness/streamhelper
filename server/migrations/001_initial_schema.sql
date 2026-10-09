@@ -87,6 +87,7 @@ CREATE TABLE bonus_buy_slot (
   multiplier          NUMERIC(10, 2),
   status              TEXT NOT NULL DEFAULT 'pending'
     CHECK (status IN ('pending', 'playing', 'archived')),
+  sort_order          INTEGER NOT NULL DEFAULT 1,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -95,7 +96,7 @@ CREATE UNIQUE INDEX idx_bonus_buy_slot_one_playing
   WHERE status = 'playing';
 
 CREATE INDEX idx_bonus_buy_slot_list
-  ON bonus_buy_slot (bonus_buy_id, created_at ASC)
+  ON bonus_buy_slot (bonus_buy_id, sort_order ASC, id ASC)
   WHERE status != 'archived';
 
 CREATE TABLE bonus_buy_widget_style_preset (

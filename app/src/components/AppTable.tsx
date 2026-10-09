@@ -10,9 +10,10 @@ import TableHead from '@mui/material/TableHead'
 import TablePagination from '@mui/material/TablePagination'
 import TableRow from '@mui/material/TableRow'
 import type { SxProps, Theme } from '@mui/material/styles'
-import { alpha, styled } from '@mui/material/styles'
+import { alpha, styled, useTheme } from '@mui/material/styles'
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import { Fragment } from 'react'
+import { Fragment, useRef, useState, type DragEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { colors } from '@/theme/colors'
 
@@ -40,6 +41,13 @@ export type AppTablePaginationConfig = {
   rowsPerPage: number
 }
 
+export type AppTableRowReorderConfig<T> = {
+  getRowId: (row: T) => number
+  onReorder: (orderedRows: T[]) => void
+  disabled?: boolean
+  dragHandleAriaLabel?: string
+}
+
 type AppTableProps<T> = {
   columns: AppTableColumn<T>[]
   rows: T[]
@@ -52,9 +60,11 @@ type AppTableProps<T> = {
   getRowSx?: (row: T) => SxProps<Theme> | undefined
   onRowClick?: (row: T) => void
   loading?: boolean
+  rowReorder?: AppTableRowReorderConfig<T>
 }
 
 const expandColumnWidth = 40
+const dragColumnWidth = 36
 
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   border: '1px solid',
@@ -156,6 +166,13 @@ const StyledExpandHeadCell = styled(StyledHeadCell)({
   paddingRight: 8,
 })
 
+const StyledDragHeadCell = styled(StyledHeadCell)({
+  width: dragColumnWidth,
+  minWidth: dragColumnWidth,
+  paddingLeft: 4,
+  paddingRight: 4,
+})
+
 const StyledDataRow = styled(TableRow)({
   transition: 'background-color 0.15s ease',
   '&:hover': {
@@ -190,6 +207,18 @@ const StyledExpandBodyCell = styled(StyledBodyCell)({
   paddingRight: 8,
 })
 
+const StyledDragBodyCell = styled(StyledBodyCell)({
+  width: dragColumnWidth,
+  minWidth: dragColumnWidth,
+  paddingLeft: 4,
+  paddingRight: 4,
+  color: colors.neutral[400],
+  cursor: 'grab',
+  '&:active': {
+    cursor: 'grabbing',
+  },
+})
+
 const StyledExpandButton = styled(IconButton, {
   shouldForwardProp: (prop) => prop !== 'expanded',
 })<{ expanded?: boolean }>(({ theme, expanded }) => ({
@@ -221,6 +250,73 @@ const StyledDetailPanel = styled(Box)(({ theme }) => ({
   borderColor: alpha(colors.neutral[100], 0.05),
 }))
 
+function draggingRowHighlightSx(theme: Theme): SxProps<Theme> {
+  const accent = theme.palette.success.main
+
+  return {
+    '& .MuiTableCell-root': {
+      backgroundColor: alpha(accent, 0.18),
+      borderTop: `2px solid ${accent}`,
+      borderBottom: `2px solid ${accent}`,
+      '&:first-of-type': {
+        borderLeft: `2px solid ${accent}`,
+      },
+      '&:last-of-type': {
+        borderRight: `2px solid ${accent}`,
+      },
+    },
+    position: 'relative',
+    zIndex: 1,
+    opacity: 0.92,
+  }
+}
+
+function setTableRowDragImage(
+  event: DragEvent<HTMLElement>,
+  accentColor: string,
+): HTMLElement | null {
+  const handle = event.currentTarget
+  const sourceRow = handle.closest('tr')
+  const sourceTable = handle.closest('table')
+  if (!sourceRow || !sourceTable) {
+    return null
+  }
+
+  const dragTable = document.createElement('table')
+  dragTable.style.position = 'fixed'
+  dragTable.style.top = '-10000px'
+  dragTable.style.left = '-10000px'
+  dragTable.style.pointerEvents = 'none'
+  dragTable.style.width = `${sourceRow.getBoundingClientRect().width}px`
+  dragTable.style.tableLayout = 'fixed'
+  dragTable.className = sourceTable.className
+
+  const dragRow = sourceRow.cloneNode(true) as HTMLTableRowElement
+  const dragFill = alpha(accentColor, 0.18)
+  const cells = Array.from(dragRow.cells)
+  cells.forEach((cell, index) => {
+    cell.style.backgroundColor = dragFill
+    cell.style.borderTop = `2px solid ${accentColor}`
+    cell.style.borderBottom = `2px solid ${accentColor}`
+    if (index === 0) {
+      cell.style.borderLeft = `2px solid ${accentColor}`
+    }
+    if (index === cells.length - 1) {
+      cell.style.borderRight = `2px solid ${accentColor}`
+    }
+  })
+  dragTable.appendChild(dragRow)
+  document.body.appendChild(dragTable)
+
+  const handleRect = handle.getBoundingClientRect()
+  const rowRect = sourceRow.getBoundingClientRect()
+  const offsetX = handleRect.left - rowRect.left + event.nativeEvent.offsetX
+  const offsetY = event.nativeEvent.offsetY
+
+  event.dataTransfer.setDragImage(dragTable, offsetX, offsetY)
+  return dragTable
+}
+
 const StyledTablePagination = styled(TablePagination)({
   border: 0,
   width: '100%',
@@ -247,9 +343,36 @@ export function AppTable<T>({
   getRowSx,
   onRowClick,
   loading = false,
+  rowReorder,
 }: AppTableProps<T>) {
   const { t } = useTranslation()
+  const theme = useTheme()
+  const [draggingRowId, setDraggingRowId] = useState<number | null>(null)
+  const [dragOverRowId, setDragOverRowId] = useState<number | null>(null)
+  const dragImageRef = useRef<HTMLElement | null>(null)
   const isEmpty = rows.length === 0
+  const reorderEnabled = rowReorder != null && !rowReorder.disabled
+
+  function reorderRows(dragId: number, targetId: number) {
+    if (!rowReorder || dragId === targetId) {
+      return
+    }
+
+    const fromIndex = rows.findIndex(
+      (row) => rowReorder.getRowId(row) === dragId,
+    )
+    const toIndex = rows.findIndex(
+      (row) => rowReorder.getRowId(row) === targetId,
+    )
+    if (fromIndex < 0 || toIndex < 0) {
+      return
+    }
+
+    const next = [...rows]
+    const [moved] = next.splice(fromIndex, 1)
+    next.splice(toIndex, 0, moved)
+    rowReorder.onReorder(next)
+  }
   const showPagination = pagination != null && pagination.count > 0
   const showFooter = Boolean(footer) || showPagination
 
@@ -271,6 +394,9 @@ export function AppTable<T>({
             {expandable ? (
               <col style={{ width: expandColumnWidth, minWidth: expandColumnWidth }} />
             ) : null}
+            {reorderEnabled ? (
+              <col style={{ width: dragColumnWidth, minWidth: dragColumnWidth }} />
+            ) : null}
             {columns.map((column) => (
               <col
                 key={column.id}
@@ -284,6 +410,7 @@ export function AppTable<T>({
           <TableHead>
             <StyledHeadRow>
               {expandable ? <StyledExpandHeadCell /> : null}
+              {reorderEnabled ? <StyledDragHeadCell aria-hidden /> : null}
               {columns.map((column) => (
                 <StyledHeadCell
                   key={column.id}
@@ -301,14 +428,71 @@ export function AppTable<T>({
               const rowKey = getRowKey(row)
               const expanded = expandable?.isExpanded(row) ?? false
               const rowSx = getRowSx?.(row)
+              const rowId = rowReorder?.getRowId(row)
+              const isDragging =
+                reorderEnabled &&
+                rowId !== undefined &&
+                draggingRowId === rowId
+              const isDragOver =
+                reorderEnabled &&
+                rowId !== undefined &&
+                dragOverRowId === rowId &&
+                draggingRowId !== rowId
 
               return (
                 <Fragment key={rowKey}>
                   <StyledDataRow
                     hover
-                    sx={rowSx}
+                    sx={
+                      isDragging
+                        ? ([
+                            ...(rowSx ? [rowSx] : []),
+                            draggingRowHighlightSx(theme),
+                          ] as SxProps<Theme>)
+                        : isDragOver
+                          ? ([
+                              ...(rowSx ? [rowSx] : []),
+                              {
+                                backgroundColor: alpha(colors.neutral[100], 0.08),
+                              },
+                            ] as SxProps<Theme>)
+                          : rowSx
+                    }
                     onClick={onRowClick ? () => onRowClick(row) : undefined}
                     style={onRowClick ? { cursor: 'pointer' } : undefined}
+                    onDragOver={
+                      reorderEnabled && rowId !== undefined
+                        ? (event) => {
+                            event.preventDefault()
+                            setDragOverRowId(rowId)
+                          }
+                        : undefined
+                    }
+                    onDrop={
+                      reorderEnabled && rowId !== undefined
+                        ? (event) => {
+                            event.preventDefault()
+                            const dragId = Number.parseInt(
+                              event.dataTransfer.getData('text/plain'),
+                              10,
+                            )
+                            if (Number.isFinite(dragId)) {
+                              reorderRows(dragId, rowId)
+                            }
+                            setDraggingRowId(null)
+                            setDragOverRowId(null)
+                          }
+                        : undefined
+                    }
+                    onDragLeave={
+                      reorderEnabled
+                        ? () => {
+                            if (dragOverRowId === rowId) {
+                              setDragOverRowId(null)
+                            }
+                          }
+                        : undefined
+                    }
                   >
                     {expandable ? (
                       <StyledExpandBodyCell>
@@ -328,6 +512,36 @@ export function AppTable<T>({
                         </StyledExpandButton>
                       </StyledExpandBodyCell>
                     ) : null}
+                    {reorderEnabled && rowId !== undefined ? (
+                      <StyledDragBodyCell
+                        draggable
+                        onDragStart={(event) => {
+                          event.dataTransfer.setData(
+                            'text/plain',
+                            String(rowId),
+                          )
+                          event.dataTransfer.effectAllowed = 'move'
+                          dragImageRef.current?.remove()
+                          dragImageRef.current = setTableRowDragImage(
+                            event,
+                            theme.palette.success.main,
+                          )
+                          setDraggingRowId(rowId)
+                        }}
+                        onDragEnd={() => {
+                          dragImageRef.current?.remove()
+                          dragImageRef.current = null
+                          setDraggingRowId(null)
+                          setDragOverRowId(null)
+                        }}
+                        aria-label={
+                          rowReorder?.dragHandleAriaLabel ??
+                          t('table.dragRowAria')
+                        }
+                      >
+                        <DragIndicatorIcon sx={{ fontSize: 18 }} aria-hidden />
+                      </StyledDragBodyCell>
+                    ) : null}
                     {columns.map((column) => (
                       <StyledBodyCell
                         key={column.id}
@@ -342,7 +556,13 @@ export function AppTable<T>({
                   </StyledDataRow>
                   {expandable && expanded ? (
                     <StyledDetailRow key={`${rowKey}-details`}>
-                      <StyledDetailCell colSpan={columns.length + 1}>
+                      <StyledDetailCell
+                        colSpan={
+                          columns.length +
+                          (expandable ? 1 : 0) +
+                          (reorderEnabled ? 1 : 0)
+                        }
+                      >
                         <Collapse in timeout="auto">
                           <StyledDetailPanel>
                             {expandable.renderDetail(row)}

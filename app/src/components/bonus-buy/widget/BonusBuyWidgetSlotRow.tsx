@@ -19,14 +19,12 @@ import {
 
 type BonusBuyWidgetSlotRowProps = {
   slot: BonusBuySlot
-  index: number
   theme: BonusBuyWidgetTheme
   currencyCode: string
 }
 
 export function BonusBuyWidgetSlotRow({
   slot,
-  index,
   theme,
   currencyCode,
 }: BonusBuyWidgetSlotRowProps) {
@@ -41,7 +39,7 @@ export function BonusBuyWidgetSlotRow({
   return (
     <StyledSlotRow widgetTheme={theme} cellHeight={74}>
       <StyledSlotInfo titleOnlyCentered={providerLabel === null}>
-        <StyledSlotName>{index + 1}. {slot.name}</StyledSlotName>
+        <StyledSlotName>{slot.sortOrder}. {slot.name}</StyledSlotName>
         {providerLabel ? (
           <StyledSlotProvider textColor={theme.textMutedColor}>
             {providerLabel}

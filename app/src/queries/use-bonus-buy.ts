@@ -19,6 +19,7 @@ import {
   fetchPublicBonusBuyWidget,
   patchBonusBuy,
   patchBonusBuySlot,
+  reorderBonusBuySlots,
   patchBonusBuyWidget,
   type PatchBonusBuyInput,
   type PatchBonusBuySlotInput,
@@ -208,6 +209,23 @@ export function useArchiveBonusBuySlot(
   return useMutation({
     mutationFn: (slotId: number) =>
       archiveBonusBuySlot(accountId!, bonusBuyId!, slotId),
+    onSuccess: () => {
+      if (bonusBuyId !== null) {
+        invalidateSession(bonusBuyId)
+      }
+    },
+  })
+}
+
+export function useReorderBonusBuySlots(
+  accountId: number | undefined,
+  bonusBuyId: number | null,
+) {
+  const invalidateSession = useInvalidateBonusBuySession(accountId)
+
+  return useMutation({
+    mutationFn: (slotIds: number[]) =>
+      reorderBonusBuySlots(accountId!, bonusBuyId!, slotIds),
     onSuccess: () => {
       if (bonusBuyId !== null) {
         invalidateSession(bonusBuyId)

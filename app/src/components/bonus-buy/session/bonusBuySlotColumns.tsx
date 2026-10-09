@@ -1,4 +1,4 @@
-import { Box, Chip, IconButton, Stack, TableSortLabel } from '@mui/material'
+import { Box, Chip, IconButton, Stack } from '@mui/material'
 import AdjustIcon from '@mui/icons-material/Adjust'
 import CircleOutlinedIcon from '@mui/icons-material/CircleOutlined'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
@@ -20,22 +20,14 @@ import {
 import { DEFAULT_AVERAGE_X_COLOR_THEME } from '@/lib/bonus-buy-widget-presentation'
 import { slotActionIconButtonSx } from '@/components/bonus-buy/session/bonusBuySessionStyles'
 import { toneChipSx } from '@/theme/colors'
-import type {
-  BonusBuySlotSortField,
-  BonusBuySlotSortState,
-} from '@/components/bonus-buy/session/bonusBuySlotSort'
 
 type BuildBonusBuySlotColumnsOptions = {
   theme: Theme
   widgetPositiveColor?: string | null
   widgetNegativeColor?: string | null
-  sort: BonusBuySlotSortState | null
-  onSortField: (field: BonusBuySlotSortField) => void
-  onSortSlotNameHeader: () => void
   onCopySlotName: (slot: BonusBuySlot) => void
   onSetPlaying: (slot: BonusBuySlot, playing: boolean) => void
   onDeleteSlot: (slot: BonusBuySlot) => void
-  getSlotNumber: (slot: BonusBuySlot) => number
 }
 
 const COL_INDEX_WIDTH = 40
@@ -52,38 +44,6 @@ const metricCellSx = {
   px: 1.5,
 } as const
 
-const sortableHeaderIconSx = (theme: Theme, active: boolean) => ({
-  color: 'inherit',
-  '& .MuiTableSortLabel-icon': {
-    opacity: active ? 1 : 0.45,
-    color: theme.palette.text.secondary,
-  },
-  '&:hover .MuiTableSortLabel-icon': {
-    opacity: active ? 1 : 0.7,
-  },
-})
-
-function sortableHeader(
-  label: string,
-  field: BonusBuySlotSortField,
-  sort: BonusBuySlotSortState | null,
-  onSortField: (field: BonusBuySlotSortField) => void,
-  theme: Theme,
-) {
-  const active = sort?.field === field
-
-  return (
-    <TableSortLabel
-      active={active}
-      direction={active ? sort.direction : 'asc'}
-      onClick={() => onSortField(field)}
-      sx={sortableHeaderIconSx(theme, active)}
-    >
-      {label}
-    </TableSortLabel>
-  )
-}
-
 function metricCell(content: ReactNode) {
   return (
     <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>{content}</Box>
@@ -96,13 +56,9 @@ export function buildBonusBuySlotColumns(
     theme,
     widgetPositiveColor,
     widgetNegativeColor,
-    sort,
-    onSortField,
-    onSortSlotNameHeader,
     onCopySlotName,
     onSetPlaying,
     onDeleteSlot,
-    getSlotNumber,
   }: BuildBonusBuySlotColumnsOptions,
 ): AppTableColumn<BonusBuySlot>[] {
   const slotResultColorTheme = {
@@ -129,25 +85,11 @@ export function buildBonusBuySlotColumns(
         pr: 0.5,
         verticalAlign: 'middle',
       },
-      render: (slot) => getSlotNumber(slot),
+      render: (slot) => slot.sortOrder,
     },
     {
       id: 'slotName',
-      header: (() => {
-        const active =
-          sort?.field === 'createdAt' || sort?.field === 'slotName'
-
-        return (
-          <TableSortLabel
-            active={active}
-            direction={active ? sort.direction : 'asc'}
-            onClick={onSortSlotNameHeader}
-            sx={sortableHeaderIconSx(theme, active)}
-          >
-            {t('table.slotName')}
-          </TableSortLabel>
-        )
-      })(),
+      header: t('table.slotName'),
       width: '100%',
       sx: {
         fontWeight: 500,
@@ -209,13 +151,7 @@ export function buildBonusBuySlotColumns(
     },
     {
       id: 'purchase',
-      header: sortableHeader(
-        t('common.purchase'),
-        'purchase',
-        sort,
-        onSortField,
-        theme,
-      ),
+      header: t('common.purchase'),
       width: COL_MONEY_WIDTH,
       minWidth: COL_MONEY_WIDTH,
       align: 'right',
@@ -225,7 +161,7 @@ export function buildBonusBuySlotColumns(
     },
     {
       id: 'win',
-      header: sortableHeader(t('common.win'), 'win', sort, onSortField, theme),
+      header: t('common.win'),
       width: COL_MONEY_WIDTH,
       minWidth: COL_MONEY_WIDTH,
       align: 'right',
@@ -234,13 +170,7 @@ export function buildBonusBuySlotColumns(
     },
     {
       id: 'multiplier',
-      header: sortableHeader(
-        t('table.multiplier'),
-        'multiplier',
-        sort,
-        onSortField,
-        theme,
-      ),
+      header: t('table.multiplier'),
       width: COL_MULTIPLIER_WIDTH,
       minWidth: COL_MULTIPLIER_WIDTH,
       align: 'right',

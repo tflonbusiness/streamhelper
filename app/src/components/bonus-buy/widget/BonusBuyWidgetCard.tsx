@@ -15,7 +15,6 @@ export function BonusBuyWidgetCard({
   slots,
   stats,
   playingSlot,
-  playingIndex,
   listSlots,
   bestMultiplierSlot,
   bestMultiplierIndex,
@@ -42,7 +41,6 @@ export function BonusBuyWidgetCard({
       {playingSlot ? (
         <BonusBuyWidgetPlayingSections
           playingSlot={playingSlot}
-          playingIndex={playingIndex}
           theme={theme}
           currencyCode={record.currencyCode}
         />

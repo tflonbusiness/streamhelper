@@ -18,14 +18,12 @@ import { getWidgetProviderLabel } from '@/components/bonus-buy/widget/bonus-buy-
 
 type BonusBuyWidgetPlayingSectionsProps = {
   playingSlot: BonusBuySlot
-  playingIndex: number
   theme: BonusBuyWidgetTheme
   currencyCode: string
 }
 
 export function BonusBuyWidgetPlayingSections({
   playingSlot,
-  playingIndex,
   theme,
   currencyCode,
 }: BonusBuyWidgetPlayingSectionsProps) {
@@ -37,7 +35,7 @@ export function BonusBuyWidgetPlayingSections({
       <StyledLiveContentRow>
         <StyledLiveInfo titleOnlyCentered={providerLabel === null}>
           <StyledLiveName textColor={theme.accentColor}>
-            {playingIndex + 1}. {playingSlot.name}
+            {playingSlot.sortOrder}. {playingSlot.name}
           </StyledLiveName>
           {providerLabel ? (
             <StyledBestWinProvider textColor={theme.textMutedColor}>

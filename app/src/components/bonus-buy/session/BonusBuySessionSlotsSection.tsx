@@ -2,7 +2,7 @@ import DownloadIcon from '@mui/icons-material/Download'
 import { useTranslation } from 'react-i18next'
 import Button from '@mui/material/Button'
 import { useTheme } from '@mui/material/styles'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { BonusBuySlot } from '@/api/bonus-buy'
 import { isBonusBuySlotPlaying } from '@/api/bonus-buy'
 import { AppTable } from '@/components/AppTable'
@@ -12,13 +12,7 @@ import { BonusBuySlotInlineEditProvider } from '@/components/bonus-buy/session/B
 import { buildBonusBuySlotsSnapshot } from '@/components/bonus-buy/session/bonus-buy-session-utils'
 import { BonusBuySlotExpandedDetails } from '@/components/bonus-buy/session/BonusBuySlotExpandedDetails'
 import { buildBonusBuySlotColumns } from '@/components/bonus-buy/session/bonusBuySlotColumns'
-import {
-  buildBonusBuySlotNumberMap,
-  DEFAULT_BONUS_BUY_SLOT_SORT,
-  sortBonusBuySlots,
-  type BonusBuySlotSortField,
-  type BonusBuySlotSortState,
-} from '@/components/bonus-buy/session/bonusBuySlotSort'
+import { sortBonusBuySlotsByOrder } from '@/components/bonus-buy/session/bonusBuySlotSort'
 import { playingSlotRowSx } from '@/components/bonus-buy/session/bonusBuySessionStyles'
 import {
   StyledSessionCard,
@@ -26,7 +20,10 @@ import {
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { useNotification } from '@/context/NotificationContext'
 import { downloadBonusBuySlotsXlsx } from '@/lib/bonus-buy-slots-export'
-import { usePatchBonusBuySlot } from '@/queries/use-bonus-buy'
+import {
+  usePatchBonusBuySlot,
+  useReorderBonusBuySlots,
+} from '@/queries/use-bonus-buy'
 
 type BonusBuySessionSlotsSectionProps = {
   accountId: number
@@ -37,6 +34,22 @@ type BonusBuySessionSlotsSectionProps = {
   widgetNegativeColor?: string | null
 }
 
+function assignDisplayOrder(
+  slots: BonusBuySlot[],
+  orderedIds: number[],
+): BonusBuySlot[] {
+  const byId = new Map(slots.map((slot) => [slot.id, slot]))
+  return orderedIds
+    .map((id, index) => {
+      const slot = byId.get(id)
+      if (!slot) {
+        return null
+      }
+      return { ...slot, sortOrder: index + 1 }
+    })
+    .filter((slot): slot is BonusBuySlot => slot !== null)
+}
+
 export const BonusBuySessionSlotsSection = (
   props: BonusBuySessionSlotsSectionProps,
 ) => {
@@ -44,53 +57,25 @@ export const BonusBuySessionSlotsSection = (
   const theme = useTheme()
   const { showSuccess, showError } = useNotification()
   const patchSlotMutation = usePatchBonusBuySlot(props.accountId, props.bonusBuyId)
+  const reorderSlotsMutation = useReorderBonusBuySlots(
+    props.accountId,
+    props.bonusBuyId,
+  )
+
+  const orderedSlotsFromProps = useMemo(
+    () => sortBonusBuySlotsByOrder(props.slots),
+    [props.slots],
+  )
+
+  const [displaySlots, setDisplaySlots] = useState(orderedSlotsFromProps)
+
+  useEffect(() => {
+    setDisplaySlots(orderedSlotsFromProps)
+  }, [orderedSlotsFromProps])
 
   const [isExportingSlots, setIsExportingSlots] = useState(false)
   const [deleteSlot, setDeleteSlot] = useState<BonusBuySlot | null>(null)
   const [expandedSlotIds, setExpandedSlotIds] = useState<Set<number>>(new Set())
-  const [slotSort, setSlotSort] = useState<BonusBuySlotSortState>(
-    DEFAULT_BONUS_BUY_SLOT_SORT,
-  )
-
-  function handleSlotNameHeaderSort() {
-    setSlotSort((previous) => {
-      if (previous.field === 'createdAt') {
-        return { field: 'slotName', direction: 'asc' }
-      }
-
-      if (previous.field === 'slotName') {
-        return {
-          field: 'slotName',
-          direction: previous.direction === 'asc' ? 'desc' : 'asc',
-        }
-      }
-
-      return DEFAULT_BONUS_BUY_SLOT_SORT
-    })
-  }
-
-  function handleSortField(field: BonusBuySlotSortField) {
-    setSlotSort((previous) => {
-      if (previous?.field === field) {
-        return {
-          field,
-          direction: previous.direction === 'asc' ? 'desc' : 'asc',
-        }
-      }
-
-      return { field, direction: 'asc' }
-    })
-  }
-
-  const slotNumberById = useMemo(
-    () => buildBonusBuySlotNumberMap(props.slots),
-    [props.slots],
-  )
-
-  const sortedSlots = useMemo(
-    () => sortBonusBuySlots(props.slots, slotSort),
-    [props.slots, slotSort],
-  )
 
   const slotsSnapshot = useMemo(
     () => buildBonusBuySlotsSnapshot(props.slots),
@@ -119,14 +104,14 @@ export const BonusBuySessionSlotsSection = (
   }
 
   function handleDownloadSlots() {
-    if (props.slots.length === 0 || isExportingSlots) {
+    if (displaySlots.length === 0 || isExportingSlots) {
       return
     }
 
     setIsExportingSlots(true)
 
     try {
-      downloadBonusBuySlotsXlsx(props.slots, props.bonusBuyId)
+      downloadBonusBuySlotsXlsx(displaySlots, props.bonusBuyId)
       showSuccess(t('bonusBuy.bonusListExported'))
     } catch (exportError) {
       showError(
@@ -157,15 +142,30 @@ export const BonusBuySessionSlotsSection = (
     }
   }
 
+  async function handleReorderSlots(orderedRows: BonusBuySlot[]) {
+    const previous = displaySlots
+    const orderedIds = orderedRows.map((slot) => slot.id)
+    setDisplaySlots(assignDisplayOrder(previous, orderedIds))
+
+    try {
+      await reorderSlotsMutation.mutateAsync(orderedIds)
+      showSuccess(t('bonusBuy.slotOrderUpdated'))
+    } catch (reorderError) {
+      setDisplaySlots(previous)
+      showError(
+        reorderError instanceof Error
+          ? reorderError.message
+          : t('bonusBuy.couldNotReorderSlots'),
+      )
+    }
+  }
+
   const slotColumns = useMemo(
     () =>
       buildBonusBuySlotColumns(t, {
         theme,
         widgetPositiveColor: props.widgetPositiveColor,
         widgetNegativeColor: props.widgetNegativeColor,
-        sort: slotSort,
-        onSortField: handleSortField,
-        onSortSlotNameHeader: handleSlotNameHeaderSort,
         onCopySlotName: (slot) => {
           void handleCopySlotName(slot)
         },
@@ -173,15 +173,12 @@ export const BonusBuySessionSlotsSection = (
           void handleSetPlaying(slot, playing)
         },
         onDeleteSlot: setDeleteSlot,
-        getSlotNumber: (slot) => slotNumberById.get(slot.id) ?? 0,
       }),
     [
       t,
       theme,
       props.widgetPositiveColor,
       props.widgetNegativeColor,
-      slotSort,
-      slotNumberById,
     ],
   )
 
@@ -217,12 +214,20 @@ export const BonusBuySessionSlotsSection = (
           >
             <AppTable
               columns={slotColumns}
-              rows={sortedSlots}
+              rows={displaySlots}
               getRowKey={(slot) => slot.id}
               emptyMessage={t('bonusBuy.noBonusesYet')}
               getRowSx={(slot) =>
                 isBonusBuySlotPlaying(slot) ? playingSlotRowSx(theme) : undefined
               }
+              rowReorder={{
+                getRowId: (slot) => slot.id,
+                onReorder: (orderedRows) => {
+                  void handleReorderSlots(orderedRows)
+                },
+                disabled: reorderSlotsMutation.isPending,
+                dragHandleAriaLabel: t('bonusBuy.dragSlotAria'),
+              }}
               expandable={{
                 isExpanded: (slot) => expandedSlotIds.has(slot.id),
                 onToggle: (slot) => toggleSlotExpanded(slot.id),

@@ -1,5 +1,5 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Pool, type PoolClient } from 'pg';
 import type { KickProfile } from '../auth/auth.types.js';
 import {
   computeMultiplier,
@@ -272,6 +272,7 @@ export type DbBonusBuySlot = {
   winAmount: string | null;
   multiplier: string | null;
   status: BonusBuySlotStatus;
+  sortOrder: number;
   createdAt: Date;
 };
 
@@ -1611,6 +1612,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     win_amount: string | null;
     multiplier: string | null;
     status: string;
+    sort_order: string | number;
     created_at: Date;
   }): DbBonusBuySlot {
     return {
@@ -1624,8 +1626,32 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       winAmount: row.win_amount,
       multiplier: row.multiplier,
       status: row.status as BonusBuySlotStatus,
+      sortOrder: toInt(row.sort_order),
       createdAt: row.created_at,
     };
+  }
+
+  private async compactBonusBuySlotSortOrders(
+    client: PoolClient,
+    bonusBuyId: number,
+  ): Promise<void> {
+    await client.query(
+      `
+        WITH ranked AS (
+          SELECT
+            id,
+            ROW_NUMBER() OVER (ORDER BY sort_order ASC, id ASC) AS new_order
+          FROM bonus_buy_slot
+          WHERE bonus_buy_id = $1
+            AND status != 'archived'
+        )
+        UPDATE bonus_buy_slot s
+        SET sort_order = r.new_order
+        FROM ranked r
+        WHERE s.id = r.id
+      `,
+      [bonusBuyId],
+    );
   }
 
   async listBonusBuySlots(
@@ -1648,6 +1674,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       win_amount: string | null;
       multiplier: string | null;
       status: string;
+      sort_order: string | number;
       created_at: Date;
     }>(
       `
@@ -1662,12 +1689,13 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           s.win_amount::text AS win_amount,
           s.multiplier::text AS multiplier,
           s.status,
+          s.sort_order,
           s.created_at
         FROM bonus_buy_slot s
         JOIN users u ON u.id = s.created_by_user_id
         WHERE s.bonus_buy_id = $1
           AND s.status != 'archived'
-        ORDER BY s.created_at ASC
+        ORDER BY s.sort_order ASC, s.id ASC
       `,
       [bonusBuyId],
     );
@@ -1705,6 +1733,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       win_amount: string | null;
       multiplier: string | null;
       status: string;
+      sort_order: string | number;
       created_at: Date;
     }>(
       `
@@ -1713,9 +1742,25 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           created_by_user_id,
           name,
           provider_name,
-          purchase_amount
+          purchase_amount,
+          sort_order
         )
-        VALUES ($1, $2, $3, $4, $5)
+        VALUES (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          COALESCE(
+            (
+              SELECT MAX(sort_order)
+              FROM bonus_buy_slot
+              WHERE bonus_buy_id = $1
+                AND status != 'archived'
+            ),
+            0
+          ) + 1
+        )
         RETURNING
           id,
           bonus_buy_id,
@@ -1727,6 +1772,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           win_amount::text AS win_amount,
           multiplier::text AS multiplier,
           status,
+          sort_order,
           created_at
       `,
       [bonusBuyId, createdByUserId, trimmedName, providerValue, normalizedPurchase],
@@ -1855,6 +1901,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         win_amount: string | null;
         multiplier: string | null;
         status: string;
+        sort_order: string | number;
         created_at: Date;
       }>(
         `
@@ -1881,6 +1928,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             s.win_amount::text AS win_amount,
             s.multiplier::text AS multiplier,
             s.status,
+            s.sort_order,
             s.created_at
         `,
         [
@@ -2359,6 +2407,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       win_amount: string | null;
       multiplier: string | null;
       status: string;
+      sort_order: string | number;
       created_at: Date;
     }>(
       `
@@ -2373,12 +2422,13 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           s.win_amount::text AS win_amount,
           s.multiplier::text AS multiplier,
           s.status,
+          s.sort_order,
           s.created_at
         FROM bonus_buy_slot s
         JOIN users u ON u.id = s.created_by_user_id
         WHERE s.bonus_buy_id = $1
           AND s.status != 'archived'
-        ORDER BY s.created_at ASC
+        ORDER BY s.sort_order ASC, s.id ASC
       `,
       [bonusBuyId],
     );
@@ -2514,24 +2564,99 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     bonusBuyId: number,
     slotId: number,
   ): Promise<void> {
-    const result = await this.pool.query(
-      `
-        UPDATE bonus_buy_slot s
-        SET status = 'archived'
-        FROM bonus_buy bb
-        WHERE s.bonus_buy_id = bb.id
-          AND bb.account_id = $1
-          AND s.bonus_buy_id = $2
-          AND s.id = $3
-          AND s.status != 'archived'
-      `,
-      [accountId, bonusBuyId, slotId],
-    );
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    if (result.rowCount === 0) {
-      throw new Error('NOT_FOUND');
+      const result = await client.query(
+        `
+          UPDATE bonus_buy_slot s
+          SET status = 'archived'
+          FROM bonus_buy bb
+          WHERE s.bonus_buy_id = bb.id
+            AND bb.account_id = $1
+            AND s.bonus_buy_id = $2
+            AND s.id = $3
+            AND s.status != 'archived'
+        `,
+        [accountId, bonusBuyId, slotId],
+      );
+
+      if (result.rowCount === 0) {
+        throw new Error('NOT_FOUND');
+      }
+
+      await this.compactBonusBuySlotSortOrders(client, bonusBuyId);
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
     }
   }
+
+  async reorderBonusBuySlots(
+    accountId: number,
+    bonusBuyId: number,
+    slotIds: number[],
+  ): Promise<DbBonusBuySlot[]> {
+    await this.requireMutableBonusBuy(accountId, bonusBuyId);
+
+    const uniqueIds = new Set(slotIds);
+    if (uniqueIds.size !== slotIds.length) {
+      throw new Error('INVALID_SLOT_REORDER');
+    }
+
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const active = await client.query<{ id: string | number }>(
+        `
+          SELECT s.id
+          FROM bonus_buy_slot s
+          JOIN bonus_buy bb ON bb.id = s.bonus_buy_id
+          WHERE bb.account_id = $1
+            AND s.bonus_buy_id = $2
+            AND s.status != 'archived'
+          ORDER BY s.sort_order ASC, s.id ASC
+        `,
+        [accountId, bonusBuyId],
+      );
+
+      const activeIds = active.rows.map((row) => toInt(row.id));
+      if (
+        activeIds.length !== slotIds.length ||
+        !slotIds.every((id) => activeIds.includes(id))
+      ) {
+        throw new Error('INVALID_SLOT_REORDER');
+      }
+
+      for (let index = 0; index < slotIds.length; index += 1) {
+        await client.query(
+          `
+            UPDATE bonus_buy_slot
+            SET sort_order = $3
+            WHERE bonus_buy_id = $1
+              AND id = $2
+              AND status != 'archived'
+          `,
+          [bonusBuyId, slotIds[index], index + 1],
+        );
+      }
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+
+    return this.listBonusBuySlots(accountId, bonusBuyId);
+  }
+
   private mapPrizeSpinRow(row: {
     id: string | number;
     account_id: string | number;

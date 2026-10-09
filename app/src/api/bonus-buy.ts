@@ -58,6 +58,7 @@ export type BonusBuySlot = {
   winAmount: string | null
   multiplier: string | null
   status: BonusBuySlotStatus
+  sortOrder: number
   createdAt: string
 }
 
@@ -409,6 +410,30 @@ export async function archiveBonusBuySlot(
       await readErrorMessage(response, i18n.t('errors.api.deleteSlot')),
     )
   }
+}
+
+export async function reorderBonusBuySlots(
+  accountId: number,
+  bonusBuyId: number,
+  slotIds: number[],
+): Promise<BonusBuySlot[]> {
+  const response = await fetch(
+    `/accounts/${accountId}/bonus-buys/${bonusBuyId}/slots/reorder`,
+    {
+      method: 'PUT',
+      credentials: 'include',
+      headers: jsonHeaders,
+      body: JSON.stringify({ slot_ids: slotIds }),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, i18n.t('errors.api.reorderBonusBuySlots')),
+    )
+  }
+
+  return response.json() as Promise<BonusBuySlot[]>
 }
 
 export async function fetchBonusBuyWidget(

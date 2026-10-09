@@ -75,13 +75,12 @@ export function deriveBonusBuyWidgetCardProps(
   slots: BonusBuySlot[],
   theme: BonusBuyWidgetTheme,
 ): BonusBuyWidgetCardProps {
-  const activeSlots = [...slots].sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-  )
+  const activeSlots = [...slots].sort((left, right) => {
+    const byOrder = left.sortOrder - right.sortOrder
+    return byOrder !== 0 ? byOrder : left.id - right.id
+  })
   const playing = activeSlots.find((slot) => isBonusBuySlotPlaying(slot)) ?? null
-  const playingIdx = playing
-    ? activeSlots.findIndex((slot) => slot.id === playing.id)
-    : -1
+  const playingIdx = playing ? playing.sortOrder - 1 : -1
   const listSlots = activeSlots.filter((slot) => !isBonusBuySlotPlaying(slot))
   const bestMultiplierSlot = findHighestMultiplierSlot(activeSlots)
   const bestMultiplierIndex = bestMultiplierSlot

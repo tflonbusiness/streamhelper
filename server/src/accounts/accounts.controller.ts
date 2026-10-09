@@ -322,6 +322,24 @@ export class AccountsController {
     return this.authService.listBonusBuySlots(accountId, user.id, bonusBuyId);
   }
 
+  @Put(':accountId/bonus-buys/:bonusBuyId/slots/reorder')
+  async reorderBonusBuySlots(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('bonusBuyId', ParseIntPipe) bonusBuyId: number,
+    @Body() body: { slot_ids?: number[] },
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+
+    return this.authService.reorderBonusBuySlots(
+      accountId,
+      user.id,
+      bonusBuyId,
+      body.slot_ids ?? [],
+    );
+  }
+
   @Post(':accountId/bonus-buys/:bonusBuyId/slots')
   async createBonusBuySlot(
     @Param('accountId', ParseIntPipe) accountId: number,

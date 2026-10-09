@@ -478,6 +478,7 @@ export class AuthService {
       winAmount: row.winAmount,
       multiplier: row.multiplier,
       status: row.status,
+      sortOrder: row.sortOrder,
       createdAt: row.createdAt.toISOString(),
     };
   }
@@ -673,6 +674,9 @@ export class AuthService {
           'Amount must be a positive number with up to 2 decimal places',
         );
       }
+      if (error.message === 'INVALID_SLOT_REORDER') {
+        throw new BadRequestException('Slot order must include every active bonus');
+      }
     }
     throw error;
   }
@@ -831,6 +835,33 @@ export class AuthService {
     try {
       await this.database.archiveBonusBuySlot(accountId, bonusBuyId, slotId);
     } catch (error) {
+      this.mapSlotMutationError(error);
+    }
+  }
+
+  async reorderBonusBuySlots(
+    accountId: number,
+    callerUserId: number,
+    bonusBuyId: number,
+    slotIds: number[],
+  ) {
+    await this.requireAccountMember(accountId, callerUserId);
+
+    if (!Array.isArray(slotIds) || slotIds.length === 0) {
+      throw new BadRequestException('slot_ids must be a non-empty array');
+    }
+
+    try {
+      const rows = await this.database.reorderBonusBuySlots(
+        accountId,
+        bonusBuyId,
+        slotIds,
+      );
+      return rows.map((row) => this.formatBonusBuySlot(row));
+    } catch (error) {
+      if (error instanceof Error && error.message === 'NOT_FOUND') {
+        throw new NotFoundException('Bonus buy not found');
+      }
       this.mapSlotMutationError(error);
     }
   }
