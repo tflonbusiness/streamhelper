@@ -1,4 +1,4 @@
-import { Box, Chip, IconButton, Stack } from '@mui/material'
+import { Box, IconButton, Stack, TableSortLabel } from '@mui/material'
 import AdjustIcon from '@mui/icons-material/Adjust'
 import CircleOutlinedIcon from '@mui/icons-material/CircleOutlined'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
@@ -19,15 +19,26 @@ import {
 } from '@/components/bonus-buy/session/BonusBuySlotInlineEdit'
 import { DEFAULT_AVERAGE_X_COLOR_THEME } from '@/lib/bonus-buy-widget-presentation'
 import { slotActionIconButtonSx } from '@/components/bonus-buy/session/bonusBuySessionStyles'
-import { toneChipSx } from '@/theme/colors'
+import {
+  StatusToneChip,
+  statusBadgeColors,
+} from '@/components/StatusToneChip'
+import type {
+  BonusBuySlotSortField,
+  BonusBuySlotSortState,
+} from '@/components/bonus-buy/session/bonusBuySlotSort'
 
 type BuildBonusBuySlotColumnsOptions = {
   theme: Theme
   widgetPositiveColor?: string | null
   widgetNegativeColor?: string | null
+  sort: BonusBuySlotSortState | null
+  onSortField: (field: BonusBuySlotSortField) => void
+  onSortSlotNameHeader: () => void
   onCopySlotName: (slot: BonusBuySlot) => void
   onSetPlaying: (slot: BonusBuySlot, playing: boolean) => void
   onDeleteSlot: (slot: BonusBuySlot) => void
+  getSlotNumber: (slot: BonusBuySlot) => number
 }
 
 const COL_INDEX_WIDTH = 40
@@ -44,6 +55,38 @@ const metricCellSx = {
   px: 1.5,
 } as const
 
+const sortableHeaderIconSx = (theme: Theme, active: boolean) => ({
+  color: 'inherit',
+  '& .MuiTableSortLabel-icon': {
+    opacity: active ? 1 : 0.45,
+    color: theme.palette.text.secondary,
+  },
+  '&:hover .MuiTableSortLabel-icon': {
+    opacity: active ? 1 : 0.7,
+  },
+})
+
+function sortableHeader(
+  label: string,
+  field: BonusBuySlotSortField,
+  sort: BonusBuySlotSortState | null,
+  onSortField: (field: BonusBuySlotSortField) => void,
+  theme: Theme,
+) {
+  const active = sort?.field === field
+
+  return (
+    <TableSortLabel
+      active={active}
+      direction={active ? sort.direction : 'asc'}
+      onClick={() => onSortField(field)}
+      sx={sortableHeaderIconSx(theme, active)}
+    >
+      {label}
+    </TableSortLabel>
+  )
+}
+
 function metricCell(content: ReactNode) {
   return (
     <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>{content}</Box>
@@ -56,9 +99,13 @@ export function buildBonusBuySlotColumns(
     theme,
     widgetPositiveColor,
     widgetNegativeColor,
+    sort,
+    onSortField,
+    onSortSlotNameHeader,
     onCopySlotName,
     onSetPlaying,
     onDeleteSlot,
+    getSlotNumber,
   }: BuildBonusBuySlotColumnsOptions,
 ): AppTableColumn<BonusBuySlot>[] {
   const slotResultColorTheme = {
@@ -77,19 +124,37 @@ export function buildBonusBuySlotColumns(
       header: '#',
       width: COL_INDEX_WIDTH,
       minWidth: COL_INDEX_WIDTH,
-      align: 'right',
+      align: 'center',
       sx: {
         color: 'text.secondary',
         fontVariantNumeric: 'tabular-nums',
-        pl: 1.5,
-        pr: 0.5,
+        px: 0.5,
         verticalAlign: 'middle',
+        textAlign: 'center',
       },
-      render: (slot) => slot.sortOrder,
+      render: (slot) => (
+        <Box component="span" sx={{ display: 'block', textAlign: 'center' }}>
+          {getSlotNumber(slot)}
+        </Box>
+      ),
     },
     {
       id: 'slotName',
-      header: t('table.slotName'),
+      header: (() => {
+        const active =
+          sort?.field === 'createdAt' || sort?.field === 'slotName'
+
+        return (
+          <TableSortLabel
+            active={active}
+            direction={active ? sort.direction : 'asc'}
+            onClick={onSortSlotNameHeader}
+            sx={sortableHeaderIconSx(theme, active)}
+          >
+            {t('table.slotName')}
+          </TableSortLabel>
+        )
+      })(),
       width: '100%',
       sx: {
         fontWeight: 500,
@@ -136,14 +201,9 @@ export function buildBonusBuySlotColumns(
             <ContentCopyIcon sx={{ fontSize: 12 }} aria-hidden />
           </IconButton>
           {isBonusBuySlotPlaying(slot) ? (
-            <Chip
+            <StatusToneChip
               label={t('common.nowPlaying')}
-              size="small"
-              sx={{
-                flexShrink: 0,
-                height: 22,
-                ...toneChipSx(theme.palette.success.light),
-              }}
+              color={statusBadgeColors.playing}
             />
           ) : null}
         </Stack>
@@ -151,7 +211,13 @@ export function buildBonusBuySlotColumns(
     },
     {
       id: 'purchase',
-      header: t('common.purchase'),
+      header: sortableHeader(
+        t('common.purchase'),
+        'purchase',
+        sort,
+        onSortField,
+        theme,
+      ),
       width: COL_MONEY_WIDTH,
       minWidth: COL_MONEY_WIDTH,
       align: 'right',
@@ -161,7 +227,7 @@ export function buildBonusBuySlotColumns(
     },
     {
       id: 'win',
-      header: t('common.win'),
+      header: sortableHeader(t('common.win'), 'win', sort, onSortField, theme),
       width: COL_MONEY_WIDTH,
       minWidth: COL_MONEY_WIDTH,
       align: 'right',
@@ -170,7 +236,13 @@ export function buildBonusBuySlotColumns(
     },
     {
       id: 'multiplier',
-      header: t('table.multiplier'),
+      header: sortableHeader(
+        t('table.multiplier'),
+        'multiplier',
+        sort,
+        onSortField,
+        theme,
+      ),
       width: COL_MULTIPLIER_WIDTH,
       minWidth: COL_MULTIPLIER_WIDTH,
       align: 'right',

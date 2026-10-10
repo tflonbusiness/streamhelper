@@ -1,9 +1,13 @@
-import { Box, Chip, Skeleton, Stack, Typography } from '@mui/material'
+import { Box, Skeleton, Stack, Typography } from '@mui/material'
 import { alpha, styled } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import type { ChatRollRecord } from '@/api/chat-roll'
 import { chatRollHistoryStatusChip } from '@/components/chat-roll/chat-roll-page/chatRollHistoryStatusChip'
+import {
+  StatusToneChip,
+  statusBadgeColors,
+} from '@/components/StatusToneChip'
 import { ChatRollSessionIdBadge } from '@/components/chat-roll/session/ChatRollSessionIdBadge'
 import { OpenSessionButton } from '@/components/OpenSessionButton'
 import { StyledSessionBadgeGroup } from '@/components/prize-spin/session/prizeSpinSessionStyles'
@@ -161,18 +165,14 @@ export function ChatRollHistoryLiveHero({
             <StyledSessionBadgeGroup>
               {chatRollHistoryStatusChip(record, t)}
               {record.isAcceptingParticipants ? (
-                <Chip
+                <StatusToneChip
                   label={t('chatRoll.entriesOpen')}
-                  size="small"
-                  color="success"
-                  variant="outlined"
+                  color={statusBadgeColors.open}
                 />
               ) : (
-                <Chip
+                <StatusToneChip
                   label={t('chatRoll.entriesPaused')}
-                  size="small"
-                  color="warning"
-                  variant="outlined"
+                  color={statusBadgeColors.paused}
                 />
               )}
             </StyledSessionBadgeGroup>

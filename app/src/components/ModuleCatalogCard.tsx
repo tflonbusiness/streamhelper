@@ -9,9 +9,8 @@ import { alpha, useTheme } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 import { IconTile } from '@/components/IconTile'
-import { ModuleIllustrationCrop } from '@/components/modules/ModuleIllustrationCrop'
 import { moduleAccentColor } from '@/lib/module-accent-color'
-import type { ModuleIconVariant, ModulePageId } from '@/lib/modules'
+import type { ModuleIconVariant } from '@/lib/modules'
 import { moduleDescriptionKey, moduleNameKey } from '@/lib/modules'
 import { cardSx } from '@/theme/colors'
 
@@ -76,26 +75,12 @@ export function ModuleCatalogCard({
         overflow: 'hidden',
       }}
     >
-      <ModuleIllustrationCrop
-        moduleId={moduleId as ModulePageId}
-        variant={iconVariant}
-        opacity={0.5}
-        viewportSx={{
-          right: 0,
-          bottom: 0,
-          width: { sm: 112, md: 128 },
-          height: { sm: 84, md: 96 },
-          display: { xs: 'none', sm: 'block' },
-        }}
-      />
       <Box
         sx={{
           display: 'flex',
           alignItems: 'flex-start',
           justifyContent: 'space-between',
           gap: 1,
-          position: 'relative',
-          zIndex: 1,
         }}
       >
         <IconTile icon={icon} variant={iconVariant} size="lg" />
@@ -123,8 +108,6 @@ export function ModuleCatalogCard({
           display: 'flex',
           flexDirection: 'column',
           gap: 0.75,
-          position: 'relative',
-          zIndex: 1,
         }}
       >
         <Typography
@@ -135,8 +118,8 @@ export function ModuleCatalogCard({
         </Typography>
         <Typography
           variant="body2"
-          color="text.secondary"
           sx={{
+            color: alpha(theme.palette.text.secondary, 0.72),
             lineHeight: 1.5,
             display: '-webkit-box',
             WebkitLineClamp: 3,
@@ -155,8 +138,6 @@ export function ModuleCatalogCard({
           color: canOpen ? accent : alpha(theme.palette.text.primary, 0.45),
           letterSpacing: '0.02em',
           textTransform: 'uppercase',
-          position: 'relative',
-          zIndex: 1,
         }}
       >
         {canOpen ? t('common.open') : t('common.comingSoon')}

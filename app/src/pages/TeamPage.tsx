@@ -54,7 +54,12 @@ import {
   useRevokeModerator,
 } from '@/queries/use-team'
 import { MODULE_PAGE_SECTION_SPACING } from '@/lib/module-page-layout'
-import { cardSx, inputFieldSx, mutedChipSx, toneChipSx } from '@/theme/colors'
+import {
+  MutedStatusChip,
+  StatusToneChip,
+  statusBadgeColors,
+} from '@/components/StatusToneChip'
+import { cardSx, colors, inputFieldSx } from '@/theme/colors'
 
 const StyledFilterFormControl = styled(FormControl)({
   minWidth: 140,
@@ -114,41 +119,32 @@ function sortableMemberHeader(
 
 function memberRoleChip(
   role: AccountMember['role'],
-  palette: Theme['palette'],
   t: ReturnType<typeof useTranslation>['t'],
 ) {
   const isOwner = role === 'owner'
 
   return (
-    <Chip
+    <StatusToneChip
       label={isOwner ? t('auth.owner') : t('team.roleModerator')}
-      size="small"
-      sx={toneChipSx(
-        isOwner ? palette.primary.light : palette.info.light,
-      )}
+      color={isOwner ? colors.brand[400] : statusBadgeColors.open}
     />
   )
 }
 
 function memberStatusChip(
   isActive: boolean,
-  palette: Theme['palette'],
-  theme: Theme,
   t: ReturnType<typeof useTranslation>['t'],
 ) {
   if (isActive) {
     return (
-      <Chip
+      <StatusToneChip
         label={t('team.activeStatus')}
-        size="small"
-        sx={toneChipSx(palette.success.light)}
+        color={statusBadgeColors.live}
       />
     )
   }
 
-  return (
-    <Chip label={t('team.revoked')} size="small" sx={mutedChipSx(theme)} />
-  )
+  return <MutedStatusChip label={t('team.revoked')} />
 }
 
 export function TeamPage() {
@@ -395,7 +391,7 @@ export function TeamPage() {
       width: 140,
       minWidth: 140,
       sx: { px: 1.5, whiteSpace: 'nowrap' },
-      render: (member) => memberRoleChip(member.role, theme.palette, t),
+      render: (member) => memberRoleChip(member.role, t),
     },
     {
       id: 'status',
@@ -410,7 +406,7 @@ export function TeamPage() {
       minWidth: 100,
       sx: { px: 1.5, whiteSpace: 'nowrap' },
       render: (member) =>
-        memberStatusChip(member.isActive, theme.palette, theme, t),
+        memberStatusChip(member.isActive, t),
     },
     {
       id: 'createdAt',

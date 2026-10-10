@@ -1,8 +1,8 @@
-import { Box, Button, Chip, Stack } from '@mui/material'
+import { Box, Button, Stack } from '@mui/material'
 import type { ReactNode } from 'react'
 import ArchiveIcon from '@mui/icons-material/Archive'
 import EditIcon from '@mui/icons-material/Edit'
-import { styled, useTheme } from '@mui/material/styles'
+import { styled } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import type { ChatRollRecord } from '@/api/chat-roll'
 import { isChatRollReadOnly } from '@/api/chat-roll'
@@ -16,7 +16,11 @@ import {
 import { SessionCardInlineNotice } from '@/components/session/SessionCardInlineNotice'
 import { ChatRollLiveStatusChip } from '@/components/chat-roll/ChatRollLiveStatusChip'
 import { ChatRollSessionIdBadge } from '@/components/chat-roll/session/ChatRollSessionIdBadge'
-import { mutedChipSx } from '@/theme/colors'
+import {
+  MutedStatusChip,
+  StatusToneChip,
+  statusBadgeColors,
+} from '@/components/StatusToneChip'
 
 type ChatRollSessionHeaderSectionProps = {
   record: ChatRollRecord
@@ -96,7 +100,6 @@ export const ChatRollSessionHeaderSection = (
   props: ChatRollSessionHeaderSectionProps,
 ) => {
   const { t } = useTranslation()
-  const theme = useTheme()
   const readOnly = isChatRollReadOnly(props.record)
 
   return (
@@ -111,11 +114,7 @@ export const ChatRollSessionHeaderSection = (
               </StyledSessionHeaderTitle>
               <StyledSessionBadgeGroup>
                 {readOnly ? (
-                  <Chip
-                    label={t('common.archived')}
-                    size="small"
-                    sx={mutedChipSx(theme)}
-                  />
+                  <MutedStatusChip label={t('common.archived')} />
                 ) : null}
                 {!readOnly && props.record.status === 'live' ? (
                   <ChatRollLiveStatusChip />
@@ -123,21 +122,17 @@ export const ChatRollSessionHeaderSection = (
                 {!readOnly &&
                 props.record.status === 'live' &&
                 props.record.isAcceptingParticipants ? (
-                  <Chip
+                  <StatusToneChip
                     label={t('chatRoll.entriesOpen')}
-                    size="small"
-                    color="success"
-                    variant="outlined"
+                    color={statusBadgeColors.open}
                   />
                 ) : null}
                 {!readOnly &&
                 props.record.status === 'live' &&
                 !props.record.isAcceptingParticipants ? (
-                  <Chip
+                  <StatusToneChip
                     label={t('chatRoll.entriesPaused')}
-                    size="small"
-                    color="warning"
-                    variant="outlined"
+                    color={statusBadgeColors.paused}
                   />
                 ) : null}
               </StyledSessionBadgeGroup>

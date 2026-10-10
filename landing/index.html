@@ -556,147 +556,6 @@
         background: var(--card);
       }
 
-      .module-preview {
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        justify-content: center;
-        height: 8.5rem;
-        border-radius: calc(var(--radius) - 2px);
-        border: 1px solid var(--border);
-        background: linear-gradient(180deg, #141418 0%, #0e0e12 100%);
-        padding: 0.75rem;
-        overflow: hidden;
-        flex-shrink: 0;
-      }
-
-      .module-preview--bonus .mp-stat-row {
-        display: flex;
-        justify-content: space-between;
-        gap: 0.5rem;
-        margin-bottom: 0.5rem;
-      }
-
-      .module-preview--bonus .mp-stat {
-        flex: 1;
-        padding: 0.45rem 0.5rem;
-        border-radius: 0.4rem;
-        background: rgba(245, 158, 11, 0.1);
-        border: 1px solid rgba(245, 158, 11, 0.2);
-      }
-
-      .module-preview--bonus .mp-stat span {
-        display: block;
-        font-size: 0.6rem;
-        color: var(--muted-foreground);
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-      }
-
-      .module-preview--bonus .mp-stat strong {
-        font-size: 0.85rem;
-        color: var(--primary);
-      }
-
-      .module-preview--bonus .mp-line {
-        height: 0.35rem;
-        border-radius: 999px;
-        background: #1f1f24;
-        margin-bottom: 0.35rem;
-        overflow: hidden;
-      }
-
-      .module-preview--bonus .mp-line > i {
-        display: block;
-        height: 100%;
-        border-radius: inherit;
-        background: linear-gradient(90deg, #f59e0b, #fbbf24);
-      }
-
-      .module-preview--wheel {
-        align-items: center;
-        justify-content: center;
-      }
-
-      .module-preview--wheel .mp-wheel {
-        width: 5.5rem;
-        height: 5.5rem;
-        border-radius: 50%;
-        background: conic-gradient(
-          #a855f7 0deg 72deg,
-          #38bdf8 72deg 144deg,
-          #f59e0b 144deg 216deg,
-          #10b981 216deg 288deg,
-          #6366f1 288deg 360deg
-        );
-        position: relative;
-        box-shadow: 0 0 0 3px #1f1f24, 0 0 24px rgba(168, 85, 247, 0.25);
-      }
-
-      .module-preview--wheel .mp-wheel::after {
-        content: "";
-        position: absolute;
-        inset: 28%;
-        border-radius: 50%;
-        background: #121215;
-        border: 2px solid #2a2a32;
-      }
-
-      .module-preview--wheel .mp-pointer {
-        position: absolute;
-        top: 0.35rem;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 0;
-        height: 0;
-        border-left: 0.35rem solid transparent;
-        border-right: 0.35rem solid transparent;
-        border-bottom: 0.55rem solid #fff;
-      }
-
-      .module-preview--roll {
-        gap: 0.5rem;
-      }
-
-      .module-preview--roll .mp-keyword {
-        align-self: center;
-        padding: 0.25rem 0.65rem;
-        border-radius: 999px;
-        font-size: 0.7rem;
-        font-weight: 600;
-        color: #38bdf8;
-        background: rgba(56, 189, 248, 0.12);
-        border: 1px solid rgba(56, 189, 248, 0.25);
-      }
-
-      .module-preview--roll .mp-winner {
-        text-align: center;
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: var(--foreground);
-      }
-
-      .module-preview--roll .mp-winner em {
-        font-style: normal;
-        color: var(--primary);
-      }
-
-      .module-preview--roll .mp-chat {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-      }
-
-      .module-preview--roll .mp-chat span {
-        font-size: 0.62rem;
-        color: var(--muted-foreground);
-        padding: 0.2rem 0.45rem;
-        border-radius: 0.35rem;
-        background: rgba(255, 255, 255, 0.03);
-        width: fit-content;
-      }
-
       .card-icon {
         display: flex;
         align-items: center;
@@ -730,6 +589,10 @@
         color: var(--muted-foreground);
         line-height: 1.55;
         flex: 1;
+      }
+
+      #widgets .card .card-body {
+        color: #6b7280;
       }
 
       /* Platform tiles */
@@ -1141,14 +1004,6 @@
           </div>
           <div class="card-grid">
             <article class="card">
-              <div class="module-preview module-preview--bonus" aria-hidden="true">
-                <div class="mp-stat-row">
-                  <div class="mp-stat"><span>Balance</span><strong>$1,240</strong></div>
-                  <div class="mp-stat"><span>Round</span><strong>7 / 12</strong></div>
-                </div>
-                <div class="mp-line"><i style="width: 58%"></i></div>
-                <div class="mp-line"><i style="width: 42%"></i></div>
-              </div>
               <h3 data-i18n="moduleBonusBuyTitle">Bonus Buy</h3>
               <p class="card-body" data-i18n="moduleBonusBuyBody">
                 Structured on-stream sessions with a live budget and round
@@ -1157,12 +1012,6 @@
               </p>
             </article>
             <article class="card">
-              <div class="module-preview module-preview--wheel" aria-hidden="true">
-                <div style="position: relative">
-                  <div class="mp-pointer"></div>
-                  <div class="mp-wheel"></div>
-                </div>
-              </div>
               <h3 data-i18n="modulePrizeSpinTitle">Prize Wheel</h3>
               <p class="card-body" data-i18n="modulePrizeSpinBody">
                 Pick a chat nick and spin sectors you define — weights, colors,
@@ -1171,14 +1020,6 @@
               </p>
             </article>
             <article class="card">
-              <div class="module-preview module-preview--roll" aria-hidden="true">
-                <span class="mp-keyword">!roll</span>
-                <div class="mp-chat">
-                  <span>viewer_42</span>
-                  <span>mod_kick ×2</span>
-                </div>
-                <p class="mp-winner">Winner: <em>viewer_42</em></p>
-              </div>
               <h3 data-i18n="moduleChatRollTitle">Chat Roll</h3>
               <p class="card-body" data-i18n="moduleChatRollBody">
                 Giveaways driven by a chat keyword, with custom weights for roles

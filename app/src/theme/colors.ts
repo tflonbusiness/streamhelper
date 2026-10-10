@@ -21,6 +21,9 @@ export const colors = {
     500: '#3ECF8E',
     400: '#6EE7B7',
   },
+  live: {
+    500: '#22c55e',
+  },
   error: {
     500: '#F87171',
     600: '#EF4444',

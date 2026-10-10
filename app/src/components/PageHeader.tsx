@@ -13,14 +13,13 @@ import GroupIcon from '@mui/icons-material/Group'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { IconTile } from '@/components/IconTile'
-import { ModuleIllustrationCrop } from '@/components/modules/ModuleIllustrationCrop'
 import { useBreadcrumbDynamicLabel } from '@/context/BreadcrumbContext'
 import { getBreadcrumbAncestors } from '@/lib/breadcrumbs'
 import {
   moduleHeaderBackground,
   modulePageHeaderSx,
 } from '@/lib/module-page-chrome'
-import type { ModuleIconVariant, ModulePageId } from '@/lib/modules'
+import type { ModuleIconVariant } from '@/lib/modules'
 import { cardSx, colors } from '@/theme/colors'
 
 const ICON_TILE_HEIGHT = 40
@@ -41,7 +40,6 @@ type PageHeaderProps = {
   icon?: SvgIconComponent
   iconVariant?: ModuleIconVariant
   moduleSurface?: boolean
-  moduleId?: ModulePageId
   action?: React.ReactNode
   showBreadcrumbs?: boolean
   /** When true, breadcrumb row is omitted (e.g. rendered by session chrome). */
@@ -163,7 +161,6 @@ export function PageHeader({
   icon,
   iconVariant = 'primary',
   moduleSurface = false,
-  moduleId,
   action,
   showBreadcrumbs = true,
   omitBreadcrumbBar = false,
@@ -179,8 +176,6 @@ export function PageHeader({
     getBreadcrumbAncestors(pathname, t, dynamicLabel).length > 0
   const moduleHeaderSx =
     moduleSurface && icon ? modulePageHeaderSx(iconVariant, theme) : undefined
-  const showModuleIllustration = moduleSurface && moduleId
-
   return (
     <Box
       component="header"
@@ -229,24 +224,8 @@ export function PageHeader({
           gap: 2,
           px: 2,
           py: hasBreadcrumbs ? 2 : 2.25,
-          pr: showModuleIllustration ? { sm: 20, md: 24 } : 2,
         }}
       >
-        {showModuleIllustration ? (
-          <ModuleIllustrationCrop
-            moduleId={moduleId}
-            variant={iconVariant}
-            viewportSx={{
-              right: 0,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: { sm: 128, md: 160 },
-              height: { sm: 96, md: 120 },
-              display: { xs: 'none', sm: 'flex' },
-              zIndex: 0,
-            }}
-          />
-        ) : null}
         <Box
           sx={{
             display: 'flex',

@@ -32,7 +32,6 @@ export function ModulePageHeader({
       icon={Icon}
       iconVariant={module.iconVariant as ModuleIconVariant}
       moduleSurface
-      moduleId={moduleId}
       action={action}
     />
   )

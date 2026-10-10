@@ -19,6 +19,7 @@ import { DashboardTariffCard } from '@/components/DashboardTariffCard'
 import { IconTile, type IconTileVariant } from '@/components/IconTile'
 import type { AuthUser } from '@/api/auth'
 import { useKickChannel } from '@/queries/use-kick-channel'
+import { StatusToneChip, statusBadgeColors } from '@/components/StatusToneChip'
 import { cardSx } from '@/theme/colors'
 
 type DashboardWelcomeBannerProps = {
@@ -142,11 +143,9 @@ export function DashboardWelcomeBanner({ user }: DashboardWelcomeBannerProps) {
                       {channelName}
                     </Typography>
                     {channel?.isLive ? (
-                      <Chip
+                      <StatusToneChip
                         label={t('common.live')}
-                        size="small"
-                        color="success"
-                        sx={{ height: 22, fontSize: '0.6875rem', fontWeight: 700 }}
+                        color={statusBadgeColors.live}
                       />
                     ) : null}
                   </Box>

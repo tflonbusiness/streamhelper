@@ -59,7 +59,6 @@ export function ModuleSessionPageHeader({
       icon={Icon}
       iconVariant={module.iconVariant as ModuleIconVariant}
       moduleSurface
-      moduleId={module.id as ModulePageId}
       action={action}
       omitBreadcrumbBar={omitBreadcrumbBar}
     />

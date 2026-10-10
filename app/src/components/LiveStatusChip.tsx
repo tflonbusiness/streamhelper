@@ -1,11 +1,14 @@
 import { Box, Chip } from '@mui/material'
-import { alpha, useTheme } from '@mui/material/styles'
+import { alpha } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
-import { toneChipSx } from '@/theme/colors'
+import {
+  statusBadgeColors,
+  statusToneChipSx,
+} from '@/components/StatusToneChip'
 
 export function LiveStatusChip() {
   const { t } = useTranslation()
-  const theme = useTheme()
+  const liveBadgeColor = statusBadgeColors.live
 
   return (
     <Chip
@@ -19,15 +22,14 @@ export function LiveStatusChip() {
             width: 8,
             height: 8,
             borderRadius: '50%',
-            bgcolor: theme.palette.error.main,
+            bgcolor: liveBadgeColor,
             display: 'block',
-            boxShadow: `0 0 6px ${alpha(theme.palette.error.main, 0.55)}`,
+            boxShadow: `0 0 6px ${alpha(liveBadgeColor, 0.55)}`,
           }}
         />
       }
       sx={{
-        ...toneChipSx(theme.palette.error.light),
-        flexShrink: 0,
+        ...statusToneChipSx(liveBadgeColor, true),
         '& .MuiChip-icon': {
           ml: 0.75,
           mr: -0.25,
