@@ -24,6 +24,7 @@ type KickStreamUpstream = {
 
 type KickChannelUpstream = {
   slug?: string;
+  broadcaster_user_id?: number | string;
   stream_title?: string;
   channel_description?: string;
   banner_picture?: string;
@@ -152,7 +153,28 @@ export class KickChannelService {
     }
 
     const payload = (await response.json()) as KickChannelsResponse;
-    return payload.data?.[0] ?? null;
+    const channel = payload.data?.[0];
+    if (!channel) {
+      return null;
+    }
+
+    if (
+      channel.broadcaster_user_id !== undefined &&
+      channel.broadcaster_user_id !== null &&
+      String(channel.broadcaster_user_id) !== channelId
+    ) {
+      const byUserId = new URLSearchParams({ broadcaster_user_id: channelId });
+      const retry = await fetch(`${KICK_CHANNELS_URL}?${byUserId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!retry.ok) {
+        return null;
+      }
+      const retryPayload = (await retry.json()) as KickChannelsResponse;
+      return retryPayload.data?.[0] ?? null;
+    }
+
+    return channel;
   }
 
   private mapUpstream(channel: KickChannelUpstream): KickChannelDto {

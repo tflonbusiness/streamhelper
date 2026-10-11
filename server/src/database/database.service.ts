@@ -716,7 +716,19 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       if (!user || !membership) {
         throw new Error('OWNER_STATE_CORRUPT');
       }
-      return { userId: user.id, membership };
+
+      await this.syncKickOwnerProfileFromOAuth(
+        existing.userId,
+        membership.accountId,
+        profile,
+      );
+
+      const refreshedMembership = await this.getPrimaryMembership(existing.userId);
+      if (!refreshedMembership) {
+        throw new Error('OWNER_STATE_CORRUPT');
+      }
+
+      return { userId: user.id, membership: refreshedMembership };
     }
 
     const accountName = profile.username.trim();
@@ -812,6 +824,50 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     } finally {
       client.release();
     }
+  }
+
+  async syncKickOwnerProfileFromOAuth(
+    userId: number,
+    accountId: number,
+    profile: KickProfile,
+  ): Promise<void> {
+    const displayName = profile.username.trim();
+
+    await this.pool.query(
+      `
+        UPDATE auth_credentials
+        SET provider_username = $1
+        WHERE user_id = $2
+          AND provider = 'kick'
+          AND provider_user_id = $3
+      `,
+      [profile.username, userId, profile.providerUserId],
+    );
+
+    await this.pool.query(
+      `
+        UPDATE account_channels
+        SET channel_id = $1, channel_slug = $2
+        WHERE account_id = $3
+          AND provider = 'kick'
+          AND is_primary = true
+      `,
+      [profile.channelId, profile.channelSlug, accountId],
+    );
+
+    if (displayName.length < 2 || displayName.length > 100) {
+      return;
+    }
+
+    await this.pool.query(`UPDATE users SET name = $1 WHERE id = $2`, [
+      displayName,
+      userId,
+    ]);
+
+    await this.pool.query(`UPDATE accounts SET name = $1 WHERE id = $2`, [
+      displayName,
+      accountId,
+    ]);
   }
 
   async findAccessLinkUserIdByToken(token: string): Promise<number | null> {

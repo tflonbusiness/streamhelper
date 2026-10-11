@@ -139,8 +139,7 @@ export class AuthService {
       return user;
     }
 
-    const channelSlug =
-      user.channelSlug ?? (await this.resolveChannelSlug(user.accountId));
+    const channelSlug = await this.resolveChannelSlug(user.accountId);
     const accountUcid =
       user.accountUcid ??
       (await this.database.getAccountUcid(user.accountId)) ??
