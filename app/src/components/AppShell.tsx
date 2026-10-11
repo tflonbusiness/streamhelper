@@ -100,6 +100,7 @@ const ShellRoot = styled(Box)(({ theme }) => ({
   display: 'flex',
   minHeight: '100svh',
   flexDirection: 'column',
+  backgroundColor: theme.palette.background.default,
   [theme.breakpoints.up('md')]: {
     flexDirection: 'row',
   },
@@ -388,12 +389,13 @@ const SidebarLogoutButton = styled(Button)(({ theme }) => ({
   paddingRight: theme.spacing(1),
 }))
 
-const MainColumn = styled(Box)({
+const MainColumn = styled(Box)(({ theme }) => ({
   display: 'flex',
   minHeight: 0,
   flex: 1,
   flexDirection: 'column',
-})
+  backgroundColor: theme.palette.background.default,
+}))
 
 const DEFAULT_MAIN_MAX_WIDTH = 1024
 const WIDE_MAIN_MAX_WIDTH = 1800
@@ -404,6 +406,7 @@ const MainContent = styled('main', {
   flex: 1,
   overflow: 'auto',
   padding: theme.spacing(wide ? 2 : 3),
+  backgroundColor: theme.palette.background.default,
 }))
 
 const MainInner = styled(Box, {
@@ -677,7 +680,7 @@ export function AppShell() {
   }
   const wideMainContent =
     location.pathname === '/dashboard' ||
-    /^\/modules\/(?:bonus-buy|chat-roll|prize-spin)(?:\/\d+)?(?:\/|$)/.test(
+    /^\/modules\/(?:bonus-buy|chat-roll|prize-spin|media-interactive)(?:\/\d+)?(?:\/|$)/.test(
       location.pathname,
     )
   const [isNavExpanded, setIsNavExpanded] = useState(loadNavExpanded)

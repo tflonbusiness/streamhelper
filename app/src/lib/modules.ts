@@ -2,13 +2,25 @@ import type { SvgIconComponent } from '@mui/icons-material'
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
 import AutorenewIcon from '@mui/icons-material/Autorenew'
 import CasinoIcon from '@mui/icons-material/Casino'
+import YouTubeIcon from '@mui/icons-material/YouTube'
+import BoltIcon from '@mui/icons-material/Bolt'
+import TrendingUpIcon from '@mui/icons-material/TrendingUp'
+import BalanceIcon from '@mui/icons-material/Balance'
+import ApartmentIcon from '@mui/icons-material/Apartment'
+import LockIcon from '@mui/icons-material/Lock'
+import HourglassTopIcon from '@mui/icons-material/HourglassTop'
+import DirectionsRunIcon from '@mui/icons-material/DirectionsRun'
 import {
   BONUS_BUY_ROUTE,
   CHAT_ROLL_ROUTE,
   PRIZE_SPIN_ROUTE,
 } from '@/lib/routes'
 
-export type ModulePageId = 'bonus-buy' | 'prize-spin' | 'chat-roll'
+/** Modules with account module sessions (history + /:id workspace). */
+export type ModuleSessionPageId = 'bonus-buy' | 'prize-spin' | 'chat-roll'
+
+/** All modules that have a dedicated operator page in the app. */
+export type ModulePageId = ModuleSessionPageId | 'media-interactive'
 
 export type ModuleCatalogStatus = 'available' | 'coming_soon'
 
@@ -64,8 +76,63 @@ export const MODULE_CATALOG: ModuleDefinition[] = [
   },
 ]
 
+/** Planned widgets on `/modules` — coming soon, no catalog routes. */
+export const COMING_SOON_WIDGET_CATALOG: ModuleDefinition[] = [
+  {
+    id: 'media-interactive',
+    status: 'coming_soon',
+    icon: YouTubeIcon,
+    iconVariant: 'danger',
+  },
+  {
+    id: 'first-reaction',
+    status: 'coming_soon',
+    icon: BoltIcon,
+    iconVariant: 'warning',
+  },
+  {
+    id: 'growing-jackpot',
+    status: 'coming_soon',
+    icon: TrendingUpIcon,
+    iconVariant: 'success',
+  },
+  {
+    id: 'red-vs-black',
+    status: 'coming_soon',
+    icon: BalanceIcon,
+    iconVariant: 'danger',
+  },
+  {
+    id: 'tower',
+    status: 'coming_soon',
+    icon: ApartmentIcon,
+    iconVariant: 'info',
+  },
+  {
+    id: 'safe-crack',
+    status: 'coming_soon',
+    icon: LockIcon,
+    iconVariant: 'purple',
+  },
+  {
+    id: 'limit-50',
+    status: 'coming_soon',
+    icon: HourglassTopIcon,
+    iconVariant: 'primary',
+  },
+  {
+    id: 'marathon',
+    status: 'coming_soon',
+    icon: DirectionsRunIcon,
+    iconVariant: 'muted',
+  },
+]
+
 export function getModuleDefinition(moduleId: string): ModuleDefinition | undefined {
-  return MODULE_CATALOG.find((module) => module.id === moduleId)
+  return (
+    MODULE_CATALOG.find((module) => module.id === moduleId) ??
+    COMING_SOON_WIDGET_CATALOG.find((module) => module.id === moduleId)
+  )
 }
 
 export function moduleNameKey(moduleId: string): string {

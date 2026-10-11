@@ -6,7 +6,11 @@ export type PublicWidgetUnavailableReason =
   | 'subscription_expired'
   | 'entitlement_over_limit'
 
-export type PublicWidgetModule = 'bonusBuy' | 'prizeSpin' | 'chatRoll'
+export type PublicWidgetModule =
+  | 'bonusBuy'
+  | 'prizeSpin'
+  | 'chatRoll'
+  | 'mediaInteractive'
 
 export function publicWidgetUnavailableMessage(
   module: PublicWidgetModule,

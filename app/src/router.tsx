@@ -25,6 +25,8 @@ import { PrizeSpinStreamWidgetPage } from './pages/PrizeSpinStreamWidgetPage'
 import { SubscriptionPage } from './pages/SubscriptionPage'
 import { SubscriptionAdminPage } from './pages/SubscriptionAdminPage'
 import { TeamPage } from './pages/TeamPage'
+import { MediaInteractivePage } from './pages/MediaInteractivePage'
+import { MediaInteractiveStreamWidgetPage } from './pages/MediaInteractiveStreamWidgetPage'
 
 export const appRouter = createBrowserRouter([
   {
@@ -46,6 +48,10 @@ export const appRouter = createBrowserRouter([
   {
     path: '/modules/chat-roll/widget/:ucid',
     element: <ChatRollStreamWidgetPage />,
+  },
+  {
+    path: '/modules/media-interactive/widget/:ucid',
+    element: <MediaInteractiveStreamWidgetPage />,
   },
   {
     path: '/internal/subscriptions',
@@ -98,6 +104,10 @@ export const appRouter = createBrowserRouter([
                   {
                     path: '/modules/chat-roll/:id',
                     element: <ChatRollSessionPage />,
+                  },
+                  {
+                    path: '/modules/media-interactive',
+                    element: <MediaInteractivePage />,
                   },
                   {
                     element: <OwnerRoute />,

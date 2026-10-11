@@ -1,0 +1,139 @@
+- id: "1"
+  title: YouTube Media database schema and settings API
+  description: >-
+    Add account-scoped tables for module settings (volume, show_video, overlay
+    size, backup_cutover, max_viewer_track_duration_seconds, kick_reward_ids)
+    and queue/backup items per playback-queue.md. Expose authenticated GET/PATCH
+    settings (CAP-4, CAP-10 data layer).
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    Follow bonus_buy_widget bootstrap pattern in DatabaseService.initSchema().
+    kick_reward_ids as JSONB array. Queue rows distinguish queue vs backup via
+    list_kind enum. Unique kick_redemption_id when not null. E2e: membership
+    enforced on PATCH.
+
+- id: "2"
+  title: Queue and backup REST API with YouTube metadata
+  description: >-
+    Implement list/reorder/remove/staff-enqueue endpoints for queue and backup
+    lists; fetch title and duration_seconds on enqueue via normalized YouTube
+    URL (CAP-2, CAP-6). Staff playlist expands to multiple rows server-side.
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    Reject viewer-duration limit for staff source only. Viewer rows require
+    kick_redemption_id. Return camelCase DTOs matching app API style. Add URL
+    normalizer unit tests (youtu.be, watch, strip playlist params).
+
+- id: "3"
+  title: Playback transport API
+  description: >-
+    Server-side now playing pointer, pause/resume flag, skip (status skipped),
+    and promote next item per playback-queue.md state machine (CAP-3, CAP-5
+    server state).
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    At most one playing row per account. Skip clears playing and advances
+    position. Expose GET playback state for overlay polling. backup_cutover
+    stored in settings; overlay/player story applies client behavior.
+
+- id: "4"
+  title: Kick redemption webhook for song orders
+  description: >-
+    Handle channel.reward.redemption.updated on POST /webhooks/kick (or dedicated
+    handler) per kick-redemption-webhook.md — idempotent enqueue, validation,
+    rejected rows with reason (CAP-8).
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    Extend KickWebhookController routing; do not break chat.message.sent. Map
+    reward_id to account via kick_reward_ids. points_charged from redemption
+    cost. Dev-only mock POST mirroring dev/kick/chat pattern. Signature verify
+    reuse KickWebhookVerifierService.
+
+- id: "5"
+  title: Burned points daily metrics API
+  description: >-
+    Endpoint returning burned total for the UTC calendar day (sum points_charged
+    all viewer rows in scope regardless of status) and recent ledger per
+    points-economy.md (CAP-7).
+  spec_checkpoint: false
+  invoke_dev_with: >-
+    Scope is UTC midnight → now only (no module sessions). Return scope in API
+    response meta. Staff rows excluded from sum.
+
+- id: "6"
+  title: Public widget playback API
+  description: >-
+    Unauthenticated GET returning overlay settings, now playing metadata, backup
+    vs queue mode, and pause flag for browser source (CAP-9 data contract).
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    Match security pattern of GET /bonus-buys/:id/widget — account resolved via
+    opaque overlay token or account ucid in path per existing module convention.
+    No auth cookie required.
+
+- id: "7"
+  title: Module catalog entry and app routing
+  description: >-
+    Register youtube-media in MODULE_CATALOG and routes to /modules/youtube-media
+    plus overlay route per youtube-media-module.md (CAP-1).
+  spec_checkpoint: false
+  invoke_dev_with: >-
+    English copy only. Icon Music or Youtube lucide. ProtectedRoute on workspace;
+    overlay route outside AppShell.
+
+- id: "8"
+  title: Operator workspace — queue, transport, burned panel
+  description: >-
+    Build /modules/youtube-media page with queue table (title, duration, nick,
+    status), reorder, remove, pause/resume/skip, and burned total + ledger
+    (CAP-2, CAP-3, CAP-7).
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    Use AppTable / PageHeader patterns from BonusBuyPage. Poll or reuse existing
+    realtime if present; otherwise 2–3s polling on playback + queue. English
+    strings in components (no i18n keys required if app is English-only).
+
+- id: "9"
+  title: Staff add track or playlist to queue or backup
+  description: >-
+    Dialog or panel for owner/mod to paste YouTube URL or playlist URL and
+    target queue vs backup list (CAP-6).
+  spec_checkpoint: false
+  invoke_dev_with: >-
+    Call staff enqueue API from story 2. Toast on success. Badge staff rows as
+    Stream in table.
+
+- id: "10"
+  title: Module settings UI
+  description: >-
+    Settings section for volume, show video, overlay dimensions, backup_cutover
+    select, max_viewer_track_duration_seconds, and kick_reward_ids editor
+    (CAP-4, CAP-10).
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    PATCH settings on save with validation clamps from player-overlay-settings.md.
+    backup_cutover labels Immediate stop / Finish current track.
+
+- id: "11"
+  title: OBS overlay player page
+  description: >-
+    Public overlay renders YouTube player at configured size, respects
+    show_video and volume, implements backup_cutover behavior with queue
+    handoff, shows now playing strip (CAP-5, CAP-9).
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    YouTube IFrame API; transparent page background. When show_video false hide
+    or 1px player per common audio-only pattern. Stream Widget card on workspace
+    with Copy OBS link + Open overlay like Bonus Buy CAP-26.
+
+- id: "12"
+  title: End-to-end verification
+  description: >-
+    Prove SPEC success signal — mock redemption webhook enqueues track, staff
+    backup plays when empty, burned total includes rejected row, overlay sync.
+    app/ and server/ build pass.
+  spec_checkpoint: false
+  done_checkpoint: true
+  invoke_dev_with: >-
+    Add focused e2e or integration test for webhook idempotency and duration
+    reject. Manual QA checklist in PR description acceptable for overlay A/V.

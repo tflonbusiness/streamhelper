@@ -248,6 +248,13 @@ export const en = {
   modules: {
     pageTitle: "Widgets",
     pageDescription: "Tools for your team's streamers",
+    availableSectionTitle: "Available now",
+    comingSoonSectionTitle: "Coming soon",
+    comingSoonBadge: "Preview",
+    comingSoonGameCount: "{{count}} widgets",
+    comingSoonLineupTitle: "In the lineup",
+    comingSoonSectionDescription:
+      "Planned stream widgets for Kick. We roll them out in phases; when a widget is ready, it moves to Available now.",
     catalog: {
       'bonus-buy': {
         name: "Bonus Buy",
@@ -263,8 +270,108 @@ export const en = {
         name: "Chat Roll",
         description:
           "Draw a winner in Kick chat with a keyword viewers type — transparent and live on stream. Flexible settings fit your format without extra work for your team."
+      },
+      'media-interactive': {
+        name: "Media Interactive",
+        description:
+          "Viewers queue any YouTube video with channel points — backup playback, OBS overlay, and full operator control."
+      },
+      'first-reaction': {
+        name: "First Reaction",
+        description:
+          "A word flashes on overlay — the first matching chat command wins."
+      },
+      'growing-jackpot': {
+        name: "Growing Jackpot",
+        description:
+          "Pool and prize grow until the timer ends; one random winner."
+      },
+      'red-vs-black': {
+        name: "Red vs Black",
+        description:
+          "Blind side vote — counts reveal at the end; winner from the winning pool."
+      },
+      'tower': {
+        name: "Tower",
+        description:
+          "Random eliminations each floor until one survivor remains."
+      },
+      'safe-crack': {
+        name: "Safe Crack",
+        description:
+          "One guess per viewer — exact code match wins before time runs out."
+      },
+      'limit-50': {
+        name: "Limit 50",
+        description:
+          "First N joiners fill the pool; timer and prize, then one winner."
+      },
+      'marathon': {
+        name: "Marathon",
+        description:
+          "Catch flash windows to build a streak and qualify for the finale draw."
       }
     }
+  },
+  mediaInteractive: {
+    title: "Media Interactive",
+    description: "Points-based YouTube queue and backup player for your stream",
+    controlTitle: "Queue & playback",
+    controlDescription: "Playback controls, quick staff enqueue, and queue lists side by side.",
+    workspaceSectionTitle: "Live control",
+    workspaceSectionDescription:
+      "Playback, staff enqueue, and both playlists in one workspace — like other module pages.",
+    transport: "Playback",
+    nowPlaying: "Now playing",
+    requestedBy: "Ordered by {{nick}}",
+    nothingPlaying: "Nothing playing",
+    overlayPaused: "Paused",
+    pause: "Pause",
+    resume: "Resume",
+    skip: "Skip",
+    orderQueue: "Order queue",
+    queueEmpty: "Queue is empty",
+    backupList: "Backup playlist",
+    backupEmpty: "No backup tracks",
+    staffAdd: "Add video (staff)",
+    staffTarget: "Destination",
+    youtubeUrl: "YouTube link or playlist",
+    toQueue: "Add to queue",
+    toBackup: "Add to backup",
+    addTrack: "Add",
+    added: "Added to list",
+    burnedTitle: "Burned channel points (today)",
+    burnedHint: "All viewer orders today, any status",
+    settings: "Player & overlay",
+    settingsSectionPlayback: "Playback",
+    settingsSectionOverlay: "Overlay",
+    settingsSectionBackup: "Backup and queue",
+    settingsSectionViewerOrders: "Viewer orders",
+    backupCutover: "When queue starts during backup",
+    streamWidgetSettingsButton: "Player & overlay settings",
+    settingsSaved: "Player and overlay settings saved.",
+    couldNotSaveSettings: "Could not save player and overlay settings.",
+    volume: "Volume",
+    showVideo: "Show video on overlay",
+    overlayModeVideo: "Video",
+    overlayModeAudio: "Audio only",
+    overlayModeVideoHint:
+      "Shows the YouTube player on stream. Set width and height for your OBS browser source.",
+    overlayModeAudioHint:
+      "Plays audio without a visible player — use a small browser source in OBS; track info can still show on the overlay.",
+    width: "Overlay width (px)",
+    height: "Overlay height (px)",
+    audioWidgetWidth: "Audio bar width (px)",
+    audioWidgetWidthHint: "Width of the now-playing bar in OBS when video is off.",
+    cutoverImmediate: "Stop backup immediately when queue plays",
+    cutoverFinish: "Finish backup track, then play queue",
+    maxDuration: "Max viewer video length (seconds)",
+    kickRewardIds: "Kick reward IDs",
+    kickRewardIdsHint: "Comma-separated reward IDs that enqueue videos",
+    streamWidgetTitle: "Stream overlay",
+    openSettingsAbove: "Edit settings in the panel above",
+    openOverlay: "Open overlay",
+    obsLink: "Copy OBS link"
   },
   subscription: {
     title: "Subscription",

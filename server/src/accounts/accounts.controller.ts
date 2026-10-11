@@ -15,6 +15,7 @@ import {
 import type { Request } from 'express';
 import { AuthService } from '../auth/auth.service.js';
 import type { SessionData } from '../auth/auth.types.js';
+import { MediaInteractiveService } from '../media-interactive/media-interactive.service.js';
 
 type CreateModeratorBody = {
   name?: string;
@@ -112,7 +113,10 @@ type PatchChatRollWidgetBody = {
 
 @Controller('accounts')
 export class AccountsController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly mediaInteractive: MediaInteractiveService,
+  ) {}
 
   @Get(':accountId/kick/channel')
   async getKickChannel(
@@ -941,6 +945,140 @@ export class AccountsController {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
     return this.authService.patchChatRollWidget(accountId, user.id, body);
+  }
+
+  @Get(':accountId/media-interactive/settings')
+  async getMediaInteractiveSettings(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.mediaInteractive.getSettings(accountId, user.id);
+  }
+
+  @Patch(':accountId/media-interactive/settings')
+  async patchMediaInteractiveSettings(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Body() body: Record<string, unknown>,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.mediaInteractive.patchSettings(accountId, user.id, {
+      volume: body.volume as number | undefined,
+      showVideo: body.show_video as boolean | undefined,
+      overlayWidth: body.overlay_width as number | undefined,
+      overlayHeight: body.overlay_height as number | undefined,
+      audioOverlayWidth: body.audio_overlay_width as number | undefined,
+      backupCutover: body.backup_cutover as
+        | 'immediate'
+        | 'finish_current_track'
+        | undefined,
+      maxViewerTrackDurationSeconds: body.max_viewer_track_duration_seconds as
+        | number
+        | undefined,
+      kickRewardIds: body.kick_reward_ids as string[] | undefined,
+    });
+  }
+
+  @Get(':accountId/media-interactive/queue')
+  async listYoutubeQueue(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Query('list') list: string | undefined,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    const listKind = list === 'backup' ? 'backup' : 'queue';
+    const items = await this.mediaInteractive.listItems(
+      accountId,
+      user.id,
+      listKind,
+    );
+    const playback = await this.mediaInteractive.getPlaybackState(
+      accountId,
+      user.id,
+    );
+    return { items, playback };
+  }
+
+  @Post(':accountId/media-interactive/staff-enqueue')
+  async staffEnqueueYoutube(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Body() body: { url?: string; list_kind?: string },
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    const items = await this.mediaInteractive.staffEnqueue(accountId, user.id, {
+      url: body.url ?? '',
+      listKind: body.list_kind === 'backup' ? 'backup' : 'queue',
+    });
+    return { items };
+  }
+
+  @Put(':accountId/media-interactive/reorder')
+  async reorderYoutube(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Body() body: { list_kind?: string; ordered_ids?: number[] },
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    const listKind = body.list_kind === 'backup' ? 'backup' : 'queue';
+    const items = await this.mediaInteractive.reorderItems(
+      accountId,
+      user.id,
+      listKind,
+      body.ordered_ids ?? [],
+    );
+    return { items };
+  }
+
+  @Delete(':accountId/media-interactive/items/:itemId')
+  @HttpCode(204)
+  async removeYoutubeItem(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('itemId', ParseIntPipe) itemId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    await this.mediaInteractive.removeItem(accountId, user.id, itemId);
+  }
+
+  @Post(':accountId/media-interactive/pause')
+  async pauseYoutube(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Body() body: { paused?: boolean },
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    await this.mediaInteractive.pause(accountId, user.id, Boolean(body.paused));
+    return { ok: true };
+  }
+
+  @Post(':accountId/media-interactive/skip')
+  async skipYoutube(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    await this.mediaInteractive.skip(accountId, user.id);
+    return { ok: true };
+  }
+
+  @Get(':accountId/media-interactive/burned-points')
+  async getYoutubeBurnedPoints(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.mediaInteractive.getBurnedPoints(accountId, user.id);
   }
 
   @Delete(':accountId/members/:memberUserId')

@@ -9,6 +9,7 @@ type ModulePageHeaderProps = {
   title: string
   description?: string
   action?: React.ReactNode
+  compact?: boolean
 }
 
 export function ModulePageHeader({
@@ -16,6 +17,7 @@ export function ModulePageHeader({
   title,
   description,
   action,
+  compact,
 }: ModulePageHeaderProps) {
   const module = getModuleDefinition(moduleId)
 
@@ -33,6 +35,7 @@ export function ModulePageHeader({
       iconVariant={module.iconVariant as ModuleIconVariant}
       moduleSurface
       action={action}
+      compact={compact}
     />
   )
 }

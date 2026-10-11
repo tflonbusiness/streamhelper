@@ -16,6 +16,8 @@ function moduleVariantForId(id: ModulePageId): ModuleIconVariant {
       return 'purple'
     case 'chat-roll':
       return 'info'
+    case 'media-interactive':
+      return 'danger'
   }
 }
 
@@ -203,6 +205,8 @@ export function ModuleIllustration({ moduleId, variant }: ModuleIllustrationProp
     case 'prize-spin':
       return <PrizeWheelIllustration accent={accent} />
     case 'chat-roll':
+      return <ChatRollIllustration accent={accent} />
+    case 'media-interactive':
       return <ChatRollIllustration accent={accent} />
   }
 }

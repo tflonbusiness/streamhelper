@@ -248,6 +248,13 @@ export const ru = {
   modules: {
     pageTitle: "Виджеты",
     pageDescription: "Инструменты для стримеров",
+    availableSectionTitle: "Доступно сейчас",
+    comingSoonSectionTitle: "Скоро",
+    comingSoonBadge: "Анонс",
+    comingSoonGameCount: "{{count}} виджетов",
+    comingSoonLineupTitle: "В линейке",
+    comingSoonSectionDescription:
+      "Запланированные виджеты для стрима на Kick. Подключаем их поэтапно: когда виджет готов, он переезжает в «Доступно сейчас».",
     catalog: {
       'bonus-buy': {
         name: "Bonus Buy",
@@ -263,8 +270,108 @@ export const ru = {
         name: "Chat Roll",
         description:
           "Выбирайте победителя из чата Kick по заданному кодовому слову."
+      },
+      'media-interactive': {
+        name: "Media Interactive",
+        description:
+          "Зрители заказывают любое видео с YouTube за баллы канала — бэкап, оверлей OBS и управление эфиром."
+      },
+      'first-reaction': {
+        name: "Первая реакция",
+        description:
+          "Слово на оверлее — побеждает первый с верной командой в чате."
+      },
+      'growing-jackpot': {
+        name: "Растущий джекпот",
+        description:
+          "Пул и приз растут до конца таймера — один случайный победитель."
+      },
+      'red-vs-black': {
+        name: "Красное vs Чёрное",
+        description:
+          "Слепой выбор стороны — счёт в конце, победитель из пула победивших."
+      },
+      'tower': {
+        name: "Башня",
+        description:
+          "Случайные вылеты с этажами, пока не останется один участник."
+      },
+      'safe-crack': {
+        name: "Взлом сейфа",
+        description:
+          "Одна попытка на зрителя — точный код до конца таймера."
+      },
+      'limit-50': {
+        name: "Лимит 50",
+        description:
+          "Первые N в пуле, таймер и приз — затем один победитель."
+      },
+      'marathon': {
+        name: "Марафон",
+        description:
+          "Лови вспышки, копи серию и попади в финальный розыгрыш."
       }
     }
+  },
+  mediaInteractive: {
+    title: "Media Interactive",
+    description: "Очередь YouTube за баллы и фоновое воспроизведение",
+    controlTitle: "Очередь и воспроизведение",
+    controlDescription: "Воспроизведение, быстрое добавление трека и две очереди рядом.",
+    workspaceSectionTitle: "Управление эфиром",
+    workspaceSectionDescription:
+      "Воспроизведение, добавление треков и обе очереди в одной рабочей области — как у других модулей.",
+    transport: "Воспроизведение",
+    nowPlaying: "Сейчас играет",
+    requestedBy: "Заказал {{nick}}",
+    nothingPlaying: "Ничего не играет",
+    overlayPaused: "Пауза",
+    pause: "Пауза",
+    resume: "Продолжить",
+    skip: "Скип",
+    orderQueue: "Очередь заказов",
+    queueEmpty: "Очередь пуста",
+    backupList: "Бэкап",
+    backupEmpty: "Нет треков в бэкапе",
+    staffAdd: "Добавить трек (стример/мод)",
+    staffTarget: "Куда добавить",
+    youtubeUrl: "Ссылка YouTube или плейлист",
+    toQueue: "В очередь",
+    toBackup: "В бэкап",
+    addTrack: "Добавить",
+    added: "Добавлено",
+    burnedTitle: "Сожжённые баллы (сегодня)",
+    burnedHint: "Все заказы зрителей за день, любой статус",
+    settings: "Плеер и оверлей",
+    settingsSectionPlayback: "Воспроизведение",
+    settingsSectionOverlay: "Оверлей",
+    settingsSectionBackup: "Бэкап и очередь",
+    settingsSectionViewerOrders: "Заказы зрителей",
+    backupCutover: "Поведение при заказе во время бэкапа",
+    streamWidgetSettingsButton: "Настройки плеера и оверлея",
+    settingsSaved: "Настройки плеера и оверлея сохранены.",
+    couldNotSaveSettings: "Не удалось сохранить настройки плеера и оверлея.",
+    volume: "Громкость",
+    showVideo: "Показывать видео в оверлее",
+    overlayModeVideo: "Видео",
+    overlayModeAudio: "Только звук",
+    overlayModeVideoHint:
+      "Плеер с картинкой в эфире. Задайте ширину и высоту под источник браузера в OBS.",
+    overlayModeAudioHint:
+      "Звук без видимого плеера — в OBS достаточно маленького источника; название трека можно показывать в оверлее.",
+    width: "Ширина оверлея (px)",
+    height: "Высота оверлея (px)",
+    audioWidgetWidth: "Ширина звуковой плашки (px)",
+    audioWidgetWidthHint: "Ширина блока «сейчас играет» в OBS, когда видео выключено.",
+    cutoverImmediate: "Сразу прерывать бэкап при заказе",
+    cutoverFinish: "Доиграть бэкап, затем очередь",
+    maxDuration: "Макс. длина трека зрителя (сек)",
+    kickRewardIds: "ID наград Kick",
+    kickRewardIdsHint: "Через запятую — redemption создаёт заказ",
+    streamWidgetTitle: "Стрим-оверлей",
+    openSettingsAbove: "Настройки — в блоке выше",
+    openOverlay: "Открыть оверлей",
+    obsLink: "Ссылка для OBS"
   },
   subscription: {
     title: "Подписка",

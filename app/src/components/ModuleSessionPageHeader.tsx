@@ -1,7 +1,11 @@
 import type { SvgIconComponent } from '@mui/icons-material'
 import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/components/PageHeader'
-import type { ModuleDefinition, ModuleIconVariant, ModulePageId } from '@/lib/modules'
+import type {
+  ModuleDefinition,
+  ModuleIconVariant,
+  ModuleSessionPageId,
+} from '@/lib/modules'
 
 type ModuleSessionPageHeaderProps = {
   module: ModuleDefinition | undefined
@@ -10,7 +14,7 @@ type ModuleSessionPageHeaderProps = {
 }
 
 export const MODULE_SESSION_PAGE_COPY: Record<
-  ModulePageId,
+  ModuleSessionPageId,
   { titleKey: string; descriptionKey: string }
 > = {
   'bonus-buy': {
@@ -31,7 +35,7 @@ export function moduleSessionPageTitle(
   module: ModuleDefinition,
   t: (key: string) => string,
 ) {
-  const copy = MODULE_SESSION_PAGE_COPY[module.id as ModulePageId]
+  const copy = MODULE_SESSION_PAGE_COPY[module.id as ModuleSessionPageId]
   return copy ? t(copy.titleKey) : ''
 }
 
@@ -46,7 +50,7 @@ export function ModuleSessionPageHeader({
     return null
   }
 
-  const copy = MODULE_SESSION_PAGE_COPY[module.id as ModulePageId]
+  const copy = MODULE_SESSION_PAGE_COPY[module.id as ModuleSessionPageId]
   const title = copy ? t(copy.titleKey) : ''
   const description = copy ? t(copy.descriptionKey) : undefined
 

@@ -44,6 +44,10 @@ type PageHeaderProps = {
   showBreadcrumbs?: boolean
   /** When true, breadcrumb row is omitted (e.g. rendered by session chrome). */
   omitBreadcrumbBar?: boolean
+  /** Single-line title row; hides description and reduces padding. */
+  compact?: boolean
+  /** Solid card surface without accent gradient overlay. */
+  flatBackground?: boolean
   className?: string
 }
 
@@ -164,6 +168,8 @@ export function PageHeader({
   action,
   showBreadcrumbs = true,
   omitBreadcrumbBar = false,
+  compact = false,
+  flatBackground = false,
   className,
 }: PageHeaderProps) {
   const theme = useTheme()
@@ -176,6 +182,7 @@ export function PageHeader({
     getBreadcrumbAncestors(pathname, t, dynamicLabel).length > 0
   const moduleHeaderSx =
     moduleSurface && icon ? modulePageHeaderSx(iconVariant, theme) : undefined
+  const showDescription = Boolean(description?.trim()) && !compact
   return (
     <Box
       component="header"
@@ -185,18 +192,22 @@ export function PageHeader({
         position: 'relative',
         overflow: 'hidden',
         ...(moduleHeaderSx as object | undefined),
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          inset: 0,
-          background: moduleHeaderBackground(
-            iconVariant,
-            theme,
-            moduleSurface,
-            Boolean(icon),
-          ),
-          pointerEvents: 'none',
-        },
+        ...(flatBackground
+          ? {}
+          : {
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                inset: 0,
+                background: moduleHeaderBackground(
+                  iconVariant,
+                  theme,
+                  moduleSurface,
+                  Boolean(icon),
+                ),
+                pointerEvents: 'none',
+              },
+            }),
       }}
     >
       {hasBreadcrumbs ? (
@@ -204,7 +215,7 @@ export function PageHeader({
           sx={{
             position: 'relative',
             px: 2,
-            py: 1.25,
+            py: compact ? 0.75 : 1.25,
             borderBottom: '1px solid',
             borderColor: 'divider',
             bgcolor: alpha(colors.neutral[100], 0.015),
@@ -219,26 +230,36 @@ export function PageHeader({
         sx={{
           position: 'relative',
           display: 'flex',
-          alignItems: description ? 'flex-start' : 'center',
+          alignItems: showDescription ? 'flex-start' : 'center',
           justifyContent: 'space-between',
           gap: 2,
           px: 2,
-          py: hasBreadcrumbs ? 2 : 2.25,
+          py: compact
+            ? hasBreadcrumbs
+              ? 1
+              : 1.25
+            : hasBreadcrumbs
+              ? 2
+              : 2.25,
         }}
       >
         <Box
           sx={{
             display: 'flex',
             minWidth: 0,
-            alignItems: description ? 'flex-start' : 'center',
-            gap: 1.5,
+            alignItems: showDescription ? 'flex-start' : 'center',
+            gap: compact ? 1.25 : 1.5,
             flex: 1,
             position: 'relative',
             zIndex: 1,
           }}
         >
           {icon ? (
-            <IconTile icon={icon} variant={iconVariant} size={moduleSurface ? 'lg' : 'md'} />
+            <IconTile
+              icon={icon}
+              variant={iconVariant}
+              size={compact ? 'md' : moduleSurface ? 'lg' : 'md'}
+            />
           ) : null}
           <Box
             sx={{
@@ -246,7 +267,7 @@ export function PageHeader({
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
-              ...(icon && !description
+              ...(icon && !showDescription
                 ? {
                     height: ICON_TILE_HEIGHT,
                     overflow: 'hidden',
@@ -260,14 +281,14 @@ export function PageHeader({
               noWrap
               sx={{
                 fontWeight: 700,
-                fontSize: '1.0625rem',
+                fontSize: compact ? '1rem' : '1.0625rem',
                 lineHeight: 1.25,
                 letterSpacing: '-0.01em',
               }}
             >
               {title}
             </Typography>
-            {description ? (
+            {showDescription ? (
               <Typography
                 variant="caption"
                 color="text.secondary"

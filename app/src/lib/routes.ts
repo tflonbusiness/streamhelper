@@ -12,6 +12,10 @@ export const prizeSpinSessionRoute = (id: number | string) =>
 export const prizeSpinWidgetRoute = (accountUcid: string) =>
   `/modules/prize-spin/widget/${accountUcid}`
 
+export const MEDIA_INTERACTIVE_ROUTE = '/modules/media-interactive'
+export const mediaInteractiveWidgetRoute = (accountUcid: string) =>
+  `/modules/media-interactive/widget/${accountUcid}`
+
 export const CHAT_ROLL_ROUTE = '/modules/chat-roll'
 export const chatRollSessionRoute = (id: number | string) =>
   `/modules/chat-roll/${id}`

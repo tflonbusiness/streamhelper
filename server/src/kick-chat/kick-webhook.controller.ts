@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import type { RawBodyRequest } from '@nestjs/common';
 import type { Request } from 'express';
+import { KickRedemptionHandler } from '../media-interactive/kick-redemption.handler.js';
 import { KickCommandRouter } from './kick-command.router.js';
 import { KickWebhookVerifierService } from './kick-webhook-verifier.service.js';
 import { kickMessageAuditFields, formatKickRouteAudit } from './kick-chat-audit.js';
@@ -23,6 +24,7 @@ export class KickWebhookController {
   constructor(
     private readonly verifier: KickWebhookVerifierService,
     private readonly router: KickCommandRouter,
+    private readonly redemptionHandler: KickRedemptionHandler,
   ) {}
 
   private logKickPayload(payload: unknown): void {
@@ -100,6 +102,14 @@ export class KickWebhookController {
       body: parsedBody,
     });
 
+    if (
+      eventType === 'channel.reward.redemption.updated' ||
+      eventType === 'channel.reward.redemption.created'
+    ) {
+      await this.redemptionHandler.handleRedemptionUpdated(parsedBody);
+      return { ok: true };
+    }
+
     if (eventType !== 'chat.message.sent') {
       this.logger.debug(
         `ignored event type=${eventType} messageId=${messageId ?? 'unknown'}`,
@@ -124,6 +134,18 @@ export class KickWebhookController {
     this.logger.log(
       `handled chat.message.sent messageId=${event.message_id} ${formatKickRouteAudit(routeResult)}`,
     );
+    return { ok: true };
+  }
+
+  @Post('dev/kick/redemption')
+  @HttpCode(200)
+  async injectMockRedemption(@Body() body: unknown): Promise<{ ok: true }> {
+    if (!this.verifier.isMockMode()) {
+      throw new UnauthorizedException(
+        'Mock redemption requires KICK_CHAT_MOCK=true',
+      );
+    }
+    await this.redemptionHandler.handleRedemptionUpdated(body);
     return { ok: true };
   }
 
