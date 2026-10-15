@@ -77,6 +77,15 @@ type PlayerSyncState = {
   volume: number
 }
 
+function applyPlayerVolume(player: YtPlayer, volume: number) {
+  player.setVolume(volume)
+  if (volume > 0) {
+    player.unMute()
+  } else {
+    player.mute()
+  }
+}
+
 function syncPlayerToView(
   player: YtPlayer,
   videoId: string | null,
@@ -85,12 +94,7 @@ function syncPlayerToView(
   last: PlayerSyncState,
 ) {
   if (volume !== last.volume) {
-    player.setVolume(volume)
-    if (volume > 0) {
-      player.unMute()
-    } else {
-      player.mute()
-    }
+    applyPlayerVolume(player, volume)
     last.volume = volume
   }
 
@@ -107,6 +111,9 @@ function syncPlayerToView(
     player.loadVideoById(videoId)
     last.videoId = videoId
     last.paused = paused
+    // iframe API starts muted for autoplay; each load can reset mute.
+    applyPlayerVolume(player, volume)
+    last.volume = volume
     if (paused) {
       player.pauseVideo()
     } else {
@@ -155,11 +162,12 @@ export function MediaInteractiveStreamWidgetPage() {
   const playerSyncRef = useRef<PlayerSyncState>({
     videoId: null,
     paused: true,
-    volume: 80,
+    volume: -1,
   })
   const playbackIntentRef = useRef({
     videoId: null as string | null,
     paused: true,
+    volume: 80,
   })
 
   const isActive = view?.status === 'active'
@@ -222,6 +230,13 @@ export function MediaInteractiveStreamWidgetPage() {
               playbackIntentRef.current.paused,
               event.data,
             )
+            if (
+              event.data === YT_PLAYING &&
+              !playbackIntentRef.current.paused &&
+              playbackIntentRef.current.volume > 0
+            ) {
+              player.unMute()
+            }
           },
         },
       })
@@ -237,7 +252,7 @@ export function MediaInteractiveStreamWidgetPage() {
       playerRef.current = null
       host.replaceChildren()
       setPlayerReady(false)
-      playerSyncRef.current = { videoId: null, paused: true, volume: 80 }
+      playerSyncRef.current = { videoId: null, paused: true, volume: -1 }
     }
   }, [isActive, accountUcid, playerHostEl])
 
@@ -248,7 +263,7 @@ export function MediaInteractiveStreamWidgetPage() {
     const np = view.playback.nowPlaying
     const videoId = np?.youtubeVideoId ?? null
     const paused = view.playback.paused
-    playbackIntentRef.current = { videoId, paused }
+    playbackIntentRef.current = { videoId, paused, volume: view.settings.volume }
     syncPlayerToView(
       playerRef.current,
       videoId,
