@@ -17,15 +17,24 @@ const YT_PAUSED = 2
 const YT_BUFFERING = 3
 const YT_CUED = 5
 
+/** YouTube often refuses playback in a 1×1 iframe (audio-only overlay). */
+const YT_MIN_WIDTH = 320
+const YT_MIN_HEIGHT = 180
+
 type YtPlayer = {
   loadVideoById: (id: string) => void
   playVideo: () => void
   pauseVideo: () => void
+  getPlayerState: () => number
   setVolume: (n: number) => void
   unMute: () => void
   mute: () => void
   destroy: () => void
   setSize: (width: number, height: number) => void
+}
+
+function isYtActivelyPlaying(state: number) {
+  return state === YT_PLAYING || state === YT_BUFFERING
 }
 
 declare global {
@@ -119,8 +128,7 @@ function scheduleMutedPlayRetries(
       // ignore — player may be tearing down
     }
   }
-  play()
-  for (const delay of [50, 150, 400, 1000]) {
+  for (const delay of [150, 400, 900, 1800]) {
     timerIds.push(window.setTimeout(play, delay))
   }
 }
@@ -199,6 +207,28 @@ function syncPlayerToView(
       scheduleAudible()
     }
     last.paused = paused
+  }
+}
+
+function nudgePlaybackIfStalled(
+  player: YtPlayer,
+  videoId: string | null,
+  paused: boolean,
+  kickMutedAutoplay: () => void,
+  scheduleAudible: () => void,
+) {
+  if (!videoId || paused) {
+    return
+  }
+  try {
+    const state = player.getPlayerState()
+    if (!isYtActivelyPlaying(state)) {
+      kickMutedAutoplay()
+      scheduleAudible()
+    }
+  } catch {
+    kickMutedAutoplay()
+    scheduleAudible()
   }
 }
 
@@ -383,6 +413,13 @@ export function MediaInteractiveStreamWidgetPage() {
       kickMutedAutoplay,
       scheduleAudibleUnlockFromIntent,
     )
+    nudgePlaybackIfStalled(
+      playerRef.current,
+      videoId,
+      paused,
+      kickMutedAutoplay,
+      scheduleAudibleUnlockFromIntent,
+    )
   }, [playerReady, view, kickMutedAutoplay, scheduleAudibleUnlockFromIntent])
 
   useEffect(() => {
@@ -394,8 +431,12 @@ export function MediaInteractiveStreamWidgetPage() {
       return
     }
     const showVideo = view.settings.showVideo
-    const w = showVideo ? view.settings.overlayWidth : 1
-    const h = showVideo ? view.settings.overlayHeight : 1
+    const w = showVideo
+      ? view.settings.overlayWidth
+      : YT_MIN_WIDTH
+    const h = showVideo
+      ? view.settings.overlayHeight
+      : YT_MIN_HEIGHT
     try {
       playerRef.current.setSize(w, h)
     } catch {

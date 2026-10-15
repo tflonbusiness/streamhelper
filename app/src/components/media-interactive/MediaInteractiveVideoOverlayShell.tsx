@@ -40,10 +40,10 @@ const StyledVideoStage = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'stageHeight' && prop !== 'dimmed' && prop !== 'hidden',
 })<{ stageHeight: number; dimmed?: boolean; hidden?: boolean }>(
   ({ theme, stageHeight, dimmed, hidden }) => ({
-    position: hidden ? 'absolute' : 'relative',
-    width: hidden ? 1 : '100%',
-    height: hidden ? 1 : stageHeight,
-    left: hidden ? 0 : undefined,
+    position: hidden ? 'fixed' : 'relative',
+    width: hidden ? 320 : '100%',
+    height: hidden ? 180 : stageHeight,
+    left: hidden ? -10_000 : undefined,
     top: hidden ? 0 : undefined,
     overflow: 'hidden',
     opacity: hidden ? 0 : 1,
