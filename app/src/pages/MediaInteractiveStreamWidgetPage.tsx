@@ -13,11 +13,8 @@ const UUID_REGEX =
 
 const YT_ENDED = 0
 const YT_PLAYING = 1
-const YT_PAUSED = 2
 const YT_BUFFERING = 3
-const YT_CUED = 5
 
-/** YouTube often refuses playback in a 1×1 iframe (audio-only overlay). */
 const YT_MIN_WIDTH = 320
 const YT_MIN_HEIGHT = 180
 
@@ -80,169 +77,26 @@ function loadYoutubeApi(): Promise<void> {
   })
 }
 
-type PlayerSyncState = {
-  videoId: string | null
-  paused: boolean
-  volume: number
-}
-
-function setPlayerVolumeLevel(player: YtPlayer, volume: number) {
+function unlockPlayerAudio(player: YtPlayer, volume: number) {
   player.setVolume(volume)
   if (volume <= 0) {
     player.mute()
-  }
-}
-
-/** Unmute only after playback has started (autoplay policy). */
-function applyAudiblePlayback(player: YtPlayer, volume: number) {
-  if (volume <= 0) {
-    setPlayerVolumeLevel(player, volume)
     return
   }
-  setPlayerVolumeLevel(player, volume)
   player.unMute()
+}
+
+function tryMutedPlay(player: YtPlayer) {
+  try {
+    player.mute()
+  } catch {
+    // ignore
+  }
   try {
     player.playVideo()
   } catch {
-    // ignore — player may be tearing down
+    // ignore
   }
-}
-
-function scheduleMutedPlayRetries(
-  player: YtPlayer,
-  paused: boolean,
-  timerIds: number[],
-) {
-  if (paused) {
-    return
-  }
-  for (const id of timerIds) {
-    window.clearTimeout(id)
-  }
-  timerIds.length = 0
-
-  const play = () => {
-    try {
-      player.playVideo()
-    } catch {
-      // ignore — player may be tearing down
-    }
-  }
-  for (const delay of [150, 400, 900, 1800]) {
-    timerIds.push(window.setTimeout(play, delay))
-  }
-}
-
-function scheduleAudibleUnlock(
-  player: YtPlayer,
-  volume: number,
-  paused: boolean,
-  timerIds: number[],
-) {
-  if (paused || volume <= 0) {
-    return
-  }
-  for (const id of timerIds) {
-    window.clearTimeout(id)
-  }
-  timerIds.length = 0
-
-  const unlock = () => applyAudiblePlayback(player, volume)
-  for (const delay of [300, 800, 1500]) {
-    timerIds.push(window.setTimeout(unlock, delay))
-  }
-}
-
-function syncPlayerToView(
-  player: YtPlayer,
-  videoId: string | null,
-  paused: boolean,
-  volume: number,
-  last: PlayerSyncState,
-  kickMutedAutoplay: () => void,
-  scheduleAudible: () => void,
-) {
-  if (volume !== last.volume) {
-    setPlayerVolumeLevel(player, volume)
-    if (
-      volume > 0 &&
-      videoId !== null &&
-      videoId === last.videoId &&
-      !paused
-    ) {
-      applyAudiblePlayback(player, volume)
-    }
-    last.volume = volume
-  }
-
-  if (!videoId) {
-    if (!last.paused) {
-      player.pauseVideo()
-      last.paused = true
-    }
-    last.videoId = null
-    return
-  }
-
-  if (videoId !== last.videoId) {
-    player.loadVideoById(videoId)
-    last.videoId = videoId
-    last.paused = paused
-    setPlayerVolumeLevel(player, volume)
-    last.volume = volume
-    if (paused) {
-      player.pauseVideo()
-    } else {
-      kickMutedAutoplay()
-      scheduleAudible()
-    }
-    return
-  }
-
-  if (paused !== last.paused) {
-    if (paused) {
-      player.pauseVideo()
-    } else {
-      kickMutedAutoplay()
-      scheduleAudible()
-    }
-    last.paused = paused
-  }
-}
-
-function nudgePlaybackIfStalled(
-  player: YtPlayer,
-  videoId: string | null,
-  paused: boolean,
-  kickMutedAutoplay: () => void,
-  scheduleAudible: () => void,
-) {
-  if (!videoId || paused) {
-    return
-  }
-  try {
-    const state = player.getPlayerState()
-    if (!isYtActivelyPlaying(state)) {
-      kickMutedAutoplay()
-      scheduleAudible()
-    }
-  } catch {
-    kickMutedAutoplay()
-    scheduleAudible()
-  }
-}
-
-function tryResumePlayback(player: YtPlayer, paused: boolean, playerState: number) {
-  if (paused) {
-    return
-  }
-  if (
-    playerState === YT_PLAYING ||
-    playerState === YT_BUFFERING
-  ) {
-    return
-  }
-  player.playVideo()
 }
 
 export function MediaInteractiveStreamWidgetPage() {
@@ -259,56 +113,12 @@ export function MediaInteractiveStreamWidgetPage() {
     setPlayerHostEl(node)
   }, [])
   const [playerReady, setPlayerReady] = useState(false)
-  const playerSyncRef = useRef<PlayerSyncState>({
-    videoId: null,
-    paused: true,
-    volume: -1,
-  })
+  const loadedVideoIdRef = useRef<string | null>(null)
   const playbackIntentRef = useRef({
     videoId: null as string | null,
     paused: true,
     volume: 80,
   })
-  const mutedPlayTimersRef = useRef<number[]>([])
-  const audibleUnlockTimersRef = useRef<number[]>([])
-
-  const clearPlaybackTimers = useCallback(() => {
-    for (const id of mutedPlayTimersRef.current) {
-      window.clearTimeout(id)
-    }
-    mutedPlayTimersRef.current = []
-    for (const id of audibleUnlockTimersRef.current) {
-      window.clearTimeout(id)
-    }
-    audibleUnlockTimersRef.current = []
-  }, [])
-
-  const kickMutedAutoplay = useCallback(() => {
-    const player = playerRef.current
-    if (!player) {
-      return
-    }
-    const { paused } = playbackIntentRef.current
-    scheduleMutedPlayRetries(
-      player,
-      paused,
-      mutedPlayTimersRef.current,
-    )
-  }, [])
-
-  const scheduleAudibleUnlockFromIntent = useCallback(() => {
-    const player = playerRef.current
-    if (!player) {
-      return
-    }
-    const { paused, volume } = playbackIntentRef.current
-    scheduleAudibleUnlock(
-      player,
-      volume,
-      paused,
-      audibleUnlockTimersRef.current,
-    )
-  }, [])
 
   const isActive = view?.status === 'active'
 
@@ -336,8 +146,8 @@ export function MediaInteractiveStreamWidgetPage() {
         return
       }
       playerRef.current = new window.YT.Player(host, {
-        height: '360',
-        width: '640',
+        height: String(YT_MIN_HEIGHT),
+        width: String(YT_MIN_WIDTH),
         playerVars: {
           autoplay: 1,
           mute: 1,
@@ -365,16 +175,16 @@ export function MediaInteractiveStreamWidgetPage() {
             if (!player) {
               return
             }
-            tryResumePlayback(
-              player,
-              playbackIntentRef.current.paused,
-              event.data,
-            )
-            if (
-              event.data === YT_PLAYING &&
-              !playbackIntentRef.current.paused
-            ) {
-              applyAudiblePlayback(player, playbackIntentRef.current.volume)
+            const intent = playbackIntentRef.current
+            if (intent.paused) {
+              return
+            }
+            if (event.data === YT_PLAYING) {
+              unlockPlayerAudio(player, intent.volume)
+              return
+            }
+            if (!isYtActivelyPlaying(event.data)) {
+              tryMutedPlay(player)
             }
           },
         },
@@ -383,7 +193,6 @@ export function MediaInteractiveStreamWidgetPage() {
 
     return () => {
       cancelled = true
-      clearPlaybackTimers()
       try {
         playerRef.current?.destroy()
       } catch {
@@ -392,79 +201,104 @@ export function MediaInteractiveStreamWidgetPage() {
       playerRef.current = null
       host.replaceChildren()
       setPlayerReady(false)
-      playerSyncRef.current = { videoId: null, paused: true, volume: -1 }
+      loadedVideoIdRef.current = null
     }
-  }, [isActive, accountUcid, playerHostEl, clearPlaybackTimers])
+  }, [isActive, accountUcid, playerHostEl])
 
-  const applyViewToPlayer = useCallback(() => {
+  const drivePlayerFromView = useCallback(() => {
     if (!playerReady || view?.status !== 'active' || !playerRef.current) {
       return
     }
+
+    const player = playerRef.current
     const np = view.playback.nowPlaying
     const videoId = np?.youtubeVideoId ?? null
     const paused = view.playback.paused
-    playbackIntentRef.current = { videoId, paused, volume: view.settings.volume }
-    syncPlayerToView(
-      playerRef.current,
-      videoId,
-      paused,
-      view.settings.volume,
-      playerSyncRef.current,
-      kickMutedAutoplay,
-      scheduleAudibleUnlockFromIntent,
-    )
-    nudgePlaybackIfStalled(
-      playerRef.current,
-      videoId,
-      paused,
-      kickMutedAutoplay,
-      scheduleAudibleUnlockFromIntent,
-    )
-  }, [playerReady, view, kickMutedAutoplay, scheduleAudibleUnlockFromIntent])
-
-  useEffect(() => {
-    applyViewToPlayer()
-  }, [applyViewToPlayer])
-
-  useEffect(() => {
-    if (!playerReady || !playerRef.current || view?.status !== 'active') {
-      return
-    }
+    const volume = view.settings.volume
     const showVideo = view.settings.showVideo
-    const w = showVideo
-      ? view.settings.overlayWidth
-      : YT_MIN_WIDTH
-    const h = showVideo
-      ? view.settings.overlayHeight
-      : YT_MIN_HEIGHT
+
+    playbackIntentRef.current = { videoId, paused, volume }
+
+    const w = showVideo ? view.settings.overlayWidth : YT_MIN_WIDTH
+    const h = showVideo ? view.settings.overlayHeight : YT_MIN_HEIGHT
     try {
-      playerRef.current.setSize(w, h)
+      player.setSize(w, h)
     } catch {
       // ignore resize failures during teardown
+    }
+
+    player.setVolume(volume)
+
+    if (!videoId) {
+      loadedVideoIdRef.current = null
+      player.pauseVideo()
+      return
+    }
+
+    if (paused) {
+      player.pauseVideo()
+      return
+    }
+
+    if (loadedVideoIdRef.current !== videoId) {
+      loadedVideoIdRef.current = videoId
+      tryMutedPlay(player)
+      player.loadVideoById(videoId)
+      return
+    }
+
+    try {
+      const state = player.getPlayerState()
+      if (state === YT_PLAYING) {
+        unlockPlayerAudio(player, volume)
+        return
+      }
+      if (!isYtActivelyPlaying(state)) {
+        tryMutedPlay(player)
+      }
+    } catch {
+      tryMutedPlay(player)
     }
   }, [playerReady, view])
 
   useEffect(() => {
-    const onVisibilityChange = () => {
-      if (document.visibilityState !== 'visible') {
+    drivePlayerFromView()
+  }, [drivePlayerFromView])
+
+  useEffect(() => {
+    const resume = () => {
+      if (document.visibilityState === 'hidden') {
         return
       }
-      applyViewToPlayer()
-      const player = playerRef.current
-      if (
-        player &&
-        !playbackIntentRef.current.paused &&
-        playbackIntentRef.current.videoId
-      ) {
-        kickMutedAutoplay()
-        scheduleAudibleUnlockFromIntent()
-      }
+      drivePlayerFromView()
     }
-    document.addEventListener('visibilitychange', onVisibilityChange)
+    document.addEventListener('visibilitychange', resume)
+    window.addEventListener('focus', resume)
+    window.addEventListener('pageshow', resume)
     return () => {
-      document.removeEventListener('visibilitychange', onVisibilityChange)
+      document.removeEventListener('visibilitychange', resume)
+      window.removeEventListener('focus', resume)
+      window.removeEventListener('pageshow', resume)
     }
-  }, [applyViewToPlayer, kickMutedAutoplay, scheduleAudibleUnlockFromIntent])
+  }, [drivePlayerFromView])
+
+  useEffect(() => {
+    if (!playerHostEl || !playerReady) {
+      return
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          drivePlayerFromView()
+        }
+      },
+      { threshold: 0.01 },
+    )
+    observer.observe(playerHostEl)
+    return () => {
+      observer.disconnect()
+    }
+  }, [playerHostEl, playerReady, drivePlayerFromView])
 
   if (!accountUcid) {
     return <StreamWidgetMessage message={widgetUiCopy.accountNotFound} />
