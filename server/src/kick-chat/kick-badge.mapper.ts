@@ -4,7 +4,6 @@ const BADGE_TYPE_TO_ROLE: Record<string, string> = {
   og: 'og',
   subscriber: 'paid_subscriber',
   sub: 'paid_subscriber',
-  founder: 'og',
 };
 
 export function mapKickBadgesToRoleIds(

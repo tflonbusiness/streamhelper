@@ -24,6 +24,13 @@ describe('mapKickBadgesToRoleIds', () => {
   it('returns empty array when no badges', () => {
     expect(mapKickBadgesToRoleIds(undefined)).toEqual([]);
   });
+
+  it('does not map founder badge type to og', () => {
+    expect(mapKickBadgesToRoleIds([{ type: 'founder' }])).toEqual([]);
+    expect(resolveKickChatRollRoleIds([{ type: 'founder' }])).toEqual([
+      'viewer',
+    ]);
+  });
 });
 
 describe('resolveKickChatRollRoleIds', () => {

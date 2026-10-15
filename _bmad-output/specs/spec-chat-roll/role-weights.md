@@ -48,7 +48,8 @@ Implementation: `server/src/kick-chat/kick-badge.mapper.ts` → `chat_roll_parti
 |-------------------|----------------------|------------------------|
 | `moderator` | `moderator` | yes — `{ "text": "Moderator", "type": "moderator" }` |
 | `vip` | `vip` | (map when seen) |
-| `og`, `founder` | `og` | (map when seen) |
+| `og` | `og` | (map when seen) |
+| `founder` | *(none)* | not mapped to Chat Roll roles |
 | `subscriber`, `sub` | `paid_subscriber` | (map when seen) |
 | `broadcaster` | *(none)* | badge present for channel owner; not mapped to Chat Roll roles |
 | *(any `badges`, including empty)* | `viewer` + mapped badge roles | `viewer` is always stored; mapped badges add `moderator`, `vip`, `og`, `paid_subscriber`, etc. |
