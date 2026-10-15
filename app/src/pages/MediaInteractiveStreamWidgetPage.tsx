@@ -77,12 +77,16 @@ type PlayerSyncState = {
   volume: number
 }
 
-function applyPlayerVolume(player: YtPlayer, volume: number) {
+function setPlayerVolumeLevel(player: YtPlayer, volume: number) {
   player.setVolume(volume)
+  if (volume <= 0) {
+    player.mute()
+  }
+}
+
+function unmuteForPlayback(player: YtPlayer, volume: number) {
   if (volume > 0) {
     player.unMute()
-  } else {
-    player.mute()
   }
 }
 
@@ -94,7 +98,15 @@ function syncPlayerToView(
   last: PlayerSyncState,
 ) {
   if (volume !== last.volume) {
-    applyPlayerVolume(player, volume)
+    setPlayerVolumeLevel(player, volume)
+    if (
+      volume > 0 &&
+      videoId !== null &&
+      videoId === last.videoId &&
+      !paused
+    ) {
+      unmuteForPlayback(player, volume)
+    }
     last.volume = volume
   }
 
@@ -111,8 +123,7 @@ function syncPlayerToView(
     player.loadVideoById(videoId)
     last.videoId = videoId
     last.paused = paused
-    // iframe API starts muted for autoplay; each load can reset mute.
-    applyPlayerVolume(player, volume)
+    setPlayerVolumeLevel(player, volume)
     last.volume = volume
     if (paused) {
       player.pauseVideo()
@@ -127,6 +138,9 @@ function syncPlayerToView(
       player.pauseVideo()
     } else {
       player.playVideo()
+      if (volume > 0) {
+        unmuteForPlayback(player, volume)
+      }
     }
     last.paused = paused
   }
@@ -232,10 +246,9 @@ export function MediaInteractiveStreamWidgetPage() {
             )
             if (
               event.data === YT_PLAYING &&
-              !playbackIntentRef.current.paused &&
-              playbackIntentRef.current.volume > 0
+              !playbackIntentRef.current.paused
             ) {
-              player.unMute()
+              unmuteForPlayback(player, playbackIntentRef.current.volume)
             }
           },
         },
