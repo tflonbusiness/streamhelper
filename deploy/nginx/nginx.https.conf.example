@@ -65,6 +65,11 @@ server {
         include /etc/nginx/snippets/proxy-api.conf;
     }
 
+    location /media-interactive/ {
+        proxy_pass http://api;
+        include /etc/nginx/snippets/proxy-api.conf;
+    }
+
     location /webhooks/ {
         proxy_pass http://api;
         include /etc/nginx/snippets/proxy-api.conf;
