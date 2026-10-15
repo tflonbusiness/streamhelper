@@ -1,7 +1,7 @@
 import { Box, Stack } from '@mui/material'
 import PauseRoundedIcon from '@mui/icons-material/PauseRounded'
 import { alpha, styled } from '@mui/material/styles'
-import type { RefObject } from 'react'
+import type { Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { MediaInteractiveItem } from '@/api/media-interactive'
 import { MediaInteractivePlayerCard } from '@/components/media-interactive/MediaInteractivePlayerCard'
@@ -13,7 +13,7 @@ type MediaInteractiveVideoOverlayShellProps = {
   audioBarWidth: number
   track: MediaInteractiveItem | null
   paused: boolean
-  playerHostRef: RefObject<HTMLDivElement | null>
+  playerHostRef: Ref<HTMLDivElement | null>
 }
 
 const StyledShell = styled(Stack, {

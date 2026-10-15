@@ -3,7 +3,8 @@ import { useParams } from 'react-router-dom'
 import { Box, Typography } from '@mui/material'
 import { notifyMediaInteractiveTrackComplete } from '@/api/media-interactive'
 import { MediaInteractiveVideoOverlayShell } from '@/components/media-interactive/MediaInteractiveVideoOverlayShell'
-import { usePinWidgetUiEnglish } from '@/i18n/widget-ui'
+import { StreamWidgetMessage } from '@/components/widget/StreamWidgetMessage'
+import { usePinWidgetUiEnglish, widgetUiCopy } from '@/i18n/widget-ui'
 import { publicWidgetUnavailableMessage } from '@/lib/public-widget'
 import { usePublicMediaInteractiveWidget } from '@/queries/use-media-interactive'
 
@@ -44,7 +45,11 @@ function loadYoutubeApi(): Promise<void> {
     return Promise.resolve()
   }
   return new Promise((resolve) => {
-    const finish = () => resolve()
+    const finish = () => {
+      if (window.YT?.Player) {
+        resolve()
+      }
+    }
     const prev = window.onYouTubeIframeAPIReady
     window.onYouTubeIframeAPIReady = () => {
       prev?.()
@@ -54,16 +59,15 @@ function loadYoutubeApi(): Promise<void> {
       const script = document.createElement('script')
       script.src = 'https://www.youtube.com/iframe_api'
       document.head.appendChild(script)
-    } else {
-      const waitForYt = () => {
-        if (window.YT?.Player) {
-          finish()
-        } else {
-          window.requestAnimationFrame(waitForYt)
-        }
-      }
-      waitForYt()
     }
+    const waitForYt = () => {
+      if (window.YT?.Player) {
+        finish()
+      } else {
+        window.requestAnimationFrame(waitForYt)
+      }
+    }
+    waitForYt()
   })
 }
 
@@ -140,9 +144,13 @@ export function MediaInteractiveStreamWidgetPage() {
   const accountUcid =
     ucid && UUID_REGEX.test(ucid) ? ucid : null
 
-  const { data: view } = usePublicMediaInteractiveWidget(accountUcid)
+  const { data: view, isPending, isError } =
+    usePublicMediaInteractiveWidget(accountUcid)
   const playerRef = useRef<YtPlayer | null>(null)
-  const hostRef = useRef<HTMLDivElement | null>(null)
+  const [playerHostEl, setPlayerHostEl] = useState<HTMLDivElement | null>(null)
+  const handlePlayerHostRef = useCallback((node: HTMLDivElement | null) => {
+    setPlayerHostEl(node)
+  }, [])
   const [playerReady, setPlayerReady] = useState(false)
   const playerSyncRef = useRef<PlayerSyncState>({
     videoId: null,
@@ -166,19 +174,20 @@ export function MediaInteractiveStreamWidgetPage() {
   }, [])
 
   useEffect(() => {
-    if (!isActive || !accountUcid || !hostRef.current) {
+    if (!isActive || !accountUcid || !playerHostEl) {
       return
     }
+    const host = playerHostEl
     let cancelled = false
 
     void loadYoutubeApi().then(() => {
-      if (cancelled || !window.YT?.Player || !hostRef.current) {
+      if (cancelled || !window.YT?.Player) {
         return
       }
       if (playerRef.current) {
         return
       }
-      playerRef.current = new window.YT.Player(hostRef.current, {
+      playerRef.current = new window.YT.Player(host, {
         height: '360',
         width: '640',
         playerVars: {
@@ -226,13 +235,11 @@ export function MediaInteractiveStreamWidgetPage() {
         // YouTube may already have detached the iframe from our host node.
       }
       playerRef.current = null
-      if (hostRef.current) {
-        hostRef.current.replaceChildren()
-      }
+      host.replaceChildren()
       setPlayerReady(false)
       playerSyncRef.current = { videoId: null, paused: true, volume: 80 }
     }
-  }, [isActive, accountUcid])
+  }, [isActive, accountUcid, playerHostEl])
 
   const applyViewToPlayer = useCallback(() => {
     if (!playerReady || view?.status !== 'active' || !playerRef.current) {
@@ -291,15 +298,15 @@ export function MediaInteractiveStreamWidgetPage() {
   }, [applyViewToPlayer])
 
   if (!accountUcid) {
-    return (
-      <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-        Account not found.
-      </Typography>
-    )
+    return <StreamWidgetMessage message={widgetUiCopy.accountNotFound} />
   }
 
-  if (!view) {
+  if (isPending) {
     return null
+  }
+
+  if (isError || !view) {
+    return <StreamWidgetMessage message={widgetUiCopy.accountNotFound} />
   }
 
   if (view.status === 'unavailable') {
@@ -328,7 +335,7 @@ export function MediaInteractiveStreamWidgetPage() {
         audioBarWidth={audioBarWidth}
         track={np}
         paused={view.playback.paused}
-        playerHostRef={hostRef}
+        playerHostRef={handlePlayerHostRef}
       />
     </Box>
   )
