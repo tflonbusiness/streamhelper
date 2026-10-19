@@ -1,5 +1,9 @@
 import { Box } from '@mui/material'
 import { useEffect, useMemo } from 'react'
+import {
+  obsBrowserSourceBoxSx,
+  useObsBrowserSourceLayout,
+} from '@/hooks/useObsBrowserSourceLayout'
 import { useParams } from 'react-router-dom'
 import { PrizeSpinWidgetNotFoundError } from '@/api/prize-spin'
 import { PrizeSpinWidgetCard } from '@/components/prize-spin/widget/PrizeSpinWidgetCard'
@@ -29,16 +33,14 @@ export function PrizeSpinStreamWidgetPage() {
   const { data: view, error, isLoading, isPending } =
     usePublicPrizeSpinWidget(accountUcid)
 
-  useEffect(() => {
-    const prevBody = document.body.style.overflow
-    const prevHtml = document.documentElement.style.overflow
-    document.body.style.overflow = 'hidden'
-    document.documentElement.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prevBody
-      document.documentElement.style.overflow = prevHtml
-    }
-  }, [])
+  const obsSize = useMemo(
+    () =>
+      view?.status === 'active'
+        ? { width: view.settings.width, height: view.settings.height }
+        : undefined,
+    [view],
+  )
+  useObsBrowserSourceLayout(obsSize)
 
   useEffect(() => attachPrizeSpinWheelAudioUnlock(), [])
 
@@ -73,19 +75,16 @@ export function PrizeSpinStreamWidgetPage() {
     )
   }
 
+  const size = { width: view.settings.width, height: view.settings.height }
+
   return (
     <Box
       sx={{
-        width: view.settings.width,
-        height: view.settings.height,
-        minHeight: view.settings.height,
+        ...obsBrowserSourceBoxSx(size),
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: 'transparent',
-        overflow: 'hidden',
         fontFamily: PRIZE_SPIN_WIDGET_THEME.fontFamily,
-        mx: 'auto',
       }}
     >
       <PrizeSpinWidgetCard

@@ -2,6 +2,7 @@ import { Grid, Stack } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import { MediaInteractiveBurnedSection } from '@/components/media-interactive/media-interactive-page/MediaInteractiveBurnedSection'
+import { MediaInteractiveViewerOrdersSection } from '@/components/media-interactive/media-interactive-page/MediaInteractiveViewerOrdersSection'
 import { MediaInteractiveStreamWidgetSection } from '@/components/media-interactive/media-interactive-page/MediaInteractiveStreamWidgetSection'
 import { MediaInteractiveWorkspaceSection } from '@/components/media-interactive/media-interactive-page/MediaInteractiveWorkspaceSection'
 import { ModulePageHeader } from '@/components/ModulePageHeader'
@@ -55,6 +56,7 @@ export function MediaInteractivePage() {
           </Grid>
           <Grid size={{ xs: 12, lg: 4 }}>
             <SidebarStack>
+              <MediaInteractiveViewerOrdersSection accountId={accountId} />
               <MediaInteractiveStreamWidgetSection
                 accountId={accountId}
                 accountUcid={accountUcid}

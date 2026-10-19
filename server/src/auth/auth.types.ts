@@ -39,6 +39,11 @@ export type KickProfile = {
 export type KickOAuthExchangeResult = {
   profile: KickProfile;
   accessToken?: string;
+  oauthTokens?: {
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  };
 };
 
 export type CreateModeratorResult = {

@@ -346,7 +346,29 @@ export const en = {
     settingsSectionPlayback: "Playback",
     settingsSectionOverlay: "Overlay",
     settingsSectionBackup: "Backup and queue",
-    settingsSectionViewerOrders: "Viewer orders",
+    viewerOrdersTitle: "Kick channel point orders",
+    viewerOrdersDescription:
+      "Choose which channel rewards add tracks when viewers redeem them.",
+    viewerOrdersStep1:
+      "On Kick, enable required viewer text on the reward (YouTube link).",
+    viewerOrdersStep2: "Turn on the rewards below that should accept orders.",
+    viewerOrdersStep3:
+      "When a viewer redeems on Kick, the track is added to your queue.",
+    viewerOrdersRewardsListTitle: "Channel rewards",
+    viewerOrdersSelectedCount: "Enabled: {{count}}",
+    viewerOrdersNoneEnabled:
+      "No rewards accept orders yet — enable at least one.",
+    viewerOrdersRewardActive: "Accepting orders",
+    viewerOrdersDurationPreview: "≈ {{formatted}}",
+    kickRewardNoInputShort: "Unavailable",
+    kickRewardUnavailableReason:
+      "This reward does not require viewer text on Kick. Enable “requires viewer input” to accept YouTube links.",
+    viewerOrdersLimitTitle: "Track length limit",
+    viewerOrdersLimitHint:
+      "Tracks longer than this are rejected; Kick points are still spent.",
+    viewerOrdersSaveLimit: "Save limit",
+    viewerOrdersLimitSaved: "Duration limit saved.",
+    viewerOrdersSaveError: "Could not save viewer order settings.",
     backupCutover: "When queue starts during backup",
     streamWidgetSettingsButton: "Player & overlay settings",
     settingsSaved: "Player and overlay settings saved.",
@@ -356,7 +378,9 @@ export const en = {
     overlayModeVideo: "Video",
     overlayModeAudio: "Audio only",
     overlayModeVideoHint:
-      "Shows the YouTube player on stream. Set width and height for your OBS browser source.",
+      "Shows the YouTube player on stream. Height is the video area only; use the OBS browser source size below.",
+    overlayObsBrowserSizeHint:
+      "OBS browser source size: {{width}}×{{height}} px (including the now-playing bar).",
     overlayModeAudioHint:
       "Plays audio without a visible player — use a small browser source in OBS; track info can still show on the overlay.",
     width: "Overlay width (px)",
@@ -366,8 +390,16 @@ export const en = {
     cutoverImmediate: "Stop backup immediately when queue plays",
     cutoverFinish: "Finish backup track, then play queue",
     maxDuration: "Max viewer video length (seconds)",
-    kickRewardIds: "Kick reward IDs",
-    kickRewardIdsHint: "Comma-separated reward IDs that enqueue videos",
+    kickRewardsSelectHint:
+      "Choose which channel point rewards add tracks to the queue (reward must ask viewers for text — e.g. a YouTube link).",
+    kickRewardsLoading: "Loading rewards from Kick…",
+    kickRewardsLoadError: "Could not load channel rewards from Kick.",
+    kickRewardsReauthHint:
+      "Sign out and sign in with Kick again so we can read your channel rewards.",
+    kickRewardsEmpty: "No channel rewards found on Kick.",
+    kickRewardCost: "{{cost}} pts",
+    kickRewardDisabled: "Disabled on Kick",
+    kickRewardNoInput: "Enable “requires viewer input” on Kick for song links",
     streamWidgetTitle: "Stream overlay",
     openSettingsAbove: "Edit settings in the panel above",
     openOverlay: "Open overlay",

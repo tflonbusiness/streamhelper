@@ -183,12 +183,14 @@ export class AuthService {
     code: string,
     codeVerifier?: string,
   ): Promise<SessionUser> {
-    const { profile, accessToken } = await this.kickOAuth.exchangeCodeForProfile(
-      code,
-      codeVerifier,
-    );
+    const { profile, accessToken, oauthTokens } =
+      await this.kickOAuth.exchangeCodeForProfile(code, codeVerifier);
     const { userId, membership } =
       await this.database.provisionOwnerFromKick(profile);
+
+    if (oauthTokens) {
+      await this.database.saveKickOAuthTokens(userId, oauthTokens);
+    }
 
     await this.kickEvents.subscribeToChatMessages({
       broadcasterUserId: profile.channelId,

@@ -4,6 +4,13 @@ const KICK_TOKEN_URL = 'https://id.kick.com/oauth/token';
 const KICK_SUBSCRIPTIONS_URL =
   'https://api.kick.com/public/v1/events/subscriptions';
 
+/** Events delivered to POST /webhooks/kick for a broadcaster channel. */
+export const KICK_CHANNEL_WEBHOOK_EVENTS = [
+  { name: 'chat.message.sent', version: 1 },
+  { name: 'channel.reward.redemption.updated', version: 1 },
+  { name: 'channel.reward.redemption.created', version: 1 },
+] as const;
+
 @Injectable()
 export class KickEventsService {
   private readonly logger = new Logger(KickEventsService.name);
@@ -17,21 +24,31 @@ export class KickEventsService {
     broadcasterUserId: string;
     userAccessToken?: string;
   }): Promise<void> {
+    await this.subscribeToChannelWebhooks(input);
+  }
+
+  async subscribeToChannelWebhooks(input: {
+    broadcasterUserId: string;
+    userAccessToken?: string;
+  }): Promise<void> {
     if (this.isMockMode()) {
+      const names = KICK_CHANNEL_WEBHOOK_EVENTS.map((e) => e.name).join(', ');
       this.logger.log(
-        `[mock] subscribed to chat.message.sent for broadcaster ${input.broadcasterUserId}`,
+        `[mock] subscribed to Kick webhooks (${names}) for broadcaster ${input.broadcasterUserId}`,
       );
       return;
     }
 
-    const events = [{ name: 'chat.message.sent', version: 1 }];
+    const events = [...KICK_CHANNEL_WEBHOOK_EVENTS];
     const method = 'webhook';
+    const eventNames = events.map((e) => e.name).join(', ');
 
     if (input.userAccessToken) {
       const userResult = await this.postSubscription({
         accessToken: input.userAccessToken,
         body: { events, method },
         label: `user token (broadcaster ${input.broadcasterUserId})`,
+        eventNames,
       });
       if (userResult) {
         return;
@@ -58,6 +75,7 @@ export class KickEventsService {
         method,
       },
       label: `app token (broadcaster ${broadcasterUserId})`,
+      eventNames,
     });
   }
 
@@ -65,6 +83,7 @@ export class KickEventsService {
     accessToken: string;
     body: Record<string, unknown>;
     label: string;
+    eventNames: string;
   }): Promise<boolean> {
     const response = await fetch(KICK_SUBSCRIPTIONS_URL, {
       method: 'POST',
@@ -84,7 +103,7 @@ export class KickEventsService {
     }
 
     this.logger.log(
-      `Subscribed to chat.message.sent via ${input.label}: ${await response.text()}`,
+      `Subscribed to Kick webhooks (${input.eventNames}) via ${input.label}: ${await response.text()}`,
     );
     return true;
   }

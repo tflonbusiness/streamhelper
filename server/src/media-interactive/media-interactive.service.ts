@@ -110,6 +110,13 @@ export class MediaInteractiveService {
     return result.rows[0] as Record<string, unknown>;
   }
 
+  private readKickRewardIds(raw: unknown): string[] {
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+    return raw.map(String).filter(Boolean);
+  }
+
   private formatSettings(row: Record<string, unknown>): MediaInteractiveSettingsDto {
     const kickIds = row.kick_reward_ids;
     return {
@@ -396,23 +403,43 @@ export class MediaInteractiveService {
   async handleKickRedemption(payload: {
     redemptionId: string;
     rewardId: string;
+    broadcasterUserId: string;
     userInput: string;
     requesterNick: string;
     pointsCharged: number;
-  }): Promise<{ accountId: number; item: MediaInteractiveItemDto } | null> {
-    const accounts = await this.pool().query<{ account_id: number }>(
-      `
-        SELECT account_id FROM media_interactive_settings
-        WHERE kick_reward_ids @> $1::jsonb
-      `,
-      [JSON.stringify([payload.rewardId])],
+  }): Promise<
+    | { kind: 'ok'; accountId: number; item: MediaInteractiveItemDto }
+    | {
+        kind: 'ignored';
+        reason:
+          | 'unknown_channel'
+          | 'subscription_expired'
+          | 'no_rewards_selected'
+          | 'reward_not_mapped';
+      }
+  > {
+    const accountId = await this.database.getAccountIdByKickChannelId(
+      payload.broadcasterUserId,
     );
-    const accountId = accounts.rows[0]?.account_id;
     if (!accountId) {
-      return null;
+      return { kind: 'ignored', reason: 'unknown_channel' };
+    }
+
+    const hasSubscription =
+      await this.database.accountHasSubscriptionAccess(accountId);
+    if (!hasSubscription) {
+      return { kind: 'ignored', reason: 'subscription_expired' };
     }
 
     const settingsRow = await this.ensureSettings(accountId);
+    const kickRewardIds = this.readKickRewardIds(settingsRow.kick_reward_ids);
+    if (kickRewardIds.length === 0) {
+      return { kind: 'ignored', reason: 'no_rewards_selected' };
+    }
+    if (!kickRewardIds.includes(payload.rewardId)) {
+      return { kind: 'ignored', reason: 'reward_not_mapped' };
+    }
+
     const maxDuration = Number(settingsRow.max_viewer_track_duration_seconds);
 
     const existing = await this.pool().query(
@@ -424,7 +451,11 @@ export class MediaInteractiveService {
         `SELECT * FROM media_interactive_item WHERE kick_redemption_id = $1`,
         [payload.redemptionId],
       );
-      return { accountId, item: this.mapItem(row.rows[0]) };
+      return {
+        kind: 'ok',
+        accountId,
+        item: this.mapItem(row.rows[0]),
+      };
     }
 
     const client = await this.pool().connect();
@@ -449,7 +480,7 @@ export class MediaInteractiveService {
           rejectReason: 'invalid_youtube_url',
         });
         await client.query('COMMIT');
-        return { accountId, item };
+        return { kind: 'ok', accountId, item };
       }
 
       if (
@@ -468,7 +499,7 @@ export class MediaInteractiveService {
           rejectReason: 'duration_exceeds_limit',
         });
         await client.query('COMMIT');
-        return { accountId, item };
+        return { kind: 'ok', accountId, item };
       }
 
       const item = await this.insertItem(client, {
@@ -487,7 +518,7 @@ export class MediaInteractiveService {
       } else {
         await this.maybeStartPlayback(accountId);
       }
-      return { accountId, item };
+      return { kind: 'ok', accountId, item };
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;

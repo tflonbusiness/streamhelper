@@ -1,5 +1,9 @@
 import { Box } from '@mui/material'
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
+import {
+  obsBrowserSourceBoxSx,
+  useObsBrowserSourceLayout,
+} from '@/hooks/useObsBrowserSourceLayout'
 import { useParams } from 'react-router-dom'
 import { ChatRollWidgetNotFoundError } from '@/api/chat-roll'
 import { ChatRollWidgetCard } from '@/components/chat-roll/widget/ChatRollWidgetCard'
@@ -27,16 +31,13 @@ export function ChatRollStreamWidgetPage() {
   const { data: view, error, isLoading, isPending } =
     usePublicChatRollWidget(accountUcid)
 
-  useEffect(() => {
-    const prevBody = document.body.style.overflow
-    const prevHtml = document.documentElement.style.overflow
-    document.body.style.overflow = 'hidden'
-    document.documentElement.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prevBody
-      document.documentElement.style.overflow = prevHtml
-    }
-  }, [])
+  const obsSize = {
+    width: CHAT_ROLL_WIDGET_DEFAULTS.width,
+    height: CHAT_ROLL_WIDGET_DEFAULTS.height,
+  }
+  useObsBrowserSourceLayout(
+    view?.status === 'active' ? obsSize : undefined,
+  )
 
   if (accountUcid === null) {
     return (
@@ -84,16 +85,11 @@ export function ChatRollStreamWidgetPage() {
   return (
     <Box
       sx={{
-        width: viewportWidth,
-        height: viewportHeight,
-        minHeight: viewportHeight,
+        ...obsBrowserSourceBoxSx(obsSize),
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: 'transparent',
-        overflow: 'hidden',
         fontFamily: CHAT_ROLL_WIDGET_THEME.fontFamily,
-        mx: 'auto',
       }}
     >
       <ChatRollWidgetCard

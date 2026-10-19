@@ -15,6 +15,7 @@ import {
 import type { Request } from 'express';
 import { AuthService } from '../auth/auth.service.js';
 import type { SessionData } from '../auth/auth.types.js';
+import { KickChannelRewardsService } from '../auth/kick-channel-rewards.service.js';
 import { MediaInteractiveService } from '../media-interactive/media-interactive.service.js';
 
 type CreateModeratorBody = {
@@ -116,6 +117,7 @@ export class AccountsController {
   constructor(
     private readonly authService: AuthService,
     private readonly mediaInteractive: MediaInteractiveService,
+    private readonly kickChannelRewards: KickChannelRewardsService,
   ) {}
 
   @Get(':accountId/kick/channel')
@@ -945,6 +947,16 @@ export class AccountsController {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
     return this.authService.patchChatRollWidget(accountId, user.id, body);
+  }
+
+  @Get(':accountId/media-interactive/kick-rewards')
+  async listMediaInteractiveKickRewards(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.kickChannelRewards.listRewardsForAccount(accountId, user.id);
   }
 
   @Get(':accountId/media-interactive/settings')

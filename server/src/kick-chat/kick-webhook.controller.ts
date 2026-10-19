@@ -16,6 +16,10 @@ import { KickCommandRouter } from './kick-command.router.js';
 import { KickWebhookVerifierService } from './kick-webhook-verifier.service.js';
 import { kickMessageAuditFields, formatKickRouteAudit } from './kick-chat-audit.js';
 import type { KickChatMessageEvent } from './kick-chat.types.js';
+import {
+  logKickDev,
+  logKickDevWebhookRequest,
+} from './kick-webhook-dev-log.js';
 
 @Controller()
 export class KickWebhookController {
@@ -27,13 +31,6 @@ export class KickWebhookController {
     private readonly redemptionHandler: KickRedemptionHandler,
   ) {}
 
-  private logKickPayload(payload: unknown): void {
-    if (process.env.KICK_WEBHOOK_DEBUG === 'false') {
-      return;
-    }
-    console.log(`[kick]\n${JSON.stringify(payload, null, 2)}`);
-  }
-
   @Post('webhooks/kick')
   @HttpCode(200)
   async handleWebhook(
@@ -44,6 +41,8 @@ export class KickWebhookController {
     @Headers('kick-event-type') eventType: string | undefined,
     @Body() body: unknown,
   ): Promise<{ ok: true }> {
+    logKickDevWebhookRequest(req, body);
+
     this.logger.log(
       `ingress POST /webhooks/kick eventType=${eventType ?? 'missing'} messageId=${messageId ?? 'missing'} hasRawBody=${Boolean(req.rawBody)}`,
     );
@@ -52,6 +51,11 @@ export class KickWebhookController {
       this.logger.warn(
         `rejected webhook: missing headers messageId=${messageId ?? 'missing'} eventType=${eventType ?? 'missing'}`,
       );
+      logKickDev('webhook rejected', {
+        reason: 'missing_headers',
+        eventType: eventType ?? null,
+        messageId: messageId ?? null,
+      });
       throw new BadRequestException('Missing Kick webhook headers');
     }
 
@@ -60,6 +64,11 @@ export class KickWebhookController {
       this.logger.warn(
         `rejected webhook: missing raw body messageId=${messageId}`,
       );
+      logKickDev('webhook rejected', {
+        reason: 'missing_raw_body',
+        eventType,
+        messageId,
+      });
       throw new BadRequestException('Missing raw request body');
     }
 
@@ -79,6 +88,12 @@ export class KickWebhookController {
         this.logger.warn(
           `rejected webhook: invalid signature messageId=${messageId} eventType=${eventType} rawBodyBytes=${rawBodyForVerify.length} KICK_WEBHOOK_SKIP_VERIFY=${skipEnv} skipActive=${this.verifier.isSkipVerify()}`,
         );
+        logKickDev('webhook rejected', {
+          reason: 'invalid_signature',
+          eventType,
+          messageId,
+          rawBodyBytes: rawBodyForVerify.length,
+        });
       }
       throw error;
     }
@@ -92,21 +107,16 @@ export class KickWebhookController {
       }
     }
 
-    this.logKickPayload({
-      headers: {
-        'kick-event-type': eventType,
-        'kick-event-message-id': messageId,
-        'kick-event-message-timestamp': timestamp,
-        'kick-event-signature': signature,
-      },
-      body: parsedBody,
-    });
-
     if (
       eventType === 'channel.reward.redemption.updated' ||
       eventType === 'channel.reward.redemption.created'
     ) {
+      logKickDev('action media_interactive.redemption', { eventType });
       await this.redemptionHandler.handleRedemptionUpdated(parsedBody);
+      logKickDev('action media_interactive.redemption handled', {
+        eventType,
+        messageId,
+      });
       return { ok: true };
     }
 
@@ -114,6 +124,11 @@ export class KickWebhookController {
       this.logger.debug(
         `ignored event type=${eventType} messageId=${messageId ?? 'unknown'}`,
       );
+      logKickDev('action ignored', {
+        eventType,
+        messageId: messageId ?? null,
+        reason: 'unsupported_event_type',
+      });
       return { ok: true };
     }
 
@@ -122,6 +137,11 @@ export class KickWebhookController {
       this.logger.warn(
         `rejected chat.message.sent: ${parseResult.reason} messageId=${messageId ?? 'unknown'}`,
       );
+      logKickDev('webhook rejected', {
+        reason: 'invalid_chat_payload',
+        detail: parseResult.reason,
+        messageId: messageId ?? null,
+      });
       throw new BadRequestException('Invalid chat.message.sent payload');
     }
 
@@ -134,6 +154,11 @@ export class KickWebhookController {
     this.logger.log(
       `handled chat.message.sent messageId=${event.message_id} ${formatKickRouteAudit(routeResult)}`,
     );
+    logKickDev('action chat.route', {
+      messageId: event.message_id,
+      audit: kickMessageAuditFields(event),
+      route: routeResult,
+    });
     return { ok: true };
   }
 
@@ -145,7 +170,9 @@ export class KickWebhookController {
         'Mock redemption requires KICK_CHAT_MOCK=true',
       );
     }
+    logKickDev('action mock.redemption', { body });
     await this.redemptionHandler.handleRedemptionUpdated(body);
+    logKickDev('action mock.redemption handled');
     return { ok: true };
   }
 
@@ -168,6 +195,10 @@ export class KickWebhookController {
     this.logger.log(
       `mock chat handled messageId=${body.message_id} ${formatKickRouteAudit(result)}`,
     );
+    logKickDev('action mock.chat.route', {
+      messageId: body.message_id,
+      route: result,
+    });
     return { ok: true, result };
   }
 

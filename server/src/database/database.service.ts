@@ -462,6 +462,74 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     return { userId: toInt(row.user_id), isActive: row.is_active };
   }
 
+  async saveKickOAuthTokens(
+    userId: number,
+    tokens: {
+      accessToken: string;
+      refreshToken?: string;
+      expiresAt?: Date;
+    },
+  ): Promise<void> {
+    await this.pool.query(
+      `
+        UPDATE auth_credentials
+        SET
+          oauth_access_token = $2,
+          oauth_refresh_token = COALESCE($3, oauth_refresh_token),
+          oauth_access_token_expires_at = $4,
+          updated_at = now()
+        WHERE user_id = $1 AND provider = 'kick'
+      `,
+      [
+        userId,
+        tokens.accessToken,
+        tokens.refreshToken ?? null,
+        tokens.expiresAt ?? null,
+      ],
+    );
+  }
+
+  async getKickOAuthTokensForAccountOwner(accountId: number): Promise<{
+    userId: number;
+    accessToken: string | null;
+    refreshToken: string | null;
+    expiresAt: Date | null;
+  } | null> {
+    const result = await this.pool.query<{
+      user_id: number;
+      oauth_access_token: string | null;
+      oauth_refresh_token: string | null;
+      oauth_access_token_expires_at: Date | null;
+    }>(
+      `
+        SELECT
+          ac.user_id,
+          ac.oauth_access_token,
+          ac.oauth_refresh_token,
+          ac.oauth_access_token_expires_at
+        FROM auth_credentials ac
+        INNER JOIN account_members am
+          ON am.user_id = ac.user_id
+          AND am.account_id = $1
+          AND am.role = 'owner'
+          AND am.is_active = true
+        WHERE ac.provider = 'kick' AND ac.is_active = true
+        LIMIT 1
+      `,
+      [accountId],
+    );
+    const row = result.rows[0];
+    if (!row) {
+      return null;
+    }
+    return {
+      userId: toInt(row.user_id),
+      accessToken: row.oauth_access_token,
+      refreshToken: row.oauth_refresh_token,
+      expiresAt: row.oauth_access_token_expires_at,
+    };
+  }
+
   private mapAccountSubscriptionRow(row: {
     status: AccountSubscriptionRow['status'] | null;
     plan_tier: string | null;

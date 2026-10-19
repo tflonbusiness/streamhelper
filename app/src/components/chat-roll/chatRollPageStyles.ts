@@ -446,8 +446,8 @@ export const RoleWeightField = styled(TextField)(({ theme }) => ({
 }))
 
 export const SettingsUnsavedAlert = styled(Alert)(({ theme }) => ({
-  marginTop: theme.spacing(-1),
-  marginBottom: theme.spacing(2),
+  marginTop: theme.spacing(1),
+  marginBottom: theme.spacing(1.5),
   paddingTop: theme.spacing(0.5),
   paddingBottom: theme.spacing(0.5),
   alignItems: 'center',

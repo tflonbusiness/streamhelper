@@ -20,6 +20,14 @@ export type KickOAuthRequest = {
 
 type KickTokenResponse = {
   access_token?: string;
+  refresh_token?: string;
+  expires_in?: number;
+};
+
+export type KickUserOAuthTokens = {
+  accessToken: string;
+  refreshToken?: string;
+  expiresAt?: Date;
 };
 
 type KickUserRecord = {
@@ -117,7 +125,8 @@ export class KickOAuthService implements OnModuleInit {
       redirect_uri: this.getRedirectUri(),
       response_type: 'code',
       state: request.state,
-      scope: 'user:read channel:read events:subscribe',
+      scope:
+        'user:read channel:read events:subscribe channel:rewards:read',
       code_challenge: request.codeChallenge,
       code_challenge_method: 'S256',
     });
@@ -187,7 +196,58 @@ export class KickOAuthService implements OnModuleInit {
     }
 
     const profile = await this.fetchProfile(tokenData.access_token);
-    return { profile, accessToken: tokenData.access_token };
+    return {
+      profile,
+      accessToken: tokenData.access_token,
+      oauthTokens: this.mapTokenResponse(tokenData),
+    };
+  }
+
+  async refreshUserAccessToken(
+    refreshToken: string,
+  ): Promise<KickUserOAuthTokens> {
+    const clientId = process.env.KICK_CLIENT_ID;
+    const clientSecret = process.env.KICK_CLIENT_SECRET;
+    if (!clientId || !clientSecret) {
+      throw new UnauthorizedException('Kick app credentials not configured');
+    }
+
+    const tokenResponse = await fetch(KICK_TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+      }).toString(),
+    });
+
+    if (!tokenResponse.ok) {
+      const detail = await tokenResponse.text();
+      throw new UnauthorizedException(
+        `Kick token refresh failed: ${tokenResponse.status} ${detail}`,
+      );
+    }
+
+    const tokenData = (await tokenResponse.json()) as KickTokenResponse;
+    if (!tokenData.access_token) {
+      throw new UnauthorizedException('Kick refresh missing access_token');
+    }
+
+    return this.mapTokenResponse(tokenData);
+  }
+
+  private mapTokenResponse(tokenData: KickTokenResponse): KickUserOAuthTokens {
+    const expiresIn = tokenData.expires_in;
+    return {
+      accessToken: tokenData.access_token!,
+      refreshToken: tokenData.refresh_token,
+      expiresAt:
+        expiresIn && Number.isFinite(expiresIn)
+          ? new Date(Date.now() + expiresIn * 1000)
+          : undefined,
+    };
   }
 
   private async fetchProfile(accessToken: string): Promise<KickProfile> {

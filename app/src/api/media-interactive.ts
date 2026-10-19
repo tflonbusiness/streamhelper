@@ -18,6 +18,15 @@ export type MediaInteractiveItem = {
   createdAt: string
 }
 
+export type KickChannelRewardOption = {
+  id: string
+  title: string
+  cost: number
+  description: string
+  isEnabled: boolean
+  isUserInputRequired: boolean
+}
+
 export type MediaInteractiveSettings = {
   volume: number
   showVideo: boolean
@@ -80,6 +89,17 @@ async function readError(response: Response): Promise<string> {
   } catch {
     return response.statusText
   }
+}
+
+export async function fetchKickChannelRewards(
+  accountId: number,
+): Promise<KickChannelRewardOption[]> {
+  const response = await fetch(
+    `/accounts/${accountId}/media-interactive/kick-rewards`,
+    { credentials: 'include' },
+  )
+  if (!response.ok) throw new Error(await readError(response))
+  return response.json() as Promise<KickChannelRewardOption[]>
 }
 
 export async function fetchMediaInteractiveSettings(

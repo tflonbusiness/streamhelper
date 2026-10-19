@@ -1,10 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Box, Typography } from '@mui/material'
 import { notifyMediaInteractiveTrackComplete } from '@/api/media-interactive'
 import { MediaInteractiveVideoOverlayShell } from '@/components/media-interactive/MediaInteractiveVideoOverlayShell'
 import { StreamWidgetMessage } from '@/components/widget/StreamWidgetMessage'
 import { usePinWidgetUiEnglish, widgetUiCopy } from '@/i18n/widget-ui'
+import {
+  obsBrowserSourceBoxSx,
+  useObsBrowserSourceLayout,
+} from '@/hooks/useObsBrowserSourceLayout'
+import { resolveMediaInteractiveObsViewport } from '@/lib/media-interactive-overlay-layout'
 import { publicWidgetUnavailableMessage } from '@/lib/public-widget'
 import { usePublicMediaInteractiveWidget } from '@/queries/use-media-interactive'
 
@@ -122,14 +127,21 @@ export function MediaInteractiveStreamWidgetPage() {
 
   const isActive = view?.status === 'active'
 
-  useEffect(() => {
-    const prevBody = document.body.style.overflow
-    document.body.style.background = 'transparent'
-    document.documentElement.style.background = 'transparent'
-    return () => {
-      document.body.style.overflow = prevBody
+  const obsViewport = useMemo(() => {
+    if (!view || view.status !== 'active') {
+      return undefined
     }
-  }, [])
+    const np = view.playback.nowPlaying
+    return resolveMediaInteractiveObsViewport({
+      showVideo: view.settings.showVideo,
+      overlayWidth: view.settings.overlayWidth,
+      overlayHeight: view.settings.overlayHeight,
+      audioOverlayWidth: view.settings.audioOverlayWidth ?? 400,
+      showTrackBar: Boolean(np),
+    })
+  }, [view])
+
+  useObsBrowserSourceLayout(obsViewport)
 
   useEffect(() => {
     if (!isActive || !accountUcid || !playerHostEl) {
@@ -328,9 +340,18 @@ export function MediaInteractiveStreamWidgetPage() {
   const np = view.playback.nowPlaying
   const showVideo = view.settings.showVideo
   const audioBarWidth = view.settings.audioOverlayWidth ?? 400
+  const viewport =
+    obsViewport ??
+    resolveMediaInteractiveObsViewport({
+      showVideo: view.settings.showVideo,
+      overlayWidth: view.settings.overlayWidth,
+      overlayHeight: view.settings.overlayHeight,
+      audioOverlayWidth: audioBarWidth,
+      showTrackBar: Boolean(np),
+    })
 
   return (
-    <Box sx={{ mx: 'auto', maxWidth: '100%', bgcolor: 'transparent' }}>
+    <Box sx={obsBrowserSourceBoxSx(viewport)}>
       <MediaInteractiveVideoOverlayShell
         showVideo={showVideo}
         width={view.settings.overlayWidth}

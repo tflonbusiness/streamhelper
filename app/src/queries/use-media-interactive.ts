@@ -3,6 +3,7 @@ import {
   fetchPublicMediaInteractiveWidget,
   fetchMediaInteractiveBurnedPoints,
   fetchMediaInteractiveQueue,
+  fetchKickChannelRewards,
   fetchMediaInteractiveSettings,
   patchMediaInteractiveSettings,
   pauseMediaInteractive,
@@ -18,6 +19,8 @@ export const mediaInteractiveKeys = {
   all: ['media-interactive'] as const,
   settings: (accountId: number) =>
     [...mediaInteractiveKeys.all, 'settings', accountId] as const,
+  kickRewards: (accountId: number) =>
+    [...mediaInteractiveKeys.all, 'kick-rewards', accountId] as const,
   queue: (accountId: number, list: 'queue' | 'backup') =>
     [...mediaInteractiveKeys.all, 'queue', accountId, list] as const,
   burned: (accountId: number) =>
@@ -31,6 +34,15 @@ export function useMediaInteractiveSettings(accountId: number | undefined) {
     queryKey: mediaInteractiveKeys.settings(accountId ?? 0),
     queryFn: () => fetchMediaInteractiveSettings(accountId!),
     enabled: accountId !== undefined,
+  })
+}
+
+export function useKickChannelRewards(accountId: number | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: mediaInteractiveKeys.kickRewards(accountId ?? 0),
+    queryFn: () => fetchKickChannelRewards(accountId!),
+    enabled: accountId !== undefined && enabled,
+    staleTime: 60_000,
   })
 }
 

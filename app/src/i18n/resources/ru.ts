@@ -346,7 +346,29 @@ export const ru = {
     settingsSectionPlayback: "Воспроизведение",
     settingsSectionOverlay: "Оверлей",
     settingsSectionBackup: "Бэкап и очередь",
-    settingsSectionViewerOrders: "Заказы зрителей",
+    viewerOrdersTitle: "Заказы за баллы Kick",
+    viewerOrdersDescription:
+      "Какие награды канала добавляют треки в очередь, когда зритель их покупает.",
+    viewerOrdersStep1:
+      "На Kick у награды включите обязательный ввод текста (ссылка YouTube).",
+    viewerOrdersStep2: "Включите нужные награды ниже — они появятся в списке.",
+    viewerOrdersStep3:
+      "Зритель покупает награду в чате — трек автоматически попадает в очередь.",
+    viewerOrdersRewardsListTitle: "Награды канала",
+    viewerOrdersSelectedCount: "Включено: {{count}}",
+    viewerOrdersNoneEnabled:
+      "Пока ни одна награда не принимает заказы — включите хотя бы одну.",
+    viewerOrdersRewardActive: "Принимает заказы",
+    viewerOrdersDurationPreview: "≈ {{formatted}}",
+    kickRewardNoInputShort: "Недоступна",
+    kickRewardUnavailableReason:
+      "На Kick у этой награды нет обязательного ввода текста. Включите «требовать сообщение от зрителя», чтобы принимать ссылку YouTube.",
+    viewerOrdersLimitTitle: "Лимит длительности",
+    viewerOrdersLimitHint:
+      "Треки длиннее этого значения отклоняются; баллы на Kick всё равно списываются.",
+    viewerOrdersSaveLimit: "Сохранить лимит",
+    viewerOrdersLimitSaved: "Лимит длительности сохранён.",
+    viewerOrdersSaveError: "Не удалось сохранить настройки заказов.",
     backupCutover: "Поведение при заказе во время бэкапа",
     streamWidgetSettingsButton: "Настройки плеера и оверлея",
     settingsSaved: "Настройки плеера и оверлея сохранены.",
@@ -356,7 +378,9 @@ export const ru = {
     overlayModeVideo: "Видео",
     overlayModeAudio: "Только звук",
     overlayModeVideoHint:
-      "Плеер с картинкой в эфире. Задайте ширину и высоту под источник браузера в OBS.",
+      "Плеер с картинкой в эфире. Высота — только область видео; размер источника в OBS см. ниже.",
+    overlayObsBrowserSizeHint:
+      "Размер browser source в OBS: {{width}}×{{height}} px (с полоской «сейчас играет»).",
     overlayModeAudioHint:
       "Звук без видимого плеера — в OBS достаточно маленького источника; название трека можно показывать в оверлее.",
     width: "Ширина оверлея (px)",
@@ -366,8 +390,17 @@ export const ru = {
     cutoverImmediate: "Сразу прерывать бэкап при заказе",
     cutoverFinish: "Доиграть бэкап, затем очередь",
     maxDuration: "Макс. длина трека зрителя (сек)",
-    kickRewardIds: "ID наград Kick",
-    kickRewardIdsHint: "Через запятую — redemption создаёт заказ",
+    kickRewardsSelectHint:
+      "Выберите награды за баллы, которые добавляют треки в очередь (нужно поле ввода у зрителя — например ссылка YouTube).",
+    kickRewardsLoading: "Загрузка наград с Kick…",
+    kickRewardsLoadError: "Не удалось загрузить награды канала с Kick.",
+    kickRewardsReauthHint:
+      "Выйдите и снова войдите через Kick, чтобы приложение могло читать награды канала.",
+    kickRewardsEmpty: "На Kick не найдено наград за баллы.",
+    kickRewardCost: "{{cost}} баллов",
+    kickRewardDisabled: "Отключена на Kick",
+    kickRewardNoInput:
+      "Включите у награды на Kick обязательный ввод текста для ссылок",
     streamWidgetTitle: "Стрим-оверлей",
     openSettingsAbove: "Настройки — в блоке выше",
     openOverlay: "Открыть оверлей",

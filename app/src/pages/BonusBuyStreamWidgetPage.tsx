@@ -1,5 +1,9 @@
 import { Box } from '@mui/material'
 import { useMemo } from 'react'
+import {
+  obsBrowserSourceBoxSx,
+  useObsBrowserSourceLayout,
+} from '@/hooks/useObsBrowserSourceLayout'
 import { useParams } from 'react-router-dom'
 import { BonusBuyWidgetNotFoundError } from '@/api/bonus-buy'
 import { BonusBuyWidgetCard } from '@/components/bonus-buy/widget/BonusBuyWidgetCard'
@@ -43,6 +47,15 @@ export function BonusBuyStreamWidgetPage() {
     )
   }, [view])
 
+  const obsSize = useMemo(() => {
+    if (!view || view.status !== 'active') {
+      return undefined
+    }
+    return { width: view.settings.width, height: view.settings.height }
+  }, [view])
+
+  useObsBrowserSourceLayout(obsSize)
+
   if (accountUcid === null) {
     return <StreamWidgetMessage message={widgetUiCopy.accountNotFound} />
   }
@@ -72,21 +85,16 @@ export function BonusBuyStreamWidgetPage() {
   }
 
   const theme = view.settings
+  const layoutSize = obsSize ?? {
+    width: theme.width,
+    height: theme.height,
+  }
 
   return (
     <Box
       sx={{
-        width: theme.width,
-        height: theme.height,
-        minWidth: theme.width,
-        minHeight: theme.height,
-        maxWidth: theme.width,
-        maxHeight: theme.height,
-        bgcolor: 'transparent',
-        overflow: 'hidden',
+        ...obsBrowserSourceBoxSx(layoutSize),
         fontFamily: theme.fontFamily,
-        flexShrink: 0,
-        boxSizing: 'border-box',
       }}
     >
       <BonusBuyWidgetCard {...cardProps} />

@@ -17,7 +17,8 @@ import {
   Typography,
 } from '@mui/material'
 import { styled } from '@mui/material/styles'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { resolveMediaInteractiveObsViewport } from '@/lib/media-interactive-overlay-layout'
 import { useTranslation } from 'react-i18next'
 import type { MediaInteractiveBackupCutover } from '@/api/media-interactive'
 import {
@@ -46,8 +47,6 @@ type SettingsDraft = {
   overlayHeight: number
   audioOverlayWidth: number
   backupCutover: MediaInteractiveBackupCutover
-  maxViewerTrackDurationSeconds: number
-  kickRewardIdsText: string
 }
 
 const StyledField = styled(TextField)(({ theme }) => ({
@@ -72,16 +71,7 @@ function settingsToDraft(
     overlayHeight: settings.overlayHeight,
     audioOverlayWidth: settings.audioOverlayWidth,
     backupCutover: settings.backupCutover,
-    maxViewerTrackDurationSeconds: settings.maxViewerTrackDurationSeconds,
-    kickRewardIdsText: settings.kickRewardIds.join(', '),
   }
-}
-
-function parseKickRewardIds(text: string): string[] {
-  return text
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean)
 }
 
 export function MediaInteractiveSettingsDialog({
@@ -107,6 +97,19 @@ export function MediaInteractiveSettingsDialog({
     }
   }, [open, settings, draft])
 
+  const obsBrowserSize = useMemo(() => {
+    if (!draft?.showVideo) {
+      return null
+    }
+    return resolveMediaInteractiveObsViewport({
+      showVideo: true,
+      overlayWidth: draft.overlayWidth,
+      overlayHeight: draft.overlayHeight,
+      audioOverlayWidth: draft.audioOverlayWidth,
+      showTrackBar: true,
+    })
+  }, [draft])
+
   const handleClose = () => {
     onClose()
   }
@@ -121,8 +124,6 @@ export function MediaInteractiveSettingsDialog({
         overlayHeight: draft.overlayHeight,
         audioOverlayWidth: draft.audioOverlayWidth,
         backupCutover: draft.backupCutover,
-        maxViewerTrackDurationSeconds: draft.maxViewerTrackDurationSeconds,
-        kickRewardIds: parseKickRewardIds(draft.kickRewardIdsText),
       },
       {
         onSuccess: () => {
@@ -272,6 +273,14 @@ export function MediaInteractiveSettingsDialog({
                         )
                       }
                     />
+                    {obsBrowserSize ? (
+                      <Typography variant="caption" color="text.secondary">
+                        {t('mediaInteractive.overlayObsBrowserSizeHint', {
+                          width: obsBrowserSize.width,
+                          height: obsBrowserSize.height,
+                        })}
+                      </Typography>
+                    ) : null}
                   </Stack>
                 ) : (
                   <StyledField
@@ -290,6 +299,7 @@ export function MediaInteractiveSettingsDialog({
                       )
                     }
                     helperText={t('mediaInteractive.audioWidgetWidthHint')}
+                    sx={inputFieldSx}
                   />
                 )}
               </StyledSettingsSection>
@@ -328,48 +338,6 @@ export function MediaInteractiveSettingsDialog({
                     </MenuItem>
                   </Select>
                 </FormControl>
-              </StyledSettingsSection>
-
-              <Divider />
-
-              <StyledSettingsSection>
-                <StyledSubsectionLabel>
-                  {t('mediaInteractive.settingsSectionViewerOrders')}
-                </StyledSubsectionLabel>
-                <Stack spacing={2}>
-                  <StyledField
-                    label={t('mediaInteractive.maxDuration')}
-                    type="number"
-                    value={draft.maxViewerTrackDurationSeconds}
-                    fullWidth
-                    onChange={(e) =>
-                      setDraft((prev) =>
-                        prev
-                          ? {
-                              ...prev,
-                              maxViewerTrackDurationSeconds: Number(
-                                e.target.value,
-                              ),
-                            }
-                          : prev,
-                      )
-                    }
-                  />
-                  <TextField
-                    label={t('mediaInteractive.kickRewardIds')}
-                    value={draft.kickRewardIdsText}
-                    onChange={(e) =>
-                      setDraft((prev) =>
-                        prev
-                          ? { ...prev, kickRewardIdsText: e.target.value }
-                          : prev,
-                      )
-                    }
-                    helperText={t('mediaInteractive.kickRewardIdsHint')}
-                    sx={inputFieldSx}
-                    fullWidth
-                  />
-                </Stack>
               </StyledSettingsSection>
             </StyledSettingsSectionsRoot>
           </Box>
