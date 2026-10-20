@@ -100,7 +100,11 @@ export class KickRedemptionHandler {
       root.username ?? user?.username ?? redeemer?.username ?? 'viewer',
     );
     const pointsCharged = Number(
-      root.channel_points_cost ?? root.cost ?? reward?.channel_points_cost ?? 0,
+      root.channel_points_cost ??
+        root.cost ??
+        reward?.cost ??
+        reward?.channel_points_cost ??
+        0,
     );
 
     if (!redemptionId || !rewardId) {
