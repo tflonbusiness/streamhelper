@@ -1,7 +1,15 @@
 import { Box, Typography } from '@mui/material'
+import { useEffect, useRef } from 'react'
 import type { PublicFirstReactionWidgetView } from '@/api/first-reaction'
 import { FirstReactionWidgetBolt } from '@/components/first-reaction/widget/FirstReactionWidgetBolt'
+import {
+  FIRST_REACTION_WIDGET_ENTER_MS,
+  FIRST_REACTION_WIDGET_EXIT_MS,
+  firstReactionWidgetEnter,
+  firstReactionWidgetExit,
+} from '@/components/first-reaction/widget/first-reaction-widget-enter-exit'
 import { useFirstReactionAcceptTimer } from '@/hooks/use-first-reaction-accept-timer'
+import { useFirstReactionWidgetVisibility } from '@/hooks/use-first-reaction-widget-visibility'
 import { widgetUiCopy } from '@/i18n/widget-ui'
 import { FIRST_REACTION_WIDGET_STYLE_DEFAULTS } from '@/lib/first-reaction-widget-style-defaults'
 
@@ -19,16 +27,26 @@ export function FirstReactionWidgetCard({
   const isAccepting = view.phase === 'accepting' && view.keyword
   const style = view.style ?? FIRST_REACTION_WIDGET_STYLE_DEFAULTS
 
+  const { phase, isRendered, handleAnimationEnd } =
+    useFirstReactionWidgetVisibility(Boolean(isAccepting))
+
+  const keywordRef = useRef(view.keyword)
+  useEffect(() => {
+    if (view.keyword) {
+      keywordRef.current = view.keyword
+    }
+  }, [view.keyword])
+
   const timer = useFirstReactionAcceptTimer(
     isAccepting ? view.acceptDeadlineAt : null,
     isAccepting ? view.acceptingStartedAt : null,
   )
 
-  if (!isAccepting) {
+  const keyword = view.keyword ?? keywordRef.current
+
+  if (!isRendered || !keyword) {
     return <Box aria-hidden sx={{ width, height, bgcolor: 'transparent' }} />
   }
-
-  const keyword = view.keyword!
   const timerLabel =
     timer.secondsLeft !== null && view.acceptDeadlineAt
       ? widgetUiCopy.firstReactionSecondsLeft.replace(
@@ -46,6 +64,7 @@ export function FirstReactionWidgetCard({
     <Box
       role="status"
       aria-label={ariaLabel}
+      onAnimationEnd={handleAnimationEnd}
       sx={{
         position: 'relative',
         width,
@@ -59,6 +78,15 @@ export function FirstReactionWidgetCard({
         gap: 0.5,
         px: 1,
         py: 0.75,
+        opacity: phase === 'visible' ? 1 : undefined,
+        transformOrigin: 'center center',
+        willChange: 'opacity, transform',
+        animation:
+          phase === 'entering'
+            ? `${firstReactionWidgetEnter} ${FIRST_REACTION_WIDGET_ENTER_MS}ms cubic-bezier(0.22, 1, 0.36, 1) forwards`
+            : phase === 'exiting'
+              ? `${firstReactionWidgetExit} ${FIRST_REACTION_WIDGET_EXIT_MS}ms ease-in forwards`
+              : 'none',
       }}
     >
       <Box
