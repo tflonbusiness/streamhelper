@@ -32,7 +32,7 @@ export const widgetUiCopy = {
   mediaInteractiveQueueIdle: 'Queue empty',
   mediaInteractiveQueueIdleHint: 'Waiting for the next track',
   firstReactionTitle: 'First Reaction',
-  firstReactionCta: 'Type in chat',
+  firstReactionCta: 'First wins',
   firstReactionIdle: 'Waiting for the next round',
   firstReactionWinner: 'Winner',
   firstReactionNoLive:

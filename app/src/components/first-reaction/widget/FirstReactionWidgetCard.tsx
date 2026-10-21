@@ -38,7 +38,10 @@ export function FirstReactionWidgetCard({
         )
       : null
 
-  const ariaLabel = timerLabel ? `${keyword}, ${timerLabel}` : keyword
+  const hint = widgetUiCopy.firstReactionCta
+  const ariaLabel = timerLabel
+    ? `${hint}. ${keyword}. ${timerLabel}`
+    : `${hint}. ${keyword}`
 
   return (
     <Box
@@ -102,6 +105,22 @@ export function FirstReactionWidgetCard({
           },
         }}
       >
+        <Typography
+          component="p"
+          sx={{
+            m: 0,
+            fontSize: 'clamp(0.7rem, 2.4vw, 0.9rem)',
+            fontWeight: 600,
+            fontFamily: '"Plus Jakarta Sans", Inter, sans-serif',
+            color: 'rgba(255, 248, 220, 0.82)',
+            textAlign: 'left',
+            lineHeight: 1.25,
+            letterSpacing: '0.02em',
+            maxWidth: '100%',
+          }}
+        >
+          {hint}
+        </Typography>
         <Typography
           component="p"
           sx={{
