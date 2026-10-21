@@ -51,34 +51,71 @@ export function FirstReactionWidgetCard({
         boxSizing: 'border-box',
         bgcolor: 'transparent',
         overflow: 'visible',
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'stretch',
+        gap: 0.5,
+        px: 1,
+        py: 0.75,
       }}
     >
-      <FirstReactionWidgetBolt />
+      <Box
+        sx={{
+          position: 'relative',
+          zIndex: 0,
+          flex: '0 0 44%',
+          minWidth: 0,
+          maxWidth: '48%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+        }}
+      >
+        <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
+          <FirstReactionWidgetBolt />
+        </Box>
+      </Box>
       <Box
         sx={{
           position: 'relative',
           zIndex: 1,
-          width: '100%',
-          height: '100%',
+          flex: '1 1 auto',
+          minWidth: 0,
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           justifyContent: 'center',
-          gap: 1,
-          px: 2,
+          gap: 0.5,
+          pl: 0.5,
+          pr: 1,
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            left: -8,
+            right: 0,
+            top: '8%',
+            bottom: '8%',
+            zIndex: -1,
+            pointerEvents: 'none',
+            background:
+              'radial-gradient(ellipse 95% 90% at 15% 50%, rgba(6, 5, 4, 0.5) 0%, transparent 70%)',
+          },
         }}
       >
         <Typography
           component="p"
           sx={{
             m: 0,
-            fontSize: 48,
+            fontSize: 'clamp(1.35rem, 5.5vw, 2.5rem)',
             fontWeight: 800,
             fontFamily: '"Plus Jakarta Sans", Inter, sans-serif',
-            color: '#fff',
-            textAlign: 'center',
-            lineHeight: 1.1,
+            color: '#FFFEF7',
+            textAlign: 'left',
+            lineHeight: 1.08,
+            letterSpacing: '0.03em',
+            textTransform: 'uppercase',
             wordBreak: 'break-word',
+            maxWidth: '100%',
           }}
         >
           {keyword}
@@ -88,11 +125,12 @@ export function FirstReactionWidgetCard({
             component="p"
             sx={{
               m: 0,
-              fontSize: 24,
-              fontWeight: 600,
+              fontSize: 'clamp(0.95rem, 3.2vw, 1.25rem)',
+              fontWeight: 700,
               fontFamily: '"Plus Jakarta Sans", Inter, sans-serif',
-              color: 'rgba(255, 255, 255, 0.92)',
-              textAlign: 'center',
+              color: 'rgba(255, 248, 220, 0.95)',
+              textAlign: 'left',
+              fontVariantNumeric: 'tabular-nums',
             }}
           >
             {timerLabel}

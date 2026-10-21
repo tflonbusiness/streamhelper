@@ -37,8 +37,9 @@ const BoltRoot = styled(Box)({
 
 const BoltSvgWrap = styled(Box)({
   position: 'relative',
-  width: '72%',
-  maxWidth: 360,
+  height: '84%',
+  width: 'auto',
+  maxWidth: '92%',
   aspectRatio: '100 / 130',
   animation: `${boltPulse} 2.4s ease-in-out infinite`,
   transformOrigin: 'center center',
