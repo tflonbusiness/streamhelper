@@ -16,6 +16,7 @@ import type { Request } from 'express';
 import { AuthService } from '../auth/auth.service.js';
 import type { SessionData } from '../auth/auth.types.js';
 import { KickChannelRewardsService } from '../auth/kick-channel-rewards.service.js';
+import { FirstReactionService } from '../first-reaction/first-reaction.service.js';
 import { MediaInteractiveService } from '../media-interactive/media-interactive.service.js';
 
 type CreateModeratorBody = {
@@ -112,10 +113,33 @@ type PatchChatRollWidgetBody = {
   height?: number;
 };
 
+type CreateFirstReactionBody = {
+  title?: string;
+};
+
+type PatchFirstReactionBody = {
+  title?: string;
+  settings?: Record<string, unknown>;
+};
+
+type StartFirstReactionDrawBody = {
+  keyword?: string;
+};
+
+type PatchFirstReactionDrawFulfillmentBody = {
+  fulfillment_status?: 'pending' | 'fulfilled';
+};
+
+type PatchFirstReactionWidgetBody = {
+  width?: number;
+  height?: number;
+};
+
 @Controller('accounts')
 export class AccountsController {
   constructor(
     private readonly authService: AuthService,
+    private readonly firstReaction: FirstReactionService,
     private readonly mediaInteractive: MediaInteractiveService,
     private readonly kickChannelRewards: KickChannelRewardsService,
   ) {}
@@ -947,6 +971,199 @@ export class AccountsController {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
     return this.authService.patchChatRollWidget(accountId, user.id, body);
+  }
+
+  @Get(':accountId/first-reactions')
+  async listFirstReactions(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Query('archived') archived: string | undefined,
+    @Query('page') page: string | undefined,
+    @Query('limit') limit: string | undefined,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    const archivedFilter =
+      archived === 'true' || archived === 'all' ? archived : 'false';
+    const pageNum = Math.max(1, Number.parseInt(page ?? '1', 10) || 1);
+    const limitNum = Math.min(
+      50,
+      Math.max(1, Number.parseInt(limit ?? '20', 10) || 20),
+    );
+    return this.firstReaction.listSessions(
+      accountId,
+      user.id,
+      archivedFilter,
+      pageNum,
+      limitNum,
+    );
+  }
+
+  @Get(':accountId/first-reactions/:firstReactionId')
+  async getFirstReaction(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('firstReactionId', ParseIntPipe) firstReactionId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.firstReaction.getSession(accountId, user.id, firstReactionId);
+  }
+
+  @Post(':accountId/first-reactions')
+  async createFirstReaction(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Body() body: CreateFirstReactionBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.firstReaction.createSession(
+      accountId,
+      user.id,
+      body.title ?? '',
+    );
+  }
+
+  @Patch(':accountId/first-reactions/:firstReactionId')
+  async patchFirstReaction(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('firstReactionId', ParseIntPipe) firstReactionId: number,
+    @Body() body: PatchFirstReactionBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.firstReaction.patchSession(
+      accountId,
+      user.id,
+      firstReactionId,
+      body,
+    );
+  }
+
+  @Delete(':accountId/first-reactions/:firstReactionId')
+  @HttpCode(204)
+  async archiveFirstReaction(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('firstReactionId', ParseIntPipe) firstReactionId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    await this.firstReaction.archiveSession(
+      accountId,
+      user.id,
+      firstReactionId,
+    );
+  }
+
+  @Post(':accountId/first-reactions/:firstReactionId/go-live')
+  async goLiveFirstReaction(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('firstReactionId', ParseIntPipe) firstReactionId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.firstReaction.goLive(accountId, user.id, firstReactionId);
+  }
+
+  @Post(':accountId/first-reactions/:firstReactionId/deactivate')
+  async deactivateFirstReaction(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('firstReactionId', ParseIntPipe) firstReactionId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.firstReaction.deactivate(accountId, user.id, firstReactionId);
+  }
+
+  @Get(':accountId/first-reactions/:firstReactionId/draws')
+  async listFirstReactionDraws(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('firstReactionId', ParseIntPipe) firstReactionId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.firstReaction.listDraws(accountId, user.id, firstReactionId);
+  }
+
+  @Post(':accountId/first-reactions/:firstReactionId/draws/start')
+  async startFirstReactionDraw(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('firstReactionId', ParseIntPipe) firstReactionId: number,
+    @Body() body: StartFirstReactionDrawBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.firstReaction.startDraw(
+      accountId,
+      user.id,
+      firstReactionId,
+      body,
+    );
+  }
+
+  @Post(':accountId/first-reactions/:firstReactionId/draws/:drawId/stop')
+  async stopFirstReactionDraw(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('firstReactionId', ParseIntPipe) firstReactionId: number,
+    @Param('drawId', ParseIntPipe) drawId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.firstReaction.stopDraw(
+      accountId,
+      user.id,
+      firstReactionId,
+      drawId,
+    );
+  }
+
+  @Patch(':accountId/first-reactions/:firstReactionId/draws/:drawId/fulfillment')
+  async patchFirstReactionDrawFulfillment(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('firstReactionId', ParseIntPipe) firstReactionId: number,
+    @Param('drawId', ParseIntPipe) drawId: number,
+    @Body() body: PatchFirstReactionDrawFulfillmentBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    const status = body.fulfillment_status ?? 'fulfilled';
+    return this.firstReaction.patchDrawFulfillment(
+      accountId,
+      user.id,
+      firstReactionId,
+      drawId,
+      status,
+    );
+  }
+
+  @Get(':accountId/first-reaction-widget')
+  async getFirstReactionWidget(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.firstReaction.getWidget(accountId, user.id);
+  }
+
+  @Patch(':accountId/first-reaction-widget')
+  async patchFirstReactionWidget(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Body() body: PatchFirstReactionWidgetBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.firstReaction.patchWidget(accountId, user.id, body);
   }
 
   @Get(':accountId/media-interactive/kick-rewards')

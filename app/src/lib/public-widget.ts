@@ -10,6 +10,7 @@ export type PublicWidgetModule =
   | 'bonusBuy'
   | 'prizeSpin'
   | 'chatRoll'
+  | 'firstReaction'
   | 'mediaInteractive'
 
 export function publicWidgetUnavailableMessage(
@@ -22,6 +23,9 @@ export function publicWidgetUnavailableMessage(
     }
     if (module === 'chatRoll') {
       return widgetUiCopy.chatRollNoSessions
+    }
+    if (module === 'firstReaction') {
+      return widgetUiCopy.firstReactionNoSessions
     }
     return widgetUiCopy.prizeSpinNoSessions
   }
@@ -39,6 +43,9 @@ export function publicWidgetUnavailableMessage(
   }
   if (module === 'chatRoll') {
     return widgetUiCopy.chatRollNoLive
+  }
+  if (module === 'firstReaction') {
+    return widgetUiCopy.firstReactionNoLive
   }
   return widgetUiCopy.prizeSpinNoLive
 }

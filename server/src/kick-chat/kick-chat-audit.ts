@@ -29,8 +29,22 @@ export function kickMessageAuditFields(
 export function formatKickRouteAudit(result: KickChatRouteResult): string {
   return JSON.stringify({
     winnerResponse: summarizeWinnerResponse(result.winnerResponse),
+    firstReaction: summarizeFirstReaction(result.firstReaction),
     intake: summarizeIntake(result.intake),
   });
+}
+
+function summarizeFirstReaction(
+  result: KickChatRouteResult['firstReaction'],
+): Record<string, string | null> {
+  if (result.action === 'won') {
+    return {
+      action: result.action,
+      displayName: result.displayName,
+      proofToken: result.proofToken,
+    };
+  }
+  return { action: result.action, reason: result.reason };
 }
 
 function summarizeWinnerResponse(

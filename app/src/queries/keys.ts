@@ -88,6 +88,25 @@ export type ChatRollListParams = {
   limit: number
 }
 
+export type FirstReactionListParams = {
+  archived: 'false' | 'true' | 'all'
+  page: number
+  limit: number
+}
+
+export const firstReactionKeys = {
+  all: ['firstReactions'] as const,
+  lists: () => [...firstReactionKeys.all, 'list'] as const,
+  list: (accountId: number, params: FirstReactionListParams) =>
+    [...firstReactionKeys.lists(), accountId, params] as const,
+  widget: (accountId: number) =>
+    [...firstReactionKeys.all, 'widget', accountId] as const,
+  publicWidget: (accountUcid: string) =>
+    [...firstReactionKeys.all, 'publicWidget', accountUcid] as const,
+  session: (accountId: number, firstReactionId: number) =>
+    [...firstReactionKeys.all, 'session', accountId, firstReactionId] as const,
+}
+
 export const kickChannelKeys = {
   all: ['kickChannel'] as const,
   detail: (accountId: number) =>

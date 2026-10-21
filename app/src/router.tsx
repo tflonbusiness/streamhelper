@@ -27,6 +27,9 @@ import { SubscriptionAdminPage } from './pages/SubscriptionAdminPage'
 import { TeamPage } from './pages/TeamPage'
 import { MediaInteractivePage } from './pages/MediaInteractivePage'
 import { MediaInteractiveStreamWidgetPage } from './pages/MediaInteractiveStreamWidgetPage'
+import { FirstReactionPage } from './pages/FirstReactionPage'
+import { FirstReactionSessionPage } from './pages/FirstReactionSessionPage'
+import { FirstReactionStreamWidgetPage } from './pages/FirstReactionStreamWidgetPage'
 
 export const appRouter = createBrowserRouter([
   {
@@ -52,6 +55,10 @@ export const appRouter = createBrowserRouter([
   {
     path: '/modules/media-interactive/widget/:ucid',
     element: <MediaInteractiveStreamWidgetPage />,
+  },
+  {
+    path: '/modules/first-reaction/widget/:ucid',
+    element: <FirstReactionStreamWidgetPage />,
   },
   {
     path: '/internal/subscriptions',
@@ -108,6 +115,14 @@ export const appRouter = createBrowserRouter([
                   {
                     path: '/modules/media-interactive',
                     element: <MediaInteractivePage />,
+                  },
+                  {
+                    path: '/modules/first-reaction',
+                    element: <FirstReactionPage />,
+                  },
+                  {
+                    path: '/modules/first-reaction/:id',
+                    element: <FirstReactionSessionPage />,
                   },
                   {
                     element: <OwnerRoute />,

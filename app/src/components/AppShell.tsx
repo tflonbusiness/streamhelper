@@ -681,7 +681,7 @@ export function AppShell() {
   const wideMainContent =
     location.pathname === '/dashboard' ||
     location.pathname === '/modules' ||
-    /^\/modules\/(?:bonus-buy|chat-roll|prize-spin|media-interactive)(?:\/\d+)?(?:\/|$)/.test(
+    /^\/modules\/(?:bonus-buy|chat-roll|prize-spin|media-interactive|first-reaction)(?:\/\d+)?(?:\/|$)/.test(
       location.pathname,
     )
   const [isNavExpanded, setIsNavExpanded] = useState(loadNavExpanded)

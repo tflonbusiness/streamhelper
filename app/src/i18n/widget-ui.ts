@@ -31,6 +31,15 @@ export const widgetUiCopy = {
   prizeSpinPrize: 'Prize',
   mediaInteractiveQueueIdle: 'Queue empty',
   mediaInteractiveQueueIdleHint: 'Waiting for the next track',
+  firstReactionTitle: 'First Reaction',
+  firstReactionCta: 'Type in chat',
+  firstReactionIdle: 'Waiting for the next round',
+  firstReactionWinner: 'Winner',
+  firstReactionNoLive:
+    'No First Reaction session is live. Open the dashboard and tap Go live.',
+  firstReactionNoSessions:
+    'No First Reaction session yet. Create one, then go live.',
+  firstReactionSecondsLeft: '{{seconds}}s left',
 } as const
 
 export function usePinWidgetUiEnglish(): void {

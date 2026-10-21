@@ -39,7 +39,12 @@ export type WinnerResponseResult =
   | { action: 'ignored'; reason: string }
   | { action: 'confirmed'; winId: number };
 
+export type FirstReactionIntakeRouteResult =
+  | { action: 'ignored'; reason: string }
+  | { action: 'won'; displayName: string; proofToken: string | null };
+
 export type KickChatRouteResult = {
   winnerResponse: WinnerResponseResult;
+  firstReaction: FirstReactionIntakeRouteResult;
   intake: ChatRollIntakeResult;
 };

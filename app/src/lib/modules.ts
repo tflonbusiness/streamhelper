@@ -13,15 +13,23 @@ import DirectionsRunIcon from '@mui/icons-material/DirectionsRun'
 import {
   BONUS_BUY_ROUTE,
   CHAT_ROLL_ROUTE,
+  FIRST_REACTION_ROUTE,
   MEDIA_INTERACTIVE_ROUTE,
   PRIZE_SPIN_ROUTE,
 } from '@/lib/routes'
 
 /** Modules with account module sessions (history + /:id workspace). */
-export type ModuleSessionPageId = 'bonus-buy' | 'prize-spin' | 'chat-roll'
+export type ModuleSessionPageId =
+  | 'bonus-buy'
+  | 'prize-spin'
+  | 'chat-roll'
+  | 'first-reaction'
 
 /** All modules that have a dedicated operator page in the app. */
-export type ModulePageId = ModuleSessionPageId | 'media-interactive'
+export type ModulePageId =
+  | ModuleSessionPageId
+  | 'media-interactive'
+  | 'first-reaction'
 
 export type ModuleCatalogStatus = 'available' | 'coming_soon'
 
@@ -83,16 +91,18 @@ export const MODULE_CATALOG: ModuleDefinition[] = [
     widgetRoute: MEDIA_INTERACTIVE_ROUTE,
     hasToggle: false,
   },
+  {
+    id: 'first-reaction',
+    status: 'available',
+    icon: BoltIcon,
+    iconVariant: 'warning',
+    widgetRoute: FIRST_REACTION_ROUTE,
+    hasToggle: false,
+  },
 ]
 
 /** Planned widgets on `/modules` — coming soon, no catalog routes. */
 export const COMING_SOON_WIDGET_CATALOG: ModuleDefinition[] = [
-  {
-    id: 'first-reaction',
-    status: 'coming_soon',
-    icon: BoltIcon,
-    iconVariant: 'warning',
-  },
   {
     id: 'growing-jackpot',
     status: 'coming_soon',

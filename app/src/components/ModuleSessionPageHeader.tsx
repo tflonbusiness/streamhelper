@@ -29,6 +29,10 @@ export const MODULE_SESSION_PAGE_COPY: Record<
     titleKey: 'chatRoll.title',
     descriptionKey: 'chatRoll.description',
   },
+  'first-reaction': {
+    titleKey: 'firstReaction.title',
+    descriptionKey: 'firstReaction.description',
+  },
 }
 
 export function moduleSessionPageTitle(

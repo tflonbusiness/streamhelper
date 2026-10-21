@@ -21,3 +21,9 @@ export const chatRollSessionRoute = (id: number | string) =>
   `/modules/chat-roll/${id}`
 export const chatRollWidgetRoute = (accountUcid: string) =>
   `/modules/chat-roll/widget/${accountUcid}`
+
+export const FIRST_REACTION_ROUTE = '/modules/first-reaction'
+export const firstReactionSessionRoute = (id: number | string) =>
+  `/modules/first-reaction/${id}`
+export const firstReactionWidgetRoute = (accountUcid: string) =>
+  `/modules/first-reaction/widget/${accountUcid}`
