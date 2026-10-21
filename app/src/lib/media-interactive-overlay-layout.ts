@@ -21,8 +21,10 @@ export type MediaInteractiveObsViewportInput = {
   overlayWidth: number
   overlayHeight: number
   audioOverlayWidth: number
-  /** False when overlay player card is hidden (no track). */
+  /** False when overlay chrome is hidden entirely. */
   showTrackBar: boolean
+  /** No track playing — show idle bar, collapse video stage height. */
+  queueIdle?: boolean
 }
 
 export function resolveMediaInteractiveObsViewport(
@@ -41,9 +43,11 @@ export function resolveMediaInteractiveObsViewport(
   const trackBarHeight = input.showTrackBar
     ? MEDIA_INTERACTIVE_OVERLAY_VIDEO_TRACK_BAR_HEIGHT_PX
     : 0
+  const videoHeight =
+    input.showTrackBar && !input.queueIdle ? input.overlayHeight : 0
 
   return {
     width: input.overlayWidth,
-    height: trackBarHeight + input.overlayHeight,
+    height: trackBarHeight + videoHeight,
   }
 }

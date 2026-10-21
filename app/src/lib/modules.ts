@@ -13,6 +13,7 @@ import DirectionsRunIcon from '@mui/icons-material/DirectionsRun'
 import {
   BONUS_BUY_ROUTE,
   CHAT_ROLL_ROUTE,
+  MEDIA_INTERACTIVE_ROUTE,
   PRIZE_SPIN_ROUTE,
 } from '@/lib/routes'
 
@@ -74,16 +75,18 @@ export const MODULE_CATALOG: ModuleDefinition[] = [
     widgetRoute: CHAT_ROLL_ROUTE,
     hasToggle: false,
   },
+  {
+    id: 'media-interactive',
+    status: 'available',
+    icon: YouTubeIcon,
+    iconVariant: 'danger',
+    widgetRoute: MEDIA_INTERACTIVE_ROUTE,
+    hasToggle: false,
+  },
 ]
 
 /** Planned widgets on `/modules` — coming soon, no catalog routes. */
 export const COMING_SOON_WIDGET_CATALOG: ModuleDefinition[] = [
-  {
-    id: 'media-interactive',
-    status: 'coming_soon',
-    icon: YouTubeIcon,
-    iconVariant: 'danger',
-  },
   {
     id: 'first-reaction',
     status: 'coming_soon',

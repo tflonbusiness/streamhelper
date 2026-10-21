@@ -84,7 +84,7 @@ export function ModulesComingSoonSection() {
                 mt: 1,
                 color: alpha(theme.palette.text.secondary, 0.9),
                 lineHeight: 1.6,
-                maxWidth: 580,
+                maxWidth: { xs: 'none', lg: 720 },
               }}
             >
               {t('modules.comingSoonSectionDescription')}
@@ -109,7 +109,7 @@ export function ModulesComingSoonSection() {
           </Typography>
           <Grid container spacing={1.5}>
             {COMING_SOON_WIDGET_CATALOG.map((module, index) => (
-              <Grid key={module.id} size={{ xs: 12, sm: 6, md: 4 }}>
+              <Grid key={module.id} size={{ xs: 12, sm: 6, md: 4, lg: 4, xl: 3 }}>
                 <ComingSoonGameCard
                   moduleId={module.id}
                   icon={module.icon}

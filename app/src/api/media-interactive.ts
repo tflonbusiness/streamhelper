@@ -35,6 +35,8 @@ export type MediaInteractiveSettings = {
   audioOverlayWidth: number
   backupCutover: MediaInteractiveBackupCutover
   maxViewerTrackDurationSeconds: number
+  viewerPlaylistsEnabled: boolean
+  maxPlaylistTracks: number
   kickRewardIds: string[]
   playbackPaused: boolean
   activeSource: 'queue' | 'backup'
@@ -49,17 +51,33 @@ export type MediaInteractiveQueueResponse = {
   }
 }
 
+export type MediaInteractiveBurnedDailyPoint = {
+  date: string
+  burnedTotal: number
+  orderCount: number
+}
+
+export type MediaInteractiveRejectedOrder = {
+  id: number
+  title: string
+  requesterNick: string
+  pointsCharged: number
+  rejectReason: string | null
+  createdAt: string
+}
+
+export type MediaInteractiveRejectedOrders = {
+  scope: 'rolling_24h'
+  items: MediaInteractiveRejectedOrder[]
+}
+
 export type MediaInteractiveBurnedPoints = {
   burnedTotal: number
-  scope: 'utc_day'
-  ledger: Array<{
-    id: number
-    title: string
-    requesterNick: string
-    pointsCharged: number
-    status: string
-    createdAt: string
-  }>
+  orderCount: number
+  scope: 'rolling_30d'
+  periodStart: string
+  periodEnd: string
+  dailySeries: MediaInteractiveBurnedDailyPoint[]
 }
 
 export type MediaInteractivePublicWidget =
@@ -122,6 +140,8 @@ export async function patchMediaInteractiveSettings(
     audioOverlayWidth: number
     backupCutover: MediaInteractiveBackupCutover
     maxViewerTrackDurationSeconds: number
+    viewerPlaylistsEnabled: boolean
+    maxPlaylistTracks: number
     kickRewardIds: string[]
   }>,
 ): Promise<MediaInteractiveSettings> {
@@ -137,6 +157,8 @@ export async function patchMediaInteractiveSettings(
       audio_overlay_width: patch.audioOverlayWidth,
       backup_cutover: patch.backupCutover,
       max_viewer_track_duration_seconds: patch.maxViewerTrackDurationSeconds,
+      viewer_playlists_enabled: patch.viewerPlaylistsEnabled,
+      max_playlist_tracks: patch.maxPlaylistTracks,
       kick_reward_ids: patch.kickRewardIds,
     }),
   })
@@ -232,6 +254,17 @@ export async function fetchMediaInteractiveBurnedPoints(
   )
   if (!response.ok) throw new Error(await readError(response))
   return response.json() as Promise<MediaInteractiveBurnedPoints>
+}
+
+export async function fetchMediaInteractiveRejectedOrders(
+  accountId: number,
+): Promise<MediaInteractiveRejectedOrders> {
+  const response = await fetch(
+    `/accounts/${accountId}/media-interactive/rejected-orders`,
+    { credentials: 'include' },
+  )
+  if (!response.ok) throw new Error(await readError(response))
+  return response.json() as Promise<MediaInteractiveRejectedOrders>
 }
 
 export async function fetchPublicMediaInteractiveWidget(

@@ -20,6 +20,8 @@ type ModuleCatalogCardProps = {
   iconVariant: ModuleIconVariant
   widgetRoute?: string
   available?: boolean
+  /** Uses horizontal icon + copy on wider cards (modules catalog). */
+  layout?: 'stacked' | 'horizontal'
 }
 
 export function ModuleCatalogCard({
@@ -28,7 +30,9 @@ export function ModuleCatalogCard({
   iconVariant,
   widgetRoute,
   available = true,
+  layout = 'stacked',
 }: ModuleCatalogCardProps) {
+  const horizontal = layout === 'horizontal'
   const { t } = useTranslation()
   const theme = useTheme()
   const accent = moduleAccentColor(iconVariant, theme)
@@ -36,7 +40,11 @@ export function ModuleCatalogCard({
 
   const cardShellSx = {
     ...cardSx,
+    width: '100%',
     height: '100%',
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
     position: 'relative' as const,
     overflow: 'hidden',
     ...(!canOpen ? { opacity: 0.72 } : {}),
@@ -67,38 +75,22 @@ export function ModuleCatalogCard({
       sx={{
         position: 'relative',
         flex: 1,
+        width: '100%',
+        boxSizing: 'border-box',
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: horizontal ? 'row' : 'column',
+        alignItems: horizontal ? 'flex-start' : 'stretch',
         gap: 2,
-        p: 2.5,
-        '&:last-child': { pb: 2.5 },
-        overflow: 'hidden',
+        p: horizontal ? 2.25 : 2.5,
+        '&:last-child': { pb: horizontal ? 2.25 : 2.5 },
       }}
     >
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          gap: 1,
-        }}
-      >
-        <IconTile icon={icon} variant={iconVariant} size="lg" />
-        {canOpen ? (
-          <ArrowForwardIcon
-            sx={{
-              fontSize: 20,
-              mt: 0.5,
-              color: alpha(theme.palette.text.primary, 0.28),
-              transition: 'transform 0.2s ease, color 0.2s ease',
-              '.MuiCardActionArea-root:hover &': {
-                transform: 'translateX(2px)',
-                color: accent,
-              },
-            }}
-            aria-hidden
-          />
-        ) : null}
+      <Box sx={{ flexShrink: 0 }}>
+        <IconTile
+          icon={icon}
+          variant={iconVariant}
+          size={horizontal ? 'md' : 'lg'}
+        />
       </Box>
 
       <Box
@@ -107,41 +99,67 @@ export function ModuleCatalogCard({
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          gap: 0.75,
+          gap: horizontal ? 1 : 0.75,
+          alignSelf: 'stretch',
         }}
       >
-        <Typography
-          variant="subtitle1"
-          sx={{ fontWeight: 600, letterSpacing: '-0.01em' }}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 1,
+          }}
         >
-          {t(moduleNameKey(moduleId))}
-        </Typography>
+          <Typography
+            variant={horizontal ? 'subtitle1' : 'subtitle1'}
+            sx={{ fontWeight: 600, letterSpacing: '-0.01em', m: 0 }}
+          >
+            {t(moduleNameKey(moduleId))}
+          </Typography>
+          {canOpen ? (
+            <ArrowForwardIcon
+              sx={{
+                fontSize: 20,
+                mt: 0.15,
+                flexShrink: 0,
+                color: alpha(theme.palette.text.primary, 0.28),
+                transition: 'transform 0.2s ease, color 0.2s ease',
+                '.MuiCardActionArea-root:hover &': {
+                  transform: 'translateX(2px)',
+                  color: accent,
+                },
+              }}
+              aria-hidden
+            />
+          ) : null}
+        </Box>
+
         <Typography
           variant="body2"
           sx={{
             color: alpha(theme.palette.text.secondary, 0.72),
-            lineHeight: 1.5,
-            display: '-webkit-box',
-            WebkitLineClamp: 3,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
+            lineHeight: 1.55,
+            flex: horizontal ? 1 : undefined,
           }}
         >
           {t(moduleDescriptionKey(moduleId))}
         </Typography>
-      </Box>
 
-      <Typography
-        variant="caption"
-        sx={{
-          fontWeight: 600,
-          color: canOpen ? accent : alpha(theme.palette.text.primary, 0.45),
-          letterSpacing: '0.02em',
-          textTransform: 'uppercase',
-        }}
-      >
-        {canOpen ? t('common.open') : t('common.comingSoon')}
-      </Typography>
+        <Typography
+          variant="caption"
+          sx={{
+            fontWeight: 600,
+            color: canOpen ? accent : alpha(theme.palette.text.primary, 0.45),
+            letterSpacing: '0.02em',
+            textTransform: 'uppercase',
+            mt: 'auto',
+            pt: 1,
+          }}
+        >
+          {canOpen ? t('common.open') : t('common.comingSoon')}
+        </Typography>
+      </Box>
     </CardContent>
   )
 
@@ -152,7 +170,8 @@ export function ModuleCatalogCard({
           component={RouterLink}
           to={widgetRoute!}
           sx={{
-            height: '100%',
+            flex: 1,
+            width: '100%',
             alignItems: 'stretch',
             display: 'flex',
             flexDirection: 'column',
@@ -161,7 +180,7 @@ export function ModuleCatalogCard({
           {content}
         </CardActionArea>
       ) : (
-        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column' }}>
           {content}
         </Box>
       )}

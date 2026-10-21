@@ -151,3 +151,55 @@ export const StyledViewerOrdersLimitPanel = styled(Box)(({ theme }) => ({
   paddingTop: theme.spacing(2.5),
   borderTop: `1px solid ${theme.palette.divider}`,
 }))
+
+export const StyledRejectedOrdersScroll = styled(Box)(({ theme }) => ({
+  marginTop: theme.spacing(2),
+  maxHeight: 300,
+  overflowY: 'auto',
+  padding: theme.spacing(0.5),
+  marginLeft: theme.spacing(-0.5),
+  marginRight: theme.spacing(-0.5),
+  borderRadius: theme.spacing(1.25),
+  border: `1px solid ${theme.palette.divider}`,
+  backgroundColor:
+    theme.palette.mode === 'dark'
+      ? 'rgba(255, 255, 255, 0.02)'
+      : 'rgba(0, 0, 0, 0.015)',
+}))
+
+export const StyledRejectedOrdersList = styled(Stack)(({ theme }) => ({
+  gap: theme.spacing(1),
+  padding: theme.spacing(1),
+}))
+
+export const StyledRejectedOrderCard = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  overflow: 'hidden',
+  padding: theme.spacing(1.5, 1.5, 1.5, 1.75),
+  borderRadius: theme.spacing(1),
+  border: `1px solid ${theme.palette.divider}`,
+  backgroundColor: theme.palette.background.paper,
+  boxShadow: `inset 3px 0 0 ${theme.palette.error.main}`,
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    inset: 0,
+    background: `linear-gradient(125deg, ${theme.palette.error.main}14 0%, transparent 52%)`,
+    pointerEvents: 'none',
+  },
+}))
+
+export const StyledRejectedOrderCardBody = styled(Stack)(({ theme }) => ({
+  position: 'relative',
+  zIndex: 1,
+  gap: theme.spacing(0.75),
+  minWidth: 0,
+}))
+
+export const StyledRejectedOrderTitleRow = styled(Box)({
+  display: 'flex',
+  alignItems: 'flex-start',
+  justifyContent: 'space-between',
+  gap: 8,
+  minWidth: 0,
+})

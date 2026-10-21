@@ -114,7 +114,7 @@ export function MediaInteractiveVideoOverlayShell({
       <StyledVideoStage
         stageHeight={height}
         dimmed={showPausedBadge}
-        hidden={!showVideo}
+        hidden={!showVideo || !track}
       >
         <Box
           ref={playerHostRef}

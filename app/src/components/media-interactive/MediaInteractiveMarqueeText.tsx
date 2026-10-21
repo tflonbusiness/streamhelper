@@ -16,13 +16,21 @@ const marquee = keyframes`
   }
 `
 
-const StyledViewport = styled(Box)({
+const StyledViewport = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'fadeEdges',
+})<{ fadeEdges?: boolean }>(({ fadeEdges }) => ({
   overflow: 'hidden',
   width: '100%',
   minWidth: 0,
-  maskImage:
-    'linear-gradient(90deg, transparent 0, #000 8px, #000 calc(100% - 8px), transparent 100%)',
-})
+  ...(fadeEdges
+    ? {
+        WebkitMaskImage:
+          'linear-gradient(90deg, transparent 0, #000 8px, #000 calc(100% - 8px), transparent 100%)',
+        maskImage:
+          'linear-gradient(90deg, transparent 0, #000 8px, #000 calc(100% - 8px), transparent 100%)',
+      }
+    : {}),
+}))
 
 const StyledTrack = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'animate',
@@ -69,7 +77,7 @@ export function MediaInteractiveMarqueeText({
   }, [text])
 
   return (
-    <StyledViewport ref={viewportRef} className={className}>
+    <StyledViewport ref={viewportRef} className={className} fadeEdges={overflows}>
       <StyledTrack animate={overflows}>
         <StyledSegment ref={measureRef}>{text}</StyledSegment>
         {overflows ? <StyledSegment aria-hidden>{text}</StyledSegment> : null}

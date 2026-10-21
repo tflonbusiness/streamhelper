@@ -5,10 +5,6 @@ import {
   DialogActions,
   DialogContent,
   Divider,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Slider,
   Stack,
   TextField,
@@ -20,7 +16,6 @@ import { styled } from '@mui/material/styles'
 import { useEffect, useMemo, useState } from 'react'
 import { resolveMediaInteractiveObsViewport } from '@/lib/media-interactive-overlay-layout'
 import { useTranslation } from 'react-i18next'
-import type { MediaInteractiveBackupCutover } from '@/api/media-interactive'
 import {
   StyledSettingsSection,
   StyledSettingsSectionsRoot,
@@ -46,7 +41,6 @@ type SettingsDraft = {
   overlayWidth: number
   overlayHeight: number
   audioOverlayWidth: number
-  backupCutover: MediaInteractiveBackupCutover
 }
 
 const StyledField = styled(TextField)(({ theme }) => ({
@@ -70,7 +64,6 @@ function settingsToDraft(
     overlayWidth: settings.overlayWidth,
     overlayHeight: settings.overlayHeight,
     audioOverlayWidth: settings.audioOverlayWidth,
-    backupCutover: settings.backupCutover,
   }
 }
 
@@ -123,7 +116,6 @@ export function MediaInteractiveSettingsDialog({
         overlayWidth: draft.overlayWidth,
         overlayHeight: draft.overlayHeight,
         audioOverlayWidth: draft.audioOverlayWidth,
-        backupCutover: draft.backupCutover,
       },
       {
         onSuccess: () => {
@@ -302,42 +294,6 @@ export function MediaInteractiveSettingsDialog({
                     sx={inputFieldSx}
                   />
                 )}
-              </StyledSettingsSection>
-
-              <Divider />
-
-              <StyledSettingsSection>
-                <StyledSubsectionLabel>
-                  {t('mediaInteractive.settingsSectionBackup')}
-                </StyledSubsectionLabel>
-                <FormControl size="small" fullWidth>
-                  <InputLabel id="media-interactive-cutover-label">
-                    {t('mediaInteractive.backupCutover')}
-                  </InputLabel>
-                  <Select
-                    labelId="media-interactive-cutover-label"
-                    label={t('mediaInteractive.backupCutover')}
-                    value={draft.backupCutover}
-                    onChange={(e) =>
-                      setDraft((prev) =>
-                        prev
-                          ? {
-                              ...prev,
-                              backupCutover: e.target
-                                .value as MediaInteractiveBackupCutover,
-                            }
-                          : prev,
-                      )
-                    }
-                  >
-                    <MenuItem value="immediate">
-                      {t('mediaInteractive.cutoverImmediate')}
-                    </MenuItem>
-                    <MenuItem value="finish_current_track">
-                      {t('mediaInteractive.cutoverFinish')}
-                    </MenuItem>
-                  </Select>
-                </FormControl>
               </StyledSettingsSection>
             </StyledSettingsSectionsRoot>
           </Box>

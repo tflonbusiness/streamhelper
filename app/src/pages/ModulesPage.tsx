@@ -11,14 +11,40 @@ import { PageHeader } from '@/components/PageHeader'
 import { MODULE_PAGE_SECTION_SPACING } from '@/lib/module-page-layout'
 import { MODULE_CATALOG } from '@/lib/modules'
 
+function ModulesSectionLabel({
+  children,
+  id,
+}: {
+  children: string
+  id?: string
+}) {
+  const theme = useTheme()
+  return (
+    <Typography
+      id={id}
+      variant="caption"
+      component="p"
+      sx={{
+        mb: 1.5,
+        fontWeight: 600,
+        fontSize: '0.6875rem',
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
+        color: alpha(theme.palette.text.secondary, 0.72),
+      }}
+    >
+      {children}
+    </Typography>
+  )
+}
+
 export function ModulesPage() {
   const { t } = useTranslation()
-  const theme = useTheme()
 
   return (
     <Stack
       spacing={MODULE_PAGE_SECTION_SPACING}
-      sx={{ bgcolor: 'background.default' }}
+      sx={{ bgcolor: 'background.default', width: '100%' }}
     >
       <PageHeader
         title={t('modules.pageTitle')}
@@ -27,32 +53,27 @@ export function ModulesPage() {
         iconVariant="primary"
         flatBackground
       />
-      <Box>
-        <Typography
-          variant="caption"
-          component="p"
-          sx={{
-            mb: 1.5,
-            fontWeight: 600,
-            fontSize: '0.6875rem',
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            color: alpha(theme.palette.text.secondary, 0.72),
-          }}
-        >
+
+      <Box component="section" aria-labelledby="modules-available-heading">
+        <ModulesSectionLabel id="modules-available-heading">
           {t('modules.availableSectionTitle')}
-        </Typography>
-        <Grid container spacing={2}>
-        {MODULE_CATALOG.map((module) => (
-          <Grid key={module.id} size={{ xs: 12, sm: 6 }}>
-            <ModuleCatalogCard
-              moduleId={module.id}
-              icon={module.icon}
-              iconVariant={module.iconVariant}
-              widgetRoute={module.widgetRoute}
-            />
-          </Grid>
-        ))}
+        </ModulesSectionLabel>
+        <Grid container spacing={2} alignItems="stretch">
+          {MODULE_CATALOG.map((module) => (
+            <Grid
+              key={module.id}
+              size={{ xs: 12, sm: 6, lg: 4, xl: 3 }}
+              sx={{ display: 'flex' }}
+            >
+              <ModuleCatalogCard
+                moduleId={module.id}
+                icon={module.icon}
+                iconVariant={module.iconVariant}
+                widgetRoute={module.widgetRoute}
+                layout="stacked"
+              />
+            </Grid>
+          ))}
         </Grid>
       </Box>
 

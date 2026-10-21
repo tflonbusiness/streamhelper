@@ -100,10 +100,6 @@ export function ComingSoonGameCard({
             mt: 0.5,
             color: alpha(theme.palette.text.secondary, 0.85),
             lineHeight: 1.45,
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
           }}
         >
           {t(moduleDescriptionKey(moduleId))}

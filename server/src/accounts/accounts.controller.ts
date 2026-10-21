@@ -990,6 +990,10 @@ export class AccountsController {
       maxViewerTrackDurationSeconds: body.max_viewer_track_duration_seconds as
         | number
         | undefined,
+      viewerPlaylistsEnabled: body.viewer_playlists_enabled as
+        | boolean
+        | undefined,
+      maxPlaylistTracks: body.max_playlist_tracks as number | undefined,
       kickRewardIds: body.kick_reward_ids as string[] | undefined,
     });
   }
@@ -1091,6 +1095,16 @@ export class AccountsController {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
     return this.mediaInteractive.getBurnedPoints(accountId, user.id);
+  }
+
+  @Get(':accountId/media-interactive/rejected-orders')
+  async getYoutubeRejectedOrders(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.mediaInteractive.getRejectedOrders(accountId, user.id);
   }
 
   @Delete(':accountId/members/:memberUserId')

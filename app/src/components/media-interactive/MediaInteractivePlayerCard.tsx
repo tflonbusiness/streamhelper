@@ -12,6 +12,7 @@ import SkipNextRoundedIcon from '@mui/icons-material/SkipNextRounded'
 import { alpha, styled } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import { formatDuration, type MediaInteractiveItem } from '@/api/media-interactive'
+import { widgetUiCopy } from '@/i18n/widget-ui'
 import { moduleLiveHeroCardSx } from '@/lib/module-page-chrome'
 import { MediaInteractiveMarqueeText } from '@/components/media-interactive/MediaInteractiveMarqueeText'
 import { youtubeThumbnailUrl } from '@/lib/youtube-thumbnail-url'
@@ -197,8 +198,12 @@ export function MediaInteractivePlayerCard({
   const empty = !track
   const controlsDisabled = empty || loading
 
-  const emptyText =
-    emptyMessage ?? t('mediaInteractive.nothingPlaying')
+  const emptyText = overlay
+    ? widgetUiCopy.mediaInteractiveQueueIdle
+    : emptyMessage ?? t('mediaInteractive.nothingPlaying')
+  const emptyHint = overlay
+    ? widgetUiCopy.mediaInteractiveQueueIdleHint
+    : t('mediaInteractive.transportEmptyHint')
 
   const body = (
     <>
@@ -210,9 +215,14 @@ export function MediaInteractivePlayerCard({
             <Skeleton variant="text" width="55%" />
           </>
         ) : empty ? (
-          <StyledTitle overlay={overlay} variant="body2">
-            {emptyText}
-          </StyledTitle>
+          <>
+            <StyledTitle overlay={overlay} variant="body2">
+              {emptyText}
+            </StyledTitle>
+            <StyledSubtitle overlay={overlay} variant="caption">
+              {emptyHint}
+            </StyledSubtitle>
+          </>
         ) : (
           <>
             {overlay ? (
@@ -266,9 +276,6 @@ export function MediaInteractivePlayerCard({
   )
 
   if (variant === 'overlay') {
-    if (empty && !loading) {
-      return null
-    }
     return (
       <StyledOverlayCard barWidth={overlayBarWidth} videoChrome={overlayVideoChrome}>
         {body}

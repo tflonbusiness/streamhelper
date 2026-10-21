@@ -4,16 +4,24 @@ import {
   Button,
   Chip,
   CircularProgress,
+  FormControl,
+  FormControlLabel,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   Switch,
   TextField,
   Typography,
 } from '@mui/material'
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined'
-import RedeemIcon from '@mui/icons-material/Redeem'
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { KickChannelRewardOption } from '@/api/media-interactive'
+import type {
+  KickChannelRewardOption,
+  MediaInteractiveBackupCutover,
+} from '@/api/media-interactive'
 import { SectionHeader } from '@/components/SectionHeader'
 import {
   StyledCard,
@@ -26,9 +34,7 @@ import {
   StyledRewardTileSwitch,
   StyledViewerOrdersLimitPanel,
   StyledViewerOrdersRewardsHeader,
-  StyledViewerOrdersStepBadge,
-  StyledViewerOrdersStepRow,
-  StyledViewerOrdersSteps,
+  StyledSubsectionLabel,
 } from '@/components/media-interactive/media-interactive-page/media-interactive-page-styles'
 import { useNotification } from '@/context/NotificationContext'
 import { inputFieldSx } from '@/theme/colors'
@@ -161,17 +167,28 @@ export function MediaInteractiveViewerOrdersSection({
 
   const selectedIds = settings?.kickRewardIds ?? []
   const [maxDurationDraft, setMaxDurationDraft] = useState<number | null>(null)
+  const [maxPlaylistTracksDraft, setMaxPlaylistTracksDraft] = useState<
+    number | null
+  >(null)
 
   useEffect(() => {
     if (settings && maxDurationDraft === null) {
       setMaxDurationDraft(settings.maxViewerTrackDurationSeconds)
     }
-  }, [settings, maxDurationDraft])
+    if (settings && maxPlaylistTracksDraft === null) {
+      setMaxPlaylistTracksDraft(settings.maxPlaylistTracks)
+    }
+  }, [settings, maxDurationDraft, maxPlaylistTracksDraft])
 
   const limitDirty = useMemo(() => {
     if (!settings || maxDurationDraft === null) return false
     return settings.maxViewerTrackDurationSeconds !== maxDurationDraft
   }, [settings, maxDurationDraft])
+
+  const playlistLimitDirty = useMemo(() => {
+    if (!settings || maxPlaylistTracksDraft === null) return false
+    return settings.maxPlaylistTracks !== maxPlaylistTracksDraft
+  }, [settings, maxPlaylistTracksDraft])
 
   const toggleReward = (reward: KickChannelRewardOption) => {
     const isOn = selectedIds.includes(reward.id)
@@ -196,13 +213,33 @@ export function MediaInteractiveViewerOrdersSection({
       .catch(() => showError(t('mediaInteractive.viewerOrdersSaveError')))
   }
 
+  const toggleViewerPlaylists = (enabled: boolean) => {
+    void mutations.patchSettings
+      .mutateAsync({ viewerPlaylistsEnabled: enabled })
+      .catch(() => showError(t('mediaInteractive.viewerOrdersSaveError')))
+  }
+
+  const saveMaxPlaylistTracks = () => {
+    if (maxPlaylistTracksDraft === null) return
+    const clamped = Math.min(50, Math.max(1, Math.round(maxPlaylistTracksDraft)))
+    void mutations.patchSettings
+      .mutateAsync({ maxPlaylistTracks: clamped })
+      .then(() => {
+        setMaxPlaylistTracksDraft(clamped)
+        showSuccess(t('mediaInteractive.viewerOrdersPlaylistLimitSaved'))
+      })
+      .catch(() => showError(t('mediaInteractive.viewerOrdersSaveError')))
+  }
+
+  const saveBackupCutover = (backupCutover: MediaInteractiveBackupCutover) => {
+    void mutations.patchSettings
+      .mutateAsync({ backupCutover })
+      .then(() => showSuccess(t('mediaInteractive.backupCutoverSaved')))
+      .catch(() => showError(t('mediaInteractive.viewerOrdersSaveError')))
+  }
+
   const loading = settingsLoading || rewardsLoading
   const selectedCount = selectedIds.length
-  const steps = [
-    t('mediaInteractive.viewerOrdersStep1'),
-    t('mediaInteractive.viewerOrdersStep2'),
-    t('mediaInteractive.viewerOrdersStep3'),
-  ]
 
   return (
     <StyledCard>
@@ -210,23 +247,16 @@ export function MediaInteractiveViewerOrdersSection({
         <SectionHeader
           title={t('mediaInteractive.viewerOrdersTitle')}
           description={t('mediaInteractive.viewerOrdersDescription')}
-          icon={RedeemIcon}
+          icon={SettingsOutlinedIcon}
           iconVariant="primary"
           showDivider={false}
         />
 
-        <StyledViewerOrdersSteps>
-          {steps.map((text, index) => (
-            <StyledViewerOrdersStepRow key={index}>
-              <StyledViewerOrdersStepBadge aria-hidden>
-                {index + 1}
-              </StyledViewerOrdersStepBadge>
-              <Typography variant="body2" color="text.secondary">
-                {text}
-              </Typography>
-            </StyledViewerOrdersStepRow>
-          ))}
-        </StyledViewerOrdersSteps>
+        <Box sx={{ mt: 2.5, mb: 1 }}>
+          <StyledSubsectionLabel>
+            {t('mediaInteractive.settingsSectionKickOrders')}
+          </StyledSubsectionLabel>
+        </Box>
 
         {loading ? (
           <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 2 }}>
@@ -287,10 +317,100 @@ export function MediaInteractiveViewerOrdersSection({
         )}
 
         <StyledViewerOrdersLimitPanel>
-          <Typography variant="subtitle2" gutterBottom>
-            {t('mediaInteractive.viewerOrdersLimitTitle')}
+          <StyledSubsectionLabel>
+            {t('mediaInteractive.settingsSectionBackup')}
+          </StyledSubsectionLabel>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, mt: 1 }}>
+            {t('mediaInteractive.settingsSectionBackupHint')}
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <FormControl
+            size="small"
+            fullWidth
+            disabled={!settings || mutations.patchSettings.isPending}
+          >
+            <InputLabel id="media-interactive-cutover-label">
+              {t('mediaInteractive.backupCutover')}
+            </InputLabel>
+            <Select
+              labelId="media-interactive-cutover-label"
+              label={t('mediaInteractive.backupCutover')}
+              value={settings?.backupCutover ?? 'finish_current_track'}
+              onChange={(e) =>
+                saveBackupCutover(e.target.value as MediaInteractiveBackupCutover)
+              }
+            >
+              <MenuItem value="immediate">
+                {t('mediaInteractive.cutoverImmediate')}
+              </MenuItem>
+              <MenuItem value="finish_current_track">
+                {t('mediaInteractive.cutoverFinish')}
+              </MenuItem>
+            </Select>
+          </FormControl>
+        </StyledViewerOrdersLimitPanel>
+
+        <StyledViewerOrdersLimitPanel>
+          <StyledSubsectionLabel>
+            {t('mediaInteractive.viewerOrdersPlaylistsTitle')}
+          </StyledSubsectionLabel>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, mt: 1 }}>
+            {t('mediaInteractive.viewerOrdersPlaylistsHint')}
+          </Typography>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={settings?.viewerPlaylistsEnabled ?? false}
+                disabled={!settings || mutations.patchSettings.isPending}
+                onChange={(_, checked) => toggleViewerPlaylists(checked)}
+              />
+            }
+            label={t('mediaInteractive.viewerOrdersPlaylistsEnabled')}
+          />
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1.5}
+            alignItems={{ xs: 'stretch', sm: 'flex-end' }}
+            sx={{ mt: 2 }}
+          >
+            <TextField
+              size="small"
+              type="number"
+              inputProps={{ min: 1, max: 50 }}
+              label={t('mediaInteractive.viewerOrdersMaxPlaylistTracks')}
+              value={maxPlaylistTracksDraft ?? ''}
+              disabled={
+                maxPlaylistTracksDraft === null ||
+                !settings?.viewerPlaylistsEnabled ||
+                mutations.patchSettings.isPending
+              }
+              onChange={(e) =>
+                setMaxPlaylistTracksDraft(Number(e.target.value))
+              }
+              helperText={t('mediaInteractive.viewerOrdersMaxPlaylistTracksHint')}
+              sx={{ ...inputFieldSx, minWidth: { sm: 220 } }}
+            />
+            <Button
+              variant={playlistLimitDirty ? 'contained' : 'outlined'}
+              size="small"
+              disabled={
+                maxPlaylistTracksDraft === null ||
+                !settings?.viewerPlaylistsEnabled ||
+                mutations.patchSettings.isPending ||
+                !playlistLimitDirty
+              }
+              onClick={saveMaxPlaylistTracks}
+              sx={{ flexShrink: 0, height: 40 }}
+            >
+              {t('mediaInteractive.viewerOrdersSavePlaylistLimit')}
+            </Button>
+          </Stack>
+        </StyledViewerOrdersLimitPanel>
+
+        <StyledViewerOrdersLimitPanel>
+          <StyledSubsectionLabel>
+            {t('mediaInteractive.viewerOrdersLimitTitle')}
+          </StyledSubsectionLabel>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, mt: 1 }}>
             {t('mediaInteractive.viewerOrdersLimitHint')}
           </Typography>
           <Stack
@@ -329,6 +449,7 @@ export function MediaInteractiveViewerOrdersSection({
             </Button>
           </Stack>
         </StyledViewerOrdersLimitPanel>
+
       </StyledCardContent>
     </StyledCard>
   )

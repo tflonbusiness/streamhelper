@@ -1,5 +1,7 @@
-import { Grid, Typography } from '@mui/material'
+import { Grid } from '@mui/material'
+import PlaylistPlayOutlinedIcon from '@mui/icons-material/PlaylistPlayOutlined'
 import SensorsIcon from '@mui/icons-material/Sensors'
+import LibraryMusicOutlinedIcon from '@mui/icons-material/LibraryMusicOutlined'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { MediaInteractiveItem } from '@/api/media-interactive'
@@ -7,6 +9,7 @@ import { SectionDivider, SectionHeader } from '@/components/SectionHeader'
 import { useNotification } from '@/context/NotificationContext'
 import { MediaInteractiveNowPlayingHero } from '@/components/media-interactive/media-interactive-page/MediaInteractiveNowPlayingHero'
 import { MediaInteractiveQueueItemRow } from '@/components/media-interactive/media-interactive-page/MediaInteractiveQueueItemRow'
+import { MediaInteractiveListEmptyState } from '@/components/media-interactive/media-interactive-page/MediaInteractiveListEmptyState'
 import { MediaInteractiveStaffAddForm } from '@/components/media-interactive/media-interactive-page/MediaInteractiveStaffAddForm'
 import {
   StyledCard,
@@ -97,9 +100,11 @@ export function MediaInteractiveWorkspaceSection({
                   {t('mediaInteractive.orderQueue')}
                 </StyledSubsectionLabel>
                 {queueItems.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary">
-                    {t('mediaInteractive.queueEmpty')}
-                  </Typography>
+                  <MediaInteractiveListEmptyState
+                    icon={PlaylistPlayOutlinedIcon}
+                    title={t('mediaInteractive.queueEmpty')}
+                    description={t('mediaInteractive.queueEmptyHint')}
+                  />
                 ) : (
                   queueItems.map((item, index) => (
                     <MediaInteractiveQueueItemRow
@@ -125,9 +130,11 @@ export function MediaInteractiveWorkspaceSection({
                   {t('mediaInteractive.backupList')}
                 </StyledSubsectionLabel>
                 {backupItems.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary">
-                    {t('mediaInteractive.backupEmpty')}
-                  </Typography>
+                  <MediaInteractiveListEmptyState
+                    icon={LibraryMusicOutlinedIcon}
+                    title={t('mediaInteractive.backupEmpty')}
+                    description={t('mediaInteractive.backupEmptyHint')}
+                  />
                 ) : (
                   backupItems.map((item, index) => (
                     <MediaInteractiveQueueItemRow

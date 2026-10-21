@@ -680,6 +680,7 @@ export function AppShell() {
   }
   const wideMainContent =
     location.pathname === '/dashboard' ||
+    location.pathname === '/modules' ||
     /^\/modules\/(?:bonus-buy|chat-roll|prize-spin|media-interactive)(?:\/\d+)?(?:\/|$)/.test(
       location.pathname,
     )

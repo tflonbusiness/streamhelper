@@ -27,6 +27,7 @@ type YtPlayer = {
   loadVideoById: (id: string) => void
   playVideo: () => void
   pauseVideo: () => void
+  stopVideo: () => void
   getPlayerState: () => number
   setVolume: (n: number) => void
   unMute: () => void
@@ -104,6 +105,18 @@ function tryMutedPlay(player: YtPlayer) {
   }
 }
 
+function stopYtPlayback(player: YtPlayer) {
+  try {
+    player.stopVideo()
+  } catch {
+    try {
+      player.pauseVideo()
+    } catch {
+      // ignore
+    }
+  }
+}
+
 export function MediaInteractiveStreamWidgetPage() {
   usePinWidgetUiEnglish()
   const { ucid } = useParams<{ ucid: string }>()
@@ -137,7 +150,8 @@ export function MediaInteractiveStreamWidgetPage() {
       overlayWidth: view.settings.overlayWidth,
       overlayHeight: view.settings.overlayHeight,
       audioOverlayWidth: view.settings.audioOverlayWidth ?? 400,
-      showTrackBar: Boolean(np),
+      showTrackBar: true,
+      queueIdle: !np,
     })
   }, [view])
 
@@ -188,7 +202,7 @@ export function MediaInteractiveStreamWidgetPage() {
               return
             }
             const intent = playbackIntentRef.current
-            if (intent.paused) {
+            if (!intent.videoId || intent.paused) {
               return
             }
             if (event.data === YT_PLAYING) {
@@ -243,7 +257,7 @@ export function MediaInteractiveStreamWidgetPage() {
 
     if (!videoId) {
       loadedVideoIdRef.current = null
-      player.pauseVideo()
+      stopYtPlayback(player)
       return
     }
 
@@ -338,6 +352,7 @@ export function MediaInteractiveStreamWidgetPage() {
   }
 
   const np = view.playback.nowPlaying
+  const queueIdle = !np
   const showVideo = view.settings.showVideo
   const audioBarWidth = view.settings.audioOverlayWidth ?? 400
   const viewport =
@@ -347,7 +362,8 @@ export function MediaInteractiveStreamWidgetPage() {
       overlayWidth: view.settings.overlayWidth,
       overlayHeight: view.settings.overlayHeight,
       audioOverlayWidth: audioBarWidth,
-      showTrackBar: Boolean(np),
+      showTrackBar: true,
+      queueIdle,
     })
 
   return (

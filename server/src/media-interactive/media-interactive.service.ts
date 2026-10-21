@@ -55,6 +55,8 @@ export type MediaInteractiveSettingsDto = {
   audioOverlayWidth: number;
   backupCutover: MediaInteractiveBackupCutover;
   maxViewerTrackDurationSeconds: number;
+  viewerPlaylistsEnabled: boolean;
+  maxPlaylistTracks: number;
   kickRewardIds: string[];
   playbackPaused: boolean;
   activeSource: 'queue' | 'backup';
@@ -110,6 +112,35 @@ export class MediaInteractiveService {
     return result.rows[0] as Record<string, unknown>;
   }
 
+  private async resolveEnqueueUrls(
+    rawUrl: string,
+    allowPlaylist: boolean,
+    maxPlaylistTracks: number,
+  ): Promise<string[]> {
+    const trimmed = rawUrl.trim();
+    if (!trimmed) {
+      return [];
+    }
+    const playlistId = extractPlaylistId(trimmed);
+    if (playlistId) {
+      if (allowPlaylist) {
+        const videoIds = await expandYoutubePlaylistVideoIds(
+          trimmed,
+          maxPlaylistTracks,
+        );
+        if (videoIds.length > 0) {
+          return videoIds.map((id) => normalizeYoutubeWatchUrl(id));
+        }
+      }
+      const singleId = extractYoutubeVideoId(trimmed);
+      if (singleId) {
+        return [normalizeYoutubeWatchUrl(singleId)];
+      }
+      return [];
+    }
+    return [trimmed];
+  }
+
   private readKickRewardIds(raw: unknown): string[] {
     if (!Array.isArray(raw)) {
       return [];
@@ -130,6 +161,13 @@ export class MediaInteractiveService {
       backupCutover: row.backup_cutover as MediaInteractiveBackupCutover,
       maxViewerTrackDurationSeconds: Number(
         row.max_viewer_track_duration_seconds,
+      ),
+      viewerPlaylistsEnabled: Boolean(
+        row.viewer_playlists_enabled ??
+          MEDIA_INTERACTIVE_DEFAULTS.viewerPlaylistsEnabled,
+      ),
+      maxPlaylistTracks: Number(
+        row.max_playlist_tracks ?? MEDIA_INTERACTIVE_DEFAULTS.maxPlaylistTracks,
       ),
       kickRewardIds: Array.isArray(kickIds)
         ? kickIds.map(String)
@@ -161,6 +199,8 @@ export class MediaInteractiveService {
       audioOverlayWidth: number;
       backupCutover: MediaInteractiveBackupCutover;
       maxViewerTrackDurationSeconds: number;
+      viewerPlaylistsEnabled: boolean;
+      maxPlaylistTracks: number;
       kickRewardIds: string[];
     }>,
   ): Promise<MediaInteractiveSettingsDto> {
@@ -198,6 +238,14 @@ export class MediaInteractiveService {
     if (patch.maxViewerTrackDurationSeconds !== undefined) {
       fields.push(`max_viewer_track_duration_seconds = $${idx++}`);
       values.push(Math.max(30, patch.maxViewerTrackDurationSeconds));
+    }
+    if (patch.viewerPlaylistsEnabled !== undefined) {
+      fields.push(`viewer_playlists_enabled = $${idx++}`);
+      values.push(patch.viewerPlaylistsEnabled);
+    }
+    if (patch.maxPlaylistTracks !== undefined) {
+      fields.push(`max_playlist_tracks = $${idx++}`);
+      values.push(Math.min(50, Math.max(1, patch.maxPlaylistTracks)));
     }
     if (patch.kickRewardIds !== undefined) {
       fields.push(`kick_reward_ids = $${idx++}::jsonb`);
@@ -335,18 +383,20 @@ export class MediaInteractiveService {
     );
     const nick = memberRow.rows[0]?.name ?? 'Stream';
 
+    const settingsRow = await this.ensureSettings(accountId);
+    const maxPlaylistTracks = Number(
+      settingsRow.max_playlist_tracks ??
+        MEDIA_INTERACTIVE_DEFAULTS.maxPlaylistTracks,
+    );
+
     const client = await this.pool().connect();
     const created: MediaInteractiveItemDto[] = [];
     try {
       await client.query('BEGIN');
-      const playlistId = extractPlaylistId(url);
-      const videoIds = playlistId
-        ? await expandYoutubePlaylistVideoIds(url)
-        : [];
-      const urls =
-        videoIds.length > 0
-          ? videoIds.map((id) => normalizeYoutubeWatchUrl(id))
-          : [url];
+      const urls = await this.resolveEnqueueUrls(url, true, maxPlaylistTracks);
+      if (urls.length === 0) {
+        throw new BadRequestException('Invalid YouTube URL or playlist');
+      }
 
       for (const singleUrl of urls) {
         const meta = await fetchYoutubeVideoMetadata(singleUrl);
@@ -441,6 +491,14 @@ export class MediaInteractiveService {
     }
 
     const maxDuration = Number(settingsRow.max_viewer_track_duration_seconds);
+    const viewerPlaylistsEnabled = Boolean(
+      settingsRow.viewer_playlists_enabled ??
+        MEDIA_INTERACTIVE_DEFAULTS.viewerPlaylistsEnabled,
+    );
+    const maxPlaylistTracks = Number(
+      settingsRow.max_playlist_tracks ??
+        MEDIA_INTERACTIVE_DEFAULTS.maxPlaylistTracks,
+    );
 
     const existing = await this.pool().query(
       `SELECT id FROM media_interactive_item WHERE kick_redemption_id = $1`,
@@ -461,8 +519,17 @@ export class MediaInteractiveService {
     const client = await this.pool().connect();
     try {
       await client.query('BEGIN');
-      const meta = await fetchYoutubeVideoMetadata(payload.userInput);
-      if (!meta) {
+      const urls = await this.resolveEnqueueUrls(
+        payload.userInput,
+        viewerPlaylistsEnabled,
+        maxPlaylistTracks,
+      );
+
+      if (urls.length === 0) {
+        const rejectReason =
+          extractPlaylistId(payload.userInput) && !viewerPlaylistsEnabled
+            ? 'playlists_disabled'
+            : 'invalid_youtube_url';
         const item = await this.insertItem(client, {
           accountId,
           listKind: 'queue',
@@ -477,48 +544,81 @@ export class MediaInteractiveService {
           pointsCharged: payload.pointsCharged,
           kickRedemptionId: payload.redemptionId,
           status: 'rejected',
-          rejectReason: 'invalid_youtube_url',
+          rejectReason,
         });
         await client.query('COMMIT');
         return { kind: 'ok', accountId, item };
       }
 
-      if (
-        meta.durationSeconds > 0 &&
-        meta.durationSeconds > maxDuration
-      ) {
+      const validMetas: Array<{
+        videoId: string;
+        title: string;
+        durationSeconds: number;
+        watchUrl: string;
+      }> = [];
+      for (const singleUrl of urls) {
+        const meta = await fetchYoutubeVideoMetadata(singleUrl);
+        if (!meta) {
+          continue;
+        }
+        if (
+          meta.durationSeconds > 0 &&
+          meta.durationSeconds > maxDuration
+        ) {
+          continue;
+        }
+        validMetas.push(meta);
+      }
+
+      if (validMetas.length === 0) {
+        const probe = await fetchYoutubeVideoMetadata(urls[0]);
+        const rejectReason =
+          !probe
+            ? 'invalid_youtube_url'
+            : probe.durationSeconds > maxDuration
+              ? 'duration_exceeds_limit'
+              : 'invalid_youtube_url';
+        const item = await this.insertItem(client, {
+          accountId,
+          listKind: 'queue',
+          source: 'viewer',
+          meta: probe ?? {
+            videoId: extractYoutubeVideoId(urls[0]) ?? 'invalid',
+            title: 'Invalid link',
+            durationSeconds: 0,
+            watchUrl: urls[0],
+          },
+          requesterNick: payload.requesterNick,
+          pointsCharged: payload.pointsCharged,
+          kickRedemptionId: payload.redemptionId,
+          status: 'rejected',
+          rejectReason,
+        });
+        await client.query('COMMIT');
+        return { kind: 'ok', accountId, item };
+      }
+
+      let firstItem: MediaInteractiveItemDto | null = null;
+      for (let i = 0; i < validMetas.length; i += 1) {
+        const meta = validMetas[i];
         const item = await this.insertItem(client, {
           accountId,
           listKind: 'queue',
           source: 'viewer',
           meta,
           requesterNick: payload.requesterNick,
-          pointsCharged: payload.pointsCharged,
-          kickRedemptionId: payload.redemptionId,
-          status: 'rejected',
-          rejectReason: 'duration_exceeds_limit',
+          pointsCharged: i === 0 ? payload.pointsCharged : 0,
+          kickRedemptionId: i === 0 ? payload.redemptionId : undefined,
+          status: 'queued',
         });
-        await client.query('COMMIT');
-        return { kind: 'ok', accountId, item };
+        if (!firstItem) {
+          firstItem = item;
+        }
       }
 
-      const item = await this.insertItem(client, {
-        accountId,
-        listKind: 'queue',
-        source: 'viewer',
-        meta,
-        requesterNick: payload.requesterNick,
-        pointsCharged: payload.pointsCharged,
-        kickRedemptionId: payload.redemptionId,
-        status: 'queued',
-      });
       await client.query('COMMIT');
-      if (item.status === 'queued') {
-        await this.onQueueItemAdded(accountId);
-      } else {
-        await this.maybeStartPlayback(accountId);
-      }
-      return { kind: 'ok', accountId, item };
+      await this.onQueueItemAdded(accountId);
+      return { kind: 'ok', accountId, item: firstItem! };
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
@@ -748,38 +848,119 @@ export class MediaInteractiveService {
     await this.maybeStartPlayback(accountId);
   }
 
-  async getBurnedPoints(accountId: number, userId: number) {
+  async getRejectedOrders(accountId: number, userId: number) {
     await this.requireMember(accountId, userId);
-    const startOfDay = new Date();
-    startOfDay.setUTCHours(0, 0, 0, 0);
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const result = await this.pool().query(
       `
         SELECT
-          COALESCE(SUM(points_charged), 0)::int AS total,
-          json_agg(
-            json_build_object(
-              'id', id,
-              'title', title,
-              'requesterNick', requester_nick,
-              'pointsCharged', points_charged,
-              'status', status,
-              'createdAt', created_at
-            )
-            ORDER BY created_at DESC
-          ) FILTER (WHERE id IS NOT NULL) AS ledger
+          id,
+          title,
+          requester_nick AS "requesterNick",
+          points_charged AS "pointsCharged",
+          reject_reason AS "rejectReason",
+          created_at AS "createdAt"
         FROM media_interactive_item
-        WHERE account_id = $1 AND source = 'viewer'
+        WHERE account_id = $1
+          AND source = 'viewer'
+          AND status = 'rejected'
           AND created_at >= $2
+        ORDER BY created_at DESC
+        LIMIT 500
       `,
-      [accountId, startOfDay.toISOString()],
+      [accountId, since.toISOString()],
     );
 
-    const row = result.rows[0];
     return {
-      burnedTotal: Number(row?.total ?? 0),
-      scope: 'utc_day' as const,
-      ledger: (row?.ledger as unknown[]) ?? [],
+      scope: 'rolling_24h' as const,
+      items: result.rows.map((row) => ({
+        id: Number(row.id),
+        title: String(row.title ?? ''),
+        requesterNick: String(row.requesterNick ?? ''),
+        pointsCharged: Number(row.pointsCharged ?? 0),
+        rejectReason: row.rejectReason ? String(row.rejectReason) : null,
+        createdAt: new Date(row.createdAt as string | Date).toISOString(),
+      })),
+    };
+  }
+
+  async getBurnedPoints(accountId: number, userId: number) {
+    await this.requireMember(accountId, userId);
+    const periodStart = new Date();
+    periodStart.setUTCHours(0, 0, 0, 0);
+    periodStart.setUTCDate(periodStart.getUTCDate() - 29);
+    const periodStartIso = periodStart.toISOString();
+
+    const viewerFilter = `
+      account_id = $1 AND source = 'viewer' AND created_at >= $2
+    `;
+
+    const [totalsResult, dailyResult] = await Promise.all([
+      this.pool().query(
+        `
+          SELECT
+            COALESCE(SUM(points_charged), 0)::int AS total,
+            COUNT(*)::int AS order_count
+          FROM media_interactive_item
+          WHERE ${viewerFilter}
+        `,
+        [accountId, periodStartIso],
+      ),
+      this.pool().query(
+        `
+          SELECT
+            (created_at AT TIME ZONE 'UTC')::date AS day,
+            COALESCE(SUM(points_charged), 0)::int AS burned_total,
+            COUNT(*)::int AS order_count
+          FROM media_interactive_item
+          WHERE ${viewerFilter}
+          GROUP BY day
+          ORDER BY day ASC
+        `,
+        [accountId, periodStartIso],
+      ),
+    ]);
+
+    const totalsRow = totalsResult.rows[0];
+    const dailyByDate = new Map<string, { burnedTotal: number; orderCount: number }>();
+    for (const row of dailyResult.rows) {
+      const day =
+        row.day instanceof Date
+          ? row.day.toISOString().slice(0, 10)
+          : String(row.day).slice(0, 10);
+      dailyByDate.set(day, {
+        burnedTotal: Number(row.burned_total ?? 0),
+        orderCount: Number(row.order_count ?? 0),
+      });
+    }
+
+    const dailySeries: Array<{
+      date: string;
+      burnedTotal: number;
+      orderCount: number;
+    }> = [];
+    const cursor = new Date(periodStart);
+    for (let i = 0; i < 30; i += 1) {
+      const date = cursor.toISOString().slice(0, 10);
+      const bucket = dailyByDate.get(date);
+      dailySeries.push({
+        date,
+        burnedTotal: bucket?.burnedTotal ?? 0,
+        orderCount: bucket?.orderCount ?? 0,
+      });
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+    }
+
+    const periodEnd = dailySeries[dailySeries.length - 1]?.date ?? periodStartIso.slice(0, 10);
+
+    return {
+      burnedTotal: Number(totalsRow?.total ?? 0),
+      orderCount: Number(totalsRow?.order_count ?? 0),
+      scope: 'rolling_30d' as const,
+      periodStart: periodStartIso.slice(0, 10),
+      periodEnd,
+      dailySeries,
     };
   }
 

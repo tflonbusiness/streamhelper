@@ -6,6 +6,8 @@ export const MEDIA_INTERACTIVE_DEFAULTS = {
   audioOverlayWidth: 400,
   backupCutover: 'immediate' as const,
   maxViewerTrackDurationSeconds: 600,
+  viewerPlaylistsEnabled: false,
+  maxPlaylistTracks: 10,
   kickRewardIds: [] as string[],
 };
 

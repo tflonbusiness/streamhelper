@@ -29,6 +29,8 @@ export const widgetUiCopy = {
   prizeSpinAddSectors: 'Add sectors in dashboard',
   prizeSpinSpinning: 'Spinning',
   prizeSpinPrize: 'Prize',
+  mediaInteractiveQueueIdle: 'Queue empty',
+  mediaInteractiveQueueIdleHint: 'Waiting for the next track',
 } as const
 
 export function usePinWidgetUiEnglish(): void {

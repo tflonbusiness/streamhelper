@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   fetchPublicMediaInteractiveWidget,
   fetchMediaInteractiveBurnedPoints,
+  fetchMediaInteractiveRejectedOrders,
   fetchMediaInteractiveQueue,
   fetchKickChannelRewards,
   fetchMediaInteractiveSettings,
@@ -25,6 +26,8 @@ export const mediaInteractiveKeys = {
     [...mediaInteractiveKeys.all, 'queue', accountId, list] as const,
   burned: (accountId: number) =>
     [...mediaInteractiveKeys.all, 'burned', accountId] as const,
+  rejected: (accountId: number) =>
+    [...mediaInteractiveKeys.all, 'rejected', accountId] as const,
   publicWidget: (ucid: string) =>
     [...mediaInteractiveKeys.all, 'public', ucid] as const,
 }
@@ -62,6 +65,17 @@ export function useMediaInteractiveBurned(accountId: number | undefined) {
   return useQuery({
     queryKey: mediaInteractiveKeys.burned(accountId ?? 0),
     queryFn: () => fetchMediaInteractiveBurnedPoints(accountId!),
+    enabled: accountId !== undefined,
+    refetchInterval: POLL_MS,
+  })
+}
+
+export function useMediaInteractiveRejectedOrders(
+  accountId: number | undefined,
+) {
+  return useQuery({
+    queryKey: mediaInteractiveKeys.rejected(accountId ?? 0),
+    queryFn: () => fetchMediaInteractiveRejectedOrders(accountId!),
     enabled: accountId !== undefined,
     refetchInterval: POLL_MS,
   })

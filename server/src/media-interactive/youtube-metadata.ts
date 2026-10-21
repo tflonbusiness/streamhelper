@@ -57,6 +57,7 @@ export async function fetchYoutubeVideoMetadata(
 
 export async function expandYoutubePlaylistVideoIds(
   playlistUrl: string,
+  maxTracks = 50,
 ): Promise<string[]> {
   try {
     const url = new URL(playlistUrl.trim());
@@ -78,7 +79,8 @@ export async function expandYoutubePlaylistVideoIds(
     while ((match = re.exec(html)) !== null) {
       ids.add(match[1]);
     }
-    return [...ids].slice(0, 50);
+    const cap = Math.max(1, Math.min(50, maxTracks));
+    return [...ids].slice(0, cap);
   } catch {
     return [];
   }
