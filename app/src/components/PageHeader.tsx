@@ -9,6 +9,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import CreditCardIcon from '@mui/icons-material/CreditCard'
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports'
+import YouTubeIcon from '@mui/icons-material/YouTube'
 import GroupIcon from '@mui/icons-material/Group'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
@@ -32,6 +33,7 @@ const breadcrumbIcons: Record<string, SvgIconComponent> = {
   'nav.bonusBuy': CardGiftcardIcon,
   'nav.prizeSpin': DashboardIcon,
   'nav.chatRoll': DashboardIcon,
+  'nav.mediaInteractive': YouTubeIcon,
 }
 
 type PageHeaderProps = {

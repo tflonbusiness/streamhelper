@@ -160,6 +160,7 @@ export const ru = {
     bonusBuy: "Bonus Buy",
     prizeSpin: "Prize Wheel",
     chatRoll: "Chat Roll",
+    mediaInteractive: "Media Interactive",
     subscriptionAdmin: "Подписки (admin)"
   },
   auth: {

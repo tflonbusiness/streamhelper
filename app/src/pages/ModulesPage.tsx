@@ -51,7 +51,7 @@ export function ModulesPage() {
         description={t('modules.pageDescription')}
         icon={SportsEsportsIcon}
         iconVariant="primary"
-        flatBackground
+        moduleSurface
       />
 
       <Box component="section" aria-labelledby="modules-available-heading">

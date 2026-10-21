@@ -2,6 +2,7 @@ import type { TFunction } from 'i18next'
 import {
   BONUS_BUY_ROUTE,
   CHAT_ROLL_ROUTE,
+  MEDIA_INTERACTIVE_ROUTE,
   MODULES_ROUTE,
   PRIZE_SPIN_ROUTE,
 } from '@/lib/routes'
@@ -49,6 +50,12 @@ export function buildBreadcrumbs(
         home,
         { labelKey: 'nav.widgets', to: MODULES_ROUTE },
         { labelKey: 'nav.chatRoll' },
+      ]
+    case MEDIA_INTERACTIVE_ROUTE:
+      return [
+        home,
+        { labelKey: 'nav.widgets', to: MODULES_ROUTE },
+        { labelKey: 'nav.mediaInteractive' },
       ]
     default:
       break
