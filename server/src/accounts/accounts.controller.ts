@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -17,6 +18,7 @@ import { AuthService } from '../auth/auth.service.js';
 import type { SessionData } from '../auth/auth.types.js';
 import { KickChannelRewardsService } from '../auth/kick-channel-rewards.service.js';
 import { FirstReactionService } from '../first-reaction/first-reaction.service.js';
+import { parseFirstReactionWidgetStyle } from '../first-reaction/first-reaction-widget-style.js';
 import { MediaInteractiveService } from '../media-interactive/media-interactive.service.js';
 
 type CreateModeratorBody = {
@@ -133,6 +135,11 @@ type PatchFirstReactionDrawFulfillmentBody = {
 type PatchFirstReactionWidgetBody = {
   width?: number;
   height?: number;
+  preset_id?: number;
+};
+
+type UpsertFirstReactionWidgetCustomPresetBody = {
+  style_settings?: unknown;
 };
 
 @Controller('accounts')
@@ -1163,7 +1170,39 @@ export class AccountsController {
   ) {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
-    return this.firstReaction.patchWidget(accountId, user.id, body);
+    return this.firstReaction.patchWidget(accountId, user.id, {
+      width: body.width,
+      height: body.height,
+      presetId: body.preset_id,
+    });
+  }
+
+  @Get(':accountId/first-reaction-widget-presets')
+  async listFirstReactionWidgetPresets(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.firstReaction.listWidgetPresets(accountId, user.id);
+  }
+
+  @Put(':accountId/first-reaction-widget-presets/custom')
+  async upsertFirstReactionWidgetCustomPreset(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Body() body: UpsertFirstReactionWidgetCustomPresetBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    if (body.style_settings === undefined) {
+      throw new BadRequestException('Style settings are required');
+    }
+    return this.firstReaction.upsertWidgetCustomPreset(
+      accountId,
+      user.id,
+      parseFirstReactionWidgetStyle(body.style_settings),
+    );
   }
 
   @Get(':accountId/media-interactive/kick-rewards')

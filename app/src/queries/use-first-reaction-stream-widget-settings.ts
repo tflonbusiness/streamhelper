@@ -15,15 +15,24 @@ export function useFirstReactionWidget(accountId: number | undefined) {
 
 export function usePatchFirstReactionStreamWidgetSettings(
   accountId: number | undefined,
+  accountUcid?: string,
 ) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (body: { width?: number; height?: number }) =>
-      patchFirstReactionWidget(accountId!, body),
+    mutationFn: (body: {
+      width?: number
+      height?: number
+      preset_id?: number
+    }) => patchFirstReactionWidget(accountId!, body),
     onSuccess: () => {
       if (accountId !== undefined) {
         void queryClient.invalidateQueries({
           queryKey: firstReactionKeys.widget(accountId),
+        })
+      }
+      if (accountUcid) {
+        void queryClient.invalidateQueries({
+          queryKey: firstReactionKeys.publicWidget(accountUcid),
         })
       }
     },

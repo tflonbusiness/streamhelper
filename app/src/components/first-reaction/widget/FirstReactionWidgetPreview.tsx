@@ -1,13 +1,18 @@
 import { Box, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
+import { HexColorField } from '@/components/bonus-buy/HexColorField'
 import { FirstReactionWidgetCard } from '@/components/first-reaction/widget/FirstReactionWidgetCard'
 import { useFirstReactionWidgetPreviewView } from '@/hooks/use-first-reaction-widget-preview-view'
+import type { FirstReactionWidgetStyle } from '@/lib/first-reaction-widget-style-defaults'
 
 type FirstReactionWidgetPreviewProps = {
   accountUcid: string
   open: boolean
   width: number
   height: number
+  styleDraft: FirstReactionWidgetStyle
+  previewBackdropColor: string
+  onPreviewBackdropColorChange: (color: string) => void
 }
 
 export function FirstReactionWidgetPreview({
@@ -15,12 +20,17 @@ export function FirstReactionWidgetPreview({
   open,
   width,
   height,
+  styleDraft,
+  previewBackdropColor,
+  onPreviewBackdropColorChange,
 }: FirstReactionWidgetPreviewProps) {
   const { t } = useTranslation()
-  const { view, isLive } = useFirstReactionWidgetPreviewView(accountUcid, open, {
-    width,
-    height,
-  })
+  const { view, isLive } = useFirstReactionWidgetPreviewView(
+    accountUcid,
+    open,
+    { width, height },
+    styleDraft,
+  )
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
@@ -34,12 +44,17 @@ export function FirstReactionWidgetPreview({
           </Typography>
         ) : null}
       </Box>
+      <HexColorField
+        label={t('firstReaction.widgetPreviewBackdrop')}
+        value={previewBackdropColor}
+        onChange={onPreviewBackdropColorChange}
+      />
       <Box
         sx={{
           position: 'relative',
           minHeight: 280,
           maxHeight: 520,
-          bgcolor: '#050506',
+          bgcolor: previewBackdropColor,
           borderRadius: 2,
           border: '1px solid',
           borderColor: 'divider',

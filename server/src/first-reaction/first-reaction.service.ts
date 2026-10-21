@@ -9,9 +9,21 @@ import type { PoolClient } from 'pg';
 import { DatabaseService } from '../database/database.service.js';
 import { initialSessionStatusOnCreate } from '../session-lifecycle/initial-session-status-on-create.js';
 import {
+  FIRST_REACTION_WIDGET_DEFAULTS,
   FIRST_REACTION_WIDGET_INSERT_SQL,
   firstReactionWidgetInsertParams,
 } from './first-reaction-widget-defaults.js';
+import {
+  formatFirstReactionWidgetPreset,
+  getAccessibleFirstReactionWidgetPreset,
+  listFirstReactionWidgetPresets,
+  resolveDefaultFirstReactionSystemPresetId,
+  upsertFirstReactionWidgetCustomPreset,
+} from './first-reaction-widget-presets.js';
+import {
+  parseFirstReactionWidgetStyle,
+  type FirstReactionWidgetStyle,
+} from './first-reaction-widget-style.js';
 import {
   mergeFirstReactionSettingsPatch,
   parseFirstReactionSettings,
@@ -244,9 +256,17 @@ export class FirstReactionService {
         [accountId, userId, trimmed, initialStatus],
       );
 
+      const defaultPresetId = await resolveDefaultFirstReactionSystemPresetId(
+        client,
+      );
       await client.query(
         FIRST_REACTION_WIDGET_INSERT_SQL,
-        firstReactionWidgetInsertParams(accountId),
+        firstReactionWidgetInsertParams(
+          accountId,
+          FIRST_REACTION_WIDGET_DEFAULTS.width,
+          FIRST_REACTION_WIDGET_DEFAULTS.height,
+          defaultPresetId,
+        ),
       );
 
       await client.query('COMMIT');
@@ -696,36 +716,106 @@ export class FirstReactionService {
     return { draw: this.mapDraw(updated.rows[0]!) };
   }
 
-  async getWidget(accountId: number, userId: number) {
-    await this.requireMember(accountId, userId);
+  private async ensureFirstReactionWidgetRow(accountId: number): Promise<void> {
+    const presetId = await resolveDefaultFirstReactionSystemPresetId(
+      this.pool(),
+    );
     await this.pool().query(
       FIRST_REACTION_WIDGET_INSERT_SQL,
-      firstReactionWidgetInsertParams(accountId),
+      firstReactionWidgetInsertParams(
+        accountId,
+        FIRST_REACTION_WIDGET_DEFAULTS.width,
+        FIRST_REACTION_WIDGET_DEFAULTS.height,
+        presetId,
+      ),
     );
+  }
+
+  private mapWidgetRow(row: Record<string, unknown>) {
+    return {
+      id: Number(row.id),
+      accountId: Number(row.account_id),
+      width: Number(row.width),
+      height: Number(row.height),
+      presetId: Number(row.preset_id),
+      style: parseFirstReactionWidgetStyle(row.preset_style_settings),
+      createdAt: new Date(row.created_at as Date).toISOString(),
+      updatedAt: new Date(row.updated_at as Date).toISOString(),
+    };
+  }
+
+  private async fetchWidgetRow(
+    accountId: number,
+  ): Promise<Record<string, unknown>> {
     const result = await this.pool().query(
-      `SELECT * FROM first_reaction_widget WHERE account_id = $1`,
+      `
+        SELECT
+          w.id,
+          w.account_id,
+          w.width,
+          w.height,
+          w.preset_id,
+          w.created_at,
+          w.updated_at,
+          p.style_settings AS preset_style_settings
+        FROM first_reaction_widget w
+        JOIN first_reaction_widget_style_preset p ON p.id = w.preset_id
+        WHERE w.account_id = $1
+      `,
       [accountId],
     );
     const row = result.rows[0];
     if (!row) {
       throw new NotFoundException();
     }
-    return {
-      id: Number(row.id),
-      accountId: Number(row.account_id),
-      width: Number(row.width),
-      height: Number(row.height),
-      createdAt: new Date(row.created_at as Date).toISOString(),
-      updatedAt: new Date(row.updated_at as Date).toISOString(),
-    };
+    return row;
+  }
+
+  async getWidget(accountId: number, userId: number) {
+    await this.requireMember(accountId, userId);
+    await this.ensureFirstReactionWidgetRow(accountId);
+    return this.mapWidgetRow(await this.fetchWidgetRow(accountId));
+  }
+
+  async listWidgetPresets(accountId: number, userId: number) {
+    await this.requireMember(accountId, userId);
+    const rows = await listFirstReactionWidgetPresets(this.pool(), accountId);
+    return rows.map((row) => formatFirstReactionWidgetPreset(row));
+  }
+
+  async upsertWidgetCustomPreset(
+    accountId: number,
+    userId: number,
+    styleSettings: FirstReactionWidgetStyle,
+  ) {
+    await this.requireMember(accountId, userId);
+    const row = await upsertFirstReactionWidgetCustomPreset(
+      this.pool(),
+      accountId,
+      userId,
+      styleSettings,
+    );
+    return formatFirstReactionWidgetPreset(row);
   }
 
   async patchWidget(
     accountId: number,
     userId: number,
-    patch: { width?: number; height?: number },
+    patch: {
+      width?: number;
+      height?: number;
+      presetId?: number;
+      style?: Partial<FirstReactionWidgetStyle>;
+    },
   ) {
     await this.requireMember(accountId, userId);
+
+    if (patch.style !== undefined) {
+      throw new BadRequestException(
+        'Widget style fields must be saved via presets',
+      );
+    }
+
     const width = patch.width !== undefined
       ? Math.min(1920, Math.max(200, Math.round(patch.width)))
       : undefined;
@@ -733,14 +823,26 @@ export class FirstReactionService {
       ? Math.min(1080, Math.max(120, Math.round(patch.height)))
       : undefined;
 
-    if (width === undefined && height === undefined) {
+    if (
+      width === undefined &&
+      height === undefined &&
+      patch.presetId === undefined
+    ) {
       return this.getWidget(accountId, userId);
     }
 
-    await this.pool().query(
-      FIRST_REACTION_WIDGET_INSERT_SQL,
-      firstReactionWidgetInsertParams(accountId),
-    );
+    await this.ensureFirstReactionWidgetRow(accountId);
+
+    if (patch.presetId !== undefined) {
+      const preset = await getAccessibleFirstReactionWidgetPreset(
+        this.pool(),
+        accountId,
+        patch.presetId,
+      );
+      if (!preset) {
+        throw new BadRequestException('Widget preset not found');
+      }
+    }
 
     const fields: string[] = ['updated_at = now()'];
     const values: unknown[] = [];
@@ -752,6 +854,10 @@ export class FirstReactionService {
     if (height !== undefined) {
       fields.push(`height = $${idx++}`);
       values.push(height);
+    }
+    if (patch.presetId !== undefined) {
+      fields.push(`preset_id = $${idx++}`);
+      values.push(patch.presetId);
     }
     values.push(accountId);
 
@@ -869,11 +975,22 @@ export class FirstReactionService {
     await this.expireStaleAcceptingDraws(Number(liveId));
 
     const widget = await this.pool().query(
-      `SELECT width, height FROM first_reaction_widget WHERE account_id = $1`,
+      `
+        SELECT
+          w.width,
+          w.height,
+          p.style_settings AS preset_style_settings
+        FROM first_reaction_widget w
+        JOIN first_reaction_widget_style_preset p ON p.id = w.preset_id
+        WHERE w.account_id = $1
+      `,
       [accountId],
     );
     const width = Number(widget.rows[0]?.width ?? 500);
     const height = Number(widget.rows[0]?.height ?? 500);
+    const style = parseFirstReactionWidgetStyle(
+      widget.rows[0]?.preset_style_settings,
+    );
 
     const drawRow = await this.getActiveDrawRow(Number(liveId));
     const recentWinner = await this.pool().query(
@@ -914,6 +1031,7 @@ export class FirstReactionService {
         status: 'active' as const,
         width,
         height,
+        style,
         phase: draw.phase,
         keyword: draw.keyword,
         acceptingStartedAt: draw.acceptingStartedAt,
@@ -927,6 +1045,7 @@ export class FirstReactionService {
         status: 'active' as const,
         width,
         height,
+        style,
         phase: 'closed' as const,
         keyword: winnerOverlay.keyword,
         acceptingStartedAt: null,
@@ -939,6 +1058,7 @@ export class FirstReactionService {
       status: 'active' as const,
       width,
       height,
+      style,
       phase: 'idle' as const,
       keyword: null,
       acceptingStartedAt: null,

@@ -70,11 +70,36 @@ export type FirstReactionListResult = {
   limit: number
 }
 
+export type FirstReactionWidgetStyle = {
+  boltFillStart: string
+  boltFillEnd: string
+  boltStroke: string
+  boltGlow: string
+  textHint: string
+  textKeyword: string
+  textTimer: string
+}
+
+export type FirstReactionWidgetPresetSource = 'system' | 'user'
+
+export type FirstReactionWidgetStylePreset = {
+  id: number
+  accountId: number | null
+  createdByUserId: number | null
+  source: FirstReactionWidgetPresetSource
+  name: string
+  styleSettings: FirstReactionWidgetStyle
+  createdAt: string
+  updatedAt: string
+}
+
 export type FirstReactionWidget = {
   id: number
   accountId: number
   width: number
   height: number
+  presetId: number
+  style: FirstReactionWidgetStyle
   createdAt: string
   updatedAt: string
 }
@@ -83,6 +108,7 @@ export type PublicFirstReactionWidgetActiveView = {
   status: 'active'
   width: number
   height: number
+  style: FirstReactionWidgetStyle
   phase: 'idle' | 'preview' | 'accepting' | 'closed'
   keyword: string | null
   acceptingStartedAt: string | null
@@ -283,7 +309,11 @@ export async function stopFirstReactionDraw(
 
 export async function patchFirstReactionWidget(
   accountId: number,
-  body: { width?: number; height?: number },
+  body: {
+    width?: number
+    height?: number
+    preset_id?: number
+  },
 ): Promise<FirstReactionWidget> {
   const response = await fetch(`/accounts/${accountId}/first-reaction-widget`, {
     method: 'PATCH',
@@ -307,6 +337,38 @@ export async function fetchFirstReactionWidget(
     throw new Error(await readErrorMessage(response, 'Failed to load widget'))
   }
   return response.json() as Promise<FirstReactionWidget>
+}
+
+export async function fetchFirstReactionWidgetPresets(
+  accountId: number,
+): Promise<FirstReactionWidgetStylePreset[]> {
+  const response = await fetch(
+    `/accounts/${accountId}/first-reaction-widget-presets`,
+    { credentials: 'include' },
+  )
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Failed to load widget presets'))
+  }
+  return response.json() as Promise<FirstReactionWidgetStylePreset[]>
+}
+
+export async function upsertFirstReactionWidgetCustomPreset(
+  accountId: number,
+  body: { style_settings: FirstReactionWidgetStyle },
+): Promise<FirstReactionWidgetStylePreset> {
+  const response = await fetch(
+    `/accounts/${accountId}/first-reaction-widget-presets/custom`,
+    {
+      method: 'PUT',
+      credentials: 'include',
+      headers: jsonHeaders,
+      body: JSON.stringify(body),
+    },
+  )
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Failed to save widget preset'))
+  }
+  return response.json() as Promise<FirstReactionWidgetStylePreset>
 }
 
 export async function fetchPublicFirstReactionWidget(

@@ -1,5 +1,7 @@
 import { Box } from '@mui/material'
 import { keyframes, styled } from '@mui/material/styles'
+import { useId } from 'react'
+import type { FirstReactionWidgetStyle } from '@/lib/first-reaction-widget-style-defaults'
 
 const boltFlicker = keyframes`
   0%, 100% { opacity: 1; }
@@ -66,30 +68,42 @@ const BoltMainSvg = styled('svg')({
   willChange: 'opacity',
 })
 
-/** Decorative lightning behind keyword — CSS-only animation for OBS browser source. */
-export function FirstReactionWidgetBolt() {
+type FirstReactionWidgetBoltProps = {
+  style: FirstReactionWidgetStyle
+}
+
+export function FirstReactionWidgetBolt({ style }: FirstReactionWidgetBoltProps) {
+  const gradientId = useId().replace(/:/g, '')
+
   return (
     <BoltRoot aria-hidden>
       <BoltSvgWrap>
         <BoltGlowSvg viewBox="0 0 100 130" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path
             d="M58 4 34 58h18L28 126l52-58H62l26-64Z"
-            fill="#FFE566"
+            fill={style.boltGlow}
             opacity={0.55}
           />
         </BoltGlowSvg>
         <BoltMainSvg viewBox="0 0 100 130" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <linearGradient id="fr-bolt-fill" x1="50" y1="4" x2="50" y2="126" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#FFF9C4" />
-              <stop offset="45%" stopColor="#FFEB3B" />
-              <stop offset="100%" stopColor="#FFC107" />
+            <linearGradient
+              id={gradientId}
+              x1="50"
+              y1="4"
+              x2="50"
+              y2="126"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0%" stopColor={style.boltFillStart} />
+              <stop offset="45%" stopColor={style.boltFillEnd} />
+              <stop offset="100%" stopColor={style.boltFillEnd} />
             </linearGradient>
           </defs>
           <path
             d="M58 4 34 58h18L28 126l52-58H62l26-64Z"
-            fill="url(#fr-bolt-fill)"
-            stroke="#FFFDE7"
+            fill={`url(#${gradientId})`}
+            stroke={style.boltStroke}
             strokeWidth={2.5}
             strokeLinejoin="round"
           />

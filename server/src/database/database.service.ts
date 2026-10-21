@@ -13,6 +13,7 @@ import {
   BONUS_BUY_WIDGET_STYLE_DEFAULTS,
   type BonusBuyWidgetStyleSettings,
 } from '../bonus-buy/bonus-buy-widget-defaults.js';
+import { FIRST_REACTION_SYSTEM_PRESET_SEEDS } from '../first-reaction/first-reaction-widget-preset-seeds.js';
 import {
   bonusBuyWidgetInsertParams,
   BONUS_BUY_WIDGET_INSERT_SQL,
@@ -382,6 +383,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     this.pool = new Pool({ connectionString });
     await runMigrations(this.pool);
     await this.seedBonusBuySystemPresets();
+    await this.seedFirstReactionSystemPresets();
   }
 
   async onModuleDestroy(): Promise<void> {
@@ -408,6 +410,29 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       await this.pool.query(
         `
           INSERT INTO bonus_buy_widget_style_preset (source, name, style_settings)
+          VALUES ('system', $1, $2::jsonb)
+        `,
+        [preset.name, JSON.stringify(preset.styleSettings)],
+      );
+    }
+  }
+
+  private async seedFirstReactionSystemPresets(): Promise<void> {
+    const existing = await this.pool.query<{ count: string }>(
+      `
+        SELECT COUNT(*)::text AS count
+        FROM first_reaction_widget_style_preset
+        WHERE source = 'system'
+      `,
+    );
+    if (Number(existing.rows[0]?.count ?? 0) > 0) {
+      return;
+    }
+
+    for (const preset of FIRST_REACTION_SYSTEM_PRESET_SEEDS) {
+      await this.pool.query(
+        `
+          INSERT INTO first_reaction_widget_style_preset (source, name, style_settings)
           VALUES ('system', $1, $2::jsonb)
         `,
         [preset.name, JSON.stringify(preset.styleSettings)],

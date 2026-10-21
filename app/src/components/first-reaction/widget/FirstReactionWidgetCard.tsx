@@ -3,6 +3,7 @@ import type { PublicFirstReactionWidgetView } from '@/api/first-reaction'
 import { FirstReactionWidgetBolt } from '@/components/first-reaction/widget/FirstReactionWidgetBolt'
 import { useFirstReactionAcceptTimer } from '@/hooks/use-first-reaction-accept-timer'
 import { widgetUiCopy } from '@/i18n/widget-ui'
+import { FIRST_REACTION_WIDGET_STYLE_DEFAULTS } from '@/lib/first-reaction-widget-style-defaults'
 
 type FirstReactionWidgetCardProps = {
   view: PublicFirstReactionWidgetView & { status: 'active' }
@@ -10,15 +11,13 @@ type FirstReactionWidgetCardProps = {
   height: number
 }
 
-/**
- * Stream overlay body — design TBD. Shows keyword + timer while accepting.
- */
 export function FirstReactionWidgetCard({
   view,
   width,
   height,
 }: FirstReactionWidgetCardProps) {
   const isAccepting = view.phase === 'accepting' && view.keyword
+  const style = view.style ?? FIRST_REACTION_WIDGET_STYLE_DEFAULTS
 
   const timer = useFirstReactionAcceptTimer(
     isAccepting ? view.acceptDeadlineAt : null,
@@ -65,7 +64,7 @@ export function FirstReactionWidgetCard({
       <Box
         sx={{
           position: 'relative',
-          zIndex: 0,
+          zIndex: 1,
           flex: '0 0 44%',
           minWidth: 0,
           maxWidth: '48%',
@@ -75,7 +74,7 @@ export function FirstReactionWidgetCard({
         }}
       >
         <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
-          <FirstReactionWidgetBolt />
+          <FirstReactionWidgetBolt style={style} />
         </Box>
       </Box>
       <Box
@@ -91,18 +90,6 @@ export function FirstReactionWidgetCard({
           gap: 0.5,
           pl: 0.5,
           pr: 1,
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            left: -8,
-            right: 0,
-            top: '8%',
-            bottom: '8%',
-            zIndex: -1,
-            pointerEvents: 'none',
-            background:
-              'radial-gradient(ellipse 95% 90% at 15% 50%, rgba(6, 5, 4, 0.5) 0%, transparent 70%)',
-          },
         }}
       >
         <Typography
@@ -112,7 +99,7 @@ export function FirstReactionWidgetCard({
             fontSize: 'clamp(0.7rem, 2.4vw, 0.9rem)',
             fontWeight: 600,
             fontFamily: '"Plus Jakarta Sans", Inter, sans-serif',
-            color: 'rgba(255, 248, 220, 0.82)',
+            color: style.textHint,
             textAlign: 'left',
             lineHeight: 1.25,
             letterSpacing: '0.02em',
@@ -128,7 +115,7 @@ export function FirstReactionWidgetCard({
             fontSize: 'clamp(1.35rem, 5.5vw, 2.5rem)',
             fontWeight: 800,
             fontFamily: '"Plus Jakarta Sans", Inter, sans-serif',
-            color: '#FFFEF7',
+            color: style.textKeyword,
             textAlign: 'left',
             lineHeight: 1.08,
             letterSpacing: '0.03em',
@@ -147,7 +134,7 @@ export function FirstReactionWidgetCard({
               fontSize: 'clamp(0.95rem, 3.2vw, 1.25rem)',
               fontWeight: 700,
               fontFamily: '"Plus Jakarta Sans", Inter, sans-serif',
-              color: 'rgba(255, 248, 220, 0.95)',
+              color: style.textTimer,
               textAlign: 'left',
               fontVariantNumeric: 'tabular-nums',
             }}

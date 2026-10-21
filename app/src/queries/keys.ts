@@ -101,6 +101,8 @@ export const firstReactionKeys = {
     [...firstReactionKeys.lists(), accountId, params] as const,
   widget: (accountId: number) =>
     [...firstReactionKeys.all, 'widget', accountId] as const,
+  presets: (accountId: number) =>
+    [...firstReactionKeys.all, 'widgetPresets', accountId] as const,
   publicWidget: (accountUcid: string) =>
     [...firstReactionKeys.all, 'publicWidget', accountUcid] as const,
   session: (accountId: number, firstReactionId: number) =>
