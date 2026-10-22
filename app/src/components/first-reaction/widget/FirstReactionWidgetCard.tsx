@@ -27,6 +27,14 @@ type FirstReactionWidgetCardProps = {
   playEnterSound?: boolean
 }
 
+type WidgetDisplayFrame = {
+  mode: 'accepting' | 'winner'
+  keyword: string
+  winnerDisplayName: string
+  acceptDeadlineAt: string | null
+  acceptingStartedAt: string | null
+}
+
 export function FirstReactionWidgetCard({
   view,
   width,
@@ -43,6 +51,7 @@ export function FirstReactionWidgetCard({
     useFirstReactionWidgetVisibility(shouldShowOverlay)
 
   const keywordRef = useRef(view.keyword)
+  const displayFrameRef = useRef<WidgetDisplayFrame | null>(null)
   const lightningSoundKeyRef = useRef<string | null>(null)
   const winnerSoundKeyRef = useRef<string | null>(null)
   const wasWinnerRevealRef = useRef(false)
@@ -52,6 +61,12 @@ export function FirstReactionWidgetCard({
       keywordRef.current = view.keyword
     }
   }, [view.keyword])
+
+  useEffect(() => {
+    if (phase === 'hidden') {
+      displayFrameRef.current = null
+    }
+  }, [phase])
 
   useEffect(() => {
     if (!playEnterSound || phase !== 'entering' || !isAccepting) {
@@ -92,33 +107,63 @@ export function FirstReactionWidgetCard({
     view.winner?.proofToken,
   ])
 
+  if (isWinnerReveal && winnerDisplayName) {
+    displayFrameRef.current = {
+      mode: 'winner',
+      keyword: view.keyword ?? keywordRef.current ?? '',
+      winnerDisplayName,
+      acceptDeadlineAt: null,
+      acceptingStartedAt: null,
+    }
+  } else if (isAccepting) {
+    const keyword = view.keyword ?? keywordRef.current
+    if (keyword) {
+      displayFrameRef.current = {
+        mode: 'accepting',
+        keyword,
+        winnerDisplayName: '',
+        acceptDeadlineAt: view.acceptDeadlineAt,
+        acceptingStartedAt: view.acceptingStartedAt,
+      }
+    }
+  }
+
+  const display = displayFrameRef.current
+
   const timer = useFirstReactionAcceptTimer(
-    isAccepting ? view.acceptDeadlineAt : null,
-    isAccepting ? view.acceptingStartedAt : null,
+    display?.mode === 'accepting' && isAccepting
+      ? display.acceptDeadlineAt
+      : null,
+    display?.mode === 'accepting' && isAccepting
+      ? display.acceptingStartedAt
+      : null,
   )
 
-  const keyword = view.keyword ?? keywordRef.current
-  const hasContent = isWinnerReveal || Boolean(keyword)
-
-  if (!isRendered || !hasContent) {
+  if (!isRendered || !display) {
     return <Box aria-hidden sx={{ width, height, bgcolor: 'transparent' }} />
   }
 
+  const isWinnerFrame = display.mode === 'winner'
+  const keyword = display.keyword
+
   const timerLabel =
-    isAccepting && timer.secondsLeft !== null && view.acceptDeadlineAt
+    display.mode === 'accepting' &&
+    isAccepting &&
+    timer.secondsLeft !== null &&
+    display.acceptDeadlineAt
       ? widgetUiCopy.firstReactionSecondsLeft.replace(
           '{{seconds}}',
           String(timer.secondsLeft),
         )
       : null
 
-  const hint = isWinnerReveal
+  const hint = isWinnerFrame
     ? widgetUiCopy.firstReactionWinner
     : widgetUiCopy.firstReactionCta
-  const headline = isWinnerReveal ? winnerDisplayName : keyword
-  const showKeywordSubline = isWinnerReveal && Boolean(keyword)
+  const headline = isWinnerFrame ? display.winnerDisplayName : keyword
+  const showKeywordSubline = isWinnerFrame && Boolean(keyword)
 
-  const ariaLabel = isWinnerReveal
+  const ariaLabel = isWinnerFrame
     ? keyword
       ? `${hint}. ${headline}. ${keyword}`
       : `${hint}. ${headline}`
@@ -212,8 +257,8 @@ export function FirstReactionWidgetCard({
             color: style.textKeyword,
             textAlign: 'left',
             lineHeight: 1.08,
-            letterSpacing: isWinnerReveal ? '0.01em' : '0.03em',
-            textTransform: isWinnerReveal ? 'none' : 'uppercase',
+            letterSpacing: isWinnerFrame ? '0.01em' : '0.03em',
+            textTransform: isWinnerFrame ? 'none' : 'uppercase',
             wordBreak: 'break-word',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
