@@ -106,6 +106,8 @@ describe('AuthController (e2e)', () => {
           moderatorActive = false;
         },
         isPlatformAdmin: async () => false,
+        getUserModuleFavorites: async () => null,
+        upsertUserModuleFavorites: async () => undefined,
         ...subscriptionDatabaseMocks,
       })
       .compile();

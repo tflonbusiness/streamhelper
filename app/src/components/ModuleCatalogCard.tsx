@@ -5,6 +5,9 @@ import CardActionArea from '@mui/material/CardActionArea'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
+import StarIcon from '@mui/icons-material/Star'
+import StarBorderIcon from '@mui/icons-material/StarBorder'
+import IconButton from '@mui/material/IconButton'
 import { alpha, useTheme } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
@@ -22,6 +25,9 @@ type ModuleCatalogCardProps = {
   available?: boolean
   /** Uses horizontal icon + copy on wider cards (modules catalog). */
   layout?: 'stacked' | 'horizontal'
+  isFavorite?: boolean
+  favoriteTogglePending?: boolean
+  onFavoriteToggle?: () => void
 }
 
 export function ModuleCatalogCard({
@@ -31,12 +37,16 @@ export function ModuleCatalogCard({
   widgetRoute,
   available = true,
   layout = 'stacked',
+  isFavorite = false,
+  favoriteTogglePending = false,
+  onFavoriteToggle,
 }: ModuleCatalogCardProps) {
   const horizontal = layout === 'horizontal'
   const { t } = useTranslation()
   const theme = useTheme()
   const accent = moduleAccentColor(iconVariant, theme)
   const canOpen = available && Boolean(widgetRoute)
+  const showFavorite = canOpen && onFavoriteToggle !== undefined
 
   const cardShellSx = {
     ...cardSx,
@@ -165,6 +175,44 @@ export function ModuleCatalogCard({
 
   return (
     <Card elevation={0} sx={cardShellSx}>
+      {showFavorite ? (
+        <IconButton
+          size="small"
+          disabled={favoriteTogglePending}
+          onClick={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            onFavoriteToggle?.()
+          }}
+          aria-label={
+            isFavorite
+              ? t('modules.favorite.removeAria', {
+                  name: t(moduleNameKey(moduleId)),
+                })
+              : t('modules.favorite.addAria', {
+                  name: t(moduleNameKey(moduleId)),
+                })
+          }
+          aria-pressed={isFavorite}
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            zIndex: 2,
+            color: isFavorite ? accent : alpha(theme.palette.text.primary, 0.35),
+            '&:hover': {
+              color: accent,
+              backgroundColor: alpha(accent, 0.12),
+            },
+          }}
+        >
+          {isFavorite ? (
+            <StarIcon fontSize="small" />
+          ) : (
+            <StarBorderIcon fontSize="small" />
+          )}
+        </IconButton>
+      ) : null}
       {canOpen ? (
         <CardActionArea
           component={RouterLink}

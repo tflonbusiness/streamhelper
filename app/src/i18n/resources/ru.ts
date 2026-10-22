@@ -160,7 +160,7 @@ export const ru = {
     bonusBuy: "Bonus Buy",
     prizeSpin: "Prize Wheel",
     chatRoll: "Chat Roll",
-    firstReaction: "Первая реакция",
+    firstReaction: "First Reaction",
     mediaInteractive: "Media Interactive",
     subscriptionAdmin: "Подписки (admin)"
   },
@@ -252,6 +252,11 @@ export const ru = {
   modules: {
     pageTitle: "Виджеты",
     pageDescription: "Инструменты для стримеров",
+    favorite: {
+      addAria: "Добавить {{name}} в избранное",
+      removeAria: "Убрать {{name}} из избранного",
+      saveError: "Не удалось сохранить избранное.",
+    },
     availableSectionTitle: "Доступно сейчас",
     comingSoonSectionTitle: "Скоро",
     comingSoonBadge: "Анонс",
@@ -281,7 +286,7 @@ export const ru = {
           "Зрители заказывают любое видео с YouTube за баллы канала — бэкап, оверлей OBS и управление эфиром."
       },
       'first-reaction': {
-        name: "Первая реакция",
+        name: "First Reaction",
         description:
           "Слово на оверлее — побеждает первый с верной командой в чате."
       },
@@ -884,11 +889,11 @@ export const ru = {
     winChancePlaceholder: "Шанс (%)"
   },
   firstReaction: {
-    title: "Первая реакция",
+    title: "First Reaction",
     description:
       "Команда на оверлее — побеждает первый с верным сообщением в чате",
     historyTitle: "Сессии",
-    historyDescription: "Сессии «Первая реакция» для этого аккаунта",
+    historyDescription: "Сессии First Reaction для этого аккаунта",
     noSessions: "Сессий пока нет",
     createSession: "Новая сессия",
     createDialogTitle: "Новая сессия",

@@ -2,13 +2,18 @@ import Grid from '@mui/material/Grid'
 import { useTranslation } from 'react-i18next'
 import { DashboardSection } from '@/components/DashboardSection'
 import { ModuleCatalogCard } from '@/components/ModuleCatalogCard'
-import { getAvailableNavModules } from '@/lib/modules'
+import { useModuleFavorites } from '@/queries/use-module-favorites'
+import { DEFAULT_FAVORITE_MODULE_IDS, getFavoriteNavModules } from '@/lib/modules'
 
 export function DashboardModuleQuickAccess() {
   const { t } = useTranslation()
-  const modules = getAvailableNavModules()
+  const { data, isPending } = useModuleFavorites()
+  const moduleIds =
+    data?.moduleIds ??
+    (isPending ? [...DEFAULT_FAVORITE_MODULE_IDS] : [])
+  const modules = getFavoriteNavModules(moduleIds)
 
-  if (modules.length === 0) {
+  if (!isPending && modules.length === 0) {
     return null
   }
 

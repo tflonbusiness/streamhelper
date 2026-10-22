@@ -252,6 +252,11 @@ export const en = {
   modules: {
     pageTitle: "Widgets",
     pageDescription: "Tools for your team's streamers",
+    favorite: {
+      addAria: "Add {{name}} to favorites",
+      removeAria: "Remove {{name}} from favorites",
+      saveError: "Could not save favorites.",
+    },
     availableSectionTitle: "Available now",
     comingSoonSectionTitle: "Coming soon",
     comingSoonBadge: "Preview",

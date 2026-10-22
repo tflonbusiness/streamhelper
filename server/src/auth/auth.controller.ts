@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   Post,
+  Put,
   Query,
   Req,
   Res,
@@ -15,6 +16,7 @@ import { AuthService } from './auth.service.js';
 import { KickOAuthService } from './kick-oauth.service.js';
 import type { LoginSurface, SessionData } from './auth.types.js';
 import { DatabaseService } from '../database/database.service.js';
+import { ModuleFavoritesService } from '../module-favorites/module-favorites.service.js';
 
 function saveSession(req: Request): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -38,6 +40,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly kickOAuth: KickOAuthService,
     private readonly database: DatabaseService,
+    private readonly moduleFavorites: ModuleFavoritesService,
   ) {}
 
   private loginErrorRedirect(appUrl: string): string {
@@ -142,6 +145,23 @@ export class AuthController {
       user: { ...enriched, platformAdmin },
       loginSurface: session.loginSurface ?? 'streamer',
     };
+  }
+
+  @Get('me/module-favorites')
+  async getModuleFavorites(@Req() req: Request) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.moduleFavorites.getModuleFavorites(user.id);
+  }
+
+  @Put('me/module-favorites')
+  async putModuleFavorites(
+    @Req() req: Request,
+    @Body() body: { moduleIds?: unknown },
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.moduleFavorites.setModuleFavorites(user.id, body.moduleIds);
   }
 
   @Post('surface')

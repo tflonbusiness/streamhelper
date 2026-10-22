@@ -51,11 +51,43 @@ export type ModuleDefinition = {
   hasToggle?: boolean
 }
 
-/** Modules shown as sidebar quick links under Modules (catalog `available` only). */
-export function getAvailableNavModules(): ModuleDefinition[] {
+export const DEFAULT_FAVORITE_MODULE_IDS = [
+  'bonus-buy',
+  'prize-spin',
+  'chat-roll',
+] as const
+
+/** Catalog entries eligible for nav shortcuts (available + route). */
+export function getNavEligibleModules(): ModuleDefinition[] {
   return MODULE_CATALOG.filter(
     (module) => module.status === 'available' && module.widgetRoute,
   )
+}
+
+/** Resolve favorite module ids to catalog definitions, preserving order. */
+export function getFavoriteNavModules(moduleIds: string[]): ModuleDefinition[] {
+  const eligible = new Map(
+    getNavEligibleModules().map((module) => [module.id, module]),
+  )
+  const seen = new Set<string>()
+  const result: ModuleDefinition[] = []
+  for (const id of moduleIds) {
+    if (seen.has(id)) {
+      continue
+    }
+    const module = eligible.get(id)
+    if (!module) {
+      continue
+    }
+    seen.add(id)
+    result.push(module)
+  }
+  return result
+}
+
+/** @deprecated Use getNavEligibleModules or getFavoriteNavModules */
+export function getAvailableNavModules(): ModuleDefinition[] {
+  return getNavEligibleModules()
 }
 
 export const MODULE_CATALOG: ModuleDefinition[] = [
@@ -156,46 +188,3 @@ export function moduleDescriptionKey(moduleId: string): string {
   return `modules.catalog.${moduleId}.description`
 }
 
-function storageKey(accountId: number) {
-  return `caz-modules-${accountId}`
-}
-
-export function getEnabledModuleIds(accountId: number): string[] {
-  try {
-    const raw = localStorage.getItem(storageKey(accountId))
-    if (!raw) {
-      return []
-    }
-    const parsed = JSON.parse(raw) as unknown
-    if (!Array.isArray(parsed)) {
-      return []
-    }
-    return parsed.filter((id): id is string => typeof id === 'string')
-  } catch {
-    return []
-  }
-}
-
-export function isModuleEnabled(accountId: number, moduleId: string): boolean {
-  return getEnabledModuleIds(accountId).includes(moduleId)
-}
-
-export function setModuleEnabled(
-  accountId: number,
-  moduleId: string,
-  enabled: boolean,
-): string[] {
-  const current = new Set(getEnabledModuleIds(accountId))
-  if (enabled) {
-    current.add(moduleId)
-  } else {
-    current.delete(moduleId)
-  }
-  const next = [...current]
-  localStorage.setItem(storageKey(accountId), JSON.stringify(next))
-  return next
-}
-
-export function countEnabledModules(accountId: number): number {
-  return getEnabledModuleIds(accountId).length
-}

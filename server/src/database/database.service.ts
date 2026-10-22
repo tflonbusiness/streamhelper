@@ -6044,6 +6044,44 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       subscription,
     };
   }
+
+  async getUserModuleFavorites(userId: number): Promise<string[] | null> {
+    const result = await this.pool.query<{ module_ids: unknown }>(
+      `
+        SELECT module_ids
+        FROM user_module_favorites
+        WHERE user_id = $1
+      `,
+      [userId],
+    );
+
+    if ((result.rowCount ?? 0) === 0) {
+      return null;
+    }
+
+    const raw = result.rows[0].module_ids;
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+
+    return raw.filter((entry): entry is string => typeof entry === 'string');
+  }
+
+  async upsertUserModuleFavorites(
+    userId: number,
+    moduleIds: string[],
+  ): Promise<void> {
+    await this.pool.query(
+      `
+        INSERT INTO user_module_favorites (user_id, module_ids, updated_at)
+        VALUES ($1, $2::jsonb, now())
+        ON CONFLICT (user_id) DO UPDATE
+        SET module_ids = EXCLUDED.module_ids,
+            updated_at = now()
+      `,
+      [userId, JSON.stringify(moduleIds)],
+    );
+  }
 }
 
 export type DbChatRollIntakeSession = {

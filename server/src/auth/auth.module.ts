@@ -6,6 +6,7 @@ import { KickChannelRewardsService } from './kick-channel-rewards.service.js';
 import { KickChannelService } from './kick-channel.service.js';
 import { KickChatModule } from '../kick-chat/kick-chat.module.js';
 import { KickOAuthService } from './kick-oauth.service.js';
+import { ModuleFavoritesService } from '../module-favorites/module-favorites.service.js';
 
 @Module({
   imports: [KickChatModule],
@@ -15,6 +16,7 @@ import { KickOAuthService } from './kick-oauth.service.js';
     KickOAuthService,
     KickChannelService,
     KickChannelRewardsService,
+    ModuleFavoritesService,
   ],
   exports: [AuthService, KickChannelRewardsService],
 })

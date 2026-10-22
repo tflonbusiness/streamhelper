@@ -9,7 +9,11 @@ import { ModuleCatalogCard } from '@/components/ModuleCatalogCard'
 import { ModulesComingSoonSection } from '@/components/modules/ModulesComingSoonSection'
 import { PageHeader } from '@/components/PageHeader'
 import { MODULE_PAGE_SECTION_SPACING } from '@/lib/module-page-layout'
-import { MODULE_CATALOG } from '@/lib/modules'
+import { DEFAULT_FAVORITE_MODULE_IDS, MODULE_CATALOG } from '@/lib/modules'
+import {
+  useModuleFavorites,
+  useToggleModuleFavorite,
+} from '@/queries/use-module-favorites'
 
 function ModulesSectionLabel({
   children,
@@ -40,6 +44,11 @@ function ModulesSectionLabel({
 
 export function ModulesPage() {
   const { t } = useTranslation()
+  const { data: favorites, isPending } = useModuleFavorites()
+  const toggleFavorite = useToggleModuleFavorite()
+  const favoriteIds =
+    favorites?.moduleIds ??
+    (isPending ? [...DEFAULT_FAVORITE_MODULE_IDS] : [])
 
   return (
     <Stack
@@ -71,6 +80,23 @@ export function ModulesPage() {
                 iconVariant={module.iconVariant}
                 widgetRoute={module.widgetRoute}
                 layout="stacked"
+                isFavorite={favoriteIds.includes(module.id)}
+                favoriteTogglePending={
+                  toggleFavorite.isPending &&
+                  toggleFavorite.variables?.moduleId === module.id
+                }
+                onFavoriteToggle={
+                  favorites
+                    ? () => {
+                        const isFavorite = favoriteIds.includes(module.id)
+                        toggleFavorite.mutate({
+                          moduleId: module.id,
+                          moduleIds: favoriteIds,
+                          favorite: !isFavorite,
+                        })
+                      }
+                    : undefined
+                }
               />
             </Grid>
           ))}

@@ -25,10 +25,12 @@ import { IconTile } from '@/components/IconTile'
 import { BreadcrumbProvider } from '@/context/BreadcrumbContext'
 import { useAuth } from '@/context/AuthContext'
 import {
-  getAvailableNavModules,
+  DEFAULT_FAVORITE_MODULE_IDS,
+  getFavoriteNavModules,
   moduleNameKey,
   type ModuleIconVariant,
 } from '@/lib/modules'
+import { useModuleFavorites } from '@/queries/use-module-favorites'
 import { accountHasSubscriptionAccess } from '@/lib/account-subscription'
 import { MODULES_ROUTE } from '@/lib/routes'
 import { getTelegramSupportUrl } from '@/lib/subscription-plan'
@@ -500,7 +502,11 @@ function SidebarModulesNav({
   label: string
 }) {
   const { t } = useTranslation()
-  const submodules = getAvailableNavModules()
+  const { data: favorites, isPending } = useModuleFavorites()
+  const favoriteIds =
+    favorites?.moduleIds ??
+    (isPending ? [...DEFAULT_FAVORITE_MODULE_IDS] : [])
+  const submodules = getFavoriteNavModules(favoriteIds)
 
   if (disabled) {
     const disabledButton = (
