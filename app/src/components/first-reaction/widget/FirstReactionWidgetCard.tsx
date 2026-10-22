@@ -11,18 +11,22 @@ import {
 import { useFirstReactionAcceptTimer } from '@/hooks/use-first-reaction-accept-timer'
 import { useFirstReactionWidgetVisibility } from '@/hooks/use-first-reaction-widget-visibility'
 import { widgetUiCopy } from '@/i18n/widget-ui'
+import { firstReactionLightningAudio } from '@/lib/first-reaction-lightning-audio'
 import { FIRST_REACTION_WIDGET_STYLE_DEFAULTS } from '@/lib/first-reaction-widget-style-defaults'
 
 type FirstReactionWidgetCardProps = {
   view: PublicFirstReactionWidgetView & { status: 'active' }
   width: number
   height: number
+  /** OBS / live widget only — muted in settings preview. */
+  playEnterSound?: boolean
 }
 
 export function FirstReactionWidgetCard({
   view,
   width,
   height,
+  playEnterSound = true,
 }: FirstReactionWidgetCardProps) {
   const isAccepting = view.phase === 'accepting' && view.keyword
   const style = view.style ?? FIRST_REACTION_WIDGET_STYLE_DEFAULTS
@@ -31,11 +35,25 @@ export function FirstReactionWidgetCard({
     useFirstReactionWidgetVisibility(Boolean(isAccepting))
 
   const keywordRef = useRef(view.keyword)
+  const lightningSoundKeyRef = useRef<string | null>(null)
+
   useEffect(() => {
     if (view.keyword) {
       keywordRef.current = view.keyword
     }
   }, [view.keyword])
+
+  useEffect(() => {
+    if (!playEnterSound || phase !== 'entering') {
+      return
+    }
+    const soundKey = view.acceptingStartedAt ?? view.keyword ?? 'draw'
+    if (lightningSoundKeyRef.current === soundKey) {
+      return
+    }
+    lightningSoundKeyRef.current = soundKey
+    firstReactionLightningAudio.playLightning()
+  }, [playEnterSound, phase, view.acceptingStartedAt, view.keyword])
 
   const timer = useFirstReactionAcceptTimer(
     isAccepting ? view.acceptDeadlineAt : null,

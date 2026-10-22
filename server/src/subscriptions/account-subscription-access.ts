@@ -5,6 +5,7 @@ export type AccountSubscriptionRow = {
   planTier: string;
   startsAt: Date;
   endsAt: Date;
+  purchasePrice: string | null;
 };
 
 export type AccountSubscriptionSnapshot = {
@@ -12,6 +13,7 @@ export type AccountSubscriptionSnapshot = {
   planTier: string;
   endsAt: string;
   hasAccess: boolean;
+  purchasePrice: string | null;
 };
 
 export function resolveAccountSubscriptionAccess(
@@ -24,6 +26,7 @@ export function resolveAccountSubscriptionAccess(
       planTier: 'trial',
       endsAt: now.toISOString(),
       hasAccess: false,
+      purchasePrice: null,
     };
   }
 
@@ -33,6 +36,7 @@ export function resolveAccountSubscriptionAccess(
     planTier: row.planTier,
     endsAt: row.endsAt.toISOString(),
     hasAccess,
+    purchasePrice: row.purchasePrice,
   };
 }
 

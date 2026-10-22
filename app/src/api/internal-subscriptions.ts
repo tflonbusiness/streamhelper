@@ -1,3 +1,4 @@
+import { translateApiErrorPayload } from '@/api/read-api-error-message'
 import i18n from '@/i18n/init-i18n'
 import type { AccountSubscriptionSession } from '@/api/auth'
 
@@ -18,6 +19,7 @@ export type SubscriptionAdminUpdatePayload = {
   mode: 'revoked' | 'trial' | 'paid'
   paidPlan?: 'pro' | 'max'
   endsAt?: string
+  purchasePrice?: string | null
 }
 
 export const SUBSCRIPTION_ADMIN_SORT_FIELDS = [
@@ -69,12 +71,7 @@ async function readErrorMessage(response: Response, fallback: string): Promise<s
   }
   try {
     const data = await response.json()
-    if (data && typeof data.message === 'string') {
-      return data.message
-    }
-    if (Array.isArray(data?.message)) {
-      return data.message.join(', ')
-    }
+    return translateApiErrorPayload(data, fallback)
   } catch {
     // ignore
   }

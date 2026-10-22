@@ -70,7 +70,12 @@ export function FirstReactionWidgetPreview({
             mx: 'auto',
           }}
         >
-          <FirstReactionWidgetCard view={view} width={width} height={height} />
+          <FirstReactionWidgetCard
+            view={view}
+            width={width}
+            height={height}
+            playEnterSound={false}
+          />
         </Box>
       </Box>
     </Box>

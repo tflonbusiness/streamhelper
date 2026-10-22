@@ -14,14 +14,13 @@ import {
   StyledSessionHeaderTitleRow,
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { SessionCardInlineNotice } from '@/components/session/SessionCardInlineNotice'
-import { useDeactivateFirstReaction } from '@/queries/use-first-reaction-session'
 
 type FirstReactionSessionHeaderSectionProps = {
   accountId: number
   firstReactionId: number
   record: FirstReactionRecord
   onOpenArchiveDialog: () => void
-  onOpenEditDialog?: () => void
+  onOpenEditDialog: () => void
   onGoLive?: () => void
   liveActionPending?: boolean
   goLiveDisabled?: boolean
@@ -48,10 +47,6 @@ export function FirstReactionSessionHeaderSection(
   props: FirstReactionSessionHeaderSectionProps,
 ) {
   const { t } = useTranslation()
-  const deactivateMutation = useDeactivateFirstReaction(
-    props.accountId,
-    props.firstReactionId,
-  )
   const readOnly = isFirstReactionReadOnly(props.record)
 
   return (
@@ -76,24 +71,25 @@ export function FirstReactionSessionHeaderSection(
                 type="button"
                 variant="contained"
                 size="small"
+                color="primary"
                 disabled={props.liveActionPending || props.goLiveDisabled}
                 onClick={props.onGoLive}
               >
                 {t('firstReaction.goLive')}
               </Button>
             ) : null}
-            {!readOnly && props.record.status === 'live' ? (
+            {!readOnly ? (
               <Button
                 type="button"
                 variant="outlined"
                 size="small"
-                disabled={deactivateMutation.isPending}
-                onClick={() => deactivateMutation.mutate()}
+                startIcon={<ArchiveIcon fontSize="small" aria-hidden />}
+                onClick={props.onOpenArchiveDialog}
               >
-                {t('firstReaction.offAir')}
+                {t('common.archive')}
               </Button>
             ) : null}
-            {!readOnly && props.onOpenEditDialog ? (
+            {!readOnly ? (
               <Button
                 type="button"
                 variant="outlined"
@@ -102,18 +98,6 @@ export function FirstReactionSessionHeaderSection(
                 onClick={props.onOpenEditDialog}
               >
                 {t('common.edit')}
-              </Button>
-            ) : null}
-            {!readOnly ? (
-              <Button
-                type="button"
-                variant="outlined"
-                size="small"
-                color="inherit"
-                startIcon={<ArchiveIcon fontSize="small" aria-hidden />}
-                onClick={props.onOpenArchiveDialog}
-              >
-                {t('table.archive')}
               </Button>
             ) : null}
           </ActionsStack>

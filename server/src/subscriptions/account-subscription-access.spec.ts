@@ -13,6 +13,7 @@ describe('account-subscription-access', () => {
         planTier: 'trial',
         startsAt: new Date('2026-09-28T12:00:00.000Z'),
         endsAt,
+        purchasePrice: null,
       },
       new Date('2026-09-30T12:00:00.000Z'),
     );
@@ -28,6 +29,7 @@ describe('account-subscription-access', () => {
         planTier: 'trial',
         startsAt: new Date('2026-09-28T12:00:00.000Z'),
         endsAt: new Date('2026-09-30T12:00:00.000Z'),
+        purchasePrice: null,
       },
       new Date('2026-10-01T00:00:00.000Z'),
     );
@@ -42,6 +44,7 @@ describe('account-subscription-access', () => {
       planTier: 'trial',
       startsAt: new Date('2026-09-28T12:00:00.000Z'),
       endsAt: new Date('2026-09-30T12:00:00.000Z'),
+      purchasePrice: null,
     };
 
     expect(

@@ -17,6 +17,12 @@ import type { Request } from 'express';
 import { AuthService } from '../auth/auth.service.js';
 import type { SessionData } from '../auth/auth.types.js';
 import { KickChannelRewardsService } from '../auth/kick-channel-rewards.service.js';
+import {
+  parseFirstReactionDrawListLimit,
+  parseFirstReactionDrawListPage,
+  parseFirstReactionDrawSortField,
+  parseFirstReactionDrawSortOrder,
+} from '../first-reaction/first-reaction-draw-list.js';
 import { FirstReactionService } from '../first-reaction/first-reaction.service.js';
 import { parseFirstReactionWidgetStyle } from '../first-reaction/first-reaction-widget-style.js';
 import { MediaInteractiveService } from '../media-interactive/media-interactive.service.js';
@@ -1091,11 +1097,23 @@ export class AccountsController {
   async listFirstReactionDraws(
     @Param('accountId', ParseIntPipe) accountId: number,
     @Param('firstReactionId', ParseIntPipe) firstReactionId: number,
+    @Query('page') page: string | undefined,
+    @Query('limit') limit: string | undefined,
+    @Query('sortBy') sortBy: string | undefined,
+    @Query('sortOrder') sortOrder: string | undefined,
     @Req() req: Request,
   ) {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
-    return this.firstReaction.listDraws(accountId, user.id, firstReactionId);
+    return this.firstReaction.listDraws(
+      accountId,
+      user.id,
+      firstReactionId,
+      parseFirstReactionDrawListPage(page),
+      parseFirstReactionDrawListLimit(limit),
+      parseFirstReactionDrawSortField(sortBy),
+      parseFirstReactionDrawSortOrder(sortOrder),
+    );
   }
 
   @Post(':accountId/first-reactions/:firstReactionId/draws/start')
@@ -1125,6 +1143,40 @@ export class AccountsController {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
     return this.firstReaction.stopDraw(
+      accountId,
+      user.id,
+      firstReactionId,
+      drawId,
+    );
+  }
+
+  @Delete(':accountId/first-reactions/:firstReactionId/draws')
+  @HttpCode(204)
+  async archiveAllFirstReactionDraws(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('firstReactionId', ParseIntPipe) firstReactionId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    await this.firstReaction.archiveAllDraws(
+      accountId,
+      user.id,
+      firstReactionId,
+    );
+  }
+
+  @Delete(':accountId/first-reactions/:firstReactionId/draws/:drawId')
+  @HttpCode(204)
+  async archiveFirstReactionDraw(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('firstReactionId', ParseIntPipe) firstReactionId: number,
+    @Param('drawId', ParseIntPipe) drawId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    await this.firstReaction.archiveDraw(
       accountId,
       user.id,
       firstReactionId,

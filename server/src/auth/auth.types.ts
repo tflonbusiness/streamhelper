@@ -3,6 +3,7 @@ export type AccountSubscriptionSession = {
   planTier: string;
   endsAt: string;
   hasAccess: boolean;
+  purchasePrice: string | null;
 };
 
 export type LoginSurface = 'streamer' | 'service';

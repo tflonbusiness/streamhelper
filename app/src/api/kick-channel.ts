@@ -1,3 +1,4 @@
+import { readApiErrorMessage as readErrorMessage } from '@/api/read-api-error-message'
 import i18n from '@/i18n/init-i18n'
 export type KickChannelDto = {
   slug: string
@@ -11,21 +12,6 @@ export type KickChannelDto = {
   streamThumbnail: string | null
   activeSubscribersCount: number | null
   activeGiftedSubscribersCount: number | null
-}
-
-async function readErrorMessage(response: Response, fallback: string): Promise<string> {
-  try {
-    const data = await response.json()
-    if (data && typeof data.message === 'string') {
-      return data.message
-    }
-    if (data && Array.isArray(data.message)) {
-      return data.message.join(', ')
-    }
-  } catch {
-    // ignore
-  }
-  return fallback
 }
 
 export class KickChannelNotFoundError extends Error {

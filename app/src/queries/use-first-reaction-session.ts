@@ -1,25 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  archiveAllFirstReactionDraws,
   archiveFirstReaction,
+  archiveFirstReactionDraw,
   deactivateFirstReaction,
   fetchFirstReactionDraws,
   fetchFirstReactionSession,
   patchFirstReaction,
   startFirstReactionDraw,
   stopFirstReactionDraw,
+  type FirstReactionDrawListParams,
   type FirstReactionSettings,
 } from '@/api/first-reaction'
 import { firstReactionKeys } from '@/queries/keys'
 
 const SESSION_POLL_MS = 2000
-
-async function fetchSessionBundle(accountId: number, firstReactionId: number) {
-  const [session, draws] = await Promise.all([
-    fetchFirstReactionSession(accountId, firstReactionId),
-    fetchFirstReactionDraws(accountId, firstReactionId),
-  ])
-  return { ...session, draws: draws.draws }
-}
 
 export function useFirstReactionSession(
   accountId: number | undefined,
@@ -27,7 +22,7 @@ export function useFirstReactionSession(
 ) {
   return useQuery({
     queryKey: firstReactionKeys.session(accountId ?? 0, firstReactionId),
-    queryFn: () => fetchSessionBundle(accountId!, firstReactionId),
+    queryFn: () => fetchFirstReactionSession(accountId!, firstReactionId),
     enabled: accountId !== undefined && Number.isFinite(firstReactionId),
     refetchInterval: (query) => {
       const active = query.state.data?.activeDraw
@@ -46,7 +41,31 @@ function useInvalidateSession(accountId: number | undefined) {
     void queryClient.invalidateQueries({
       queryKey: firstReactionKeys.session(accountId, firstReactionId),
     })
+    void queryClient.invalidateQueries({
+      queryKey: firstReactionKeys.drawsRoot(accountId, firstReactionId),
+    })
   }
+}
+
+export function useFirstReactionDraws(
+  accountId: number | undefined,
+  firstReactionId: number,
+  params: FirstReactionDrawListParams,
+  options?: { pollWhileAccepting?: boolean },
+) {
+  return useQuery({
+    queryKey: firstReactionKeys.draws(
+      accountId ?? 0,
+      firstReactionId,
+      params,
+    ),
+    queryFn: () =>
+      fetchFirstReactionDraws(accountId!, firstReactionId, params),
+    enabled:
+      accountId !== undefined && Number.isFinite(firstReactionId),
+    placeholderData: (previous) => previous,
+    refetchInterval: options?.pollWhileAccepting ? SESSION_POLL_MS : false,
+  })
 }
 
 export function usePatchFirstReactionSession(
@@ -107,6 +126,30 @@ export function useStopFirstReactionDraw(
   return useMutation({
     mutationFn: (drawId: number) =>
       stopFirstReactionDraw(accountId!, firstReactionId, drawId),
+    onSuccess: () => invalidate(firstReactionId),
+  })
+}
+
+export function useArchiveFirstReactionDraw(
+  accountId: number | undefined,
+  firstReactionId: number,
+) {
+  const invalidate = useInvalidateSession(accountId)
+  return useMutation({
+    mutationFn: (drawId: number) =>
+      archiveFirstReactionDraw(accountId!, firstReactionId, drawId),
+    onSuccess: () => invalidate(firstReactionId),
+  })
+}
+
+export function useArchiveAllFirstReactionDraws(
+  accountId: number | undefined,
+  firstReactionId: number,
+) {
+  const invalidate = useInvalidateSession(accountId)
+  return useMutation({
+    mutationFn: () =>
+      archiveAllFirstReactionDraws(accountId!, firstReactionId),
     onSuccess: () => invalidate(firstReactionId),
   })
 }

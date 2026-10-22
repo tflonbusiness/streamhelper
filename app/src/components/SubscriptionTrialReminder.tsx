@@ -1,7 +1,4 @@
-import Button from '@mui/material/Button'
-import Stack from '@mui/material/Stack'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink } from 'react-router-dom'
 import type { AuthUser } from '@/api/auth'
 import { StatusAlert, type StatusAlertTone } from '@/components/StatusAlert'
 import {
@@ -13,9 +10,6 @@ import {
   getPlanDefinition,
   resolveCurrentSubscriptionPlanId,
 } from '@/lib/subscription-catalog'
-import { TelegramIcon } from '@/components/TelegramIcon'
-import { getTelegramSupportUrl } from '@/lib/subscription-plan'
-
 const SUBSCRIPTION_ENDING_SOON_DAYS = 3
 
 export function subscriptionEndingSoonTone(
@@ -74,58 +68,3 @@ export function SubscriptionTrialReminder({ user }: SubscriptionTrialReminderPro
   )
 }
 
-type SubscriptionExpiredNoticeProps = {
-  user: AuthUser | null | undefined
-  variant?: 'dashboard' | 'subscription'
-}
-
-export function SubscriptionExpiredNotice({
-  user,
-  variant = 'dashboard',
-}: SubscriptionExpiredNoticeProps) {
-  const { t } = useTranslation()
-
-  if (!user?.accountId || accountHasSubscriptionAccess(user)) {
-    return null
-  }
-
-  const isSubscriptionPage = variant === 'subscription'
-
-  return (
-    <StatusAlert tone="error" title={t('subscription.trialExpiredTitle')}>
-      <Stack spacing={1.5} alignItems="flex-start">
-        <span>
-          {isSubscriptionPage
-            ? t('subscription.trialExpiredSubscriptionPageBody')
-            : user.role === 'moderator'
-              ? t('subscription.trialExpiredModeratorBody')
-              : t('subscription.trialExpiredBody')}
-        </span>
-        {user.role === 'owner' && !isSubscriptionPage ? (
-          <Button
-            component={RouterLink}
-            to="/subscription"
-            size="small"
-            variant="contained"
-            color="error"
-          >
-            {t('subscription.activateSubscriptionCta')}
-          </Button>
-        ) : null}
-        {!isSubscriptionPage && user.role !== 'owner' && user.role !== 'moderator' ? (
-          <Button
-            component="a"
-            href={getTelegramSupportUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-            size="small"
-            variant="outlined"
-            endIcon={<TelegramIcon fontSize="small" />}
-          >
-            {t('subscription.telegramCta')}
-          </Button>
-        ) : null}
-      </Stack>
-    </StatusAlert>
-  )
-}

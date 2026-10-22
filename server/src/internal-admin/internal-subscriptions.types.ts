@@ -7,6 +7,8 @@ export type SubscriptionAdminUpdateBody = {
   paidPlan?: 'pro' | 'max';
   endsAt?: string;
   planTier?: string;
+  /** Decimal string, e.g. "29.00". Omit to keep existing on paid renewals. */
+  purchasePrice?: string | null;
 };
 
 export type SubscriptionAdminSearchItem = {

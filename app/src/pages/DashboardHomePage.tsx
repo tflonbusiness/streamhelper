@@ -16,19 +16,24 @@ export function DashboardHomePage() {
   const { user } = useAuth()
   const hasAccount = Boolean(user?.accountId)
   const hasSubscriptionAccess = accountHasSubscriptionAccess(user)
+  const subscriptionInactive = hasAccount && !hasSubscriptionAccess
 
   return (
     <Stack spacing={MODULE_PAGE_SECTION_SPACING} sx={{ pb: 2 }}>
       <PageHeader
         title={t('dashboard.title')}
-        description={t('dashboard.description')}
+        description={
+          subscriptionInactive
+            ? t('dashboard.descriptionExpired')
+            : t('dashboard.description')
+        }
         icon={DashboardIcon}
-        iconVariant="primary"
+        iconVariant={subscriptionInactive ? 'warning' : 'primary'}
       />
 
       {hasAccount ? <DashboardSubscriptionBanner user={user} /> : null}
 
-      {hasAccount && user?.accountId && hasSubscriptionAccess ? (
+      {hasAccount && user?.accountId ? (
         <Box
           sx={{
             display: 'grid',
@@ -42,7 +47,7 @@ export function DashboardHomePage() {
         >
           <Stack spacing={3} sx={{ minWidth: 0 }}>
             <DashboardWelcomeBanner user={user} />
-            <DashboardModuleQuickAccess />
+            {hasSubscriptionAccess ? <DashboardModuleQuickAccess /> : null}
           </Stack>
 
           <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>

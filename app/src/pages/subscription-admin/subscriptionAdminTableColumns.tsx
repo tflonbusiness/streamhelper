@@ -46,6 +46,23 @@ function sortableHeader(
   )
 }
 
+function formatPurchasePrice(
+  value: string | null | undefined,
+  locale: string,
+): string {
+  if (!value) {
+    return '—'
+  }
+  const parsed = Number.parseFloat(value)
+  if (!Number.isFinite(parsed)) {
+    return value
+  }
+  return parsed.toLocaleString(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+}
+
 function formatEndsAt(value: string | null | undefined, locale: string): string {
   if (!value) {
     return '—'
@@ -182,6 +199,14 @@ export function buildSubscriptionAdminTableColumns(
       header: t('subscriptionAdmin.columnAccess'),
       width: 120,
       render: (row) => <AccessChip row={row} t={t} theme={theme} />,
+    },
+    {
+      id: 'purchasePrice',
+      header: t('subscriptionAdmin.columnPurchasePrice'),
+      width: 108,
+      align: 'right',
+      render: (row) =>
+        formatPurchasePrice(row.subscription.purchasePrice, locale),
     },
     {
       id: 'endsAt',

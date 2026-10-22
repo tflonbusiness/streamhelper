@@ -1,3 +1,4 @@
+import { readApiErrorMessage as readErrorMessage } from '@/api/read-api-error-message'
 import i18n from '@/i18n/init-i18n'
 import type { EntitlementEnvelope } from '@/lib/entitlements'
 
@@ -6,6 +7,7 @@ export type AccountSubscriptionSession = {
   planTier: string
   endsAt: string
   hasAccess: boolean
+  purchasePrice: string | null
 }
 
 export type AuthUser = {
@@ -49,21 +51,6 @@ const jsonHeaders = {
 
 async function parseJson<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>
-}
-
-async function readErrorMessage(response: Response, fallback: string): Promise<string> {
-  try {
-    const data = await response.json()
-    if (data && typeof data.message === 'string') {
-      return data.message
-    }
-    if (data && Array.isArray(data.message)) {
-      return data.message.join(', ')
-    }
-  } catch {
-    // ignore
-  }
-  return fallback
 }
 
 export function kickLoginUrl(surface: LoginSurface = 'streamer'): string {

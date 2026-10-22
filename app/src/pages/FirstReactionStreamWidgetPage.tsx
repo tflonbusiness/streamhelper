@@ -1,5 +1,5 @@
 import { Box } from '@mui/material'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { FirstReactionWidgetNotFoundError } from '@/api/first-reaction'
 import { FirstReactionWidgetCard } from '@/components/first-reaction/widget/FirstReactionWidgetCard'
@@ -10,6 +10,7 @@ import {
 } from '@/hooks/useObsBrowserSourceLayout'
 import { usePinWidgetUiEnglish, widgetUiCopy } from '@/i18n/widget-ui'
 import { publicWidgetUnavailableMessage } from '@/lib/public-widget'
+import { attachFirstReactionLightningAudioUnlock } from '@/lib/first-reaction-lightning-audio'
 import { FIRST_REACTION_WIDGET_DEFAULTS } from '@/lib/first-reaction-widget-defaults'
 import { usePublicFirstReactionWidget } from '@/queries/use-first-reaction-widget'
 
@@ -39,6 +40,8 @@ export function FirstReactionStreamWidgetPage() {
   useObsBrowserSourceLayout(
     view?.status === 'active' ? obsSize : undefined,
   )
+
+  useEffect(() => attachFirstReactionLightningAudioUnlock(), [])
 
   if (accountUcid === null) {
     return (

@@ -7,14 +7,17 @@ import { isFirstReactionReadOnly } from '@/api/first-reaction'
 import type { FirstReactionSettings } from '@/api/first-reaction'
 import { FirstReactionArchiveDialog } from '@/components/first-reaction/first-reaction-page/FirstReactionArchiveDialog'
 import { formatFirstReactionLiveSessionHint } from '@/components/first-reaction/first-reaction-page/first-reaction-page-utils'
-import { FirstReactionStreamWidgetSection } from '@/components/first-reaction/FirstReactionStreamWidgetSection'
 import { FirstReactionDrawHistorySection } from '@/components/first-reaction/session/FirstReactionDrawHistorySection'
 import { FirstReactionDrawSection } from '@/components/first-reaction/session/FirstReactionDrawSection'
 import { FirstReactionSessionErrorState } from '@/components/first-reaction/session/FirstReactionSessionErrorState'
+import { FirstReactionEditSessionDialog } from '@/components/first-reaction/session/FirstReactionEditSessionDialog'
 import { FirstReactionSessionHeaderSection } from '@/components/first-reaction/session/FirstReactionSessionHeaderSection'
 import { FirstReactionSessionLoadingState } from '@/components/first-reaction/session/FirstReactionSessionLoadingState'
 import { FirstReactionSettingsSection } from '@/components/first-reaction/session/FirstReactionSettingsSection'
-import { firstReactionModule } from '@/components/first-reaction/session/first-reaction-session-utils'
+import {
+  areFirstReactionSettingsEqual,
+  firstReactionModule,
+} from '@/components/first-reaction/session/first-reaction-session-utils'
 import { ModulePageShell } from '@/components/ModulePageShell'
 import {
   ModulePageSectionChrome,
@@ -49,6 +52,7 @@ export function FirstReactionSessionPage() {
   const accountId = user?.accountId
 
   const [archiveOpen, setArchiveOpen] = useState(false)
+  const [editSessionDialogOpen, setEditSessionDialogOpen] = useState(false)
   const [manualKeyword, setManualKeyword] = useState('')
   const [settingsDraft, setSettingsDraft] =
     useState<FirstReactionSettings | null>(null)
@@ -65,15 +69,13 @@ export function FirstReactionSessionPage() {
 
   const record = data?.record
   const activeDraw = data?.activeDraw ?? null
-  const draws = data?.draws ?? []
-
   useSetBreadcrumbLabel(record ? `${record.title} #${record.id}` : null)
 
   if (!isValidId || isLoading) {
     return <FirstReactionSessionLoadingState />
   }
 
-  if (error || !record || accountId === undefined || !user?.accountUcid) {
+  if (error || !record || accountId === undefined) {
     return (
       <FirstReactionSessionErrorState
         message={
@@ -88,6 +90,9 @@ export function FirstReactionSessionPage() {
   const readOnly = isFirstReactionReadOnly(record)
   const isLive = record.status === 'live'
   const settings = settingsDraft ?? record.settings
+  const isSettingsDirty =
+    settingsDraft !== null &&
+    !areFirstReactionSettingsEqual(settingsDraft, record.settings)
   const canMutate = canMutateWithEntitlements(undefined)
   const activeDrawId = activeDraw?.id
 
@@ -138,6 +143,7 @@ export function FirstReactionSessionPage() {
               })
             }
             onOpenArchiveDialog={() => setArchiveOpen(true)}
+            onOpenEditDialog={() => setEditSessionDialogOpen(true)}
           />
         </ModulePageSectionChrome>
         <Grid container spacing={3} alignItems="flex-start">
@@ -172,7 +178,12 @@ export function FirstReactionSessionPage() {
                   activeDrawId && stopMutation.mutate(activeDrawId)
                 }
               />
-              <FirstReactionDrawHistorySection draws={draws} />
+              <FirstReactionDrawHistorySection
+                accountId={accountId}
+                firstReactionId={firstReactionId}
+                readOnly={readOnly}
+                pollWhileAccepting={activeDraw?.phase === 'accepting'}
+              />
             </ColumnStack>
           </Grid>
           <Grid size={{ xs: 12, lg: 4 }}>
@@ -180,13 +191,10 @@ export function FirstReactionSessionPage() {
               <FirstReactionSettingsSection
                 settings={settings}
                 readOnly={readOnly}
+                isDirty={isSettingsDirty}
                 savePending={patchMutation.isPending}
-                onChange={setSettingsDraft}
+                onChange={(next) => setSettingsDraft(next)}
                 onSave={saveSettings}
-              />
-              <FirstReactionStreamWidgetSection
-                accountId={accountId}
-                accountUcid={user.accountUcid}
               />
             </ColumnStack>
           </Grid>
@@ -197,6 +205,13 @@ export function FirstReactionSessionPage() {
         open={archiveOpen}
         record={record}
         onClose={() => setArchiveOpen(false)}
+      />
+      <FirstReactionEditSessionDialog
+        accountId={accountId}
+        firstReactionId={firstReactionId}
+        record={record}
+        open={editSessionDialogOpen}
+        onClose={() => setEditSessionDialogOpen(false)}
       />
     </ModulePageShell>
   )

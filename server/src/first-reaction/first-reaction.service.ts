@@ -30,6 +30,11 @@ import {
   type FirstReactionSettings,
 } from './first-reaction-settings.js';
 import {
+  buildFirstReactionDrawOrderBy,
+  type FirstReactionDrawSortField,
+  type FirstReactionDrawSortOrder,
+} from './first-reaction-draw-list.js';
+import {
   pickGeneratedKeyword,
   resolveManualKeyword,
 } from './first-reaction-word-picker.js';
@@ -418,23 +423,55 @@ export class FirstReactionService {
     return this.getSession(accountId, userId, firstReactionId);
   }
 
-  async listDraws(accountId: number, userId: number, firstReactionId: number) {
+  async listDraws(
+    accountId: number,
+    userId: number,
+    firstReactionId: number,
+    page: number,
+    limit: number,
+    sortBy: FirstReactionDrawSortField,
+    sortOrder: FirstReactionDrawSortOrder,
+  ) {
     await this.requireMember(accountId, userId);
     const row = await this.getSessionRow(accountId, firstReactionId);
     if (!row) {
       throw new NotFoundException();
     }
+
+    const countResult = await this.pool().query<{ count: string }>(
+      `
+        SELECT COUNT(*)::text AS count
+        FROM first_reaction_draw
+        WHERE first_reaction_id = $1
+          AND is_archived = false
+      `,
+      [firstReactionId],
+    );
+    const total = Number.parseInt(countResult.rows[0]?.count ?? '0', 10);
+    const maxPage = Math.max(1, Math.ceil(total / limit) || 1);
+    const resolvedPage = Math.min(Math.max(1, page), maxPage);
+    const offset = (resolvedPage - 1) * limit;
+    const orderBy = buildFirstReactionDrawOrderBy(sortBy, sortOrder);
+
     const draws = await this.pool().query(
       `
         SELECT *
         FROM first_reaction_draw
         WHERE first_reaction_id = $1
-        ORDER BY created_at DESC
-        LIMIT 100
+          AND is_archived = false
+        ORDER BY ${orderBy}
+        LIMIT $2 OFFSET $3
       `,
-      [firstReactionId],
+      [firstReactionId, limit, offset],
     );
-    return { draws: draws.rows.map((r) => this.mapDraw(r)) };
+    return {
+      draws: draws.rows.map((r) => this.mapDraw(r)),
+      total,
+      page: resolvedPage,
+      limit,
+      sortBy,
+      sortOrder,
+    };
   }
 
   private async assertCanStartDraw(
@@ -714,6 +751,68 @@ export class FirstReactionService {
       throw new NotFoundException();
     }
     return { draw: this.mapDraw(updated.rows[0]!) };
+  }
+
+  private async assertMutableSession(
+    accountId: number,
+    firstReactionId: number,
+  ): Promise<void> {
+    const row = await this.getSessionRow(accountId, firstReactionId);
+    if (!row || row.status === 'archived') {
+      throw new NotFoundException();
+    }
+  }
+
+  async archiveDraw(
+    accountId: number,
+    userId: number,
+    firstReactionId: number,
+    drawId: number,
+  ): Promise<void> {
+    await this.requireMember(accountId, userId);
+    await this.assertMutableSession(accountId, firstReactionId);
+
+    const result = await this.pool().query(
+      `
+        UPDATE first_reaction_draw d
+        SET is_archived = true
+        FROM first_reaction fr
+        WHERE d.first_reaction_id = fr.id
+          AND fr.account_id = $1
+          AND d.first_reaction_id = $2
+          AND d.id = $3
+          AND d.is_archived = false
+          AND d.phase = 'closed'
+      `,
+      [accountId, firstReactionId, drawId],
+    );
+
+    if (result.rowCount === 0) {
+      throw new NotFoundException();
+    }
+  }
+
+  async archiveAllDraws(
+    accountId: number,
+    userId: number,
+    firstReactionId: number,
+  ): Promise<void> {
+    await this.requireMember(accountId, userId);
+    await this.assertMutableSession(accountId, firstReactionId);
+
+    await this.pool().query(
+      `
+        UPDATE first_reaction_draw d
+        SET is_archived = true
+        FROM first_reaction fr
+        WHERE d.first_reaction_id = fr.id
+          AND fr.account_id = $1
+          AND d.first_reaction_id = $2
+          AND d.is_archived = false
+          AND d.phase = 'closed'
+      `,
+      [accountId, firstReactionId],
+    );
   }
 
   private async ensureFirstReactionWidgetRow(accountId: number): Promise<void> {
@@ -1000,6 +1099,7 @@ export class FirstReactionService {
         WHERE first_reaction_id = $1
           AND phase = 'closed'
           AND result = 'won'
+          AND is_archived = false
         ORDER BY closed_at DESC NULLS LAST
         LIMIT 1
       `,

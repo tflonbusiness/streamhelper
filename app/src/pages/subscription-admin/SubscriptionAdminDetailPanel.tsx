@@ -8,6 +8,7 @@ import {
   Select,
   Stack,
   ToggleButton,
+  TextField,
   ToggleButtonGroup,
   Typography,
 } from '@mui/material'
@@ -31,11 +32,13 @@ type SubscriptionAdminDetailPanelProps = {
   mode: SubscriptionAdminDetailMode
   paidPlan: 'pro' | 'max'
   endsAtLocal: string
+  purchasePriceLocal: string
   saving: boolean
   accessChip: (account: SubscriptionAdminAccountDetail) => ReactNode
   onModeChange: (mode: SubscriptionAdminDetailMode) => void
   onPaidPlanChange: (plan: 'pro' | 'max') => void
   onEndsAtChange: (value: string) => void
+  onPurchasePriceChange: (value: string) => void
   onSave: () => void
 }
 
@@ -44,11 +47,13 @@ export function SubscriptionAdminDetailPanel({
   mode,
   paidPlan,
   endsAtLocal,
+  purchasePriceLocal,
   saving,
   accessChip,
   onModeChange,
   onPaidPlanChange,
   onEndsAtChange,
+  onPurchasePriceChange,
   onSave,
 }: SubscriptionAdminDetailPanelProps) {
   const { t } = useTranslation()
@@ -226,19 +231,31 @@ export function SubscriptionAdminDetailPanel({
               </FormControl>
 
               {mode === 'paid' ? (
-                <FormControl fullWidth sx={inputFieldSx}>
-                  <FormLabel sx={{ mb: 1 }}>{t('subscriptionAdmin.paidPlanLabel')}</FormLabel>
-                  <Select
-                    value={paidPlan}
+                <>
+                  <FormControl fullWidth sx={inputFieldSx}>
+                    <FormLabel sx={{ mb: 1 }}>{t('subscriptionAdmin.paidPlanLabel')}</FormLabel>
+                    <Select
+                      value={paidPlan}
+                      size="small"
+                      onChange={(event) =>
+                        onPaidPlanChange(event.target.value as 'pro' | 'max')
+                      }
+                    >
+                      <MenuItem value="pro">Pro</MenuItem>
+                      <MenuItem value="max">Max</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    label={t('subscriptionAdmin.purchasePriceLabel')}
+                    helperText={t('subscriptionAdmin.purchasePriceHint')}
+                    value={purchasePriceLocal}
+                    onChange={(event) => onPurchasePriceChange(event.target.value)}
+                    fullWidth
                     size="small"
-                    onChange={(event) =>
-                      onPaidPlanChange(event.target.value as 'pro' | 'max')
-                    }
-                  >
-                    <MenuItem value="pro">Pro</MenuItem>
-                    <MenuItem value="max">Max</MenuItem>
-                  </Select>
-                </FormControl>
+                    inputMode="decimal"
+                    sx={inputFieldSx}
+                  />
+                </>
               ) : null}
 
               {mode !== 'revoked' ? (

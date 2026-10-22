@@ -1,3 +1,4 @@
+import { readApiErrorMessage as readErrorMessage } from '@/api/read-api-error-message'
 import i18n from '@/i18n/init-i18n'
 import type { EntitlementEnvelope } from '@/lib/entitlements'
 const jsonHeaders = {
@@ -154,21 +155,6 @@ export class BonusBuyWidgetNotFoundError extends Error {
     super('ACCOUNT_NOT_FOUND')
     this.name = 'BonusBuyWidgetNotFoundError'
   }
-}
-
-async function readErrorMessage(response: Response, fallback: string): Promise<string> {
-  try {
-    const data = await response.json()
-    if (data && typeof data.message === 'string') {
-      return data.message
-    }
-    if (data && Array.isArray(data.message)) {
-      return data.message.join(', ')
-    }
-  } catch {
-    // ignore
-  }
-  return fallback
 }
 
 export async function fetchBonusBuy(

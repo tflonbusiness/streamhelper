@@ -99,6 +99,7 @@ export class InternalSubscriptionsService {
         mode: normalized.mode,
         paidPlan: normalized.paidPlan,
         endsAt: normalized.endsAt?.toISOString(),
+        purchasePrice: normalized.purchasePrice,
       }),
     );
 
@@ -110,6 +111,7 @@ export class InternalSubscriptionsService {
     paidPlan?: 'pro' | 'max';
     endsAt?: Date;
     planTier: string;
+    purchasePrice?: string | null;
   } {
     if (
       body.mode !== 'revoked' &&
@@ -120,8 +122,14 @@ export class InternalSubscriptionsService {
     }
 
     const planTierFromBody = body.planTier?.trim();
+    const purchasePrice = this.normalizePurchasePriceInput(body.purchasePrice);
+
     if (body.mode === 'revoked') {
-      return { mode: 'revoked', planTier: planTierFromBody || 'trial' };
+      return {
+        mode: 'revoked',
+        planTier: planTierFromBody || 'trial',
+        purchasePrice: null,
+      };
     }
 
     if (!body.endsAt?.trim()) {
@@ -138,7 +146,12 @@ export class InternalSubscriptionsService {
     }
 
     if (body.mode === 'trial') {
-      return { mode: 'trial', endsAt, planTier: planTierFromBody || 'trial' };
+      return {
+        mode: 'trial',
+        endsAt,
+        planTier: planTierFromBody || 'trial',
+        purchasePrice: null,
+      };
     }
 
     const paidPlan = body.paidPlan;
@@ -151,6 +164,27 @@ export class InternalSubscriptionsService {
       paidPlan,
       endsAt,
       planTier: planTierFromBody || paidPlan,
+      purchasePrice,
     };
+  }
+
+  private normalizePurchasePriceInput(
+    value: string | null | undefined,
+  ): string | null | undefined {
+    if (value === undefined) {
+      return undefined;
+    }
+    if (value === null) {
+      return null;
+    }
+    const trimmed = value.trim();
+    if (trimmed.length === 0) {
+      throw new BadRequestException('purchasePrice must be a positive amount');
+    }
+    const parsed = Number.parseFloat(trimmed);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      throw new BadRequestException('purchasePrice must be a non-negative number');
+    }
+    return parsed.toFixed(2);
   }
 }

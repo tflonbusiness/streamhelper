@@ -560,6 +560,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     plan_tier: string | null;
     starts_at: Date | null;
     ends_at: Date | null;
+    purchase_price?: string | null;
   }): AccountSubscriptionRow | null {
     if (
       row.status === null ||
@@ -575,6 +576,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       planTier: row.plan_tier,
       startsAt: row.starts_at,
       endsAt: row.ends_at,
+      purchasePrice: row.purchase_price ?? null,
     };
   }
 
@@ -599,9 +601,15 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       plan_tier: string | null;
       starts_at: Date | null;
       ends_at: Date | null;
+      purchase_price: string | null;
     }>(
       `
-        SELECT status, plan_tier, starts_at, ends_at
+        SELECT
+          status,
+          plan_tier,
+          starts_at,
+          ends_at,
+          purchase_price::text AS purchase_price
         FROM account_subscriptions
         WHERE account_id = $1
         LIMIT 1
@@ -615,6 +623,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         plan_tier: null,
         starts_at: null,
         ends_at: null,
+        purchase_price: null,
       },
     );
 
@@ -744,6 +753,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       plan_tier: string | null;
       starts_at: Date | null;
       ends_at: Date | null;
+      purchase_price: string | null;
     }>(
       `
         SELECT
@@ -755,7 +765,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           s.status,
           s.plan_tier,
           s.starts_at,
-          s.ends_at
+          s.ends_at,
+          s.purchase_price::text AS purchase_price
         FROM account_members am
         JOIN accounts a ON a.id = am.account_id
         LEFT JOIN account_subscriptions s ON s.account_id = a.id
@@ -5681,6 +5692,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       plan_tier: string | null;
       starts_at: Date | null;
       ends_at: Date | null;
+      purchase_price: string | null;
     }>(
       `
         SELECT
@@ -5692,7 +5704,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           s.status,
           s.plan_tier,
           s.starts_at,
-          s.ends_at
+          s.ends_at,
+          s.purchase_price::text AS purchase_price
         FROM accounts a
         LEFT JOIN account_subscriptions s ON s.account_id = a.id
         LEFT JOIN LATERAL (
@@ -5753,6 +5766,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       plan_tier: string | null;
       starts_at: Date | null;
       ends_at: Date | null;
+      purchase_price: string | null;
     }>(
       `
         SELECT
@@ -5764,7 +5778,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           s.status,
           s.plan_tier,
           s.starts_at,
-          s.ends_at
+          s.ends_at,
+          s.purchase_price::text AS purchase_price
         FROM accounts a
         LEFT JOIN account_subscriptions s ON s.account_id = a.id
         LEFT JOIN LATERAL (
@@ -5823,6 +5838,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       paidPlan?: 'pro' | 'max';
       endsAt?: Date;
       planTier: string;
+      purchasePrice?: string | null;
     },
   ): Promise<
     import('../internal-admin/internal-subscriptions.types.js').SubscriptionAdminAccountDetail | null
@@ -5878,17 +5894,25 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         [accountId, subscriptionPlan],
       );
 
+      const purchasePriceForInsert =
+        input.mode === 'paid' ? (input.purchasePrice ?? null) : null;
+
       await client.query(
         `
           INSERT INTO account_subscriptions (
-            account_id, status, plan_tier, starts_at, ends_at
+            account_id, status, plan_tier, starts_at, ends_at, purchase_price
           )
-          VALUES ($1, $2, $3, now(), $4)
+          VALUES ($1, $2, $3, now(), $4, $5::numeric)
           ON CONFLICT (account_id) DO UPDATE SET
             status = EXCLUDED.status,
             plan_tier = EXCLUDED.plan_tier,
             ends_at = EXCLUDED.ends_at,
             updated_at = now(),
+            purchase_price = CASE
+              WHEN EXCLUDED.plan_tier = 'trial' OR EXCLUDED.status != 'active' THEN NULL
+              WHEN $6::boolean THEN $5::numeric
+              ELSE account_subscriptions.purchase_price
+            END,
             starts_at = CASE
               WHEN EXCLUDED.status = 'active'
                 AND account_subscriptions.status IS DISTINCT FROM 'active'
@@ -5896,7 +5920,14 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
               ELSE account_subscriptions.starts_at
             END
         `,
-        [accountId, status, planTier, endsAt],
+        [
+          accountId,
+          status,
+          planTier,
+          endsAt,
+          purchasePriceForInsert,
+          input.purchasePrice !== undefined,
+        ],
       );
 
       const after = await this.loadSubscriptionAdminAuditPayload(accountId, client);
@@ -5937,6 +5968,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     plan_tier: string | null;
     starts_at: Date | null;
     ends_at: Date | null;
+    purchase_price: string | null;
   }): Promise<
     import('../internal-admin/internal-subscriptions.types.js').SubscriptionAdminSearchItem | null
   > {
@@ -5970,6 +6002,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       plan_tier: string | null;
       starts_at: Date | null;
       ends_at: Date | null;
+      purchase_price: string | null;
     }>(
       `
         SELECT
@@ -5977,7 +6010,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           s.status,
           s.plan_tier,
           s.starts_at,
-          s.ends_at
+          s.ends_at,
+          s.purchase_price::text AS purchase_price
         FROM accounts a
         LEFT JOIN account_subscriptions s ON s.account_id = a.id
         WHERE a.id = $1
@@ -5999,6 +6033,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       plan_tier: row.plan_tier,
       starts_at: row.starts_at,
       ends_at: row.ends_at,
+      purchase_price: row.purchase_price,
     });
     const subscription = subscriptionRow
       ? resolveAccountSubscriptionAccess(subscriptionRow)

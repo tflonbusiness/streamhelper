@@ -72,6 +72,7 @@ export function SubscriptionAdminPage() {
   const [mode, setMode] = useState<AdminMode>('trial')
   const [paidPlan, setPaidPlan] = useState<'pro' | 'max'>('pro')
   const [endsAtLocal, setEndsAtLocal] = useState(defaultEndsAtLocal)
+  const [purchasePriceLocal, setPurchasePriceLocal] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -177,6 +178,7 @@ export function SubscriptionAdminPage() {
           )
         }
       }
+      setPurchasePriceLocal(detail.subscription.purchasePrice ?? '')
     } catch (loadError) {
       setError(
         loadError instanceof Error
@@ -200,7 +202,14 @@ export function SubscriptionAdminPage() {
           : {
               mode,
               endsAt: localInputToIso(endsAtLocal),
-              ...(mode === 'paid' ? { paidPlan } : {}),
+              ...(mode === 'paid'
+                ? {
+                    paidPlan,
+                    ...(purchasePriceLocal.trim()
+                      ? { purchasePrice: purchasePriceLocal.trim() }
+                      : {}),
+                  }
+                : {}),
             }
 
       const updated = await updateSubscriptionAdminAccount(
@@ -304,11 +313,13 @@ export function SubscriptionAdminPage() {
             mode={mode}
             paidPlan={paidPlan}
             endsAtLocal={endsAtLocal}
+            purchasePriceLocal={purchasePriceLocal}
             saving={saving}
             accessChip={accessChip}
             onModeChange={setMode}
             onPaidPlanChange={setPaidPlan}
             onEndsAtChange={setEndsAtLocal}
+            onPurchasePriceChange={setPurchasePriceLocal}
             onSave={() => void handleSave()}
           />
         </Grid>

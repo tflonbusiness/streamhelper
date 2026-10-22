@@ -1,8 +1,6 @@
 import type { AuthUser } from '@/api/auth'
-import {
-  SubscriptionExpiredNotice,
-  SubscriptionTrialReminder,
-} from '@/components/SubscriptionTrialReminder'
+import { DashboardSubscriptionExpiredState } from '@/components/DashboardSubscriptionExpiredState'
+import { SubscriptionTrialReminder } from '@/components/SubscriptionTrialReminder'
 import { accountHasSubscriptionAccess } from '@/lib/account-subscription'
 
 type DashboardSubscriptionBannerProps = {
@@ -15,7 +13,7 @@ export function DashboardSubscriptionBanner({ user }: DashboardSubscriptionBanne
   }
 
   if (!accountHasSubscriptionAccess(user)) {
-    return <SubscriptionExpiredNotice user={user} variant="dashboard" />
+    return <DashboardSubscriptionExpiredState user={user} />
   }
 
   return <SubscriptionTrialReminder user={user} />

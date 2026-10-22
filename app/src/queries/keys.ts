@@ -94,6 +94,13 @@ export type FirstReactionListParams = {
   limit: number
 }
 
+export type FirstReactionDrawListParams = {
+  page: number
+  limit: number
+  sortBy: import('@/api/first-reaction').FirstReactionDrawSortField
+  sortOrder: import('@/api/first-reaction').FirstReactionDrawSortOrder
+}
+
 export const firstReactionKeys = {
   all: ['firstReactions'] as const,
   lists: () => [...firstReactionKeys.all, 'list'] as const,
@@ -107,6 +114,22 @@ export const firstReactionKeys = {
     [...firstReactionKeys.all, 'publicWidget', accountUcid] as const,
   session: (accountId: number, firstReactionId: number) =>
     [...firstReactionKeys.all, 'session', accountId, firstReactionId] as const,
+  drawsRoot: (accountId: number, firstReactionId: number) =>
+    [
+      ...firstReactionKeys.all,
+      'draws',
+      accountId,
+      firstReactionId,
+    ] as const,
+  draws: (
+    accountId: number,
+    firstReactionId: number,
+    params: FirstReactionDrawListParams,
+  ) =>
+    [
+      ...firstReactionKeys.drawsRoot(accountId, firstReactionId),
+      params,
+    ] as const,
 }
 
 export const kickChannelKeys = {

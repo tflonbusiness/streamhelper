@@ -1,3 +1,6 @@
+import { readApiErrorMessage as readErrorMessage } from '@/api/read-api-error-message'
+import i18n from '@/i18n/init-i18n'
+
 const jsonHeaders = {
   'Content-Type': 'application/json',
 }
@@ -35,6 +38,31 @@ export type FirstReactionRecord = {
   createdAt: string
   createdByUserId: number
   createdByName: string
+}
+
+export type FirstReactionDrawSortField =
+  | 'drawIndex'
+  | 'keyword'
+  | 'outcome'
+  | 'winner'
+  | 'time'
+
+export type FirstReactionDrawSortOrder = 'asc' | 'desc'
+
+export type FirstReactionDrawListParams = {
+  page: number
+  limit: number
+  sortBy: FirstReactionDrawSortField
+  sortOrder: FirstReactionDrawSortOrder
+}
+
+export type FirstReactionDrawListResult = {
+  draws: FirstReactionDraw[]
+  total: number
+  page: number
+  limit: number
+  sortBy: FirstReactionDrawSortField
+  sortOrder: FirstReactionDrawSortOrder
 }
 
 export type FirstReactionDraw = {
@@ -131,21 +159,6 @@ export function isFirstReactionReadOnly(
   record: Pick<FirstReactionRecord, 'status'>,
 ): boolean {
   return record.status === 'archived'
-}
-
-async function readErrorMessage(response: Response, fallback: string): Promise<string> {
-  try {
-    const data = await response.json()
-    if (data && typeof data.message === 'string') {
-      return data.message
-    }
-    if (data && Array.isArray(data.message)) {
-      return data.message.join(', ')
-    }
-  } catch {
-    // ignore
-  }
-  return fallback
 }
 
 export async function fetchFirstReactions(
@@ -261,15 +274,22 @@ export async function deactivateFirstReaction(
 export async function fetchFirstReactionDraws(
   accountId: number,
   firstReactionId: number,
-): Promise<{ draws: FirstReactionDraw[] }> {
+  params: FirstReactionDrawListParams,
+): Promise<FirstReactionDrawListResult> {
+  const search = new URLSearchParams({
+    page: String(params.page),
+    limit: String(params.limit),
+    sortBy: params.sortBy,
+    sortOrder: params.sortOrder,
+  })
   const response = await fetch(
-    `/accounts/${accountId}/first-reactions/${firstReactionId}/draws`,
+    `/accounts/${accountId}/first-reactions/${firstReactionId}/draws?${search}`,
     { credentials: 'include' },
   )
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, 'Failed to load draws'))
   }
-  return response.json() as Promise<{ draws: FirstReactionDraw[] }>
+  return response.json() as Promise<FirstReactionDrawListResult>
 }
 
 export async function startFirstReactionDraw(
@@ -305,6 +325,40 @@ export async function stopFirstReactionDraw(
     throw new Error(await readErrorMessage(response, 'Failed to stop draw'))
   }
   return response.json() as Promise<{ draw: FirstReactionDraw }>
+}
+
+export async function archiveFirstReactionDraw(
+  accountId: number,
+  firstReactionId: number,
+  drawId: number,
+): Promise<void> {
+  const response = await fetch(
+    `/accounts/${accountId}/first-reactions/${firstReactionId}/draws/${drawId}`,
+    { method: 'DELETE', credentials: 'include' },
+  )
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, i18n.t('firstReaction.couldNotRemoveDraw')),
+    )
+  }
+}
+
+export async function archiveAllFirstReactionDraws(
+  accountId: number,
+  firstReactionId: number,
+): Promise<void> {
+  const response = await fetch(
+    `/accounts/${accountId}/first-reactions/${firstReactionId}/draws`,
+    { method: 'DELETE', credentials: 'include' },
+  )
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(
+        response,
+        i18n.t('firstReaction.couldNotArchiveDraws'),
+      ),
+    )
+  }
 }
 
 export async function patchFirstReactionWidget(
