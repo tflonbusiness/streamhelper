@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   archiveAllFirstReactionDraws,
@@ -20,7 +21,10 @@ export function useFirstReactionSession(
   accountId: number | undefined,
   firstReactionId: number,
 ) {
-  return useQuery({
+  const queryClient = useQueryClient()
+  const acceptingDrawIdRef = useRef<number | null>(null)
+
+  const query = useQuery({
     queryKey: firstReactionKeys.session(accountId ?? 0, firstReactionId),
     queryFn: () => fetchFirstReactionSession(accountId!, firstReactionId),
     enabled: accountId !== undefined && Number.isFinite(firstReactionId),
@@ -32,6 +36,24 @@ export function useFirstReactionSession(
       return false
     },
   })
+
+  useEffect(() => {
+    if (accountId === undefined || !Number.isFinite(firstReactionId)) {
+      return
+    }
+    const active = query.data?.activeDraw
+    const acceptingId =
+      active?.phase === 'accepting' ? active.id : null
+    const prev = acceptingDrawIdRef.current
+    if (prev !== null && acceptingId === null) {
+      void queryClient.invalidateQueries({
+        queryKey: firstReactionKeys.drawsRoot(accountId, firstReactionId),
+      })
+    }
+    acceptingDrawIdRef.current = acceptingId
+  }, [accountId, firstReactionId, query.data?.activeDraw, queryClient])
+
+  return query
 }
 
 function useInvalidateSession(accountId: number | undefined) {

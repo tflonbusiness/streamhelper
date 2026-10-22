@@ -1,7 +1,8 @@
-import { Button, Stack, TextField, Typography } from '@mui/material'
+import { Button, LinearProgress, Stack, TextField, Typography } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import type { FirstReactionDraw, FirstReactionRecord } from '@/api/first-reaction'
+import { useFirstReactionAcceptTimer } from '@/hooks/use-first-reaction-accept-timer'
 import {
   StyledSessionCard,
   StyledSessionCardContent,
@@ -42,6 +43,15 @@ export function FirstReactionDrawSection(props: FirstReactionDrawSectionProps) {
   const showManualField =
     settings.wordSource === 'manual' && settings.manualScope === 'per_draw'
   const isAccepting = props.activeDraw?.phase === 'accepting'
+  const acceptDeadlineAt =
+    isAccepting && props.activeDraw?.acceptDeadlineAt
+      ? props.activeDraw.acceptDeadlineAt
+      : null
+  const acceptingStartedAt =
+    isAccepting && props.activeDraw?.acceptingStartedAt
+      ? props.activeDraw.acceptingStartedAt
+      : null
+  const timer = useFirstReactionAcceptTimer(acceptDeadlineAt, acceptingStartedAt)
 
   return (
     <StyledSessionCard elevation={0}>
@@ -78,6 +88,26 @@ export function FirstReactionDrawSection(props: FirstReactionDrawSectionProps) {
               <Typography variant="body2" color="text.secondary">
                 {t('firstReaction.phaseAccepting')}
               </Typography>
+              {timer.secondsLeft !== null ? (
+                <Stack spacing={0.75} sx={{ pt: 0.5, maxWidth: 320 }}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={Math.round((timer.progress ?? 0) * 100)}
+                    color={timer.urgent ? 'warning' : 'primary'}
+                    aria-hidden
+                  />
+                  <Typography
+                    variant="body2"
+                    color={timer.urgent ? 'warning.main' : 'text.secondary'}
+                    fontWeight={timer.urgent ? 700 : 500}
+                    sx={{ fontVariantNumeric: 'tabular-nums' }}
+                  >
+                    {t('firstReaction.acceptTimeRemaining', {
+                      seconds: timer.secondsLeft,
+                    })}
+                  </Typography>
+                </Stack>
+              ) : null}
             </Stack>
           ) : null}
           <ActionsRow>

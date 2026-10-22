@@ -220,6 +220,7 @@ export class FirstReactionService {
     if (!row || row.status === 'archived') {
       throw new NotFoundException();
     }
+    await this.expireStaleAcceptingDraws(firstReactionId);
     const activeDraw = await this.getActiveDrawRow(firstReactionId);
     return {
       record: this.mapSession(row),

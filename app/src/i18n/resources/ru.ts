@@ -1006,7 +1006,8 @@ export const ru = {
     sessionArchived: "Сессия отправлена в архив.",
     couldNotArchiveSession: "Не удалось архивировать сессию",
     sessionArchivedViewOnly: "Сессия в архиве — только просмотр.",
-    phaseAccepting: "Идёт приём команд в чате"
+    phaseAccepting: "Идёт приём команд в чате",
+    acceptTimeRemaining: "Осталось {{seconds}} с"
   },
   chatRoll: {
     title: "Chat Roll",

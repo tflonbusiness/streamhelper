@@ -984,7 +984,8 @@ export const en = {
     sessionArchived: "Session archived.",
     couldNotArchiveSession: "Could not archive session",
     sessionArchivedViewOnly: "This session is archived. View only.",
-    phaseAccepting: "Accepting chat commands"
+    phaseAccepting: "Accepting chat commands",
+    acceptTimeRemaining: "{{seconds}}s left"
   },
   chatRoll: {
     title: "Chat Roll",
