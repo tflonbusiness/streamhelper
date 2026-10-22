@@ -86,6 +86,22 @@ class FirstReactionLightningAudio {
     void this.playLightningAsync()
   }
 
+  /** Short celebratory sting when a winner is revealed on overlay. */
+  playWinner(): void {
+    void this.playWinnerAsync()
+  }
+
+  private async playWinnerAsync(): Promise<void> {
+    const ctx = await this.ensureRunning()
+    if (!ctx) {
+      return
+    }
+
+    const out = this.getOutput(ctx)
+    const t0 = ctx.currentTime + 0.01
+    this.playWinnerSting(ctx, out, t0)
+  }
+
   private async playLightningAsync(): Promise<void> {
     const ctx = await this.ensureRunning()
     if (!ctx) {
@@ -219,6 +235,72 @@ class FirstReactionLightningAudio {
 
     noise.start(at)
     noise.stop(at + len + 0.02)
+  }
+
+  private playWinnerSting(ctx: AudioContext, out: AudioNode, start: number): void {
+    const notes = [523.25, 659.25, 783.99, 1046.5]
+    const noteGap = 0.055
+    const noteDur = 0.14
+
+    notes.forEach((freq, index) => {
+      const at = start + index * noteGap
+      const osc = ctx.createOscillator()
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(freq, at)
+
+      const shimmer = ctx.createOscillator()
+      shimmer.type = 'sine'
+      shimmer.frequency.setValueAtTime(freq * 2.01, at)
+
+      const mix = ctx.createGain()
+      mix.gain.setValueAtTime(0.0001, at)
+      mix.gain.linearRampToValueAtTime(0.2 - index * 0.02, at + 0.012)
+      mix.gain.exponentialRampToValueAtTime(0.0001, at + noteDur)
+
+      const shimmerGain = ctx.createGain()
+      shimmerGain.gain.setValueAtTime(0.0001, at)
+      shimmerGain.gain.linearRampToValueAtTime(0.06, at + 0.01)
+      shimmerGain.gain.exponentialRampToValueAtTime(0.0001, at + noteDur * 0.85)
+
+      osc.connect(mix)
+      shimmer.connect(shimmerGain)
+      mix.connect(out)
+      shimmerGain.connect(out)
+
+      osc.start(at)
+      shimmer.start(at)
+      osc.stop(at + noteDur + 0.02)
+      shimmer.stop(at + noteDur + 0.02)
+    })
+
+    const sparkleAt = start + notes.length * noteGap
+    const sparkleLen = 0.12
+    const sampleCount = Math.floor(ctx.sampleRate * sparkleLen)
+    const buffer = ctx.createBuffer(1, sampleCount, ctx.sampleRate)
+    const data = buffer.getChannelData(0)
+    for (let i = 0; i < sampleCount; i++) {
+      const t = i / sampleCount
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 1.8)
+    }
+
+    const sparkle = ctx.createBufferSource()
+    sparkle.buffer = buffer
+
+    const hp = ctx.createBiquadFilter()
+    hp.type = 'highpass'
+    hp.frequency.setValueAtTime(2200, sparkleAt)
+
+    const sparkleGain = ctx.createGain()
+    sparkleGain.gain.setValueAtTime(0.0001, sparkleAt)
+    sparkleGain.gain.linearRampToValueAtTime(0.12, sparkleAt + 0.01)
+    sparkleGain.gain.exponentialRampToValueAtTime(0.0001, sparkleAt + sparkleLen)
+
+    sparkle.connect(hp)
+    hp.connect(sparkleGain)
+    sparkleGain.connect(out)
+
+    sparkle.start(sparkleAt)
+    sparkle.stop(sparkleAt + sparkleLen + 0.02)
   }
 }
 

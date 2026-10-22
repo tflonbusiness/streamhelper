@@ -13,6 +13,11 @@ import { useFirstReactionWidgetVisibility } from '@/hooks/use-first-reaction-wid
 import { widgetUiCopy } from '@/i18n/widget-ui'
 import { firstReactionLightningAudio } from '@/lib/first-reaction-lightning-audio'
 import { FIRST_REACTION_WIDGET_STYLE_DEFAULTS } from '@/lib/first-reaction-widget-style-defaults'
+import {
+  getFirstReactionWidgetWinnerDisplayName,
+  isFirstReactionWidgetAccepting,
+  isFirstReactionWidgetOverlayVisible,
+} from '@/lib/first-reaction-widget-view'
 
 type FirstReactionWidgetCardProps = {
   view: PublicFirstReactionWidgetView & { status: 'active' }
@@ -28,14 +33,19 @@ export function FirstReactionWidgetCard({
   height,
   playEnterSound = true,
 }: FirstReactionWidgetCardProps) {
-  const isAccepting = view.phase === 'accepting' && view.keyword
+  const isAccepting = isFirstReactionWidgetAccepting(view)
+  const winnerDisplayName = getFirstReactionWidgetWinnerDisplayName(view)
+  const isWinnerReveal = winnerDisplayName !== null
+  const shouldShowOverlay = isFirstReactionWidgetOverlayVisible(view)
   const style = view.style ?? FIRST_REACTION_WIDGET_STYLE_DEFAULTS
 
   const { phase, isRendered, handleAnimationEnd } =
-    useFirstReactionWidgetVisibility(Boolean(isAccepting))
+    useFirstReactionWidgetVisibility(shouldShowOverlay)
 
   const keywordRef = useRef(view.keyword)
   const lightningSoundKeyRef = useRef<string | null>(null)
+  const winnerSoundKeyRef = useRef<string | null>(null)
+  const wasWinnerRevealRef = useRef(false)
 
   useEffect(() => {
     if (view.keyword) {
@@ -44,7 +54,7 @@ export function FirstReactionWidgetCard({
   }, [view.keyword])
 
   useEffect(() => {
-    if (!playEnterSound || phase !== 'entering') {
+    if (!playEnterSound || phase !== 'entering' || !isAccepting) {
       return
     }
     const soundKey = view.acceptingStartedAt ?? view.keyword ?? 'draw'
@@ -53,7 +63,34 @@ export function FirstReactionWidgetCard({
     }
     lightningSoundKeyRef.current = soundKey
     firstReactionLightningAudio.playLightning()
-  }, [playEnterSound, phase, view.acceptingStartedAt, view.keyword])
+  }, [playEnterSound, phase, isAccepting, view.acceptingStartedAt, view.keyword])
+
+  useEffect(() => {
+    if (!playEnterSound) {
+      wasWinnerRevealRef.current = isWinnerReveal
+      return
+    }
+    if (isWinnerReveal && !wasWinnerRevealRef.current) {
+      const soundKey =
+        view.winner?.proofToken ??
+        (view.winner?.id != null ? String(view.winner.id) : null) ??
+        winnerDisplayName
+      if (soundKey && winnerSoundKeyRef.current !== soundKey) {
+        winnerSoundKeyRef.current = soundKey
+        firstReactionLightningAudio.playWinner()
+      }
+    }
+    if (!isWinnerReveal) {
+      winnerSoundKeyRef.current = null
+    }
+    wasWinnerRevealRef.current = isWinnerReveal
+  }, [
+    playEnterSound,
+    isWinnerReveal,
+    winnerDisplayName,
+    view.winner?.id,
+    view.winner?.proofToken,
+  ])
 
   const timer = useFirstReactionAcceptTimer(
     isAccepting ? view.acceptDeadlineAt : null,
@@ -61,22 +98,33 @@ export function FirstReactionWidgetCard({
   )
 
   const keyword = view.keyword ?? keywordRef.current
+  const hasContent = isWinnerReveal || Boolean(keyword)
 
-  if (!isRendered || !keyword) {
+  if (!isRendered || !hasContent) {
     return <Box aria-hidden sx={{ width, height, bgcolor: 'transparent' }} />
   }
+
   const timerLabel =
-    timer.secondsLeft !== null && view.acceptDeadlineAt
+    isAccepting && timer.secondsLeft !== null && view.acceptDeadlineAt
       ? widgetUiCopy.firstReactionSecondsLeft.replace(
           '{{seconds}}',
           String(timer.secondsLeft),
         )
       : null
 
-  const hint = widgetUiCopy.firstReactionCta
-  const ariaLabel = timerLabel
-    ? `${hint}. ${keyword}. ${timerLabel}`
-    : `${hint}. ${keyword}`
+  const hint = isWinnerReveal
+    ? widgetUiCopy.firstReactionWinner
+    : widgetUiCopy.firstReactionCta
+  const headline = isWinnerReveal ? winnerDisplayName : keyword
+  const showKeywordSubline = isWinnerReveal && Boolean(keyword)
+
+  const ariaLabel = isWinnerReveal
+    ? keyword
+      ? `${hint}. ${headline}. ${keyword}`
+      : `${hint}. ${headline}`
+    : timerLabel
+      ? `${hint}. ${headline}. ${timerLabel}`
+      : `${hint}. ${headline}`
 
   return (
     <Box
@@ -164,14 +212,41 @@ export function FirstReactionWidgetCard({
             color: style.textKeyword,
             textAlign: 'left',
             lineHeight: 1.08,
-            letterSpacing: '0.03em',
-            textTransform: 'uppercase',
+            letterSpacing: isWinnerReveal ? '0.01em' : '0.03em',
+            textTransform: isWinnerReveal ? 'none' : 'uppercase',
             wordBreak: 'break-word',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
             maxWidth: '100%',
           }}
+          title={headline ?? undefined}
         >
-          {keyword}
+          {headline}
         </Typography>
+        {showKeywordSubline ? (
+          <Typography
+            component="p"
+            sx={{
+              m: 0,
+              fontSize: 'clamp(0.75rem, 2.2vw, 0.95rem)',
+              fontWeight: 600,
+              fontFamily: '"Plus Jakarta Sans", Inter, sans-serif',
+              color: style.textTimer,
+              textAlign: 'left',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              maxWidth: '100%',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {keyword}
+          </Typography>
+        ) : null}
         {timerLabel ? (
           <Typography
             component="p"

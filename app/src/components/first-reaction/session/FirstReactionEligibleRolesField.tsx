@@ -30,7 +30,7 @@ export function FirstReactionEligibleRolesField(
   const showNoRolesError = !hasEnabledFirstReactionParticipantRole(props.settings)
 
   return (
-    <Stack spacing={1.25}>
+    <Stack spacing={2.5}>
       <Stack direction="row" spacing={1} alignItems="center">
         <GroupIcon fontSize="small" color="action" aria-hidden />
         <Typography variant="body2" color="text.secondary">
@@ -42,7 +42,7 @@ export function FirstReactionEligibleRolesField(
           {t('firstReaction.noEligibleRolesError')}
         </Alert>
       ) : null}
-      <Stack spacing={1}>
+      <Stack spacing={1.25}>
         {roleMeta.map((role) => {
           const setting = roles[role.id]
           return (

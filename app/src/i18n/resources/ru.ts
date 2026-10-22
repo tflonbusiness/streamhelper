@@ -912,7 +912,7 @@ export const ru = {
     settingsDescription:
       "Слово на оверлее и правила приёма ответов в чате",
     settingsGroupKeyword: "Слово для розыгрыша",
-    settingsGroupTimeout: "Таймер приёма",
+    settingsGroupTimeout: "Таймеры на оверлее",
     settingsGroupParticipants: "Участники",
     eligibleRolesHelper:
       "Кто может отправить правильное слово в чат (роли Kick)",
@@ -973,6 +973,11 @@ export const ru = {
       "Добавьте хотя бы одно слово (2–20 символов), иначе розыгрыш не запустится.",
     acceptTimeoutEnabled: "Лимит по времени",
     acceptTimeoutSeconds: "Секунд",
+    winnerOverlaySecondsLabel: "Победитель на оверлее (сек.)",
+    winnerOverlaySecondsHelp:
+      "Сколько секунд имя победителя видно в OBS-оверлее после выигрыша ({{min}}–{{max}} с).",
+    winnerOverlaySecondsOutOfRange:
+      "Укажите значение от {{min}} до {{max}} секунд.",
     streamWidgetTitle: "Оверлей для стрима",
     streamWidgetSettingsTitle: "Размер оверлея",
     streamWidgetSettingsButton: "Настройки виджета",

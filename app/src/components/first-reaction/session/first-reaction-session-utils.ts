@@ -14,9 +14,25 @@ export function areFirstReactionSettingsEqual(
   return JSON.stringify(a) === JSON.stringify(b)
 }
 
+export const FIRST_REACTION_WINNER_OVERLAY_SECONDS_MIN = 3
+export const FIRST_REACTION_WINNER_OVERLAY_SECONDS_MAX = 30
+
+export function isFirstReactionWinnerOverlaySecondsValid(
+  seconds: number,
+): boolean {
+  return (
+    Number.isFinite(seconds) &&
+    seconds >= FIRST_REACTION_WINNER_OVERLAY_SECONDS_MIN &&
+    seconds <= FIRST_REACTION_WINNER_OVERLAY_SECONDS_MAX
+  )
+}
+
 export function isFirstReactionSettingsValidForSave(
   settings: FirstReactionSettings,
 ): boolean {
+  if (!isFirstReactionWinnerOverlaySecondsValid(settings.winnerOverlaySeconds)) {
+    return false
+  }
   if (!hasEnabledFirstReactionParticipantRole(settings)) {
     return false
   }

@@ -891,7 +891,7 @@ export const en = {
     settingsDescription:
       "Overlay keyword and rules for accepting chat answers",
     settingsGroupKeyword: "Giveaway keyword",
-    settingsGroupTimeout: "Accept timer",
+    settingsGroupTimeout: "Overlay timers",
     settingsGroupParticipants: "Participants",
     eligibleRolesHelper:
       "Who can send the correct word in chat (Kick roles)",
@@ -951,6 +951,11 @@ export const en = {
       "Add at least one word (2–20 characters) or giveaways cannot start.",
     acceptTimeoutEnabled: "Time limit",
     acceptTimeoutSeconds: "Seconds",
+    winnerOverlaySecondsLabel: "Winner on overlay (seconds)",
+    winnerOverlaySecondsHelp:
+      "How long the winner’s name stays visible in the OBS overlay after a win ({{min}}–{{max}} s).",
+    winnerOverlaySecondsOutOfRange:
+      "Enter a value between {{min}} and {{max}} seconds.",
     streamWidgetTitle: "Stream overlay",
     streamWidgetSettingsTitle: "Overlay size",
     streamWidgetSettingsButton: "Widget settings",

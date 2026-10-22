@@ -13,12 +13,18 @@ import { useTranslation } from 'react-i18next'
 import type { FirstReactionSettings } from '@/api/first-reaction'
 import { FirstReactionCustomWordsField } from '@/components/first-reaction/session/FirstReactionCustomWordsField'
 import { FirstReactionEligibleRolesField } from '@/components/first-reaction/session/FirstReactionEligibleRolesField'
-import { isFirstReactionSettingsValidForSave } from '@/components/first-reaction/session/first-reaction-session-utils'
+import {
+  FIRST_REACTION_WINNER_OVERLAY_SECONDS_MAX,
+  FIRST_REACTION_WINNER_OVERLAY_SECONDS_MIN,
+  isFirstReactionSettingsValidForSave,
+  isFirstReactionWinnerOverlaySecondsValid,
+} from '@/components/first-reaction/session/first-reaction-session-utils'
 import {
   SettingsFormRoot,
   SettingsGroup,
   SettingsGroupLabel,
   SettingsGroupPanel,
+  SettingsGroupPanelBlock,
   SettingsHeaderBlock,
   SettingsNestedField,
   SettingsSaveButton,
@@ -51,6 +57,9 @@ export function FirstReactionSettingsSection(
   const saveLabel = props.savePending ? t('common.saving') : t('common.save')
   const fieldsDisabled = props.readOnly
   const canSaveSettings = isFirstReactionSettingsValidForSave(settings)
+  const winnerOverlaySecondsInvalid = !isFirstReactionWinnerOverlaySecondsValid(
+    settings.winnerOverlaySeconds,
+  )
   const showCustomWords =
     settings.wordSource === 'generated' &&
     settings.generationPool === 'custom_list'
@@ -120,7 +129,7 @@ export function FirstReactionSettingsSection(
                 </Select>
               </FormControl>
               {settings.wordSource === 'manual' ? (
-                <>
+                <SettingsGroupPanelBlock>
                   <FormControl fullWidth size={fieldSize} disabled={fieldsDisabled}>
                     <InputLabel>{t('firstReaction.manualScopeLabel')}</InputLabel>
                     <Select
@@ -167,9 +176,9 @@ export function FirstReactionSettingsSection(
                       }}
                     />
                   ) : null}
-                </>
+                </SettingsGroupPanelBlock>
               ) : (
-                <>
+                <SettingsGroupPanelBlock>
                   <FormControl fullWidth size={fieldSize} disabled={fieldsDisabled}>
                     <InputLabel>{t('firstReaction.generationPoolLabel')}</InputLabel>
                     <Select
@@ -203,7 +212,7 @@ export function FirstReactionSettingsSection(
                       }
                     />
                   ) : null}
-                </>
+                </SettingsGroupPanelBlock>
               )}
             </SettingsGroupPanel>
           </SettingsGroup>
@@ -213,45 +222,80 @@ export function FirstReactionSettingsSection(
               {t('firstReaction.settingsGroupTimeout')}
             </SettingsGroupLabel>
             <SettingsGroupPanel>
-              <SettingsToggleRow>
-                <Switch
-                  size="small"
-                  checked={settings.acceptTimeoutEnabled}
-                  disabled={fieldsDisabled}
-                  onChange={(e) =>
-                    props.onChange({
-                      ...settings,
-                      acceptTimeoutEnabled: e.target.checked,
-                    })
-                  }
-                />
-                <SettingsToggleCopy>
-                  <SettingsToggleLabel variant="body2">
-                    {t('firstReaction.acceptTimeoutEnabled')}
-                  </SettingsToggleLabel>
-                </SettingsToggleCopy>
-              </SettingsToggleRow>
-              {settings.acceptTimeoutEnabled ? (
-                <SettingsNestedField>
-                  <TextField
-                    type="number"
-                    size={fieldSize}
-                    label={t('firstReaction.acceptTimeoutSeconds')}
-                    value={settings.acceptTimeoutSeconds}
+              <SettingsGroupPanelBlock>
+                <SettingsToggleRow>
+                  <Switch
+                    size="small"
+                    checked={settings.acceptTimeoutEnabled}
                     disabled={fieldsDisabled}
-                    fullWidth
-                    slotProps={{
-                      htmlInput: { min: 1, step: 1 },
-                    }}
                     onChange={(e) =>
                       props.onChange({
                         ...settings,
-                        acceptTimeoutSeconds: Number(e.target.value),
+                        acceptTimeoutEnabled: e.target.checked,
                       })
                     }
                   />
-                </SettingsNestedField>
-              ) : null}
+                  <SettingsToggleCopy>
+                    <SettingsToggleLabel variant="body2">
+                      {t('firstReaction.acceptTimeoutEnabled')}
+                    </SettingsToggleLabel>
+                  </SettingsToggleCopy>
+                </SettingsToggleRow>
+                {settings.acceptTimeoutEnabled ? (
+                  <SettingsNestedField>
+                    <TextField
+                      type="number"
+                      size={fieldSize}
+                      label={t('firstReaction.acceptTimeoutSeconds')}
+                      value={settings.acceptTimeoutSeconds}
+                      disabled={fieldsDisabled}
+                      fullWidth
+                      slotProps={{
+                        htmlInput: { min: 1, step: 1 },
+                      }}
+                      onChange={(e) =>
+                        props.onChange({
+                          ...settings,
+                          acceptTimeoutSeconds: Number(e.target.value),
+                        })
+                      }
+                    />
+                  </SettingsNestedField>
+                ) : null}
+              </SettingsGroupPanelBlock>
+              <TextField
+                type="number"
+                size={fieldSize}
+                label={t('firstReaction.winnerOverlaySecondsLabel')}
+                value={settings.winnerOverlaySeconds}
+                disabled={fieldsDisabled}
+                fullWidth
+                error={winnerOverlaySecondsInvalid}
+                helperText={
+                  winnerOverlaySecondsInvalid
+                    ? t('firstReaction.winnerOverlaySecondsOutOfRange', {
+                        min: FIRST_REACTION_WINNER_OVERLAY_SECONDS_MIN,
+                        max: FIRST_REACTION_WINNER_OVERLAY_SECONDS_MAX,
+                      })
+                    : t('firstReaction.winnerOverlaySecondsHelp', {
+                        min: FIRST_REACTION_WINNER_OVERLAY_SECONDS_MIN,
+                        max: FIRST_REACTION_WINNER_OVERLAY_SECONDS_MAX,
+                      })
+                }
+                slotProps={{
+                  htmlInput: {
+                    min: FIRST_REACTION_WINNER_OVERLAY_SECONDS_MIN,
+                    max: FIRST_REACTION_WINNER_OVERLAY_SECONDS_MAX,
+                    step: 1,
+                  },
+                }}
+                onChange={(e) =>
+                  props.onChange({
+                    ...settings,
+                    winnerOverlaySeconds: Number(e.target.value),
+                  })
+                }
+              />
             </SettingsGroupPanel>
           </SettingsGroup>
 

@@ -2,28 +2,28 @@ import { useEffect, useRef, useState } from 'react'
 
 type VisibilityPhase = 'hidden' | 'entering' | 'visible' | 'exiting'
 
-export function useFirstReactionWidgetVisibility(isAccepting: boolean) {
+export function useFirstReactionWidgetVisibility(shouldShow: boolean) {
   const [phase, setPhase] = useState<VisibilityPhase>(
-    isAccepting ? 'entering' : 'hidden',
+    shouldShow ? 'entering' : 'hidden',
   )
-  const wasAcceptingRef = useRef(isAccepting)
+  const wasShowingRef = useRef(shouldShow)
 
   useEffect(() => {
-    if (isAccepting && !wasAcceptingRef.current) {
+    if (shouldShow && !wasShowingRef.current) {
       setPhase('entering')
-    } else if (!isAccepting && wasAcceptingRef.current) {
+    } else if (!shouldShow && wasShowingRef.current) {
       setPhase((current) =>
         current === 'hidden' ? 'hidden' : 'exiting',
       )
     }
-    wasAcceptingRef.current = isAccepting
-  }, [isAccepting])
+    wasShowingRef.current = shouldShow
+  }, [shouldShow])
 
   useEffect(() => {
-    if (isAccepting && phase === 'hidden') {
+    if (shouldShow && phase === 'hidden') {
       setPhase('entering')
     }
-  }, [isAccepting, phase])
+  }, [shouldShow, phase])
 
   const handleAnimationEnd = () => {
     if (phase === 'entering') {

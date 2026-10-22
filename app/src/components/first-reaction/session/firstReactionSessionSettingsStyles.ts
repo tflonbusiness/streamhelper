@@ -8,11 +8,11 @@ export const SettingsHeaderBlock = styled(Stack)(({ theme }) => ({
 }))
 
 export const SettingsFormRoot = styled(Stack)(({ theme }) => ({
-  gap: theme.spacing(2.5),
+  gap: theme.spacing(3.5),
 }))
 
 export const SettingsGroup = styled(Stack)(({ theme }) => ({
-  gap: theme.spacing(1),
+  gap: theme.spacing(1.25),
 }))
 
 export const SettingsGroupLabel = styled(Typography)(({ theme }) => ({
@@ -25,8 +25,8 @@ export const SettingsGroupLabel = styled(Typography)(({ theme }) => ({
 }))
 
 export const SettingsGroupPanel = styled(Stack)(({ theme }) => ({
-  gap: theme.spacing(1.5),
-  padding: theme.spacing(2),
+  gap: theme.spacing(3),
+  padding: theme.spacing(2.5),
   borderRadius: theme.spacing(1.25),
   border: '1px solid',
   borderColor: theme.palette.divider,
@@ -49,6 +49,10 @@ export const SettingsToggleLabel = styled(Typography)({
   fontWeight: 500,
   lineHeight: 1.4,
 })
+
+export const SettingsGroupPanelBlock = styled(Stack)(({ theme }) => ({
+  gap: theme.spacing(2),
+}))
 
 export const SettingsNestedField = styled(Box)(({ theme }) => ({
   paddingLeft: theme.spacing(4.5),
