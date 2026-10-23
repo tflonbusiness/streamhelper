@@ -25,6 +25,7 @@ import {
 } from '../first-reaction/first-reaction-draw-list.js';
 import { FirstReactionService } from '../first-reaction/first-reaction.service.js';
 import { parseFirstReactionWidgetStyle } from '../first-reaction/first-reaction-widget-style.js';
+import { GrowingJackpotService } from '../growing-jackpot/growing-jackpot.service.js';
 import { MediaInteractiveService } from '../media-interactive/media-interactive.service.js';
 
 type CreateModeratorBody = {
@@ -148,11 +149,36 @@ type UpsertFirstReactionWidgetCustomPresetBody = {
   style_settings?: unknown;
 };
 
+type CreateGrowingJackpotBody = {
+  title?: string;
+};
+
+type PatchGrowingJackpotBody = {
+  title?: string;
+  settings?: Record<string, unknown>;
+};
+
+type PatchGrowingJackpotRoundFulfillmentBody = {
+  fulfillment_status?: 'pending' | 'fulfilled';
+};
+
+type PatchGrowingJackpotWidgetBody = {
+  width?: number;
+  height?: number;
+  style?: {
+    prizeText?: string;
+    prizeTextDim?: string;
+    keywordText?: string;
+    timerText?: string;
+  };
+};
+
 @Controller('accounts')
 export class AccountsController {
   constructor(
     private readonly authService: AuthService,
     private readonly firstReaction: FirstReactionService,
+    private readonly growingJackpot: GrowingJackpotService,
     private readonly mediaInteractive: MediaInteractiveService,
     private readonly kickChannelRewards: KickChannelRewardsService,
   ) {}
@@ -1426,5 +1452,204 @@ export class AccountsController {
 
     await this.authService.revokeModerator(accountId, user.id, memberUserId);
     return { ok: true };
+  }
+
+  @Get(':accountId/growing-jackpots')
+  async listGrowingJackpots(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Query('archived') archived: string | undefined,
+    @Query('page') page: string | undefined,
+    @Query('limit') limit: string | undefined,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    const archivedFilter =
+      archived === 'true' || archived === 'all' ? archived : 'false';
+    const pageNum = Math.max(1, Number.parseInt(page ?? '1', 10) || 1);
+    const limitNum = Math.min(
+      50,
+      Math.max(1, Number.parseInt(limit ?? '20', 10) || 20),
+    );
+    return this.growingJackpot.listSessions(
+      accountId,
+      user.id,
+      archivedFilter,
+      pageNum,
+      limitNum,
+    );
+  }
+
+  @Get(':accountId/growing-jackpots/:growingJackpotId')
+  async getGrowingJackpot(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('growingJackpotId', ParseIntPipe) growingJackpotId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.growingJackpot.getSession(accountId, user.id, growingJackpotId);
+  }
+
+  @Post(':accountId/growing-jackpots')
+  async createGrowingJackpot(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Body() body: CreateGrowingJackpotBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    const title = body.title?.trim() ?? 'Growing Jackpot';
+    return this.growingJackpot.createSession(accountId, user.id, title);
+  }
+
+  @Patch(':accountId/growing-jackpots/:growingJackpotId')
+  async patchGrowingJackpot(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('growingJackpotId', ParseIntPipe) growingJackpotId: number,
+    @Body() body: PatchGrowingJackpotBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.growingJackpot.patchSession(
+      accountId,
+      user.id,
+      growingJackpotId,
+      body,
+    );
+  }
+
+  @Delete(':accountId/growing-jackpots/:growingJackpotId')
+  @HttpCode(204)
+  async archiveGrowingJackpot(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('growingJackpotId', ParseIntPipe) growingJackpotId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    await this.growingJackpot.archiveSession(
+      accountId,
+      user.id,
+      growingJackpotId,
+    );
+  }
+
+  @Post(':accountId/growing-jackpots/:growingJackpotId/go-live')
+  async goLiveGrowingJackpot(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('growingJackpotId', ParseIntPipe) growingJackpotId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.growingJackpot.goLive(accountId, user.id, growingJackpotId);
+  }
+
+  @Post(':accountId/growing-jackpots/:growingJackpotId/deactivate')
+  async deactivateGrowingJackpot(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('growingJackpotId', ParseIntPipe) growingJackpotId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.growingJackpot.deactivate(accountId, user.id, growingJackpotId);
+  }
+
+  @Get(':accountId/growing-jackpots/:growingJackpotId/rounds')
+  async listGrowingJackpotRounds(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('growingJackpotId', ParseIntPipe) growingJackpotId: number,
+    @Query('page') pageRaw: string | undefined,
+    @Query('limit') limitRaw: string | undefined,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    const page = Math.max(1, Number.parseInt(pageRaw ?? '1', 10) || 1);
+    const limit = Math.min(
+      100,
+      Math.max(1, Number.parseInt(limitRaw ?? '20', 10) || 20),
+    );
+    return this.growingJackpot.listRounds(
+      accountId,
+      user.id,
+      growingJackpotId,
+      limit,
+      page,
+    );
+  }
+
+  @Post(':accountId/growing-jackpots/:growingJackpotId/rounds/start')
+  async startGrowingJackpotRound(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('growingJackpotId', ParseIntPipe) growingJackpotId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.growingJackpot.startRound(accountId, user.id, growingJackpotId);
+  }
+
+  @Post(':accountId/growing-jackpots/:growingJackpotId/rounds/:roundId/stop')
+  async stopGrowingJackpotRound(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('growingJackpotId', ParseIntPipe) growingJackpotId: number,
+    @Param('roundId', ParseIntPipe) roundId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.growingJackpot.stopRound(
+      accountId,
+      user.id,
+      growingJackpotId,
+      roundId,
+    );
+  }
+
+  @Patch(
+    ':accountId/growing-jackpots/:growingJackpotId/rounds/:roundId/fulfillment',
+  )
+  async patchGrowingJackpotRoundFulfillment(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('growingJackpotId', ParseIntPipe) growingJackpotId: number,
+    @Param('roundId', ParseIntPipe) roundId: number,
+    @Body() body: PatchGrowingJackpotRoundFulfillmentBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    const status = body.fulfillment_status ?? 'fulfilled';
+    return this.growingJackpot.patchRoundFulfillment(
+      accountId,
+      user.id,
+      growingJackpotId,
+      roundId,
+      status,
+    );
+  }
+
+  @Get(':accountId/growing-jackpot-widget')
+  async getGrowingJackpotWidget(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.growingJackpot.getWidget(accountId, user.id);
+  }
+
+  @Patch(':accountId/growing-jackpot-widget')
+  async patchGrowingJackpotWidget(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Body() body: PatchGrowingJackpotWidgetBody,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    return this.growingJackpot.patchWidget(accountId, user.id, body);
   }
 }

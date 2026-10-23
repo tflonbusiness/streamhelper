@@ -5,6 +5,7 @@ export const FAVORITABLE_MODULE_IDS = [
   'chat-roll',
   'media-interactive',
   'first-reaction',
+  'growing-jackpot',
 ] as const;
 
 export type FavoritableModuleId = (typeof FAVORITABLE_MODULE_IDS)[number];

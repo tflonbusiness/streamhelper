@@ -33,6 +33,10 @@ export const MODULE_SESSION_PAGE_COPY: Record<
     titleKey: 'firstReaction.title',
     descriptionKey: 'firstReaction.description',
   },
+  'growing-jackpot': {
+    titleKey: 'growingJackpot.title',
+    descriptionKey: 'growingJackpot.description',
+  },
 }
 
 export function moduleSessionPageTitle(

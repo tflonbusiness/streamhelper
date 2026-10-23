@@ -124,7 +124,7 @@ docker compose --env-file .env.production -f docker-compose.prod.yml exec server
 
 Страницы OBS вида `/modules/.../widget/...` **не** требуют отдельного `location` (их отдаёт SPA через `try_files` → `index.html`). Прокси нужен только для `fetch('/<prefix>/…')` с оверлея.
 
-Текущие префиксы: `auth`, `accounts`, `join`, `bonus-buys`, `prize-spins`, `chat-rolls`, `media-interactive`, `first-reactions`, `webhooks`, `internal`.
+Текущие префиксы: `auth`, `accounts`, `join`, `bonus-buys`, `prize-spins`, `chat-rolls`, `media-interactive`, `first-reactions`, `growing-jackpots`, `webhooks`, `internal`.
 
 После изменений в `landing/` или `deploy/nginx/`:
 

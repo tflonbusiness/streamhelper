@@ -40,6 +40,13 @@ export const widgetUiCopy = {
   firstReactionNoSessions:
     'No First Reaction session yet. Create one, then go live.',
   firstReactionSecondsLeft: '{{seconds}}s left',
+  growingJackpotTitle: 'Growing Jackpot',
+  growingJackpotIdle: 'Waiting for the next round',
+  growingJackpotWinner: 'Winner',
+  growingJackpotNoParticipants: 'No participants',
+  growingJackpotPlayers: 'Players',
+  growingJackpotPrize: 'Prize',
+  growingJackpotTime: 'Time',
 } as const
 
 export function usePinWidgetUiEnglish(): void {

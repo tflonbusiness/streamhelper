@@ -6,6 +6,7 @@ import { resolveKickChatRollRoleIds } from '../kick-badge.mapper.js';
 import { KickChatReplyService } from '../kick-chat-reply.service.js';
 import type {
   ChatRollIntakeResult,
+  KickChatIntakeOptions,
   KickChatMessageEvent,
 } from '../kick-chat.types.js';
 
@@ -18,7 +19,14 @@ export class ChatRollIntakeHandler {
     private readonly chatReply: KickChatReplyService,
   ) {}
 
-  async handle(event: KickChatMessageEvent): Promise<ChatRollIntakeResult> {
+  async handle(
+    event: KickChatMessageEvent,
+    options: KickChatIntakeOptions,
+  ): Promise<ChatRollIntakeResult> {
+    if (options.duplicateChatEvent) {
+      return { action: 'ignored', reason: 'duplicate_event' };
+    }
+
     const messageId = event.message_id;
     const broadcasterId = String(event.broadcaster.user_id);
     const accountId = await this.database.getAccountIdByKickChannelId(
@@ -59,24 +67,6 @@ export class ChatRollIntakeHandler {
       });
       return result;
     }
-
-    const isNew = await this.database.recordKickChatEvent({
-      messageId: event.message_id,
-      broadcasterId,
-      senderId: String(event.sender.user_id),
-      content: event.content,
-    });
-    if (!isNew) {
-      const result = { action: 'ignored' as const, reason: 'duplicate_event' };
-      this.logger.log(
-        `${describeIntakePersistence(result, { messageId })} accountId=${accountId} chatRollId=${session.id}`,
-      );
-      return result;
-    }
-
-    this.logger.log(
-      `saved kick_chat_events messageId=${messageId} accountId=${accountId} chatRollId=${session.id} broadcasterId=${broadcasterId} senderId=${String(event.sender.user_id)}`,
-    );
 
     if (!session.isAcceptingParticipants) {
       const result = { action: 'entries_paused' as const };

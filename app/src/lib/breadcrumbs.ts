@@ -3,6 +3,7 @@ import {
   BONUS_BUY_ROUTE,
   CHAT_ROLL_ROUTE,
   FIRST_REACTION_ROUTE,
+  GROWING_JACKPOT_ROUTE,
   MEDIA_INTERACTIVE_ROUTE,
   MODULES_ROUTE,
   PRIZE_SPIN_ROUTE,
@@ -64,6 +65,12 @@ export function buildBreadcrumbs(
         { labelKey: 'nav.widgets', to: MODULES_ROUTE },
         { labelKey: 'nav.firstReaction' },
       ]
+    case GROWING_JACKPOT_ROUTE:
+      return [
+        home,
+        { labelKey: 'nav.widgets', to: MODULES_ROUTE },
+        { labelKey: 'nav.growingJackpot' },
+      ]
     default:
       break
   }
@@ -100,6 +107,15 @@ export function buildBreadcrumbs(
       home,
       { labelKey: 'nav.widgets', to: MODULES_ROUTE },
       { labelKey: 'nav.firstReaction', to: FIRST_REACTION_ROUTE },
+      { label: sessionLabel(t, dynamicLabel) },
+    ]
+  }
+
+  if (pathname.startsWith(`${GROWING_JACKPOT_ROUTE}/`)) {
+    return [
+      home,
+      { labelKey: 'nav.widgets', to: MODULES_ROUTE },
+      { labelKey: 'nav.growingJackpot', to: GROWING_JACKPOT_ROUTE },
       { label: sessionLabel(t, dynamicLabel) },
     ]
   }

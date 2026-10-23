@@ -46,15 +46,19 @@ Eight games for MVP. Each round: **one winner**, **one streamer bonus**. Command
 | Field | Value |
 |-------|-------|
 | ID | `growing-jackpot` |
-| Command | `!join` |
-| Winner rule | Random one from join pool at timer end |
-| Duration | ~5 min (configurable) |
+| Command | Configurable join keyword (default `!join`) |
+| Winner rule | Random one from join pool at timer end (weighted by Kick role settings) |
+| Duration | ~5 min default (configurable timer per session) |
 
-**Flow:** Streamer starts → overlay shows participant count and growing prize display → each unique `!join` increments counters → timer ends → one random winner.
+**Flow:** Streamer starts a round → overlay shows join command, participant count, displayed prize, and countdown → each unique matching command increments counters → timer ends → one random winner (or empty round if no participants).
 
-**Rules:** One `!join` per user per round; repeat joins ignored.
+**Rules:** One qualifying command per user per round; repeat joins ignored. Displayed prize grows with participant count only (`base + count × step`, optional cap). While a round is active, another round cannot start.
 
-**Streamer settings:** Timer length; prize growth step; optional prize cap (display).
+**Intake:** Same chat message may match multiple live modules if keywords match (fan-out; no priority between games).
+
+**Empty pool:** Timer expiry with zero participants closes the round with no winner and no bot announcement.
+
+**Streamer settings:** Join keyword; timer length; prize base/step/cap (display only); eligible Kick roles and weights; announce winner in chat toggle.
 
 ---
 

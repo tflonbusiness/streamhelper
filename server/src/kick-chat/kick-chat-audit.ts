@@ -31,6 +31,7 @@ export function formatKickRouteAudit(result: KickChatRouteResult): string {
     winnerResponse: summarizeWinnerResponse(result.winnerResponse),
     firstReaction: summarizeFirstReaction(result.firstReaction),
     intake: summarizeIntake(result.intake),
+    growingJackpot: summarizeGrowingJackpot(result.growingJackpot),
   });
 }
 
@@ -54,6 +55,22 @@ function summarizeWinnerResponse(
     return { action: result.action, winId: result.winId };
   }
   return { action: result.action, reason: result.reason };
+}
+
+function summarizeGrowingJackpot(
+  result: KickChatRouteResult['growingJackpot'],
+): Record<string, string | number> {
+  if (result.action === 'participant_added') {
+    return {
+      action: result.action,
+      displayName: result.displayName,
+      participantCount: result.participantCount,
+    };
+  }
+  if (result.action === 'ignored') {
+    return { action: result.action, reason: result.reason };
+  }
+  return { action: result.action };
 }
 
 function summarizeIntake(

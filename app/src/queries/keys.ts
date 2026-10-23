@@ -137,3 +137,40 @@ export const kickChannelKeys = {
   detail: (accountId: number) =>
     [...kickChannelKeys.all, accountId] as const,
 }
+
+export type GrowingJackpotListParams = {
+  archived: 'false' | 'true' | 'all'
+  page: number
+  limit: number
+}
+
+export const growingJackpotKeys = {
+  all: ['growingJackpots'] as const,
+  lists: () => [...growingJackpotKeys.all, 'list'] as const,
+  list: (accountId: number, params: GrowingJackpotListParams) =>
+    [...growingJackpotKeys.lists(), accountId, params] as const,
+  publicWidget: (accountUcid: string) =>
+    [...growingJackpotKeys.all, 'publicWidget', accountUcid] as const,
+  session: (accountId: number, growingJackpotId: number) =>
+    [...growingJackpotKeys.all, 'session', accountId, growingJackpotId] as const,
+  widget: (accountId: number) =>
+    [...growingJackpotKeys.all, 'widget', accountId] as const,
+  roundsRoot: (accountId: number, growingJackpotId: number) =>
+    [
+      ...growingJackpotKeys.all,
+      'rounds',
+      accountId,
+      growingJackpotId,
+    ] as const,
+  rounds: (
+    accountId: number,
+    growingJackpotId: number,
+    page: number,
+    limit: number,
+  ) =>
+    [
+      ...growingJackpotKeys.roundsRoot(accountId, growingJackpotId),
+      page,
+      limit,
+    ] as const,
+}

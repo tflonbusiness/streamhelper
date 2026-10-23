@@ -14,6 +14,7 @@ import {
   BONUS_BUY_ROUTE,
   CHAT_ROLL_ROUTE,
   FIRST_REACTION_ROUTE,
+  GROWING_JACKPOT_ROUTE,
   MEDIA_INTERACTIVE_ROUTE,
   PRIZE_SPIN_ROUTE,
 } from '@/lib/routes'
@@ -24,12 +25,14 @@ export type ModuleSessionPageId =
   | 'prize-spin'
   | 'chat-roll'
   | 'first-reaction'
+  | 'growing-jackpot'
 
 /** All modules that have a dedicated operator page in the app. */
 export type ModulePageId =
   | ModuleSessionPageId
   | 'media-interactive'
   | 'first-reaction'
+  | 'growing-jackpot'
 
 export type ModuleCatalogStatus = 'available' | 'coming_soon'
 
@@ -131,16 +134,18 @@ export const MODULE_CATALOG: ModuleDefinition[] = [
     widgetRoute: FIRST_REACTION_ROUTE,
     hasToggle: false,
   },
+  {
+    id: 'growing-jackpot',
+    status: 'available',
+    icon: TrendingUpIcon,
+    iconVariant: 'success',
+    widgetRoute: GROWING_JACKPOT_ROUTE,
+    hasToggle: false,
+  },
 ]
 
 /** Planned widgets on `/modules` — coming soon, no catalog routes. */
 export const COMING_SOON_WIDGET_CATALOG: ModuleDefinition[] = [
-  {
-    id: 'growing-jackpot',
-    status: 'coming_soon',
-    icon: TrendingUpIcon,
-    iconVariant: 'success',
-  },
   {
     id: 'red-vs-black',
     status: 'coming_soon',

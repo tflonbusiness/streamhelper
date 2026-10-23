@@ -6,7 +6,10 @@ import { DatabaseService } from '../../database/database.service.js';
 import { describeIntakePersistence } from '../kick-chat-audit.js';
 import { resolveKickChatRollRoleIds } from '../kick-badge.mapper.js';
 import { KickChatReplyService } from '../kick-chat-reply.service.js';
-import type { KickChatMessageEvent } from '../kick-chat.types.js';
+import type {
+  KickChatIntakeOptions,
+  KickChatMessageEvent,
+} from '../kick-chat.types.js';
 
 export type FirstReactionIntakeResult =
   | { action: 'ignored'; reason: string }
@@ -22,7 +25,14 @@ export class FirstReactionIntakeHandler {
     private readonly chatReply: KickChatReplyService,
   ) {}
 
-  async handle(event: KickChatMessageEvent): Promise<FirstReactionIntakeResult> {
+  async handle(
+    event: KickChatMessageEvent,
+    options: KickChatIntakeOptions,
+  ): Promise<FirstReactionIntakeResult> {
+    if (options.duplicateChatEvent) {
+      return { action: 'ignored', reason: 'duplicate_event' };
+    }
+
     const messageId = event.message_id;
     const broadcasterId = String(event.broadcaster.user_id);
     const accountId = await this.database.getAccountIdByKickChannelId(
@@ -54,16 +64,6 @@ export class FirstReactionIntakeHandler {
     const message = event.content.trim();
     if (!commandMatchesKeyword(message, context.keyword)) {
       return { action: 'ignored', reason: 'keyword_mismatch' };
-    }
-
-    const isNew = await this.database.recordKickChatEvent({
-      messageId: event.message_id,
-      broadcasterId,
-      senderId: String(event.sender.user_id),
-      content: event.content,
-    });
-    if (!isNew) {
-      return { action: 'ignored', reason: 'duplicate_event' };
     }
 
     const roleIds = resolveKickChatRollRoleIds(event.sender.identity?.badges);

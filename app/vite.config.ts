@@ -25,6 +25,7 @@ export default defineConfig({
       '/prize-spins': 'http://localhost:3000',
       '/chat-rolls': 'http://localhost:3000',
       '/first-reactions': 'http://localhost:3000',
+      '/growing-jackpots': 'http://localhost:3000',
       '/media-interactive': 'http://localhost:3000',
       '/internal': 'http://localhost:3000',
     },

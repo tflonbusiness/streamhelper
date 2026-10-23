@@ -6,6 +6,8 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module.js';
 import { DatabaseService } from './../src/database/database.service.js';
+import { FirstReactionService } from './../src/first-reaction/first-reaction.service.js';
+import { GrowingJackpotService } from './../src/growing-jackpot/growing-jackpot.service.js';
 
 describe('Kick chat webhook (e2e)', () => {
   let app: INestApplication<App>;
@@ -40,6 +42,8 @@ describe('Kick chat webhook (e2e)', () => {
           input.messageId !== 'dup-001',
         getAccountIdByKickChannelId: async (channelId: string) =>
           channelId === 'channel-mock' ? 10 : null,
+        getKickChannelIdByAccountId: async (accountId: number) =>
+          accountId === 10 ? 'channel-mock' : null,
         getChatRollForIntake: async (accountId: number, keyword: string) =>
           accountId === 10 &&
           keyword.trim().toLowerCase() === liveSession.keyword.trim().toLowerCase()
@@ -50,6 +54,20 @@ describe('Kick chat webhook (e2e)', () => {
           participantId: 42,
         }),
         accountHasSubscriptionAccess: async () => true,
+        getPool: () =>
+          ({
+            query: async () => ({ rows: [] }),
+          }) as never,
+      })
+      .overrideProvider(FirstReactionService)
+      .useValue({
+        getIntakeContext: async () => null,
+      })
+      .overrideProvider(GrowingJackpotService)
+      .useValue({
+        getIntakeContext: async () => null,
+        closeDueRoundsForJackpot: async () => undefined,
+        tryJoinFromChat: async () => ({ status: 'not_accepting' as const }),
       })
       .compile();
 
@@ -89,20 +107,102 @@ describe('Kick chat webhook (e2e)', () => {
       })
       .expect(200);
 
-    expect(response.body).toEqual({
-      ok: true,
-      result: {
-        winnerResponse: {
-          action: 'ignored',
-          reason: 'response_disabled',
-        },
-        intake: {
-          action: 'participant_added',
-          displayName: 'luckyviewer',
-          replyInChat: false,
-        },
-      },
+    expect(response.body.ok).toBe(true);
+    expect(response.body.result.winnerResponse).toEqual({
+      action: 'ignored',
+      reason: 'response_disabled',
     });
+    expect(response.body.result.intake).toEqual({
+      action: 'participant_added',
+      displayName: 'luckyviewer',
+      replyInChat: false,
+    });
+    expect(response.body.result.firstReaction.action).toBe('ignored');
+    expect(response.body.result.growingJackpot.action).toBe('ignored');
+  });
+
+  it('fan-out: same keyword enrolls chat roll and growing jackpot', async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    })
+      .overrideProvider(DatabaseService)
+      .useValue({
+        onModuleInit: async () => undefined,
+        onModuleDestroy: async () => undefined,
+        recordKickChatEvent: async () => true,
+        getAccountIdByKickChannelId: async () => 10,
+        getKickChannelIdByAccountId: async () => 'channel-mock',
+        getChatRollForIntake: async (accountId: number, keyword: string) =>
+          accountId === 10 &&
+          keyword.trim().toLowerCase() === liveSession.keyword.trim().toLowerCase()
+            ? liveSession
+            : null,
+        insertChatRollParticipantFromChat: async () => ({
+          status: 'created' as const,
+          participantId: 7,
+        }),
+        accountHasSubscriptionAccess: async () => true,
+        getPool: () =>
+          ({
+            query: async () => ({ rows: [] }),
+          }) as never,
+      })
+      .overrideProvider(FirstReactionService)
+      .useValue({
+        getIntakeContext: async () => null,
+      })
+      .overrideProvider(GrowingJackpotService)
+      .useValue({
+        getIntakeContext: async () => ({
+          growingJackpotId: 2,
+          roundId: 99,
+          joinKeyword: '!join',
+          settings: {
+            roleSettings: liveSession.roleSettings,
+          },
+        }),
+        tryJoinFromChat: async () => ({
+          status: 'created' as const,
+          participantCount: 3,
+          displayPrize: 12,
+        }),
+        closeDueRoundsForJackpot: async () => undefined,
+      })
+      .compile();
+
+    const fanoutApp = moduleFixture.createNestApplication({ rawBody: true });
+    fanoutApp.use(cookieParser());
+    fanoutApp.use(
+      session({
+        secret: 'test-secret',
+        resave: false,
+        saveUninitialized: false,
+      }),
+    );
+    await fanoutApp.init();
+
+    const response = await request(fanoutApp.getHttpServer())
+      .post('/dev/kick/chat')
+      .send({
+        message_id: 'mock-fanout-001',
+        broadcaster: { user_id: 'channel-mock' },
+        sender: {
+          user_id: 'viewer-fan',
+          username: 'fanout_user',
+          identity: { badges: [] },
+        },
+        content: '!join',
+      })
+      .expect(200);
+
+    expect(response.body.result.intake.action).toBe('participant_added');
+    expect(response.body.result.growingJackpot).toEqual({
+      action: 'participant_added',
+      displayName: 'fanout_user',
+      participantCount: 3,
+    });
+
+    await fanoutApp.close();
   });
 
   it('confirms pending winner response on live session', async () => {

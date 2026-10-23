@@ -30,6 +30,9 @@ import { MediaInteractiveStreamWidgetPage } from './pages/MediaInteractiveStream
 import { FirstReactionPage } from './pages/FirstReactionPage'
 import { FirstReactionSessionPage } from './pages/FirstReactionSessionPage'
 import { FirstReactionStreamWidgetPage } from './pages/FirstReactionStreamWidgetPage'
+import { GrowingJackpotPage } from './pages/GrowingJackpotPage'
+import { GrowingJackpotSessionPage } from './pages/GrowingJackpotSessionPage'
+import { GrowingJackpotStreamWidgetPage } from './pages/GrowingJackpotStreamWidgetPage'
 
 export const appRouter = createBrowserRouter([
   {
@@ -59,6 +62,10 @@ export const appRouter = createBrowserRouter([
   {
     path: '/modules/first-reaction/widget/:ucid',
     element: <FirstReactionStreamWidgetPage />,
+  },
+  {
+    path: '/modules/growing-jackpot/widget/:ucid',
+    element: <GrowingJackpotStreamWidgetPage />,
   },
   {
     path: '/internal/subscriptions',
@@ -123,6 +130,14 @@ export const appRouter = createBrowserRouter([
                   {
                     path: '/modules/first-reaction/:id',
                     element: <FirstReactionSessionPage />,
+                  },
+                  {
+                    path: '/modules/growing-jackpot',
+                    element: <GrowingJackpotPage />,
+                  },
+                  {
+                    path: '/modules/growing-jackpot/:id',
+                    element: <GrowingJackpotSessionPage />,
                   },
                   {
                     element: <OwnerRoute />,

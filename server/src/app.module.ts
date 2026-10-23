@@ -12,6 +12,7 @@ import { ChatRollModule } from './chat-roll/chat-roll.module.js';
 import { InternalAdminModule } from './internal-admin/internal-admin.module.js';
 import { PrizeSpinModule } from './prize-spin/prize-spin.module.js';
 import { FirstReactionModule } from './first-reaction/first-reaction.module.js';
+import { GrowingJackpotModule } from './growing-jackpot/growing-jackpot.module.js';
 import { MediaInteractiveModule } from './media-interactive/media-interactive.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
@@ -30,6 +31,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     PrizeSpinModule,
     ChatRollModule,
     FirstReactionModule,
+    GrowingJackpotModule,
     KickChatModule,
     MediaInteractiveModule,
     InternalAdminModule,

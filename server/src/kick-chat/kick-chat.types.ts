@@ -43,8 +43,23 @@ export type FirstReactionIntakeRouteResult =
   | { action: 'ignored'; reason: string }
   | { action: 'won'; displayName: string; proofToken: string | null };
 
+export type GrowingJackpotIntakeResult =
+  | { action: 'ignored'; reason: string }
+  | {
+      action: 'participant_added';
+      displayName: string;
+      participantCount: number;
+    }
+  | { action: 'duplicate' }
+  | { action: 'entries_paused' };
+
+export type KickChatIntakeOptions = {
+  duplicateChatEvent: boolean;
+};
+
 export type KickChatRouteResult = {
   winnerResponse: WinnerResponseResult;
   firstReaction: FirstReactionIntakeRouteResult;
   intake: ChatRollIntakeResult;
+  growingJackpot: GrowingJackpotIntakeResult;
 };

@@ -86,6 +86,43 @@ export class KickChatReplyService {
     }
   }
 
+  async sendGrowingJackpotWinner(input: {
+    broadcasterUserId: string;
+    displayName: string;
+    proofToken: string;
+  }): Promise<void> {
+    const proof = input.proofToken ? ` Proof: ${input.proofToken}.` : '';
+    const content = `@${input.displayName} — you won Growing Jackpot! Bonus from streamer incoming.${proof}`;
+
+    if (this.isMockMode()) {
+      this.logger.log(
+        `[mock] chat reply → ${input.broadcasterUserId}: ${content}`,
+      );
+      return;
+    }
+
+    const accessToken = await this.getAppAccessToken();
+    const response = await fetch(KICK_CHAT_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        broadcaster_user_id: Number(input.broadcasterUserId),
+        content,
+        type: 'bot',
+      }),
+    });
+
+    if (!response.ok) {
+      const detail = await response.text();
+      this.logger.warn(
+        `Kick growing jackpot winner reply failed (${response.status}): ${detail}`,
+      );
+    }
+  }
+
   private async getAppAccessToken(): Promise<string> {
     const now = Date.now();
     if (this.cachedAppToken && this.cachedAppToken.expiresAt > now) {

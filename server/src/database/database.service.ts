@@ -4276,6 +4276,23 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     return row ? toInt(row.account_id) : null;
   }
 
+  async getKickChannelIdByAccountId(
+    accountId: number,
+  ): Promise<string | null> {
+    const result = await this.pool.query<{ channel_id: string }>(
+      `
+        SELECT channel_id
+        FROM account_channels
+        WHERE account_id = $1 AND provider = 'kick'
+        ORDER BY is_primary DESC, id ASC
+        LIMIT 1
+      `,
+      [accountId],
+    );
+    const row = result.rows[0];
+    return row ? String(row.channel_id) : null;
+  }
+
   private mapChatRollRow(row: {
     id: string | number;
     account_id: string | number;
