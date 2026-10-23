@@ -115,6 +115,17 @@ docker compose --env-file .env.production -f docker-compose.prod.yml exec server
 
 В production **корень сайта** (`/`) — продающая страница `landing/index.html`. React-приложение и виджеты OBS по-прежнему на тех же путях (`/login`, `/dashboard`, `/modules/.../widget/...`). API проксируется nginx на контейнер `server`.
 
+### Публичные API-префиксы (новый модуль)
+
+Каждый **корневой** Nest-контроллер (`@Controller('first-reactions')` и т.п., не пути внутри `/accounts/`) нужно прокинуть в двух местах:
+
+1. `deploy/nginx/snippets/app-proxy.conf` — `location /<prefix>/ { proxy_pass http://api; … }`
+2. `app/vite.config.ts` — `server.proxy['/<prefix>']`
+
+Страницы OBS вида `/modules/.../widget/...` **не** требуют отдельного `location` (их отдаёт SPA через `try_files` → `index.html`). Прокси нужен только для `fetch('/<prefix>/…')` с оверлея.
+
+Текущие префиксы: `auth`, `accounts`, `join`, `bonus-buys`, `prize-spins`, `chat-rolls`, `media-interactive`, `first-reactions`, `webhooks`, `internal`.
+
 После изменений в `landing/` или `deploy/nginx/`:
 
 ```bash

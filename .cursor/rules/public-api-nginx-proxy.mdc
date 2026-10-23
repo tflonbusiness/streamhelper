@@ -1,0 +1,35 @@
+---
+description: New top-level Nest API prefix — update nginx prod proxy and Vite dev proxy
+globs: server/src/**/*.controller.ts
+alwaysApply: false
+---
+
+# Public API routes and reverse proxy
+
+When you add or change a **root-level** Nest `@Controller('…')` (paths like `/first-reactions/...`, not nested under `/accounts/:id/...`):
+
+## Checklist (all three)
+
+1. **Production nginx** — add a `location` block in `deploy/nginx/snippets/app-proxy.conf`:
+   ```nginx
+   location /<prefix>/ {
+       proxy_pass http://api;
+       include /etc/nginx/snippets/proxy-api.conf;
+   }
+   ```
+   If the repo still mirrors locations in `deploy/nginx/nginx.https.conf.example`, add the same block there.
+
+2. **Local dev** — add the same prefix to `app/vite.config.ts` → `server.proxy` (target `http://localhost:3000`).
+
+3. **Docs** — one line in `docs/deploy-vps.md` § «Публичные API-префиксы» if this is a new module.
+
+## Do not confuse with SPA routes
+
+- OBS/dashboard pages under `/modules/.../widget/...` are served by `location /` → `index.html`. **No** extra nginx `location` for those.
+- Only **browser `fetch()` to the API host** needs the proxy prefix (e.g. `GET /first-reactions/widget/:ucid`).
+
+## Existing prefixes (keep in sync when auditing)
+
+`/auth/`, `/accounts/`, `/join/`, `/bonus-buys/`, `/prize-spins/`, `/chat-rolls/`, `/media-interactive/`, `/first-reactions/`, `/webhooks/`, `/internal/`
+
+Routes under `/accounts/` are already covered by `location /accounts/`.
