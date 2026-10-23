@@ -14,12 +14,14 @@ describe('AuthService', () => {
   let findUserById: ReturnType<typeof vi.fn>;
   let getPrimaryMembership: ReturnType<typeof vi.fn>;
   let revokeModeratorPermanently: ReturnType<typeof vi.fn>;
+  let getPrimaryKickChannel: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     hasActiveCredentials = vi.fn();
     findUserById = vi.fn();
     getPrimaryMembership = vi.fn();
     revokeModeratorPermanently = vi.fn();
+    getPrimaryKickChannel = vi.fn();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -30,6 +32,7 @@ describe('AuthService', () => {
             hasActiveCredentials,
             findUserById,
             getPrimaryMembership,
+            getPrimaryKickChannel,
             provisionOwnerFromKick: vi.fn(),
             findCredentialByProvider: vi.fn(),
             findAccessLinkUserIdByToken: vi.fn(),
@@ -66,23 +69,32 @@ describe('AuthService', () => {
   it('establishSessionForUserId returns user with account context', async () => {
     hasActiveCredentials.mockResolvedValue(true);
     findUserById.mockResolvedValue({ id: 1, name: 'demo_streamer' });
+    const subscription = activeTrialSubscriptionFixture({
+      endsAt: '2030-01-01T00:00:00.000Z',
+    });
     getPrimaryMembership.mockResolvedValue({
       accountId: 10,
       ucid: '550e8400-e29b-41d4-a716-446655440000',
       name: 'demo_streamer',
       role: 'owner',
       subscriptionPlan: 'free',
-      subscription: activeTrialSubscriptionFixture(),
+      subscription,
+    });
+    getPrimaryKickChannel.mockResolvedValue({
+      channelId: 'channel-mock',
+      channelSlug: 'kick_user_mock',
     });
 
     await expect(service.establishSessionForUserId(1)).resolves.toEqual({
       id: 1,
       name: 'demo_streamer',
       accountId: 10,
+      accountUcid: '550e8400-e29b-41d4-a716-446655440000',
       accountName: 'demo_streamer',
       role: 'owner',
       subscriptionPlan: 'free',
-      subscription: activeTrialSubscriptionFixture(),
+      subscription,
+      channelSlug: 'kick_user_mock',
     });
   });
 

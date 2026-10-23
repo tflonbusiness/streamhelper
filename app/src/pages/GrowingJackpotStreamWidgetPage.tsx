@@ -74,7 +74,10 @@ export function GrowingJackpotStreamWidgetPage() {
   }
 
   return (
-    <Box sx={obsBrowserSourceBoxSx({ width, height })}>
+    <Box
+      data-testid="growing-jackpot-stream-widget"
+      sx={obsBrowserSourceBoxSx({ width, height })}
+    >
       <GrowingJackpotWidgetCard view={view} width={width} height={height} />
     </Box>
   )

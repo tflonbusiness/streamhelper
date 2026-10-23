@@ -1,5 +1,9 @@
 import { Decimal } from 'decimal.js';
 
+function toMoneyString(value: Decimal): string {
+  return value.toDecimalPlaces(2).toFixed(2);
+}
+
 export function computeMultiplier(
   winAmount: string,
   purchaseAmount: string,
@@ -8,7 +12,7 @@ export function computeMultiplier(
   if (purchase.lte(0)) {
     throw new Error('INVALID_PURCHASE_AMOUNT');
   }
-  return new Decimal(winAmount).div(purchase).toDecimalPlaces(2).toString();
+  return toMoneyString(new Decimal(winAmount).div(purchase));
 }
 
 export function normalizeMoney(value: string): string {
@@ -19,7 +23,7 @@ export function normalizeMoney(value: string): string {
   if (!parsed.isFinite() || parsed.lt(0)) {
     throw new Error('INVALID_AMOUNT');
   }
-  return parsed.toDecimalPlaces(2).toString();
+  return toMoneyString(parsed);
 }
 
 export function normalizeSignedMoney(value: string): string {
@@ -30,7 +34,7 @@ export function normalizeSignedMoney(value: string): string {
   if (!parsed.isFinite()) {
     throw new Error('INVALID_SIGNED_AMOUNT');
   }
-  return parsed.toDecimalPlaces(2).toString();
+  return toMoneyString(parsed);
 }
 
 export function normalizePositiveMoney(value: string): string {

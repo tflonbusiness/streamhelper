@@ -72,6 +72,7 @@ export function GrowingJackpotSessionHeaderSection(
                 variant="contained"
                 size="small"
                 color="primary"
+                data-testid="growing-jackpot-session-go-live"
                 disabled={props.liveActionPending || props.goLiveDisabled}
                 onClick={props.onGoLive}
               >

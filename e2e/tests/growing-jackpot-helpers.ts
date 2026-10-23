@@ -1,0 +1,53 @@
+import { expect, type Page } from '@playwright/test'
+
+export async function deactivateAllLiveGrowingJackpotSessions(
+  page: Page,
+  accountId: number,
+): Promise<void> {
+  const response = await page.request.get(
+    `/accounts/${accountId}/growing-jackpots?archived=false&page=1&limit=50`,
+  )
+  expect(response.ok()).toBeTruthy()
+  const body = (await response.json()) as {
+    sessions: Array<{ id: number; status: string }>
+  }
+  for (const session of body.sessions) {
+    if (session.status === 'live') {
+      const deactivate = await page.request.post(
+        `/accounts/${accountId}/growing-jackpots/${session.id}/deactivate`,
+      )
+      expect(deactivate.ok()).toBeTruthy()
+    }
+  }
+}
+
+export async function ensureGrowingJackpotSessionLive(page: Page): Promise<void> {
+  const goLive = page.getByTestId('growing-jackpot-session-go-live')
+  if (await goLive.isVisible()) {
+    await goLive.click()
+    await expect(goLive).toBeHidden()
+  }
+}
+
+export async function openGrowingJackpotSession(
+  page: Page,
+  title: string,
+): Promise<void> {
+  const titleLink = page.getByRole('link', { name: title }).first()
+  const openLink = page.getByRole('link', { name: `Open ${title}` }).first()
+  await expect(titleLink.or(openLink)).toBeVisible()
+  if (await titleLink.isVisible()) {
+    await titleLink.click()
+  } else {
+    await openLink.click()
+  }
+  await expect(page).toHaveURL(/\/modules\/growing-jackpot\/\d+/)
+}
+
+export async function startGrowingJackpotRound(page: Page): Promise<void> {
+  await ensureGrowingJackpotSessionLive(page)
+  const startRound = page.getByTestId('growing-jackpot-start-round')
+  await expect(startRound).toBeEnabled()
+  await startRound.click()
+  await expect(page.getByTestId('growing-jackpot-stop-round')).toBeVisible()
+}

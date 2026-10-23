@@ -70,7 +70,9 @@ export function GrowingJackpotRoundSection(
               <Typography variant="caption" color="text.secondary">
                 {t('growingJackpot.joinKeywordLabel')}
               </Typography>
-              <CommandDisplay>{props.activeRound.joinKeyword}</CommandDisplay>
+              <CommandDisplay data-testid="growing-jackpot-join-keyword">
+                {props.activeRound.joinKeyword}
+              </CommandDisplay>
               <Typography variant="body2" color="text.secondary">
                 {t('growingJackpot.participantCount', {
                   count: props.activeRound.participantCount,
@@ -106,6 +108,7 @@ export function GrowingJackpotRoundSection(
             {!isAccepting ? (
               <Button
                 variant="contained"
+                data-testid="growing-jackpot-start-round"
                 disabled={
                   props.readOnly ||
                   !props.isLive ||
@@ -118,6 +121,7 @@ export function GrowingJackpotRoundSection(
             ) : (
               <Button
                 color="warning"
+                data-testid="growing-jackpot-stop-round"
                 disabled={props.readOnly || props.stopPending}
                 onClick={props.onStop}
               >
