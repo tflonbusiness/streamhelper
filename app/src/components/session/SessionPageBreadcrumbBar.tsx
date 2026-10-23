@@ -16,15 +16,22 @@ import { cardSx, colors } from '@/theme/colors'
 
 type SessionPageBreadcrumbBarProps = {
   module: ModuleDefinition
+  /** When false, only the module icon is shown (no title caption). */
+  showModuleTitle?: boolean
 }
 
 /** Session pages: module accent and breadcrumbs only (no module title/description block). */
-export function SessionPageBreadcrumbBar({ module }: SessionPageBreadcrumbBarProps) {
+export function SessionPageBreadcrumbBar({
+  module,
+  showModuleTitle = true,
+}: SessionPageBreadcrumbBarProps) {
   const { t } = useTranslation()
   const theme = useTheme()
   const iconVariant = module.iconVariant as ModuleIconVariant
   const moduleHeaderSx = modulePageHeaderSx(iconVariant, theme)
-  const moduleTitle = moduleSessionPageTitle(module, t)
+  const moduleTitle = showModuleTitle
+    ? moduleSessionPageTitle(module, t)
+    : null
   const ModuleIcon = module.icon as SvgIconComponent
 
   return (
@@ -91,22 +98,24 @@ export function SessionPageBreadcrumbBar({ module }: SessionPageBreadcrumbBarPro
             height: 32,
           }}
         >
-          <Typography
-            variant="caption"
-            noWrap
-            component="span"
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              fontWeight: 700,
-              fontSize: '0.75rem',
-              lineHeight: 1,
-              letterSpacing: '-0.01em',
-              maxWidth: { xs: 100, sm: 180 },
-            }}
-          >
-            {moduleTitle}
-          </Typography>
+          {moduleTitle ? (
+            <Typography
+              variant="caption"
+              noWrap
+              component="span"
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                lineHeight: 1,
+                letterSpacing: '-0.01em',
+                maxWidth: { xs: 100, sm: 180 },
+              }}
+            >
+              {moduleTitle}
+            </Typography>
+          ) : null}
           <IconTile icon={ModuleIcon} variant={iconVariant} size="sm" />
         </Stack>
       </Box>

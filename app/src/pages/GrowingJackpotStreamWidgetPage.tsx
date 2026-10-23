@@ -1,5 +1,5 @@
 import { Box } from '@mui/material'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { GrowingJackpotWidgetNotFoundError } from '@/api/growing-jackpot'
 import { GrowingJackpotWidgetCard } from '@/components/growing-jackpot/widget/GrowingJackpotWidgetCard'
@@ -10,11 +10,23 @@ import {
 } from '@/hooks/useObsBrowserSourceLayout'
 import { usePinWidgetUiEnglish, widgetUiCopy } from '@/i18n/widget-ui'
 import { useGrowingJackpotTerminalOverlay } from '@/hooks/use-growing-jackpot-terminal-overlay'
+import { attachFirstReactionLightningAudioUnlock } from '@/lib/first-reaction-lightning-audio'
 import { GROWING_JACKPOT_WIDGET_DEFAULTS } from '@/lib/growing-jackpot-widget-defaults'
 import { usePublicGrowingJackpotWidget } from '@/queries/use-growing-jackpot-widget'
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function isGrowingJackpotOverlayVisible(
+  view: ReturnType<typeof useGrowingJackpotTerminalOverlay>,
+): boolean {
+  return (
+    view !== undefined &&
+    view.status !== 'idle' &&
+    view.status !== 'no_participants' &&
+    view.status !== 'unavailable'
+  )
+}
 
 export function GrowingJackpotStreamWidgetPage() {
   usePinWidgetUiEnglish()
@@ -31,6 +43,8 @@ export function GrowingJackpotStreamWidgetPage() {
     usePublicGrowingJackpotWidget(accountUcid)
   const view = useGrowingJackpotTerminalOverlay(rawView)
 
+  const overlayVisible = isGrowingJackpotOverlayVisible(view)
+
   const width =
     view && view.status !== 'unavailable'
       ? view.width
@@ -40,7 +54,11 @@ export function GrowingJackpotStreamWidgetPage() {
       ? view.height
       : GROWING_JACKPOT_WIDGET_DEFAULTS.height
 
-  useObsBrowserSourceLayout({ width, height })
+  useObsBrowserSourceLayout(
+    view && view.status !== 'unavailable' ? { width, height } : undefined,
+  )
+
+  useEffect(() => attachFirstReactionLightningAudioUnlock(), [])
 
   if (accountUcid === null) {
     return (
@@ -73,10 +91,28 @@ export function GrowingJackpotStreamWidgetPage() {
     )
   }
 
+  if (!overlayVisible) {
+    return (
+      <Box
+        data-testid="growing-jackpot-stream-widget"
+        aria-hidden
+        sx={{
+          width: GROWING_JACKPOT_WIDGET_DEFAULTS.width,
+          height: GROWING_JACKPOT_WIDGET_DEFAULTS.height,
+          bgcolor: 'transparent',
+        }}
+      />
+    )
+  }
+
   return (
     <Box
       data-testid="growing-jackpot-stream-widget"
-      sx={obsBrowserSourceBoxSx({ width, height })}
+      sx={{
+        ...obsBrowserSourceBoxSx({ width, height }),
+        display: 'flex',
+        alignItems: 'stretch',
+      }}
     >
       <GrowingJackpotWidgetCard view={view} width={width} height={height} />
     </Box>

@@ -1,10 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { GrowingJackpotSettings } from '@/api/growing-jackpot'
+import type {
+  GrowingJackpotRoundListParams,
+  GrowingJackpotSettings,
+} from '@/api/growing-jackpot'
 import {
+  archiveAllGrowingJackpotRounds,
+  archiveGrowingJackpotRound,
   deactivateGrowingJackpot,
   fetchGrowingJackpotRounds,
   fetchGrowingJackpotSession,
-  patchGrowingJackpotRoundFulfillment,
   patchGrowingJackpotSession,
   startGrowingJackpotRound,
   stopGrowingJackpotRound,
@@ -32,19 +36,17 @@ export function useGrowingJackpotSession(
 export function useGrowingJackpotRounds(
   accountId: number | undefined,
   growingJackpotId: number,
-  page = 1,
-  limit = 20,
+  params: GrowingJackpotRoundListParams,
   options?: { pollWhileAccepting?: boolean },
 ) {
   return useQuery({
     queryKey: growingJackpotKeys.rounds(
       accountId ?? 0,
       growingJackpotId,
-      page,
-      limit,
+      params,
     ),
     queryFn: () =>
-      fetchGrowingJackpotRounds(accountId!, growingJackpotId, page, limit),
+      fetchGrowingJackpotRounds(accountId!, growingJackpotId, params),
     enabled: accountId !== undefined && Number.isFinite(growingJackpotId),
     refetchInterval: (query) => {
       if (!options?.pollWhileAccepting) {
@@ -132,19 +134,30 @@ export function useStopGrowingJackpotRound(
   })
 }
 
-export function usePatchGrowingJackpotRoundFulfillment(
+export function useArchiveGrowingJackpotRound(
   accountId: number | undefined,
   growingJackpotId: number,
 ) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { roundId: number; status: 'pending' | 'fulfilled' }) =>
-      patchGrowingJackpotRoundFulfillment(
-        accountId!,
-        growingJackpotId,
-        input.roundId,
-        input.status,
-      ),
+    mutationFn: (roundId: number) =>
+      archiveGrowingJackpotRound(accountId!, growingJackpotId, roundId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: growingJackpotKeys.roundsRoot(accountId!, growingJackpotId),
+      })
+    },
+  })
+}
+
+export function useArchiveAllGrowingJackpotRounds(
+  accountId: number | undefined,
+  growingJackpotId: number,
+) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      archiveAllGrowingJackpotRounds(accountId!, growingJackpotId),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: growingJackpotKeys.roundsRoot(accountId!, growingJackpotId),

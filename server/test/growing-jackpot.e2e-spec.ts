@@ -90,7 +90,7 @@ describe('Growing Jackpot (e2e)', () => {
       .expect(200)
       .expect(({ body }) => {
         expect(body.status).toBe('idle');
-        expect(body.width).toBe(500);
+        expect(body.width).toBe(640);
       });
   });
 
@@ -211,13 +211,13 @@ describe('Growing Jackpot (e2e)', () => {
       });
   });
 
-  it('marks round fulfillment after win', async () => {
+  it('archives a closed round from history', async () => {
     const agent = request.agent(app.getHttpServer());
     await loginOwner(agent);
 
     const create = await agent
       .post(`/accounts/${accountId}/growing-jackpots`)
-      .send({ title: 'Fulfill' })
+      .send({ title: 'Archive round' })
       .expect(201);
     const id = (create.body.session?.id ?? create.body.id) as number;
 
@@ -225,24 +225,26 @@ describe('Growing Jackpot (e2e)', () => {
       .post(`/accounts/${accountId}/growing-jackpots/${id}/rounds/start`)
       .expect(201);
     const roundId = started.body.round.id as number;
-    store.addParticipant(roundId, 'winner-e2e', 'champ');
-    store.expireRound(roundId);
-
-    await request(app.getHttpServer())
-      .get(`/growing-jackpots/widget/${ucid}`)
-      .expect(200)
-      .expect(({ body }) => {
-        expect(body.status).toBe('winner');
-      });
 
     await agent
-      .patch(
-        `/accounts/${accountId}/growing-jackpots/${id}/rounds/${roundId}/fulfillment`,
+      .post(
+        `/accounts/${accountId}/growing-jackpots/${id}/rounds/${roundId}/stop`,
       )
-      .send({ fulfillment_status: 'fulfilled' })
+      .expect(201);
+
+    await agent
+      .delete(
+        `/accounts/${accountId}/growing-jackpots/${id}/rounds/${roundId}`,
+      )
+      .expect(204);
+
+    await agent
+      .get(
+        `/accounts/${accountId}/growing-jackpots/${id}/rounds?page=1&limit=10&sortBy=time&sortOrder=desc`,
+      )
       .expect(200)
       .expect(({ body }) => {
-        expect(body.round.fulfillmentStatus).toBe('fulfilled');
+        expect(body.total).toBe(0);
       });
   });
 

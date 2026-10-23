@@ -25,6 +25,12 @@ import {
 } from '../first-reaction/first-reaction-draw-list.js';
 import { FirstReactionService } from '../first-reaction/first-reaction.service.js';
 import { parseFirstReactionWidgetStyle } from '../first-reaction/first-reaction-widget-style.js';
+import {
+  parseGrowingJackpotRoundListLimit,
+  parseGrowingJackpotRoundListPage,
+  parseGrowingJackpotRoundSortField,
+  parseGrowingJackpotRoundSortOrder,
+} from '../growing-jackpot/growing-jackpot-round-list.js';
 import { GrowingJackpotService } from '../growing-jackpot/growing-jackpot.service.js';
 import { MediaInteractiveService } from '../media-interactive/media-interactive.service.js';
 
@@ -156,10 +162,6 @@ type CreateGrowingJackpotBody = {
 type PatchGrowingJackpotBody = {
   title?: string;
   settings?: Record<string, unknown>;
-};
-
-type PatchGrowingJackpotRoundFulfillmentBody = {
-  fulfillment_status?: 'pending' | 'fulfilled';
 };
 
 type PatchGrowingJackpotWidgetBody = {
@@ -1562,23 +1564,22 @@ export class AccountsController {
   async listGrowingJackpotRounds(
     @Param('accountId', ParseIntPipe) accountId: number,
     @Param('growingJackpotId', ParseIntPipe) growingJackpotId: number,
-    @Query('page') pageRaw: string | undefined,
-    @Query('limit') limitRaw: string | undefined,
+    @Query('page') page: string | undefined,
+    @Query('limit') limit: string | undefined,
+    @Query('sortBy') sortBy: string | undefined,
+    @Query('sortOrder') sortOrder: string | undefined,
     @Req() req: Request,
   ) {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
-    const page = Math.max(1, Number.parseInt(pageRaw ?? '1', 10) || 1);
-    const limit = Math.min(
-      100,
-      Math.max(1, Number.parseInt(limitRaw ?? '20', 10) || 20),
-    );
     return this.growingJackpot.listRounds(
       accountId,
       user.id,
       growingJackpotId,
-      limit,
-      page,
+      parseGrowingJackpotRoundListPage(page),
+      parseGrowingJackpotRoundListLimit(limit),
+      parseGrowingJackpotRoundSortField(sortBy),
+      parseGrowingJackpotRoundSortOrder(sortOrder),
     );
   }
 
@@ -1610,25 +1611,37 @@ export class AccountsController {
     );
   }
 
-  @Patch(
-    ':accountId/growing-jackpots/:growingJackpotId/rounds/:roundId/fulfillment',
-  )
-  async patchGrowingJackpotRoundFulfillment(
+  @Delete(':accountId/growing-jackpots/:growingJackpotId/rounds')
+  @HttpCode(204)
+  async archiveAllGrowingJackpotRounds(
     @Param('accountId', ParseIntPipe) accountId: number,
     @Param('growingJackpotId', ParseIntPipe) growingJackpotId: number,
-    @Param('roundId', ParseIntPipe) roundId: number,
-    @Body() body: PatchGrowingJackpotRoundFulfillmentBody,
     @Req() req: Request,
   ) {
     const session = req.session as SessionData;
     const user = await this.authService.requireValidSessionUser(session.user);
-    const status = body.fulfillment_status ?? 'fulfilled';
-    return this.growingJackpot.patchRoundFulfillment(
+    await this.growingJackpot.archiveAllRounds(
+      accountId,
+      user.id,
+      growingJackpotId,
+    );
+  }
+
+  @Delete(':accountId/growing-jackpots/:growingJackpotId/rounds/:roundId')
+  @HttpCode(204)
+  async archiveGrowingJackpotRound(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Param('growingJackpotId', ParseIntPipe) growingJackpotId: number,
+    @Param('roundId', ParseIntPipe) roundId: number,
+    @Req() req: Request,
+  ) {
+    const session = req.session as SessionData;
+    const user = await this.authService.requireValidSessionUser(session.user);
+    await this.growingJackpot.archiveRound(
       accountId,
       user.id,
       growingJackpotId,
       roundId,
-      status,
     );
   }
 

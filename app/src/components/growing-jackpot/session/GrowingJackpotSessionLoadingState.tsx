@@ -18,7 +18,10 @@ export function GrowingJackpotSessionLoadingState() {
     <ModulePageShell moduleId="growing-jackpot" spacing={0}>
       <ModulePageSections>
         <ModulePageSectionChrome>
-          <SessionPageBreadcrumbBar module={growingJackpotModule} />
+          <SessionPageBreadcrumbBar
+            module={growingJackpotModule}
+            showModuleTitle={false}
+          />
         </ModulePageSectionChrome>
         <Grid container spacing={3} sx={{ width: '100%' }}>
           <Grid size={{ xs: 12, lg: 8 }}>

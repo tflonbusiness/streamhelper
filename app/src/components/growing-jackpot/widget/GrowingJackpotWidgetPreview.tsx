@@ -23,7 +23,7 @@ function buildDemoView(
   return {
     status: 'accepting',
     joinKeyword: '!join',
-    settings: { winnerOverlaySeconds: 8 },
+    settings: { winnerOverlaySeconds: 8, prizeDisplayCap: 200 },
     width,
     height,
     style,
@@ -90,7 +90,12 @@ export function GrowingJackpotWidgetPreview({
           justifyContent: 'center',
         }}
       >
-        <GrowingJackpotWidgetCard view={view} width={width} height={height} />
+        <GrowingJackpotWidgetCard
+          view={view}
+          width={width}
+          height={height}
+          playEnterSound={false}
+        />
       </Box>
     </Box>
   )

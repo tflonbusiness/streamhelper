@@ -20,10 +20,8 @@ type GrowingJackpotSessionHeaderSectionProps = {
   onOpenArchiveDialog: () => void
   onOpenEditDialog: () => void
   onGoLive?: () => void
-  onDeactivate?: () => void
   liveActionPending?: boolean
   goLiveDisabled?: boolean
-  deactivatePending?: boolean
 }
 
 const HeaderStack = styled(Stack)(({ theme }) => ({
@@ -77,18 +75,6 @@ export function GrowingJackpotSessionHeaderSection(
                 onClick={props.onGoLive}
               >
                 {t('growingJackpot.goLive')}
-              </Button>
-            ) : null}
-            {!readOnly && props.record.status === 'live' ? (
-              <Button
-                type="button"
-                variant="outlined"
-                size="small"
-                color="warning"
-                disabled={props.deactivatePending}
-                onClick={props.onDeactivate}
-              >
-                {t('growingJackpot.goOffAir')}
               </Button>
             ) : null}
             {!readOnly ? (

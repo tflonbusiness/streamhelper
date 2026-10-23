@@ -1,9 +1,19 @@
+import ArchiveIcon from '@mui/icons-material/Archive'
 import HistoryIcon from '@mui/icons-material/History'
-import { Box, Button, Chip, Stack, Typography } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { Box, Button, Stack } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { GrowingJackpotRound } from '@/api/growing-jackpot'
-import { AppTable, type AppTableColumn } from '@/components/AppTable'
+import { AppTable } from '@/components/AppTable'
+import { GrowingJackpotArchiveAllRoundsDialog } from '@/components/growing-jackpot/session/GrowingJackpotArchiveAllRoundsDialog'
+import { buildGrowingJackpotRoundHistoryColumns } from '@/components/growing-jackpot/session/growingJackpotRoundHistoryColumns'
+import {
+  DEFAULT_GROWING_JACKPOT_ROUND_SORT,
+  GROWING_JACKPOT_ROUND_HISTORY_PAGE_SIZE,
+  toGrowingJackpotRoundListParams,
+  type GrowingJackpotRoundSortField,
+  type GrowingJackpotRoundSortState,
+} from '@/components/growing-jackpot/session/growing-jackpot-round-history-sort'
 import { SectionHeader, sectionTableIcon } from '@/components/SectionHeader'
 import { StatusAlert } from '@/components/StatusAlert'
 import {
@@ -13,11 +23,9 @@ import {
 } from '@/components/prize-spin/session/prizeSpinSessionStyles'
 import { useNotification } from '@/context/NotificationContext'
 import {
+  useArchiveGrowingJackpotRound,
   useGrowingJackpotRounds,
-  usePatchGrowingJackpotRoundFulfillment,
 } from '@/queries/use-growing-jackpot-session'
-
-const ROUND_HISTORY_PAGE_SIZE = 10
 
 type GrowingJackpotRoundHistorySectionProps = {
   accountId: number
@@ -32,21 +40,32 @@ export function GrowingJackpotRoundHistorySection({
   readOnly,
   pollWhileAccepting = false,
 }: GrowingJackpotRoundHistorySectionProps) {
-  const { t } = useTranslation()
-  const { showSuccess } = useNotification()
+  const { t, i18n } = useTranslation()
+  const theme = useTheme()
+  const locale = i18n.language
+  const { showSuccess, showError } = useNotification()
+  const [archiveAllDialogOpen, setArchiveAllDialogOpen] = useState(false)
+
+  const archiveRoundMutation = useArchiveGrowingJackpotRound(
+    accountId,
+    growingJackpotId,
+  )
+
+  const [sort, setSort] = useState<GrowingJackpotRoundSortState>(
+    DEFAULT_GROWING_JACKPOT_ROUND_SORT,
+  )
   const [page, setPage] = useState(1)
+
+  const listParams = useMemo(
+    () => toGrowingJackpotRoundListParams(page, sort),
+    [page, sort],
+  )
 
   const { data, isLoading, isFetching, error } = useGrowingJackpotRounds(
     accountId,
     growingJackpotId,
-    page,
-    ROUND_HISTORY_PAGE_SIZE,
+    listParams,
     { pollWhileAccepting },
-  )
-
-  const fulfillmentMutation = usePatchGrowingJackpotRoundFulfillment(
-    accountId,
-    growingJackpotId,
   )
 
   const rounds = data?.rounds ?? []
@@ -59,128 +78,121 @@ export function GrowingJackpotRoundHistorySection({
     }
     const maxPage = Math.max(
       1,
-      Math.ceil(data.total / ROUND_HISTORY_PAGE_SIZE) || 1,
+      Math.ceil(data.total / GROWING_JACKPOT_ROUND_HISTORY_PAGE_SIZE) || 1,
     )
     if (page > maxPage) {
       setPage(maxPage)
     }
   }, [data, page])
 
-  const columns = useMemo((): AppTableColumn<GrowingJackpotRound>[] => {
-    return [
-      {
-        id: 'index',
-        header: '#',
-        width: 48,
-        render: (round) => round.roundIndex,
-      },
-      {
-        id: 'keyword',
-        header: t('growingJackpot.historyKeyword'),
-        render: (round) => round.joinKeyword,
-      },
-      {
-        id: 'result',
-        header: t('growingJackpot.historyResult'),
-        render: (round) => round.result ?? round.phase,
-      },
-      {
-        id: 'winner',
-        header: t('growingJackpot.historyWinner'),
-        render: (round) => (
-          <Box>
-            {round.winnerDisplayName ?? '—'}
-            {round.proofToken ? (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: 'block' }}
-              >
-                {round.proofToken}
-              </Typography>
-            ) : null}
-          </Box>
-        ),
-      },
-      {
-        id: 'fulfillment',
-        header: t('growingJackpot.historyFulfillment'),
-        render: (round) => {
-          if (round.result !== 'won') {
-            return '—'
-          }
-          if (round.fulfillmentStatus === 'fulfilled') {
-            return (
-              <Chip
-                size="small"
-                color="success"
-                label={t('growingJackpot.fulfillmentFulfilled')}
-              />
-            )
-          }
-          return (
-            <Button
-              size="small"
-              variant="outlined"
-              disabled={readOnly || fulfillmentMutation.isPending}
-              onClick={() =>
-                fulfillmentMutation.mutate(
-                  { roundId: round.id, status: 'fulfilled' },
-                  {
-                    onSuccess: () =>
-                      showSuccess(t('growingJackpot.fulfillmentMarked')),
-                  },
-                )
-              }
-            >
-              {t('growingJackpot.markFulfilled')}
-            </Button>
+  const handleSortField = useCallback((field: GrowingJackpotRoundSortField) => {
+    setSort((previous) => {
+      if (previous.field === field) {
+        return {
+          field,
+          direction: previous.direction === 'asc' ? 'desc' : 'asc',
+        }
+      }
+      return { field, direction: 'asc' }
+    })
+    setPage(1)
+  }, [])
+
+  const handleArchiveRound = useCallback(
+    (roundId: number) => {
+      archiveRoundMutation.mutate(roundId, {
+        onSuccess: () => showSuccess(t('growingJackpot.roundRemoved')),
+        onError: (error) => {
+          showError(
+            error instanceof Error
+              ? error.message
+              : t('growingJackpot.couldNotRemoveRound'),
           )
         },
-      },
-    ]
-  }, [fulfillmentMutation, readOnly, showSuccess, t])
+      })
+    },
+    [archiveRoundMutation, showError, showSuccess, t],
+  )
+
+  const columns = useMemo(
+    () =>
+      buildGrowingJackpotRoundHistoryColumns({
+        t,
+        theme,
+        locale,
+        sort,
+        onSortField: handleSortField,
+        readOnly,
+        onArchiveRound: handleArchiveRound,
+      }),
+    [handleArchiveRound, handleSortField, locale, readOnly, sort, t, theme],
+  )
+
+  const archivableCount = rounds.filter((round) => round.phase === 'closed').length
 
   return (
-    <StyledSessionCard elevation={0}>
-      <StyledSessionCardContent>
-        <Stack spacing={2}>
-          <StyledSessionSectionChrome>
-            <SectionHeader
-              title={t('growingJackpot.roundHistoryTitle')}
-              icon={total > 0 ? sectionTableIcon : HistoryIcon}
-              iconVariant={total > 0 ? 'secondary' : 'info'}
-              showDivider={false}
-            />
-          </StyledSessionSectionChrome>
-          {error ? (
-            <StatusAlert tone="error">
-              {error instanceof Error
-                ? error.message
-                : t('growingJackpot.couldNotLoadRoundHistory')}
-            </StatusAlert>
-          ) : null}
-          {!error && total === 0 && !showInitialLoading ? (
-            <StatusAlert tone="info">{t('growingJackpot.noRounds')}</StatusAlert>
-          ) : null}
-          {!error && (total > 0 || showInitialLoading) ? (
-            <Box sx={{ minWidth: 0, overflowX: 'auto' }}>
-              <AppTable
-                columns={columns}
-                rows={rounds}
-                getRowKey={(round) => round.id}
-                loading={showInitialLoading || isFetching}
-                pagination={{
-                  count: total,
-                  page,
-                  onPageChange: setPage,
-                  rowsPerPage: ROUND_HISTORY_PAGE_SIZE,
-                }}
+    <>
+      <StyledSessionCard elevation={0}>
+        <StyledSessionCardContent>
+          <Stack spacing={2}>
+            <StyledSessionSectionChrome>
+              <SectionHeader
+                title={t('growingJackpot.roundHistoryTitle', { count: total })}
+                icon={total > 0 ? sectionTableIcon : HistoryIcon}
+                iconVariant={total > 0 ? 'secondary' : 'info'}
+                showDivider={false}
+                action={
+                  archivableCount > 0 ? (
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      size="small"
+                      startIcon={<ArchiveIcon fontSize="small" aria-hidden />}
+                      disabled={readOnly}
+                      onClick={() => setArchiveAllDialogOpen(true)}
+                    >
+                      {t('growingJackpot.archiveAllRounds')}
+                    </Button>
+                  ) : undefined
+                }
               />
-            </Box>
-          ) : null}
-        </Stack>
-      </StyledSessionCardContent>
-    </StyledSessionCard>
+            </StyledSessionSectionChrome>
+            {error ? (
+              <StatusAlert tone="error">
+                {error instanceof Error
+                  ? error.message
+                  : t('growingJackpot.couldNotLoadRoundHistory')}
+              </StatusAlert>
+            ) : null}
+            {!error && total === 0 && !showInitialLoading ? (
+              <StatusAlert tone="info">{t('growingJackpot.noRounds')}</StatusAlert>
+            ) : null}
+            {!error && (total > 0 || showInitialLoading) ? (
+              <Box sx={{ minWidth: 0, overflowX: 'auto' }}>
+                <AppTable
+                  columns={columns}
+                  rows={rounds}
+                  getRowKey={(round) => round.id}
+                  loading={showInitialLoading || isFetching}
+                  pagination={{
+                    count: total,
+                    page,
+                    onPageChange: setPage,
+                    rowsPerPage: GROWING_JACKPOT_ROUND_HISTORY_PAGE_SIZE,
+                  }}
+                />
+              </Box>
+            ) : null}
+          </Stack>
+        </StyledSessionCardContent>
+      </StyledSessionCard>
+      <GrowingJackpotArchiveAllRoundsDialog
+        accountId={accountId}
+        growingJackpotId={growingJackpotId}
+        roundCount={archivableCount}
+        open={archiveAllDialogOpen}
+        onClose={() => setArchiveAllDialogOpen(false)}
+      />
+    </>
   )
 }

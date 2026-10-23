@@ -12,8 +12,9 @@ import {
 import { styled } from '@mui/material/styles'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Controller, useForm } from 'react-hook-form'
-import { GrowingJackpotWidgetPreview } from '@/components/growing-jackpot/widget/GrowingJackpotWidgetPreview'
+import { GrowingJackpotWidgetThemePresetPicker } from '@/components/growing-jackpot/GrowingJackpotWidgetThemePresetPicker'
 import { GrowingJackpotWidgetStyleForm } from '@/components/growing-jackpot/growing-jackpot-page/GrowingJackpotWidgetStyleForm'
+import { GrowingJackpotWidgetPreview } from '@/components/growing-jackpot/widget/GrowingJackpotWidgetPreview'
 import { WidgetSettingsDialogTitle } from '@/components/widget/WidgetSettingsPaletteIcon'
 import { useNotification } from '@/context/NotificationContext'
 import { GROWING_JACKPOT_WIDGET_DEFAULTS } from '@/lib/growing-jackpot-widget-defaults'
@@ -23,6 +24,11 @@ import {
   mergeGrowingJackpotWidgetStyle,
   type GrowingJackpotWidgetStyle,
 } from '@/lib/growing-jackpot-widget-style-defaults'
+import {
+  GROWING_JACKPOT_WIDGET_THEME_PRESETS,
+  applyGrowingJackpotWidgetPreset,
+  matchGrowingJackpotWidgetPresetFromList,
+} from '@/lib/growing-jackpot-widget-presets'
 import {
   type GrowingJackpotWidgetSettingsFormValues,
   createGrowingJackpotWidgetSettingsFormSchema,
@@ -105,6 +111,11 @@ export function GrowingJackpotStreamWidgetSettingsDialog(
   const width = watch('width')
   const height = watch('height')
 
+  const activePresetId = useMemo(
+    () => matchGrowingJackpotWidgetPresetFromList(styleDraft),
+    [styleDraft],
+  )
+
   useEffect(() => {
     if (props.open && widgetSettings) {
       reset({
@@ -143,6 +154,12 @@ export function GrowingJackpotStreamWidgetSettingsDialog(
     value: GrowingJackpotWidgetStyle[K],
   ) => {
     setStyleDraft((previous) => ({ ...previous, [key]: value }))
+  }
+
+  const applyPreset = (presetId: string) => {
+    setStyleDraft((previous) =>
+      applyGrowingJackpotWidgetPreset(previous, presetId),
+    )
   }
 
   return (
@@ -202,6 +219,11 @@ export function GrowingJackpotStreamWidgetSettingsDialog(
                 )}
               />
             </StyledFormStack>
+            <GrowingJackpotWidgetThemePresetPicker
+              presets={GROWING_JACKPOT_WIDGET_THEME_PRESETS}
+              activePresetId={activePresetId}
+              onSelectPreset={applyPreset}
+            />
             <GrowingJackpotWidgetStyleForm draft={styleDraft} onUpdate={updateStyle} />
             <GrowingJackpotWidgetPreview
               width={width}

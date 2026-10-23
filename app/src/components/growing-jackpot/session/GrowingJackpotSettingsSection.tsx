@@ -1,14 +1,6 @@
 import SaveIcon from '@mui/icons-material/Save'
 import SettingsIcon from '@mui/icons-material/Settings'
-import {
-  FormControl,
-  FormControlLabel,
-  InputLabel,
-  MenuItem,
-  Select,
-  Switch,
-  TextField,
-} from '@mui/material'
+import { Alert, TextField } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import type { FirstReactionSettings } from '@/api/first-reaction'
 import type { GrowingJackpotSettings } from '@/api/growing-jackpot'
@@ -21,9 +13,6 @@ import {
   SettingsGroupPanelBlock,
   SettingsHeaderBlock,
   SettingsSaveButton,
-  SettingsToggleCopy,
-  SettingsToggleLabel,
-  SettingsToggleRow,
 } from '@/components/first-reaction/session/firstReactionSessionSettingsStyles'
 import {
   GROWING_JACKPOT_WINNER_OVERLAY_SECONDS_MAX,
@@ -91,6 +80,13 @@ export function GrowingJackpotSettingsSection(
                 ) : undefined
               }
             />
+            {!props.readOnly && props.isDirty ? (
+              <Alert severity="warning" variant="outlined">
+                {props.savePending
+                  ? t('common.saving')
+                  : t('growingJackpot.settingsUnsavedBanner')}
+              </Alert>
+            ) : null}
           </SettingsHeaderBlock>
 
           <SettingsGroup>
@@ -218,64 +214,29 @@ export function GrowingJackpotSettingsSection(
                   }
                   fullWidth
                 />
-                <FormControl fullWidth size={fieldSize} disabled={fieldsDisabled}>
-                  <InputLabel id="gj-weight-combine-label">
-                    {t('growingJackpot.weightCombineModeLabel')}
-                  </InputLabel>
-                  <Select
-                    labelId="gj-weight-combine-label"
-                    label={t('growingJackpot.weightCombineModeLabel')}
-                    value={settings.weightCombineMode}
-                    onChange={(e) =>
-                      props.onChange({
-                        ...settings,
-                        weightCombineMode: e.target.value as
-                          | 'highest'
-                          | 'sum',
-                      })
-                    }
-                  >
-                    <MenuItem value="highest">
-                      {t('growingJackpot.weightCombineHighest')}
-                    </MenuItem>
-                    <MenuItem value="sum">
-                      {t('growingJackpot.weightCombineSum')}
-                    </MenuItem>
-                  </Select>
-                </FormControl>
-                <SettingsToggleRow>
-                  <SettingsToggleLabel>
-                    <SettingsToggleCopy>
-                      {t('growingJackpot.announceWinnerInChatLabel')}
-                    </SettingsToggleCopy>
-                  </SettingsToggleLabel>
-                  <Switch
-                    checked={settings.announceWinnerInChat}
-                    disabled={fieldsDisabled}
-                    onChange={(e) =>
-                      props.onChange({
-                        ...settings,
-                        announceWinnerInChat: e.target.checked,
-                      })
-                    }
-                  />
-                </SettingsToggleRow>
               </SettingsGroupPanelBlock>
             </SettingsGroupPanel>
           </SettingsGroup>
 
-          <FirstReactionEligibleRolesField
-            settings={
-              { roleSettings: settings.roleSettings } as FirstReactionSettings
-            }
-            disabled={fieldsDisabled}
-            onChange={(next) =>
-              props.onChange({
-                ...settings,
-                roleSettings: next.roleSettings,
-              })
-            }
-          />
+          <SettingsGroup>
+            <SettingsGroupLabel variant="caption">
+              {t('firstReaction.settingsGroupParticipants')}
+            </SettingsGroupLabel>
+            <SettingsGroupPanel>
+              <FirstReactionEligibleRolesField
+                settings={
+                  { roleSettings: settings.roleSettings } as FirstReactionSettings
+                }
+                disabled={fieldsDisabled}
+                onChange={(next) =>
+                  props.onChange({
+                    ...settings,
+                    roleSettings: next.roleSettings,
+                  })
+                }
+              />
+            </SettingsGroupPanel>
+          </SettingsGroup>
         </SettingsFormRoot>
       </StyledSessionCardContent>
     </StyledSessionCard>

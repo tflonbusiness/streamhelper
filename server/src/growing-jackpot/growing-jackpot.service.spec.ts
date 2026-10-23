@@ -125,7 +125,8 @@ describe('GrowingJackpotService (in-memory)', () => {
     expect(view.status).toBe('accepting');
     if (view.status === 'accepting') {
       expect(view.joinKeyword).toBe('!join');
-      expect(view.width).toBe(500);
+      expect(view.width).toBe(640);
+      expect(view.height).toBe(176);
     }
   });
 
@@ -257,11 +258,32 @@ describe('GrowingJackpotService (in-memory)', () => {
       accountId,
       userId,
       session.id,
-      10,
       1,
+      10,
+      'time',
+      'desc',
     );
     expect(list.total).toBe(1);
     expect(list.rounds[0]?.result).toBe('stopped');
+  });
+
+  it('archives a closed round', async () => {
+    const { session } = await service.createSession(accountId, userId, 'Archive');
+    const { round } = await service.startRound(accountId, userId, session.id);
+    await service.stopRound(accountId, userId, session.id, round.id);
+
+    await service.archiveRound(accountId, userId, session.id, round.id);
+
+    const list = await service.listRounds(
+      accountId,
+      userId,
+      session.id,
+      1,
+      10,
+      'time',
+      'desc',
+    );
+    expect(list.total).toBe(0);
   });
 
   it('stops an accepting round without drawing', async () => {
@@ -278,31 +300,6 @@ describe('GrowingJackpotService (in-memory)', () => {
     expect(stopped.round.result).toBe('stopped');
     expect(stopped.round.phase).toBe('closed');
     expect(stopped.round.winnerDisplayName).toBeNull();
-  });
-
-  it('marks won round as fulfilled', async () => {
-    const { session } = await service.createSession(accountId, userId, 'Prize');
-    const { round } = await service.startRound(accountId, userId, session.id);
-    await service.tryJoinFromChat({
-      accountId,
-      growingJackpotId: session.id,
-      roundId: round.id,
-      provider: 'kick',
-      providerUserId: 'fulfill-1',
-      displayName: 'winner',
-      roleIds: ['viewer'],
-    });
-    store.expireRound(round.id);
-    await service.closeDueRoundsForJackpot(session.id);
-
-    const fulfilled = await service.patchRoundFulfillment(
-      accountId,
-      userId,
-      session.id,
-      round.id,
-      'fulfilled',
-    );
-    expect(fulfilled.round.fulfillmentStatus).toBe('fulfilled');
   });
 
   it('returns intake context for live accepting round', async () => {

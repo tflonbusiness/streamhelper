@@ -64,11 +64,29 @@ export type GrowingJackpotListResult = {
   limit: number
 }
 
+export type GrowingJackpotRoundSortField =
+  | 'roundIndex'
+  | 'keyword'
+  | 'outcome'
+  | 'winner'
+  | 'time'
+
+export type GrowingJackpotRoundSortOrder = 'asc' | 'desc'
+
+export type GrowingJackpotRoundListParams = {
+  page: number
+  limit: number
+  sortBy: GrowingJackpotRoundSortField
+  sortOrder: GrowingJackpotRoundSortOrder
+}
+
 export type GrowingJackpotRoundListResult = {
   rounds: GrowingJackpotRound[]
   total: number
   page: number
   limit: number
+  sortBy: GrowingJackpotRoundSortField
+  sortOrder: GrowingJackpotRoundSortOrder
 }
 
 export type GrowingJackpotWidgetStyle = {
@@ -97,7 +115,10 @@ export type PublicGrowingJackpotWidget =
       status: 'accepting'
       round: GrowingJackpotRound
       joinKeyword: string
-      settings: { winnerOverlaySeconds: number }
+      settings: {
+        winnerOverlaySeconds: number
+        prizeDisplayCap: number | null
+      }
       width: number
       height: number
       style: GrowingJackpotWidgetStyle
@@ -105,7 +126,10 @@ export type PublicGrowingJackpotWidget =
   | {
       status: 'winner'
       round: GrowingJackpotRound
-      settings: { winnerOverlaySeconds: number }
+      settings: {
+        winnerOverlaySeconds: number
+        prizeDisplayCap: number | null
+      }
       width: number
       height: number
       style: GrowingJackpotWidgetStyle
@@ -113,7 +137,10 @@ export type PublicGrowingJackpotWidget =
   | {
       status: 'no_participants'
       round: GrowingJackpotRound
-      settings: { winnerOverlaySeconds: number }
+      settings: {
+        winnerOverlaySeconds: number
+        prizeDisplayCap: number | null
+      }
       width: number
       height: number
       style: GrowingJackpotWidgetStyle
@@ -243,15 +270,16 @@ export async function deactivateGrowingJackpot(
 export async function fetchGrowingJackpotRounds(
   accountId: number,
   growingJackpotId: number,
-  page = 1,
-  limit = 20,
+  params: GrowingJackpotRoundListParams,
 ): Promise<GrowingJackpotRoundListResult> {
-  const params = new URLSearchParams({
-    page: String(page),
-    limit: String(limit),
+  const search = new URLSearchParams({
+    page: String(params.page),
+    limit: String(params.limit),
+    sortBy: params.sortBy,
+    sortOrder: params.sortOrder,
   })
   const response = await fetch(
-    `/accounts/${accountId}/growing-jackpots/${growingJackpotId}/rounds?${params}`,
+    `/accounts/${accountId}/growing-jackpots/${growingJackpotId}/rounds?${search}`,
     { credentials: 'include' },
   )
   return parseJson(response, 'Failed to load rounds')
@@ -288,22 +316,38 @@ export async function stopGrowingJackpotRound(
   return parseJson(response, 'Failed to stop round')
 }
 
-export async function patchGrowingJackpotRoundFulfillment(
+export async function archiveGrowingJackpotRound(
   accountId: number,
   growingJackpotId: number,
   roundId: number,
-  fulfillmentStatus: 'pending' | 'fulfilled',
-): Promise<{ round: GrowingJackpotRound }> {
+): Promise<void> {
   const response = await fetch(
-    `/accounts/${accountId}/growing-jackpots/${growingJackpotId}/rounds/${roundId}/fulfillment`,
-    {
-      method: 'PATCH',
-      credentials: 'include',
-      headers: jsonHeaders,
-      body: JSON.stringify({ fulfillment_status: fulfillmentStatus }),
-    },
+    `/accounts/${accountId}/growing-jackpots/${growingJackpotId}/rounds/${roundId}`,
+    { method: 'DELETE', credentials: 'include' },
   )
-  return parseJson(response, 'Failed to update fulfillment')
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, i18n.t('growingJackpot.couldNotRemoveRound')),
+    )
+  }
+}
+
+export async function archiveAllGrowingJackpotRounds(
+  accountId: number,
+  growingJackpotId: number,
+): Promise<void> {
+  const response = await fetch(
+    `/accounts/${accountId}/growing-jackpots/${growingJackpotId}/rounds`,
+    { method: 'DELETE', credentials: 'include' },
+  )
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(
+        response,
+        i18n.t('growingJackpot.couldNotArchiveRounds'),
+      ),
+    )
+  }
 }
 
 export class GrowingJackpotWidgetNotFoundError extends Error {

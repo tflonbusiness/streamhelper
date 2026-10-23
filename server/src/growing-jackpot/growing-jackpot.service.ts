@@ -21,6 +21,11 @@ import {
 } from './growing-jackpot-settings.js';
 import { GROWING_JACKPOT_WIDGET_DEFAULTS } from './growing-jackpot-widget-defaults.js';
 import {
+  buildGrowingJackpotRoundOrderBy,
+  type GrowingJackpotRoundSortField,
+  type GrowingJackpotRoundSortOrder,
+} from './growing-jackpot-round-list.js';
+import {
   mergeGrowingJackpotWidgetStylePatch,
   parseGrowingJackpotWidgetStyle,
   type GrowingJackpotWidgetStyle,
@@ -256,10 +261,13 @@ export class GrowingJackpotService
   ) {
     await this.requireMember(accountId, userId);
     const row = await this.getSessionRow(accountId, growingJackpotId);
-    if (!row || row.status === 'archived') {
+    if (!row) {
       throw new NotFoundException();
     }
-    const activeRound = await this.getActiveRoundRow(growingJackpotId);
+    const activeRound =
+      row.status === 'archived'
+        ? null
+        : await this.getActiveRoundRow(growingJackpotId);
     return {
       session: this.mapSession(row),
       activeRound: activeRound ? this.mapRound(activeRound) : null,
@@ -417,12 +425,24 @@ export class GrowingJackpotService
     return this.getSession(accountId, userId, growingJackpotId);
   }
 
+  private async assertMutableSession(
+    accountId: number,
+    growingJackpotId: number,
+  ): Promise<void> {
+    const row = await this.getSessionRow(accountId, growingJackpotId);
+    if (!row || row.status === 'archived') {
+      throw new NotFoundException();
+    }
+  }
+
   async listRounds(
     accountId: number,
     userId: number,
     growingJackpotId: number,
-    limit = 20,
-    page = 1,
+    page: number,
+    limit: number,
+    sortBy: GrowingJackpotRoundSortField,
+    sortOrder: GrowingJackpotRoundSortOrder,
   ) {
     await this.requireMember(accountId, userId);
     const row = await this.getSessionRow(accountId, growingJackpotId);
@@ -431,19 +451,27 @@ export class GrowingJackpotService
     }
 
     const countResult = await this.pool().query<{ count: string }>(
-      `SELECT COUNT(*)::text AS count FROM growing_jackpot_round WHERE growing_jackpot_id = $1`,
+      `
+        SELECT COUNT(*)::text AS count
+        FROM growing_jackpot_round
+        WHERE growing_jackpot_id = $1
+          AND is_archived = false
+      `,
       [growingJackpotId],
     );
     const total = Number.parseInt(countResult.rows[0]?.count ?? '0', 10);
-    const resolvedPage = Math.max(1, page);
+    const maxPage = Math.max(1, Math.ceil(total / limit) || 1);
+    const resolvedPage = Math.min(Math.max(1, page), maxPage);
     const offset = (resolvedPage - 1) * limit;
+    const orderBy = buildGrowingJackpotRoundOrderBy(sortBy, sortOrder);
 
     const rounds = await this.pool().query(
       `
         SELECT *
         FROM growing_jackpot_round
         WHERE growing_jackpot_id = $1
-        ORDER BY created_at DESC
+          AND is_archived = false
+        ORDER BY ${orderBy}
         LIMIT $2 OFFSET $3
       `,
       [growingJackpotId, limit, offset],
@@ -454,7 +482,61 @@ export class GrowingJackpotService
       total,
       page: resolvedPage,
       limit,
+      sortBy,
+      sortOrder,
     };
+  }
+
+  async archiveRound(
+    accountId: number,
+    userId: number,
+    growingJackpotId: number,
+    roundId: number,
+  ): Promise<void> {
+    await this.requireMember(accountId, userId);
+    await this.assertMutableSession(accountId, growingJackpotId);
+
+    const result = await this.pool().query(
+      `
+        UPDATE growing_jackpot_round r
+        SET is_archived = true
+        FROM growing_jackpot gj
+        WHERE r.growing_jackpot_id = gj.id
+          AND gj.account_id = $1
+          AND r.growing_jackpot_id = $2
+          AND r.id = $3
+          AND r.is_archived = false
+          AND r.phase = 'closed'
+      `,
+      [accountId, growingJackpotId, roundId],
+    );
+
+    if (result.rowCount === 0) {
+      throw new NotFoundException();
+    }
+  }
+
+  async archiveAllRounds(
+    accountId: number,
+    userId: number,
+    growingJackpotId: number,
+  ): Promise<void> {
+    await this.requireMember(accountId, userId);
+    await this.assertMutableSession(accountId, growingJackpotId);
+
+    await this.pool().query(
+      `
+        UPDATE growing_jackpot_round r
+        SET is_archived = true
+        FROM growing_jackpot gj
+        WHERE r.growing_jackpot_id = gj.id
+          AND gj.account_id = $1
+          AND r.growing_jackpot_id = $2
+          AND r.is_archived = false
+          AND r.phase = 'closed'
+      `,
+      [accountId, growingJackpotId],
+    );
   }
 
   private async assertCanStartRound(
@@ -564,37 +646,6 @@ export class GrowingJackpotService
       throw new NotFoundException();
     }
     return { round: this.mapRound(round) };
-  }
-
-  async patchRoundFulfillment(
-    accountId: number,
-    userId: number,
-    growingJackpotId: number,
-    roundId: number,
-    fulfillmentStatus: 'pending' | 'fulfilled',
-  ) {
-    await this.requireMember(accountId, userId);
-    const result = await this.pool().query(
-      `
-        UPDATE growing_jackpot_round r
-        SET
-          fulfillment_status = $1,
-          fulfilled_at = CASE WHEN $1 = 'fulfilled' THEN now() ELSE NULL END,
-          fulfilled_by_user_id = CASE WHEN $1 = 'fulfilled' THEN $2 ELSE NULL END
-        FROM growing_jackpot gj
-        WHERE r.id = $3
-          AND r.growing_jackpot_id = $4
-          AND gj.id = r.growing_jackpot_id
-          AND gj.account_id = $5
-          AND r.result = 'won'
-      `,
-      [fulfillmentStatus, userId, roundId, growingJackpotId, accountId],
-    );
-    if (result.rowCount === 0) {
-      throw new NotFoundException();
-    }
-    const round = await this.getRoundRow(growingJackpotId, roundId);
-    return { round: this.mapRound(round!) };
   }
 
   private async getRoundRow(
@@ -1106,6 +1157,7 @@ export class GrowingJackpotService
     const settings = parseGrowingJackpotSettings(row.settings_snapshot);
     const overlaySettings = {
       winnerOverlaySeconds: settings.winnerOverlaySeconds,
+      prizeDisplayCap: settings.prizeDisplayCap,
     };
 
     if (mapped.phase === 'accepting') {

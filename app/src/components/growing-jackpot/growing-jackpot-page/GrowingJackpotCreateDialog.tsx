@@ -9,9 +9,8 @@ import {
   Typography,
 } from '@mui/material'
 import { styled } from '@mui/material/styles'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { GROWING_JACKPOT_DEFAULT_TITLE } from '@/components/growing-jackpot/growing-jackpot-page/growing-jackpot-page-utils'
 import { useNotification } from '@/context/NotificationContext'
 import { useCreateGrowingJackpot } from '@/queries/use-growing-jackpots'
 
@@ -49,8 +48,15 @@ export function GrowingJackpotCreateDialog({
 }: GrowingJackpotCreateDialogProps) {
   const { t } = useTranslation()
   const { showSuccess, showError } = useNotification()
-  const [title, setTitle] = useState(GROWING_JACKPOT_DEFAULT_TITLE)
+  const defaultTitle = t('growingJackpot.defaultSessionTitle')
+  const [title, setTitle] = useState(defaultTitle)
   const createMutation = useCreateGrowingJackpot(accountId)
+
+  useEffect(() => {
+    if (open) {
+      setTitle(t('growingJackpot.defaultSessionTitle'))
+    }
+  }, [open, t])
 
   const handleClose = () => {
     if (!createMutation.isPending) {
@@ -62,7 +68,7 @@ export function GrowingJackpotCreateDialog({
     createMutation.mutate(title.trim(), {
       onSuccess: () => {
         showSuccess(t('growingJackpot.sessionCreated'))
-        setTitle(GROWING_JACKPOT_DEFAULT_TITLE)
+        setTitle(t('growingJackpot.defaultSessionTitle'))
         onClose()
       },
       onError: (error) =>

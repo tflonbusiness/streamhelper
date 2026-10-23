@@ -43,7 +43,6 @@ export const widgetUiCopy = {
   growingJackpotTitle: 'Growing Jackpot',
   growingJackpotIdle: 'Waiting for the next round',
   growingJackpotWinner: 'Winner',
-  growingJackpotNoParticipants: 'No participants',
   growingJackpotPlayers: 'Players',
   growingJackpotPrize: 'Prize',
   growingJackpotTime: 'Time',

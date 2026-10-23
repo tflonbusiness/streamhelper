@@ -40,9 +40,12 @@ export function useArchiveGrowingJackpot(accountId: number | undefined) {
   return useMutation({
     mutationFn: (growingJackpotId: number) =>
       archiveGrowingJackpot(accountId!, growingJackpotId),
-    onSuccess: () => {
+    onSuccess: (_data, growingJackpotId) => {
       void queryClient.invalidateQueries({
         queryKey: growingJackpotKeys.lists(),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: growingJackpotKeys.session(accountId!, growingJackpotId),
       })
     },
   })

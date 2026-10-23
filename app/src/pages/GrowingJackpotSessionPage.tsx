@@ -31,7 +31,6 @@ import { MODULE_PAGE_SECTION_SPACING } from '@/lib/module-page-layout'
 import { useGoLiveGrowingJackpot } from '@/queries/use-growing-jackpots'
 import {
   useGrowingJackpotSession,
-  useDeactivateGrowingJackpot,
   usePatchGrowingJackpotSession,
   useStartGrowingJackpotRound,
   useStopGrowingJackpotRound,
@@ -65,11 +64,6 @@ export function GrowingJackpotSessionPage() {
   const patchMutation = usePatchGrowingJackpotSession(accountId, growingJackpotId)
   const startMutation = useStartGrowingJackpotRound(accountId, growingJackpotId)
   const stopMutation = useStopGrowingJackpotRound(accountId, growingJackpotId)
-  const deactivateMutation = useDeactivateGrowingJackpot(
-    accountId,
-    growingJackpotId,
-  )
-
   const record = data?.session
   const activeRound = data?.activeRound ?? null
   const isAccepting = activeRound?.phase === 'accepting'
@@ -125,14 +119,16 @@ export function GrowingJackpotSessionPage() {
         sx={{ pb: 2, width: '100%' }}
       >
         <ModulePageSectionChrome>
-          <SessionPageBreadcrumbBar module={growingJackpotModule} />
+          <SessionPageBreadcrumbBar
+            module={growingJackpotModule}
+            showModuleTitle={false}
+          />
         </ModulePageSectionChrome>
         <ModulePageSectionChrome>
           <GrowingJackpotSessionHeaderSection
             record={record}
             goLiveDisabled={!canMutate}
             liveActionPending={goLiveMutation.isPending}
-            deactivatePending={deactivateMutation.isPending}
             onOpenArchiveDialog={() => setArchiveOpen(true)}
             onOpenEditDialog={() => setEditOpen(true)}
             onGoLive={() =>
@@ -143,17 +139,6 @@ export function GrowingJackpotSessionPage() {
                     e instanceof Error
                       ? e.message
                       : t('growingJackpot.couldNotGoLive'),
-                  ),
-              })
-            }
-            onDeactivate={() =>
-              deactivateMutation.mutate(undefined, {
-                onSuccess: () => showSuccess(t('growingJackpot.wentOffAir')),
-                onError: (e) =>
-                  showError(
-                    e instanceof Error
-                      ? e.message
-                      : t('growingJackpot.couldNotGoOffAir'),
                   ),
               })
             }

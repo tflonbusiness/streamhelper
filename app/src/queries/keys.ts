@@ -165,12 +165,10 @@ export const growingJackpotKeys = {
   rounds: (
     accountId: number,
     growingJackpotId: number,
-    page: number,
-    limit: number,
+    params: import('@/api/growing-jackpot').GrowingJackpotRoundListParams,
   ) =>
     [
       ...growingJackpotKeys.roundsRoot(accountId, growingJackpotId),
-      page,
-      limit,
+      params,
     ] as const,
 }

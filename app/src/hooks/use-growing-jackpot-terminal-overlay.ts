@@ -1,25 +1,38 @@
 import { useEffect, useState } from 'react'
 import type { PublicGrowingJackpotWidget } from '@/api/growing-jackpot'
 
-/** Hides winner / no_participants overlay after winnerOverlaySeconds from closedAt. */
+function mapNoParticipantsToIdle(
+  view: PublicGrowingJackpotWidget,
+): PublicGrowingJackpotWidget {
+  if (view.status !== 'no_participants') {
+    return view
+  }
+  return {
+    status: 'idle',
+    width: view.width,
+    height: view.height,
+    style: view.style,
+    growingJackpotId: view.round.growingJackpotId,
+  }
+}
+
+/** Hides winner overlay after winnerOverlaySeconds from closedAt. */
 export function useGrowingJackpotTerminalOverlay(
   view: PublicGrowingJackpotWidget | undefined,
 ): PublicGrowingJackpotWidget | undefined {
   const [expired, setExpired] = useState(false)
+  const activeView = view ? mapNoParticipantsToIdle(view) : undefined
 
   useEffect(() => {
     setExpired(false)
-    if (
-      !view ||
-      (view.status !== 'winner' && view.status !== 'no_participants')
-    ) {
+    if (!activeView || activeView.status !== 'winner') {
       return
     }
-    const closedAt = view.round.closedAt
+    const closedAt = activeView.round.closedAt
     if (!closedAt) {
       return
     }
-    const seconds = view.settings.winnerOverlaySeconds
+    const seconds = activeView.settings.winnerOverlaySeconds
     const endMs = new Date(closedAt).getTime() + seconds * 1000
     const remaining = endMs - Date.now()
     if (remaining <= 0) {
@@ -28,21 +41,21 @@ export function useGrowingJackpotTerminalOverlay(
     }
     const id = window.setTimeout(() => setExpired(true), remaining)
     return () => window.clearTimeout(id)
-  }, [view])
+  }, [activeView])
 
-  if (!view || !expired) {
-    return view
+  if (!activeView || !expired) {
+    return activeView
   }
 
-  if (view.status === 'winner' || view.status === 'no_participants') {
+  if (activeView.status === 'winner') {
     return {
       status: 'idle',
-      width: view.width,
-      height: view.height,
-      style: view.style,
-      growingJackpotId: view.round.growingJackpotId,
+      width: activeView.width,
+      height: activeView.height,
+      style: activeView.style,
+      growingJackpotId: activeView.round.growingJackpotId,
     }
   }
 
-  return view
+  return activeView
 }

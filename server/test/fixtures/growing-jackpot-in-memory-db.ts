@@ -41,6 +41,7 @@ type RoundRow = {
   created_at: Date;
   stopped_by_user_id?: number | null;
   winner_chat_announced?: boolean;
+  is_archived?: boolean;
 };
 
 type ParticipantRow = {
@@ -394,7 +395,8 @@ export class GrowingJackpotInMemoryDb {
     if (sql.includes('count(*)') && sql.includes('growing_jackpot_round')) {
       const jackpotId = Number(params[0]);
       const count = this.rounds.filter(
-        (r) => r.growing_jackpot_id === jackpotId,
+        (r) =>
+          r.growing_jackpot_id === jackpotId && r.is_archived !== true,
       ).length;
       return Promise.resolve({ rows: [{ count: String(count) }] });
     }
@@ -595,16 +597,60 @@ export class GrowingJackpotInMemoryDb {
     if (
       sql.includes('select *') &&
       sql.includes('from growing_jackpot_round') &&
-      sql.includes('order by created_at desc')
+      sql.includes('is_archived = false') &&
+      sql.includes('limit $2 offset $3')
     ) {
       const jackpotId = Number(params[0]);
       const limit = Number(params[1]);
       const offset = Number(params[2]);
       const rows = this.rounds
-        .filter((r) => r.growing_jackpot_id === jackpotId)
+        .filter(
+          (r) => r.growing_jackpot_id === jackpotId && r.is_archived !== true,
+        )
         .sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
         .slice(offset, offset + limit);
       return Promise.resolve({ rows });
+    }
+
+    if (
+      sql.includes('update growing_jackpot_round') &&
+      sql.includes('is_archived = true')
+    ) {
+      const accountId = Number(params[0]);
+      const jackpotId = Number(params[1]);
+      const jackpot = this.jackpots.find(
+        (j) => j.id === jackpotId && j.account_id === accountId,
+      );
+      if (!jackpot) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+      if (params.length === 3) {
+        const roundId = Number(params[2]);
+        const round = this.rounds.find(
+          (r) =>
+            r.id === roundId &&
+            r.growing_jackpot_id === jackpotId &&
+            r.is_archived !== true &&
+            r.phase === 'closed',
+        );
+        if (!round) {
+          return Promise.resolve({ rows: [], rowCount: 0 });
+        }
+        round.is_archived = true;
+        return Promise.resolve({ rows: [], rowCount: 1 });
+      }
+      let updated = 0;
+      for (const round of this.rounds) {
+        if (
+          round.growing_jackpot_id === jackpotId &&
+          round.is_archived !== true &&
+          round.phase === 'closed'
+        ) {
+          round.is_archived = true;
+          updated += 1;
+        }
+      }
+      return Promise.resolve({ rows: [], rowCount: updated });
     }
 
     if (
@@ -650,30 +696,6 @@ export class GrowingJackpotInMemoryDb {
         widget.style = JSON.parse(styleJson) as Record<string, unknown>;
       }
       this.widgets.set(accountId, widget);
-      return Promise.resolve({ rows: [], rowCount: 1 });
-    }
-
-    if (
-      sql.includes('update growing_jackpot_round') &&
-      sql.includes('fulfillment_status =')
-    ) {
-      const [status, , roundId, jackpotId, accountId] = params as [
-        string,
-        number,
-        number,
-        number,
-        number,
-      ];
-      const jackpot = this.jackpots.find(
-        (j) => j.id === jackpotId && j.account_id === accountId,
-      );
-      const round = this.rounds.find(
-        (r) => r.id === roundId && r.growing_jackpot_id === jackpotId,
-      );
-      if (!jackpot || !round || round.result !== 'won') {
-        return Promise.resolve({ rows: [], rowCount: 0 });
-      }
-      round.fulfillment_status = status;
       return Promise.resolve({ rows: [], rowCount: 1 });
     }
 
